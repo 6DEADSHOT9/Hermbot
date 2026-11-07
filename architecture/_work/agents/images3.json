@@ -1,0 +1,632 @@
+{
+ "agent": "images3",
+ "files_read": [
+  ".taste-skill/after/connections-1440.png",
+  ".taste-skill/after/connections-390.png",
+  ".taste-skill/after/create-group-1440.png",
+  ".taste-skill/after/create-group-390.png",
+  ".taste-skill/after/create-teammate-1440.png",
+  ".taste-skill/after/create-teammate-390.png",
+  ".taste-skill/after/dark-390.png",
+  ".taste-skill/after/dark-owner-menu-390.png",
+  ".taste-skill/after/dark-routines-390.png",
+  ".taste-skill/after/file-library-1440.png",
+  ".taste-skill/after/file-library-390.png",
+  ".taste-skill/after/knowledge-1440.png",
+  ".taste-skill/after/knowledge-320.png",
+  ".taste-skill/after/knowledge-390.png",
+  ".taste-skill/after/knowledge-768.png",
+  ".taste-skill/after/knowledge-844.png",
+  ".taste-skill/after/navigation-1440.png",
+  ".taste-skill/after/navigation-320.png",
+  ".taste-skill/after/navigation-390.png",
+  ".taste-skill/after/navigation-768.png",
+  ".taste-skill/after/navigation-844.png",
+  ".taste-skill/after/owner-menu-1440.png",
+  ".taste-skill/after/owner-menu-390.png",
+  ".taste-skill/after/routines-1440.png",
+  ".taste-skill/after/routines-320.png",
+  ".taste-skill/after/routines-390.png",
+  ".taste-skill/after/routines-768.png",
+  ".taste-skill/after/routines-844.png",
+  ".taste-skill/after/workspace-1440.png",
+  ".taste-skill/after/workspace-320.png",
+  ".taste-skill/after/workspace-390.png",
+  ".taste-skill/after/workspace-768.png",
+  ".taste-skill/after/workspace-844.png",
+  ".taste-skill/after/workspace-settings-1440.png",
+  ".taste-skill/after/workspace-settings-390.png",
+  ".taste-skill/before/desktop-fold.jpg",
+  ".taste-skill/before/desktop-page-01.jpg",
+  ".taste-skill/before/knowledge-1440.png",
+  ".taste-skill/before/knowledge-390.png",
+  ".taste-skill/before/knowledge-768.png",
+  ".taste-skill/before/mobile-fold.jpg",
+  ".taste-skill/before/mobile-page-01.jpg",
+  ".taste-skill/before/navigation-1440.png",
+  ".taste-skill/before/navigation-390.png",
+  ".taste-skill/before/navigation-768.png",
+  ".taste-skill/before/routines-1440.png",
+  ".taste-skill/before/routines-390.png",
+  ".taste-skill/before/routines-768.png",
+  ".taste-skill/before/tablet-fold.jpg",
+  ".taste-skill/before/tablet-page-01.jpg",
+  ".taste-skill/before/workspace-1440.png",
+  ".taste-skill/before/workspace-390.png",
+  ".taste-skill/before/workspace-768.png",
+  ".taste-skill/refined/knowledge-1440.png",
+  ".taste-skill/refined/knowledge-320.png",
+  ".taste-skill/refined/knowledge-390.png",
+  ".taste-skill/refined/knowledge-768.png",
+  ".taste-skill/refined/knowledge-844.png",
+  ".taste-skill/refined/navigation-1440.png",
+  ".taste-skill/refined/navigation-320.png",
+  ".taste-skill/refined/navigation-390.png",
+  ".taste-skill/refined/navigation-768.png",
+  ".taste-skill/refined/navigation-844.png",
+  ".taste-skill/refined/routines-1440.png",
+  ".taste-skill/refined/routines-320.png",
+  ".taste-skill/refined/routines-390.png",
+  ".taste-skill/refined/routines-768.png",
+  ".taste-skill/refined/routines-844.png",
+  ".taste-skill/refined/workspace-1440.png",
+  ".taste-skill/refined/workspace-320.png",
+  ".taste-skill/refined/workspace-390.png",
+  ".taste-skill/refined/workspace-768.png",
+  ".taste-skill/refined/workspace-844.png",
+  ".taste-skill/work-details/after/finished-1440.png",
+  ".taste-skill/work-details/after/finished-320.png",
+  ".taste-skill/work-details/after/finished-390.png",
+  ".taste-skill/work-details/after/finished-card-1440.png",
+  ".taste-skill/work-details/after/finished-card-320.png",
+  ".taste-skill/work-details/after/finished-card-390.png",
+  ".taste-skill/work-details/after/inspect-1440.png",
+  ".taste-skill/work-details/after/inspect-320.png",
+  ".taste-skill/work-details/after/inspect-390.png",
+  ".taste-skill/work-details/after/outputs-1440.png",
+  ".taste-skill/work-details/after/outputs-320.png",
+  ".taste-skill/work-details/after/outputs-390.png",
+  ".taste-skill/work-details/after/removed-1440.png",
+  ".taste-skill/work-details/after/removed-320.png",
+  ".taste-skill/work-details/after/removed-390.png",
+  ".taste-skill/work-details/after/removed-row-1440.png",
+  ".taste-skill/work-details/after/removed-row-320.png",
+  ".taste-skill/work-details/after/removed-row-390.png",
+  ".taste-skill/work-details/before/finished-1440.png",
+  ".taste-skill/work-details/before/finished-320.png",
+  ".taste-skill/work-details/before/finished-390.png",
+  ".taste-skill/work-details/before/inspect-1440.png",
+  ".taste-skill/work-details/before/inspect-320.png",
+  ".taste-skill/work-details/before/inspect-390.png",
+  ".taste-skill/work-details/before/outputs-1440.png",
+  ".taste-skill/work-details/before/outputs-320.png",
+  ".taste-skill/work-details/before/outputs-390.png",
+  ".taste-skill/work-details/before/removed-1440.png",
+  ".taste-skill/work-details/before/removed-320.png",
+  ".taste-skill/work-details/before/removed-390.png",
+  "plan/archive/grokbot-design-reference.png"
+ ],
+ "summary": "Before: the login card and workspace already used a sage-green palette, but modals (Memory & skills, Routines) used default system sans, mismatched button sizes, plain-text status and equal-weight outlined actions; the sidebar had spaced all-caps labels, boxed Connections/File library buttons and a three-icon owner footer that overlapped text at tablet width; the Work panel's removed-work row collapsed into a one-word-per-line column and file sizes showed '0.0 KB'. Refined: introduced a geometric sans (DM Sans-like), sentence-case section labels, a single Owner chevron menu, a status-pill Routines card with a text-style action row and a filled Run now, and added 320 and 844x390 captures to test small viewports. After: added the Owner popover (Connections, File library, Workspace settings, theme toggle, Sign out), a scrollable sidebar with pinned Routines/Owner footer, new Connections, File library, Create group/teammate and Workspace settings modals, a dark theme, accurate byte sizes, a fixed removed-work row and softer link-style work actions. Remaining visible issues: the Create teammate colour input renders as a thin line, 'Curated memory' stays a bare heading, and Memory modal buttons stay uneven. Landscape 844x390 modals still clip, and some fixture data (Phase 4 UI fixtures) appears in screenshots.",
+ "module_notes": {
+  ".taste-skill/before/desktop-fold.jpg": {
+   "purpose": "Login screen, desktop first-fold (1440px), light sage theme, BEFORE stage: centred white card with hermbot wordmark, 'Your team, your workspace.', Owner token field, green 'Open workspace' button.",
+   "layer": "doc",
+   "screen": "Login (owner token)"
+  },
+  ".taste-skill/before/desktop-page-01.jpg": {
+   "purpose": "Login screen, desktop page capture (1440px), light sage theme, BEFORE stage: centred white card with hermbot wordmark, 'Your team, your workspace.', Owner token field, green 'Open workspace' button. Right half is a flat grey empty canvas (capture artifact: page rendered in only the left portion).",
+   "layer": "doc",
+   "screen": "Login (owner token)"
+  },
+  ".taste-skill/before/tablet-fold.jpg": {
+   "purpose": "Login screen, tablet first-fold (768px), light sage theme, BEFORE stage: centred white card with hermbot wordmark, 'Your team, your workspace.', Owner token field, green 'Open workspace' button.",
+   "layer": "doc",
+   "screen": "Login (owner token)"
+  },
+  ".taste-skill/before/tablet-page-01.jpg": {
+   "purpose": "Login screen, tablet page capture (768px), light sage theme, BEFORE stage: centred white card with hermbot wordmark, 'Your team, your workspace.', Owner token field, green 'Open workspace' button. Right half is a flat grey empty canvas (capture artifact: page rendered in only the left portion).",
+   "layer": "doc",
+   "screen": "Login (owner token)"
+  },
+  ".taste-skill/before/mobile-fold.jpg": {
+   "purpose": "Login screen, mobile first-fold (390px), light sage theme, BEFORE stage: centred white card with hermbot wordmark, 'Your team, your workspace.', Owner token field, green 'Open workspace' button.",
+   "layer": "doc",
+   "screen": "Login (owner token)"
+  },
+  ".taste-skill/before/mobile-page-01.jpg": {
+   "purpose": "Login screen, mobile page capture (390px), light sage theme, BEFORE stage: centred white card with hermbot wordmark, 'Your team, your workspace.', Owner token field, green 'Open workspace' button. Right half is a flat grey empty canvas (capture artifact: page rendered in only the left portion).",
+   "layer": "doc",
+   "screen": "Login (owner token)"
+  },
+  ".taste-skill/before/knowledge-1440.png": {
+   "purpose": "Memory & skills modal, 1440 desktop, light, BEFORE: blurred workspace behind; modal uses default system sans, unstyled 'Curated memory'/'Skills' headings, mismatched Create skill/Import SKILL.md button sizes, native select, curated-memory cards empty/missing.",
+   "layer": "doc",
+   "screen": "Memory & skills modal"
+  },
+  ".taste-skill/before/knowledge-390.png": {
+   "purpose": "Memory & skills modal, 390 mobile, light, BEFORE: near full-width sheet with default font, memory cards and skill rows with Enable buttons; skill rows cut off at bottom, inconsistent button heights.",
+   "layer": "doc",
+   "screen": "Memory & skills modal"
+  },
+  ".taste-skill/before/knowledge-768.png": {
+   "purpose": "Memory & skills modal, 768 tablet, light, BEFORE: same plain styling as desktop, skills list (claude-code, codex, computer-use) with Enable buttons, sidebar blurred behind.",
+   "layer": "doc",
+   "screen": "Memory & skills modal"
+  },
+  ".taste-skill/before/navigation-1440.png": {
+   "purpose": "Main workspace, 1440 desktop, light, BEFORE: sidebar with spaced-caps section labels (YOUR TEAM, PAST TEAMMATES, GROUPS), Quill/Scout/Sage list, Routines link and boxed Connections/File library buttons, Owner footer with three icon buttons; right 'In this conversation' panel.",
+   "layer": "doc",
+   "screen": "Workspace sidebar + chat"
+  },
+  ".taste-skill/before/navigation-390.png": {
+   "purpose": "Mobile nav drawer open, 390px, light, BEFORE: sidebar covers ~2/3 width with all-caps labels, groups list clipped, Routines/Connections/File library stacked, footer icon buttons.",
+   "layer": "doc",
+   "screen": "Mobile navigation drawer"
+  },
+  ".taste-skill/before/navigation-768.png": {
+   "purpose": "Tablet 768 workspace, light, BEFORE: persistent sidebar; header icons (people, plus) wrap awkwardly under the logo; Owner footer icons overlap the 'Local workspace' text; groups list clipped by action buttons.",
+   "layer": "doc",
+   "screen": "Workspace sidebar + chat"
+  },
+  ".taste-skill/before/routines-1440.png": {
+   "purpose": "Routines modal, 1440 desktop, light, BEFORE: heading + New routine/Refresh buttons, routine card with plain 'active' text, 'interval \u00b7 UTC \u00b7 Scout', oversized body-weight status text, Delete routine in red text, outlined Edit/History/Run now/Pause buttons all equal weight, mismatched type sizes.",
+   "layer": "doc",
+   "screen": "Routines modal"
+  },
+  ".taste-skill/before/routines-390.png": {
+   "purpose": "Routines modal, 390 mobile, light, BEFORE: action buttons wrap to two rows (Pause plus red Delete routine), inconsistent font sizes in card.",
+   "layer": "doc",
+   "screen": "Routines modal"
+  },
+  ".taste-skill/before/routines-768.png": {
+   "purpose": "Routines modal, 768 tablet, light, BEFORE: same card layout as desktop with equal-weight outlined action buttons and plain 'active' label.",
+   "layer": "doc",
+   "screen": "Routines modal"
+  },
+  ".taste-skill/before/workspace-1440.png": {
+   "purpose": "Main chat workspace, 1440 desktop, light, BEFORE: Scout conversation, green user bubbles, composer, Work/Outputs side panel with needs-attention card; sidebar uses caps labels and boxed utility buttons.",
+   "layer": "doc",
+   "screen": "Workspace chat"
+  },
+  ".taste-skill/before/workspace-390.png": {
+   "purpose": "Mobile chat, 390px, light, BEFORE: hamburger header with truncated subtitle, chat messages with green user bubbles, composer with Coordinate team, mention.",
+   "layer": "doc",
+   "screen": "Workspace chat (mobile)"
+  },
+  ".taste-skill/before/workspace-768.png": {
+   "purpose": "Tablet 768 chat with sidebar, light, BEFORE: sidebar header icons wrap below logo, groups list clipped, footer icons overlapping owner text; chat and composer fine.",
+   "layer": "doc",
+   "screen": "Workspace chat (tablet)"
+  },
+  "plan/archive/grokbot-design-reference.png": {
+   "purpose": "Full-page screenshot of the external Grok Bot design article (dark theme, 'Designing Grok Bot for a world of persistent agents'); used as inspiration: Bot roster instead of chat history, five primitives (Bots, Chats, Prompts, Tools, Artifacts), presence, routines.",
+   "layer": "doc",
+   "screen": "Design reference"
+  },
+  ".taste-skill/refined/knowledge-1440.png": {
+   "purpose": "Refined Memory & skills modal, 1440 desktop, light: DM Sans-style typography, bolder title, tighter header; sidebar now uses sentence-case labels (Your teammates/Groups), Owner footer collapsed to a single chevron menu; 'Curated memory' still renders as a bare heading and buttons still uneven.",
+   "layer": "doc",
+   "screen": "Memory & skills modal"
+  },
+  ".taste-skill/refined/knowledge-320.png": {
+   "purpose": "Refined Memory & skills modal, 320 small phone, light: title wraps to two lines, memory cards (Personal notes/User profile) shown, content clipped under modal at bottom.",
+   "layer": "doc",
+   "screen": "Memory & skills modal"
+  },
+  ".taste-skill/refined/knowledge-390.png": {
+   "purpose": "Refined Memory & skills modal, 390 mobile, light: new geometric font, skill rows with teal-green description and Enable button; Import SKILL.md button bolder than Create skill (mismatch persists).",
+   "layer": "doc",
+   "screen": "Memory & skills modal"
+  },
+  ".taste-skill/refined/knowledge-768.png": {
+   "purpose": "Refined Memory & skills modal, 768 tablet, light: sidebar collapsed to hamburger header, modal with memory cards and skill list; type changed to DM Sans.",
+   "layer": "doc",
+   "screen": "Memory & skills modal"
+  },
+  ".taste-skill/refined/knowledge-844.png": {
+   "purpose": "Refined Memory & skills modal, 844x390 landscape phone, light: modal clipped by short viewport, only header and memory cards visible.",
+   "layer": "doc",
+   "screen": "Memory & skills modal"
+  },
+  ".taste-skill/refined/navigation-1440.png": {
+   "purpose": "Refined workspace, 1440 desktop, light: sidebar with sentence-case section labels, larger group list (6 groups, scrolling), Routines pinned, Owner footer with chevron menu replacing boxed Connections/File library buttons and icon row.",
+   "layer": "doc",
+   "screen": "Navigation sidebar/drawer"
+  },
+  ".taste-skill/refined/navigation-320.png": {
+   "purpose": "Refined mobile nav drawer, 320px, light: drawer shows logo, search, Your teammates, Past teammates, Routines, Owner chevron; groups hidden/short viewport.",
+   "layer": "doc",
+   "screen": "Navigation sidebar/drawer"
+  },
+  ".taste-skill/refined/navigation-390.png": {
+   "purpose": "Refined mobile nav drawer, 390px, light: Your teammates, Past teammates, Groups with 4 visible entries, Routines, Owner footer chevron; cleaner spacing than before.",
+   "layer": "doc",
+   "screen": "Navigation sidebar/drawer"
+  },
+  ".taste-skill/refined/navigation-768.png": {
+   "purpose": "Refined tablet nav drawer open over chat, 768px, light: full sidebar incl. 5 groups, header icons now sit beside logo (previous wrapping fixed), footer collapsed.",
+   "layer": "doc",
+   "screen": "Navigation sidebar/drawer"
+  },
+  ".taste-skill/refined/navigation-844.png": {
+   "purpose": "Refined landscape-phone drawer, 844x390, light: drawer shows only Your teammates partially (Sage clipped) plus Routines and Owner footer; very short viewport, list cramped.",
+   "layer": "doc",
+   "screen": "Navigation sidebar/drawer"
+  },
+  ".taste-skill/refined/routines-1440.png": {
+   "purpose": "Refined Routines modal, 1440 desktop, light: dark-green primary 'New routine', status pill 'Active' with dot, 'Every 60 minutes', bold next-run date, 'Last run: Needs attention', text-style Edit/History/Pause with filled Run now and red Delete right-aligned; Archived routines divider.",
+   "layer": "doc",
+   "screen": "Routines modal"
+  },
+  ".taste-skill/refined/routines-320.png": {
+   "purpose": "Refined Routines modal, 320 small phone, light: new hierarchy; actions wrap, Delete drops to its own line; modal bottom partly clipped.",
+   "layer": "doc",
+   "screen": "Routines modal"
+  },
+  ".taste-skill/refined/routines-390.png": {
+   "purpose": "Refined Routines modal, 390 mobile, light: header, actions on one row with Delete beside them, Archived routines toggle; much cleaner than before.",
+   "layer": "doc",
+   "screen": "Routines modal"
+  },
+  ".taste-skill/refined/routines-768.png": {
+   "purpose": "Refined Routines modal, 768 tablet, light: card layout consistent with desktop.",
+   "layer": "doc",
+   "screen": "Routines modal"
+  },
+  ".taste-skill/refined/routines-844.png": {
+   "purpose": "Refined Routines modal, 844x390 landscape phone, light: modal overflows the short viewport; Run now row and Archived routines at the very bottom edge.",
+   "layer": "doc",
+   "screen": "Routines modal"
+  },
+  ".taste-skill/refined/workspace-1440.png": {
+   "purpose": "Refined main workspace, 1440 desktop, light: new typography, sentence-case sidebar, Owner chevron footer, chat with larger readable bubbles; right panel Work card with bold title and link-styled actions.",
+   "layer": "doc",
+   "screen": "Workspace chat"
+  },
+  ".taste-skill/refined/workspace-320.png": {
+   "purpose": "Refined chat, 320 small phone, light: header with hamburger, avatar, truncated subtitle, overflow dots; composer with Coordinate team; message area is narrow with few lines visible.",
+   "layer": "doc",
+   "screen": "Workspace chat"
+  },
+  ".taste-skill/refined/workspace-390.png": {
+   "purpose": "Refined chat, 390 mobile, light: header with menu, Scout avatar, overflow menu; long Scout message and user reply bubble, composer.",
+   "layer": "doc",
+   "screen": "Workspace chat"
+  },
+  ".taste-skill/refined/workspace-768.png": {
+   "purpose": "Refined chat, 768 tablet, light: hamburger header replaces sidebar; long message text readable, composer at bottom.",
+   "layer": "doc",
+   "screen": "Workspace chat"
+  },
+  ".taste-skill/refined/workspace-844.png": {
+   "purpose": "Refined chat, 844x390 landscape phone, light: only one message and the composer fit; header compact.",
+   "layer": "doc",
+   "screen": "Workspace chat"
+  },
+  ".taste-skill/after/connections-1440.png": {
+   "purpose": "Connections modal, 1440 desktop, light, AFTER: new tabs (Connections, OAuth setup, Permissions, Activity), explanatory copy, connection cards (test fixtures 'Phase 4 UI fixture ... github', revoked) with Edit access / Connect account (filled) / Use access token; Owner footer menu replaces boxed button.",
+   "layer": "doc",
+   "screen": "Connections modal"
+  },
+  ".taste-skill/after/connections-390.png": {
+   "purpose": "Connections modal, 390 mobile, light, AFTER: tabs wrap with Activity on second row; cards stack buttons two-by-one; content is test-fixture data.",
+   "layer": "doc",
+   "screen": "Connections modal"
+  },
+  ".taste-skill/after/create-group-1440.png": {
+   "purpose": "Create group modal 'Bring your team together', 1440, light, AFTER: conversation name field, teammate checkbox cards (Scout, Sage, Quill), full-width Create conversation button, X close icon (larger than other modals' small x).",
+   "layer": "doc",
+   "screen": "Create group modal"
+  },
+  ".taste-skill/after/create-group-390.png": {
+   "purpose": "Create group modal, 390 mobile, light, AFTER: same card list stacks cleanly with full-width primary button.",
+   "layer": "doc",
+   "screen": "Create group modal"
+  },
+  ".taste-skill/after/create-teammate-1440.png": {
+   "purpose": "Create teammate modal, 1440, light, AFTER: Name/Avatar, Role textarea, Provider/Model selects, Color field rendered as a thin line (broken colour input), Expertise, Tools checkboxes; content cut at bottom.",
+   "layer": "doc",
+   "screen": "Create teammate modal"
+  },
+  ".taste-skill/after/create-teammate-390.png": {
+   "purpose": "Create teammate modal, 390 mobile, light, AFTER: single column form; Color input again renders as a thin line (visible problem).",
+   "layer": "doc",
+   "screen": "Create teammate modal"
+  },
+  ".taste-skill/after/dark-390.png": {
+   "purpose": "Dark theme chat, 390 mobile, AFTER: dark green-black surface, olive user bubble, light text, muted composer; contrast good.",
+   "layer": "doc",
+   "screen": "Dark theme chat"
+  },
+  ".taste-skill/after/dark-owner-menu-390.png": {
+   "purpose": "Dark theme mobile drawer with Owner menu open, 390, AFTER: popover with Connections, File library, Workspace settings, Switch to light theme, Sign out; Owner name in green.",
+   "layer": "doc",
+   "screen": "Dark owner menu"
+  },
+  ".taste-skill/after/dark-routines-390.png": {
+   "purpose": "Dark theme Routines modal, 390 mobile, AFTER: updated copy ('Give a teammate work to run on a schedule'), 'Every hour', Needs attention in coral, green Run now.",
+   "layer": "doc",
+   "screen": "Dark Routines modal"
+  },
+  ".taste-skill/after/file-library-1440.png": {
+   "purpose": "File library modal, 1440, light, AFTER: Files/Search prior work toggle, search field, conversation select, Upload a file and Import link controls, versioned file rows (test fixtures like phase4-github-issue-inspection.md).",
+   "layer": "doc",
+   "screen": "File library modal"
+  },
+  ".taste-skill/after/file-library-390.png": {
+   "purpose": "File library modal, 390 mobile, light, AFTER: stacked controls, Import link under URL field, file rows with version/size/bot.",
+   "layer": "doc",
+   "screen": "File library modal"
+  },
+  ".taste-skill/after/knowledge-1440.png": {
+   "purpose": "Memory & skills modal, 1440, light, AFTER: same as refined; 'Curated memory' still bare heading with no cards visible and sidebar uses Scout/Sage list scrolled; Work panel visible behind.",
+   "layer": "doc",
+   "screen": "Memory & skills modal"
+  },
+  ".taste-skill/after/knowledge-320.png": {
+   "purpose": "Memory & skills modal, 320 small phone, light, AFTER: same as refined, title wraps, memory cards visible.",
+   "layer": "doc",
+   "screen": "Memory & skills modal"
+  },
+  ".taste-skill/after/knowledge-390.png": {
+   "purpose": "Memory & skills modal, 390 mobile, light, AFTER: identical to refined; skill row descriptions teal, Enable button.",
+   "layer": "doc",
+   "screen": "Memory & skills modal"
+  },
+  ".taste-skill/after/knowledge-768.png": {
+   "purpose": "Memory & skills modal, 768 tablet, light, AFTER: skills list with Enable buttons and DM Sans type, no visible change from refined.",
+   "layer": "doc",
+   "screen": "Memory & skills modal"
+  },
+  ".taste-skill/after/knowledge-844.png": {
+   "purpose": "Memory & skills modal, 844x390 landscape, light, AFTER: clipped by short viewport (same as refined).",
+   "layer": "doc",
+   "screen": "Memory & skills modal"
+  },
+  ".taste-skill/after/navigation-1440.png": {
+   "purpose": "Workspace with sidebar, 1440, light, AFTER: sidebar scrolled so Scout/Sage and 6 groups visible with Routines pinned at bottom and Owner chevron footer; two highlighted rows (Scout and Sage hover) visible.",
+   "layer": "doc",
+   "screen": "Navigation sidebar"
+  },
+  ".taste-skill/after/navigation-320.png": {
+   "purpose": "Mobile drawer scrolled, 320px, light, AFTER: groups list (Kaggle, Anthropic ipo, Project chat temp2, Manik's task, Project chat3) with Routines/Owner pinned footer; drawer scrolls independently.",
+   "layer": "doc",
+   "screen": "Navigation drawer"
+  },
+  ".taste-skill/after/navigation-390.png": {
+   "purpose": "Mobile drawer, 390px, light, AFTER: scrollable list with Sage, Past teammates, 6 Groups, pinned Routines and Owner footer.",
+   "layer": "doc",
+   "screen": "Navigation drawer"
+  },
+  ".taste-skill/after/navigation-768.png": {
+   "purpose": "Tablet drawer over chat, 768px, light, AFTER: scrollable sidebar with Scout/Sage, groups, pinned Routines and Owner footer.",
+   "layer": "doc",
+   "screen": "Navigation drawer"
+  },
+  ".taste-skill/after/navigation-844.png": {
+   "purpose": "Landscape-phone drawer, 844x390, light, AFTER: scroll region fills short viewport with groups visible; Routines and Owner footer remain pinned (improvement over refined where list was cramped).",
+   "layer": "doc",
+   "screen": "Navigation drawer"
+  },
+  ".taste-skill/after/owner-menu-1440.png": {
+   "purpose": "Owner popover menu on desktop, 1440, light, AFTER: Connections, File library, Workspace settings, Switch to dark theme, Sign out; replaces the boxed sidebar buttons.",
+   "layer": "doc",
+   "screen": "Owner menu"
+  },
+  ".taste-skill/after/owner-menu-390.png": {
+   "purpose": "Owner popover menu on mobile drawer, 390, light, AFTER: same five items with icons, anchored above Owner chevron.",
+   "layer": "doc",
+   "screen": "Owner menu"
+  },
+  ".taste-skill/after/routines-1440.png": {
+   "purpose": "Routines modal, 1440, light, AFTER: updated copy ('Every hour' instead of 'Every 60 minutes'), Needs attention in red, text-style actions with filled Run now.",
+   "layer": "doc",
+   "screen": "Routines modal"
+  },
+  ".taste-skill/after/routines-320.png": {
+   "purpose": "Routines modal, 320 small phone, light, AFTER: actions wrap with Delete on own row; bottom clipped.",
+   "layer": "doc",
+   "screen": "Routines modal"
+  },
+  ".taste-skill/after/routines-390.png": {
+   "purpose": "Routines modal, 390 mobile, light, AFTER: clean header, Active pill, 'Every hour', red Needs attention, Archived routines.",
+   "layer": "doc",
+   "screen": "Routines modal"
+  },
+  ".taste-skill/after/routines-768.png": {
+   "purpose": "Routines modal, 768 tablet, light, AFTER: consistent with desktop.",
+   "layer": "doc",
+   "screen": "Routines modal"
+  },
+  ".taste-skill/after/routines-844.png": {
+   "purpose": "Routines modal, 844x390 landscape, light, AFTER: modal now scrolls/fits viewport from top; Edit shows focus underline.",
+   "layer": "doc",
+   "screen": "Routines modal"
+  },
+  ".taste-skill/after/workspace-1440.png": {
+   "purpose": "Main workspace, 1440 desktop, light, AFTER: refined layout with Work/Outputs panel and sentence-case sidebar, matches refined stage.",
+   "layer": "doc",
+   "screen": "Workspace chat"
+  },
+  ".taste-skill/after/workspace-320.png": {
+   "purpose": "Chat at 320 small phone, light, AFTER: same as refined.",
+   "layer": "doc",
+   "screen": "Workspace chat"
+  },
+  ".taste-skill/after/workspace-390.png": {
+   "purpose": "Chat at 390 mobile, light, AFTER: same as refined.",
+   "layer": "doc",
+   "screen": "Workspace chat"
+  },
+  ".taste-skill/after/workspace-768.png": {
+   "purpose": "Chat at 768 tablet, light, AFTER: long Quill/Scout Slack-delivery messages with inline code; composer clean.",
+   "layer": "doc",
+   "screen": "Workspace chat"
+  },
+  ".taste-skill/after/workspace-844.png": {
+   "purpose": "Chat at 844x390 landscape, light, AFTER: short viewport shows one message plus composer.",
+   "layer": "doc",
+   "screen": "Workspace chat"
+  },
+  ".taste-skill/after/workspace-settings-1440.png": {
+   "purpose": "Workspace settings modal, 1440, light, AFTER: tabs Workspace/Providers/Teammates/Grants; timezone, default provider, max teammates, concurrent executions, work budget fields; some 'Execution assessments' label spacing awkward.",
+   "layer": "doc",
+   "screen": "Workspace settings modal"
+  },
+  ".taste-skill/after/workspace-settings-390.png": {
+   "purpose": "Workspace settings modal, 390 mobile, light, AFTER: single-column form with number spinner on budget field.",
+   "layer": "doc",
+   "screen": "Workspace settings modal"
+  },
+  ".taste-skill/work-details/before/finished-1440.png": {
+   "purpose": "1440 side-panel crop (narrow ~300px column), light, BEFORE stage (work-details pass): Right-hand Work panel with Finished work expanded: duplicate needs-attention cards, completed card with underlined Inspect work / Save as skill / Remove from work list links.",
+   "layer": "doc",
+   "screen": "Work panel: finished"
+  },
+  ".taste-skill/work-details/before/finished-320.png": {
+   "purpose": "320 small phone, light, BEFORE stage (work-details pass): Right-hand Work panel with Finished work expanded: duplicate needs-attention cards, completed card with underlined Inspect work / Save as skill / Remove from work list links.",
+   "layer": "doc",
+   "screen": "Work panel: finished"
+  },
+  ".taste-skill/work-details/before/finished-390.png": {
+   "purpose": "390 mobile, light, BEFORE stage (work-details pass): Right-hand Work panel with Finished work expanded: duplicate needs-attention cards, completed card with underlined Inspect work / Save as skill / Remove from work list links.",
+   "layer": "doc",
+   "screen": "Work panel: finished"
+  },
+  ".taste-skill/work-details/before/inspect-1440.png": {
+   "purpose": "1440 desktop modal, light, BEFORE stage (work-details pass): 'Inspect the work' modal showing assignment, Scout status, timeline of events.",
+   "layer": "doc",
+   "screen": "Work panel: inspect"
+  },
+  ".taste-skill/work-details/before/inspect-320.png": {
+   "purpose": "320 small phone, light, BEFORE stage (work-details pass): 'Inspect the work' modal showing assignment, Scout status, timeline of events.",
+   "layer": "doc",
+   "screen": "Work panel: inspect"
+  },
+  ".taste-skill/work-details/before/inspect-390.png": {
+   "purpose": "390 mobile, light, BEFORE stage (work-details pass): 'Inspect the work' modal showing assignment, Scout status, timeline of events.",
+   "layer": "doc",
+   "screen": "Work panel: inspect"
+  },
+  ".taste-skill/work-details/before/outputs-1440.png": {
+   "purpose": "1440 side-panel crop (narrow ~300px column), light, BEFORE stage (work-details pass): Outputs tab listing files with '0.0 KB' sizes (wrong for tiny files) and arrows.",
+   "layer": "doc",
+   "screen": "Work panel: outputs"
+  },
+  ".taste-skill/work-details/before/outputs-320.png": {
+   "purpose": "320 small phone, light, BEFORE stage (work-details pass): Outputs tab listing files with '0.0 KB' sizes (wrong for tiny files) and arrows.",
+   "layer": "doc",
+   "screen": "Work panel: outputs"
+  },
+  ".taste-skill/work-details/before/outputs-390.png": {
+   "purpose": "390 mobile, light, BEFORE stage (work-details pass): Outputs tab listing files with '0.0 KB' sizes (wrong for tiny files) and arrows.",
+   "layer": "doc",
+   "screen": "Work panel: outputs"
+  },
+  ".taste-skill/work-details/before/removed-1440.png": {
+   "purpose": "1440 side-panel crop (narrow ~300px column), light, BEFORE stage (work-details pass): Removed work section expanded: removed item title rendered in a narrow column breaking word-by-word ('Resea rch Starlin k India...') - layout bug.",
+   "layer": "doc",
+   "screen": "Work panel: removed"
+  },
+  ".taste-skill/work-details/before/removed-320.png": {
+   "purpose": "320 small phone, light, BEFORE stage (work-details pass): Removed work section expanded: removed item title rendered in a narrow column breaking word-by-word ('Resea rch Starlin k India...') - layout bug.",
+   "layer": "doc",
+   "screen": "Work panel: removed"
+  },
+  ".taste-skill/work-details/before/removed-390.png": {
+   "purpose": "390 mobile, light, BEFORE stage (work-details pass): Removed work section expanded: removed item title rendered in a narrow column breaking word-by-word ('Resea rch Starlin k India...') - layout bug.",
+   "layer": "doc",
+   "screen": "Work panel: removed"
+  },
+  ".taste-skill/work-details/after/finished-1440.png": {
+   "purpose": "1440 side-panel crop (narrow ~300px column), light, AFTER stage (work-details pass): Finished work expanded with text-style (non-underlined) action buttons, bold section headers.",
+   "layer": "doc",
+   "screen": "Work panel: finished"
+  },
+  ".taste-skill/work-details/after/finished-320.png": {
+   "purpose": "320 small phone, light, AFTER stage (work-details pass): Finished work expanded with text-style (non-underlined) action buttons, bold section headers.",
+   "layer": "doc",
+   "screen": "Work panel: finished"
+  },
+  ".taste-skill/work-details/after/finished-390.png": {
+   "purpose": "390 mobile, light, AFTER stage (work-details pass): Finished work expanded with text-style (non-underlined) action buttons, bold section headers.",
+   "layer": "doc",
+   "screen": "Work panel: finished"
+  },
+  ".taste-skill/work-details/after/inspect-1440.png": {
+   "purpose": "1440 desktop modal, light, AFTER stage (work-details pass): 'Inspect the work' modal, content same, relative times updated (14 min ago).",
+   "layer": "doc",
+   "screen": "Work panel: inspect"
+  },
+  ".taste-skill/work-details/after/inspect-320.png": {
+   "purpose": "320 small phone, light, AFTER stage (work-details pass): 'Inspect the work' modal, content same, relative times updated (14 min ago).",
+   "layer": "doc",
+   "screen": "Work panel: inspect"
+  },
+  ".taste-skill/work-details/after/inspect-390.png": {
+   "purpose": "390 mobile, light, AFTER stage (work-details pass): 'Inspect the work' modal, content same, relative times updated (14 min ago).",
+   "layer": "doc",
+   "screen": "Work panel: inspect"
+  },
+  ".taste-skill/work-details/after/outputs-1440.png": {
+   "purpose": "1440 side-panel crop (narrow ~300px column), light, AFTER stage (work-details pass): Outputs tab now shows accurate byte sizes ('22 B', '109 B') and wrapped long filenames.",
+   "layer": "doc",
+   "screen": "Work panel: outputs"
+  },
+  ".taste-skill/work-details/after/outputs-320.png": {
+   "purpose": "320 small phone, light, AFTER stage (work-details pass): Outputs tab now shows accurate byte sizes ('22 B', '109 B') and wrapped long filenames.",
+   "layer": "doc",
+   "screen": "Work panel: outputs"
+  },
+  ".taste-skill/work-details/after/outputs-390.png": {
+   "purpose": "390 mobile, light, AFTER stage (work-details pass): Outputs tab now shows accurate byte sizes ('22 B', '109 B') and wrapped long filenames.",
+   "layer": "doc",
+   "screen": "Work panel: outputs"
+  },
+  ".taste-skill/work-details/after/removed-1440.png": {
+   "purpose": "1440 side-panel crop (narrow ~300px column), light, AFTER stage (work-details pass): Removed work section now renders title in a full-width row with Restore to work list / Inspect active work actions (word-break bug fixed).",
+   "layer": "doc",
+   "screen": "Work panel: removed"
+  },
+  ".taste-skill/work-details/after/removed-320.png": {
+   "purpose": "320 small phone, light, AFTER stage (work-details pass): Removed work section now renders title in a full-width row with Restore to work list / Inspect active work actions (word-break bug fixed).",
+   "layer": "doc",
+   "screen": "Work panel: removed"
+  },
+  ".taste-skill/work-details/after/removed-390.png": {
+   "purpose": "390 mobile, light, AFTER stage (work-details pass): Removed work section now renders title in a full-width row with Restore to work list / Inspect active work actions (word-break bug fixed).",
+   "layer": "doc",
+   "screen": "Work panel: removed"
+  },
+  ".taste-skill/work-details/after/finished-card-1440.png": {
+   "purpose": "1440 crop, light, AFTER (work-details): Completed card 'Test single-session subagent capability' crop with Inspect work, Save as skill, Remove from work list text actions.",
+   "layer": "doc",
+   "screen": "Work panel: finished card"
+  },
+  ".taste-skill/work-details/after/finished-card-320.png": {
+   "purpose": "320 crop, light, AFTER (work-details): Completed card 'Test single-session subagent capability' crop with Inspect work, Save as skill, Remove from work list text actions; Save as skill shown in pressed/focus state.",
+   "layer": "doc",
+   "screen": "Work panel: finished card"
+  },
+  ".taste-skill/work-details/after/finished-card-390.png": {
+   "purpose": "390 crop, light, AFTER (work-details): Completed card 'Test single-session subagent capability' crop with Inspect work, Save as skill, Remove from work list text actions.",
+   "layer": "doc",
+   "screen": "Work panel: finished card"
+  },
+  ".taste-skill/work-details/after/removed-row-1440.png": {
+   "purpose": "1440 crop, light, AFTER (work-details): removed-work row 'Research Starlin India controversy and send Word report to Dhruv' with Needs attention \u00b7 Scout and Restore to work list / Inspect active work.",
+   "layer": "doc",
+   "screen": "Work panel: removed row"
+  },
+  ".taste-skill/work-details/after/removed-row-320.png": {
+   "purpose": "320 crop, light, AFTER (work-details): removed-work row 'Research Starlin India controversy and send Word report to Dhruv' with Needs attention \u00b7 Scout and Restore to work list / Inspect active work; Inspect active work in focus state.",
+   "layer": "doc",
+   "screen": "Work panel: removed row"
+  },
+  ".taste-skill/work-details/after/removed-row-390.png": {
+   "purpose": "390 crop, light, AFTER (work-details): removed-work row 'Research Starlin India controversy and send Word report to Dhruv' with Needs attention \u00b7 Scout and Restore to work list / Inspect active work.",
+   "layer": "doc",
+   "screen": "Work panel: removed row"
+  }
+ }
+}

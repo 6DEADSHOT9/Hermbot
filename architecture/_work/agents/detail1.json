@@ -1,0 +1,2555 @@
+{
+ "agent": "detail1",
+ "files_read": [
+  "test-results/coordination-1440.png",
+  "test-results/coordination-390.png",
+  "test-results/desktop.png",
+  "test-results/execution-budget-1440.png",
+  "test-results/execution-budget-320.png",
+  "test-results/execution-budget-390.png",
+  "test-results/mobile.png",
+  "test-results/native-tools-1440.png",
+  "test-results/native-tools-390.png",
+  "test-results/phase2-approval.png",
+  "test-results/phase2-desktop.png",
+  "test-results/phase2-mobile.png",
+  "test-results/phase2-retired-history.png",
+  "test-results/phase3-computer-desktop.png",
+  "test-results/phase3-computer-mobile.png",
+  "test-results/phase3-knowledge-desktop.png",
+  "test-results/phase3-knowledge-mobile.png",
+  "test-results/phase3-library-desktop.png",
+  "test-results/phase3-library-mobile.png",
+  "test-results/phase3-pdf-preview.png",
+  "test-results/phase3-review.png",
+  "test-results/phase4-connections-1440.png",
+  "test-results/phase4-connections-320.png",
+  "test-results/phase4-connections-390.png",
+  "test-results/phase4-connections-844.png",
+  "test-results/phase4-mcp-recovery-closed.png",
+  "test-results/phase4-mcp-recovery.png",
+  "test-results/phase4-mcp-review.png",
+  "test-results/phase5-routines-1440.png",
+  "test-results/phase5-routines-320.png",
+  "test-results/phase5-routines-390.png",
+  "test-results/phase52-before-1440.png",
+  "test-results/phase52-before-390.png",
+  "test-results/phase52-before-768.png",
+  "test-results/phase52-empty-history-1440.png",
+  "test-results/phase52-empty-history-320.png",
+  "test-results/phase52-empty-history-390.png",
+  "test-results/phase52-empty-history-768.png",
+  "test-results/phase52-history-final-1440.png",
+  "test-results/phase52-history-final-320.png",
+  "test-results/phase52-history-final-390.png",
+  "test-results/phase52-history-final-768.png",
+  "test-results/phase52-live-history-1440.png",
+  "test-results/phase52-live-history-320.png",
+  "test-results/phase52-live-history-390.png",
+  "test-results/phase52-live-history-768.png",
+  "test-results/phase52-live-history-dark-390.png",
+  "test-results/phase52-source-form-1440.png",
+  "test-results/phase52-source-form-320.png",
+  "test-results/phase52-source-form-390.png",
+  "test-results/phase52-source-form-768.png",
+  "test-results/phase52-sources-1440.png",
+  "test-results/phase52-sources-320.png",
+  "test-results/phase52-sources-390.png",
+  "test-results/phase52-sources-768.png",
+  "test-results/phase52-trigger-form-1440.png",
+  "test-results/phase52-trigger-form-320.png",
+  "test-results/phase52-trigger-form-390.png",
+  "test-results/phase52-trigger-form-768.png",
+  "test-results/phase52-triggers-1440.png",
+  "test-results/phase52-triggers-320.png",
+  "test-results/phase52-triggers-390.png",
+  "test-results/phase52-triggers-768.png",
+  "test-results/phase53-browser-failure.png",
+  "test-results/phase53-management-1440.png",
+  "test-results/phase53-management-320.png"
+ ],
+ "module_notes": {
+  "test-results/coordination-1440.png": {
+   "purpose": "Desktop 'Inspect the work' modal over Sage conversation showing coordination operation progress",
+   "visible_text": [
+    "Inspect the work",
+    "Assignments, execution progress and decisions for this operation.",
+    "Combine required contributions",
+    "Sage",
+    "Waiting for required results · Combine required contributions",
+    "Last tool activity: read_file · completed · 2 min ago",
+    "Last progress: 2 min ago",
+    "Last runtime contact: 0 sec ago",
+    "Sage",
+    "Queued · Coordination follow-up",
+    "Execution 1: Completed",
+    "read_file · Completed",
+    "12:00:37 PM",
+    "(blurred bg) Sage header 'Review, code validation, and coordination', 'Waiting for required results', 'In this conversation', 'Combined report Pending', '0 of 1 required results ready'"
+   ],
+   "components": [
+    "Centered modal with close X",
+    "Section heading",
+    "Nested assignment rows",
+    "Blurred sidebar/chat/right panel"
+   ],
+   "state": "Modal open; Sage waiting for required results; nested Sage queued follow-up; execution 1 completed",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Modal content is plain unstyled text with no status chips or visual separation between assignment, follow-up and execution log; nested 'Sage' row is indented inconsistently relative to parent",
+     "where": "modal body"
+    },
+    {
+     "text": "Very small low-contrast grey metadata text (11px) for 'Last tool activity' lines and timestamp",
+     "where": "modal body lines 414-477 y, 610 y"
+    }
+   ]
+  },
+  "test-results/coordination-390.png": {
+   "purpose": "Mobile 'Inspect the work' modal, same content as desktop",
+   "visible_text": [
+    "Inspect the work",
+    "Assignments, execution progress and decisions for this operation.",
+    "Combine required contributions",
+    "Sage",
+    "Waiting for required results · Combine required contributions",
+    "Last tool activity: read_file · completed · 2 min ago",
+    "Last progress: 2 min ago",
+    "Last runtime contact: 0 sec ago",
+    "Sage",
+    "Queued · Coordination follow-up",
+    "Execution 1: Completed",
+    "read_file · Completed",
+    "12:00:37 PM"
+   ],
+   "components": [
+    "Modal with close X",
+    "Blurred app behind"
+   ],
+   "state": "Same as desktop",
+   "viewport": "390x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Small low-contrast grey metadata text",
+     "where": "modal body"
+    },
+    {
+     "text": "Large empty area below modal content is fine, but modal text blocks are visually undifferentiated flat list",
+     "where": "modal body"
+    }
+   ]
+  },
+  "test-results/desktop.png": {
+   "purpose": "Desktop chat with 'Live proof · manager and dependent assignments' group conversation completed",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate…",
+    "Live proof · active wo…",
+    "Phase 2 skill and men…",
+    "Phase 3 review UI 179…",
+    "Live proof · research …",
+    "Live proof · data and …",
+    "Live proof · manager …",
+    "Live recovery · persis…",
+    "Live recovery · worke…",
+    "Live recovery · interru…",
+    "Live recovery · cancel…",
+    "3 teammates / 1 teammates / 2 teammates",
+    "File library",
+    "Private workspace",
+    "Owner",
+    "Local workspace",
+    "Live proof · manager and dependent assignments",
+    "Scout · Sage · Quill",
+    "Ready",
+    "You 08:02 AM Coordinate your two permitted teammates for this code review. First assign Quill (writer) to implement a Python function average(values) ...",
+    "Quill 08:03 AM Published average.py as durable Python code artifact ID 05840a48-7b41-5265-a32a-2ce95b4fba25...",
+    "Scout 08:04 AM Reviewed Quill's average(values) artifact ... all 5 tests passed ... artifact a1bf081d-8c82-534e-9e23-5164c4d6680e.",
+    "Sage 08:04 AM Completed the coordinated review ... Published final review artifact: 7ed95e08-2be2-5642-bd0d-b1273a7e54a7.",
+    "Reply 👍",
+    "Message your team…",
+    "To Quill",
+    "Coordinate team",
+    "@ Mention",
+    "Reference a skill",
+    "Your team works in the background. You stay in control.",
+    "↵ send · ⇧↵ new line",
+    "In this conversation",
+    "Work 1",
+    "Outputs 3",
+    "Completed",
+    "Team task",
+    "Inspect work",
+    "Save as skill",
+    "Sage is coordinating",
+    "Quill Completed",
+    "Scout Completed",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "Left sidebar with team/group list",
+    "Chat header with group icon and status 'Ready'",
+    "Message thread",
+    "Composer with To selector, coordinate checkbox, attach, schedule icons, mention/skill selects",
+    "Right panel Work/Outputs tabs with completed task card"
+   ],
+   "state": "Group conversation, task completed, composer idle",
+   "viewport": "1440x1000",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Sidebar group names truncated with ellipsis (e.g. 'Live proof · active wo…') making groups indistinguishable",
+     "where": "left sidebar"
+    },
+    {
+     "text": "Duplicate-looking group titles 'Phase 2 skill and men…' x2",
+     "where": "left sidebar"
+    },
+    {
+     "text": "Composer select 'Reference a skill' shows a bare dropdown arrow far from label (wide empty select)",
+     "where": "composer bottom row"
+    },
+    {
+     "text": "Tiny low-contrast text in right panel (chips 'Team task', 'Sage is coordinating')",
+     "where": "right panel"
+    }
+   ]
+  },
+  "test-results/execution-budget-1440.png": {
+   "purpose": "Desktop Quill conversation with work paused for budget reached in right panel",
+   "visible_text": [
+    "Quill",
+    "Writing, synthesis, and clear deliverables",
+    "Ready",
+    "Quill 08:58 AM This item can be cleared as completed based on the definitive Slack receipt already received...",
+    "You 08:59 AM remove that task",
+    "Quill 08:59 AM I can't remove/delete the work item “Send Slack message to Manik” (3d10f5f6-...) ... Please remove it from the task UI yourself or provide an authorized task-management path.",
+    "Your Team 3",
+    "Scout Research",
+    "Quill Budget reached",
+    "Sage Review",
+    "Past teammates 14",
+    "Groups 4",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Connections",
+    "File library",
+    "Message Quill…",
+    "Coordinate team",
+    "@ Mention",
+    "In this conversation",
+    "Work 9",
+    "Outputs 0",
+    "Budget reached",
+    "Paused work layout check",
+    "Quill owns this work",
+    "1 of 2 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "The active work budget was reached.",
+    "Completed results are preserved.",
+    "Continue",
+    "Stop task",
+    "Finished work (8)",
+    "Removed work (1)"
+   ],
+   "components": [
+    "Sidebar with team, past teammates, groups, Connections and File library buttons",
+    "Chat thread",
+    "Right panel active work card with Continue button and Stop task checkbox",
+    "Collapsed Finished/Removed work disclosures"
+   ],
+   "state": "Quill work paused at Budget reached; 1 of 2 required results ready",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Group list in sidebar is clipped at bottom: 'Anthropic ipo' row cut off mid-icon above Connections button",
+     "where": "sidebar y~660-690"
+    },
+    {
+     "text": "Last message bubble in thread is cut off at bottom edge above composer (green bubble sliver at y~690)",
+     "where": "chat bottom"
+    },
+    {
+     "text": "Very small tiny text 'Budget reached', 'Quill owns this work', links 'Inspect work'/'Remove from work list'",
+     "where": "right panel card"
+    }
+   ]
+  },
+  "test-results/execution-budget-320.png": {
+   "purpose": "320px mobile right-panel drawer open on budget reached work card",
+   "visible_text": [
+    "In this conversation",
+    "Work 9",
+    "Outputs 0",
+    "Budget reached",
+    "Paused work layout check",
+    "Quill owns this work",
+    "1 of 2 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "The active work budget was reached.",
+    "Completed results are preserved.",
+    "Continue",
+    "Stop task",
+    "Finished work (8)",
+    "Removed work (1)",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "Drawer with close X",
+    "Tabs",
+    "Work card",
+    "Footer note",
+    "Dimmed app at left edge"
+   ],
+   "state": "Right drawer open, budget reached",
+   "viewport": "320x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Drawer covers nearly whole width, leaving ~30px sliver of app at left; sliver shows clipped sidebar/menu icon and blue avatars",
+     "where": "left edge x0-32"
+    },
+    {
+     "text": "Tiny 10px labels/links",
+     "where": "work card"
+    }
+   ]
+  },
+  "test-results/execution-budget-390.png": {
+   "purpose": "390px mobile drawer open on budget reached work card",
+   "visible_text": [
+    "In this conversation",
+    "Work 9",
+    "Outputs 0",
+    "Budget reached",
+    "Paused work layout check",
+    "Quill owns this work",
+    "1 of 2 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "The active work budget was reached. Completed results are preserved.",
+    "Continue",
+    "Stop task",
+    "Finished work (8)",
+    "Removed work (1)",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "Right drawer with highlighted close X",
+    "Work card",
+    "Dimmed sidebar behind showing '3', '14', '+' badges"
+   ],
+   "state": "Drawer open, budget reached",
+   "viewport": "390x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Drawer's backdrop shows a partially opened sidebar with clipped content ('3' badge, '14' badge, clipped text)",
+     "where": "left x0-70"
+    },
+    {
+     "text": "Continue button sits directly under wrapped text with little spacing",
+     "where": "work card y~315"
+    }
+   ]
+  },
+  "test-results/mobile.png": {
+   "purpose": "Dark theme mobile chat of live proof manager conversation",
+   "visible_text": [
+    "Live proof · mana…",
+    "Scout · Sage · Quill",
+    "You: Coordinate your two permitted teammates for this code review. First assign Quill (writer) to implement a Python function average(values) ...",
+    "Quill 08:03 AM Published average.py as durable Python code artifact ID 05840a48-7b41-5265-a32a-2ce95b4fba25. The",
+    "Reply 👍",
+    "Message your team…",
+    "To Quill",
+    "Coordinate team",
+    "@ Mention",
+    "Reference a skill",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "Top bar with hamburger, group avatar, title, 4 icons",
+    "Message list",
+    "Composer"
+   ],
+   "state": "Conversation with completed responses; scrolled mid-thread",
+   "viewport": "390x844",
+   "theme": "dark",
+   "defects": [
+    {
+     "text": "Header title truncated 'Live proof · mana…'",
+     "where": "top bar"
+    },
+    {
+     "text": "Top of first message ('You') clipped under header",
+     "where": "y~70"
+    },
+    {
+     "text": "Quill message cut off at composer top edge",
+     "where": "y~610"
+    }
+   ]
+  },
+  "test-results/native-tools-1440.png": {
+   "purpose": "Desktop Scout 'Memory & skills' modal showing tools & app access",
+   "visible_text": [
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Tools & application access",
+    "Read local files Available",
+    "Edit local files Available",
+    "Run local commands Available",
+    "Use the browser Available",
+    "Use the desktop Available",
+    "Consult skills Available",
+    "Maintain memory Available",
+    "App connections keep enabled tools available. Connector actions use the permissions configured in Connections.",
+    "googles · 13 permitted application actions",
+    "Curated memory",
+    "Personal notes No saved entries",
+    "User profile No saved entries",
+    "Skills",
+    "Your teammate automatically consults relevant enabled skills for each assignment. Enabling a skill does not change its tool or application access.",
+    "Find a skill"
+   ],
+   "components": [
+    "Modal with scrollable content",
+    "Tools table",
+    "Curated memory cards",
+    "Skills section start with search label"
+   ],
+   "state": "Modal open, scrolled to top; skills list below fold",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Modal bottom cuts the 'Find a skill' input mid-field (clipped at modal edge)",
+     "where": "modal bottom y~850"
+    },
+    {
+     "text": "'Available' status text is plain grey with no chip styling and low contrast",
+     "where": "tools table"
+    },
+    {
+     "text": "Modal nearly fills viewport height",
+     "where": "modal"
+    }
+   ]
+  },
+  "test-results/native-tools-390.png": {
+   "purpose": "Mobile Scout 'Memory & skills' modal",
+   "visible_text": [
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Tools & application access",
+    "Read local files Available",
+    "Edit local files Available",
+    "Run local commands Available",
+    "Use the browser Available",
+    "Use the desktop Available",
+    "Consult skills Available",
+    "Maintain memory Available",
+    "App connections keep enabled tools available. Connector actions use the permissions configured in Connections.",
+    "googles · 13 permitted application actions",
+    "Curated memory",
+    "Personal notes No saved entries",
+    "User profile No saved entries",
+    "Skills",
+    "Your teammate automatically consults relevant enabled skills for each assignment. Enabling a skill does not"
+   ],
+   "components": [
+    "Modal",
+    "Tools table",
+    "Memory cards"
+   ],
+   "state": "Modal open, scrolled top",
+   "viewport": "390x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Skills description sentence is cut off at modal bottom ('...does not')",
+     "where": "modal bottom y~850"
+    }
+   ]
+  },
+  "test-results/phase2-approval.png": {
+   "purpose": "Desktop Phase 2 UI manager awaiting owner review of a proposed teammate creation",
+   "visible_text": [
+    "Phase 2 UI manager",
+    "You coordinate concise local work. Follow management scope and propose lifecycle changes for owner review.",
+    "Working",
+    "You 07:23 PM Phase 2 UI exit proof: first inspect your owner-issued grant. Propose creation of a new teammate named Phase 2 UI specialist ...",
+    "Review teammate changes",
+    "Create one teammate named Phase 2 UI specialist for local arithmetic verification and evidence publishing, using the workspace default provider/model.",
+    "\"create\"",
+    "{ \"configuration\": { \"cpus\": 1, \"name\": \"Phase 2 UI specialist\", \"role\": \"verify small arithmetic using local Python and publish evidence\", \"color\": \"#829c77\", \"avatar\": \"\", \"memory_mb\": 1024, \"model_name\": \"gpt-6-luna\", \"provider_id\": \"dc56a202-052c-4164-8843-370f3a499a2d\", \"capabilities\": [], \"enabled_tools\": [ \"file\"",
+    "Allow once",
+    "Deny",
+    "Edit proposal",
+    "Message Phase 2 UI manager…",
+    "Coordinate team",
+    "@ Mention",
+    "No standing grant",
+    "Your Team 5",
+    "Sage Review",
+    "Quill Writing",
+    "Scout Research",
+    "Phase 2 lifecycle proof",
+    "Phase 2 UI manager Needs your review",
+    "Groups: Browser verified group, Phase 1 protocol acceptance (x2 each)",
+    "In this conversation",
+    "Work 1",
+    "Needs your review",
+    "Team task",
+    "Inspect work",
+    "Redirect",
+    "Stop team task",
+    "Revoke management authority",
+    "RECENT ACTIVITY: hermbot_propose, lifecycle proposed, hermbot_propose, hermbot_grants, hermbot_grants, task started"
+   ],
+   "components": [
+    "Sidebar",
+    "Chat header",
+    "Approval card with JSON payload and Allow once/Deny/Edit proposal buttons",
+    "Composer with 'No standing grant' select",
+    "Right panel work card + Recent activity list"
+   ],
+   "state": "Awaiting owner approval; manager working",
+   "viewport": "1440x1000",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Raw JSON payload shown to user in code block (configuration dict) and the code block is clipped mid-content at '\"file\"' with buttons overlapping the bottom of the block",
+     "where": "approval card y~540-760"
+    },
+    {
+     "text": "Allow once button overlaps / sits directly on truncated JSON block with no padding",
+     "where": "y~737"
+    },
+    {
+     "text": "Duplicate groups listed twice in sidebar (Browser verified group, Phase 1 protocol acceptance)",
+     "where": "sidebar groups"
+    },
+    {
+     "text": "Raw tool names (hermbot_propose, hermbot_grants) in Recent activity",
+     "where": "right panel"
+    }
+   ]
+  },
+  "test-results/phase2-desktop.png": {
+   "purpose": "Desktop Phase 2 UI manager complete with Outputs tab listing 3 artifacts",
+   "visible_text": [
+    "Phase 2 UI manager",
+    "Ready",
+    "You 07:23 PM Phase 2 UI exit proof ...",
+    "Phase 2 UI specialist 07:23 PM Local Python verification succeeded: 17 + 25 = 42; verification: True (process exit code 0). Published text artifact ... Artifact ID: 9a7411f1-0da0-561e-980b-da95e89f3dd0.",
+    "Phase 2 UI manager 07:24 PM Specialist task 3066267d-631b-4bfd-a82a-63e27871db5f completed successfully ... the previous corrective publish was rejected with a coordination-service-unavailable instruction to stop rather than repeat the effect. An empty artifact 809af29f-... was created by the mistaken initial publish.",
+    "Outputs 3",
+    "Phase 2 UI exit proof Phase 2 UI manager · 0.3 KB",
+    "Phase 2 UI exit proof Phase 2 UI manager · 0.0 KB",
+    "specialist-proof-42.txt Phase 2 UI specialist · 0.2 KB",
+    "Your Team 6",
+    "Sage, Quill, Scout, Phase 2 UI manager (You coordinate concise l…), Phase 2 UI specialist (verify small arithmetic us…)",
+    "Groups",
+    "Message Phase 2 UI manager…",
+    "No standing grant"
+   ],
+   "components": [
+    "Sidebar",
+    "Chat thread",
+    "Outputs list with open-arrow cards",
+    "Composer"
+   ],
+   "state": "Completed; Outputs tab selected",
+   "viewport": "1440x1000",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Two outputs have identical title 'Phase 2 UI exit proof' with one at 0.0 KB (empty artifact) – confusing duplicates",
+     "where": "right panel outputs"
+    },
+    {
+     "text": "Sidebar subtitles truncated with ellipsis",
+     "where": "sidebar"
+    }
+   ]
+  },
+  "test-results/phase2-mobile.png": {
+   "purpose": "Mobile drawer showing completed Phase 2 task with Phase 2 UI specialist child",
+   "visible_text": [
+    "In this conversation",
+    "Work 1",
+    "Outputs 3",
+    "Completed",
+    "Team task",
+    "Inspect work",
+    "Phase 2 UI exit proof: first inspect your owner-issued grant. Propose creation of a new teammate named Phase 2 UI specialist, role…",
+    "Phase 2 UI manager is coordinating",
+    "Phase 2 UI specialist Completed",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "Right drawer with close X",
+    "Work card",
+    "Dimmed chat behind"
+   ],
+   "state": "Drawer open",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Behind-drawer chat text clipped to single letters at the left (e.g. 'Lo', 've', 'ar')",
+     "where": "left x0-70"
+    },
+    {
+     "text": "Footer text sits slightly above bottom with tiny text",
+     "where": "footer"
+    }
+   ]
+  },
+  "test-results/phase2-retired-history.png": {
+   "purpose": "Desktop deleted (retired) teammate Phase 2 clone proof, read-only history",
+   "visible_text": [
+    "Phase 2 clone proof",
+    "A concise local arithmetic assistant. Follow the owner's instructions precisely.",
+    "Stopped",
+    "You 08:08 AM Use a native file or terminal tool to read /workspace/phase2-proof.txt. If and only if it contains CLONE_PROOF_42 publish a text artifact containing CLONE_VERIFIED_42. Finish. Do not delegate.",
+    "Phase 2 clone proof 08:08 AM Read /workspace/phase2-proof.txt; it contains CLONE_PROOF_42. Published text artifact clone-verified-42.txt with content CLONE_VERIFIED_42 (artifact ID 67328c21-d822-57d4-9b64-323bce9620db).",
+    "Outputs 1",
+    "clone-verified-42.txt Phase 2 clone proof · 0.0 KB",
+    "Work 1",
+    "Read-only history stays read-only",
+    "Deleted · saved conversation (many)",
+    "Groups 37",
+    "File library",
+    "This teammate was deleted. Its saved conversation and outputs remain available."
+   ],
+   "components": [
+    "Sidebar with many Deleted past teammates",
+    "Chat",
+    "Composer with typed text 'Read-only history stays read-only'",
+    "Outputs panel"
+   ],
+   "state": "Deleted teammate, history view; status chip Stopped",
+   "viewport": "1440x1000",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Composer is active-looking with typed text and enabled send button/Coordinate checkbox on a deleted teammate despite footer saying history is read-only",
+     "where": "composer"
+    },
+    {
+     "text": "Sidebar list cropped at top (first item half visible) and many repeated 'Phase 2 UI lifecycle c…' deleted entries",
+     "where": "sidebar top"
+    },
+    {
+     "text": "Two 'Phase 2 skills proof' / 'Phase 2 lifecycle proof' duplicate entries",
+     "where": "sidebar"
+    }
+   ]
+  },
+  "test-results/phase3-computer-desktop.png": {
+   "purpose": "Desktop 'Scout computer' live desktop viewer modal showing Chromium with human assistance page",
+   "visible_text": [
+    "Connected · Keyboard and pointer enabled",
+    "Secure input",
+    "Click the destination field on the computer first. This types through the live connection and clears the input immediately.",
+    "Type into focused field",
+    "Press Enter on computer",
+    "Press Tab on computer",
+    "Press Escape on computer",
+    "Closing this pane or losing the connection keeps human control. Reconnect and hand back explicitly when ready.",
+    "(in remote screen) Hermbot local human a… tabs; 127.0.0.1:8099; Restore pages? Chromium didn't shut down correctly. Restore; Local human assistance; PHASE3_HUMAN_DONE: checked total 42"
+   ],
+   "components": [
+    "Wide modal with live VNC canvas",
+    "Status line",
+    "Secure input textbox",
+    "Disabled 'Type into focused field' button",
+    "Key press buttons"
+   ],
+   "state": "Live desktop open, human in control",
+   "viewport": "1440x1000",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Modal title/header and close button missing/not visible; modal top starts directly with the canvas",
+     "where": "modal top"
+    },
+    {
+     "text": "Remote Chromium 'Restore pages?' crash-recovery bubble overlaps page content",
+     "where": "remote screen top right"
+    },
+    {
+     "text": "Remote desktop is letterboxed with dark bars; timestamp watermark unreadable",
+     "where": "canvas right top"
+    },
+    {
+     "text": "'Type into focused field' disabled with very faint text",
+     "where": "y~811"
+    }
+   ]
+  },
+  "test-results/phase3-computer-mobile.png": {
+   "purpose": "Mobile 'Scout computer' pane with Take over controls",
+   "visible_text": [
+    "Scout computer",
+    "View this teammate's private desktop, take control, and explicitly hand it back when you finish.",
+    "Bot is in control",
+    "Expand live view",
+    "Take over",
+    "Open browser",
+    "Stop computer",
+    "Closing this pane or losing the connection keeps human control. Reconnect and hand back explicitly when ready.",
+    "(thumbnail) Local human assistance PHASE3_HUMAN_DONE: checked total 42; Restore pages?"
+   ],
+   "components": [
+    "Modal",
+    "Action buttons",
+    "Live thumbnail"
+   ],
+   "state": "Bot in control, thumbnail shown",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "'Open browser' button disabled faint text",
+     "where": "y~332"
+    },
+    {
+     "text": "Thumbnail text is illegibly small",
+     "where": "thumbnail"
+    }
+   ]
+  },
+  "test-results/phase3-knowledge-desktop.png": {
+   "purpose": "Desktop Quill Memory & skills modal in skill editor view with unprovisioned notice",
+   "visible_text": [
+    "Quill · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Start this teammate and wait for provisioning to finish before editing knowledge.",
+    "Skill name",
+    "hermbot-ui-1791359013876",
+    "Content",
+    "---\nname: hermbot-ui-1791359013876\ndescription: Review a local UI acceptance report\n---\n\nVerify source values and publish a concise report.\n\nVersion two: check provenance.",
+    "Enable this skill after saving",
+    "Save reviewed content",
+    "Remove skill",
+    "Back",
+    "Saved versions Load a version as a new draft"
+   ],
+   "components": [
+    "Modal",
+    "Text input",
+    "Monospace textarea with resize handle",
+    "Checkbox",
+    "Disabled Save and Remove buttons",
+    "Saved versions select"
+   ],
+   "state": "Editor view; teammate still provisioning so save disabled",
+   "viewport": "1440x1000",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Provisioning warning is shown as plain grey text, easily missed, while Save reviewed content is disabled with no inline explanation",
+     "where": "modal y~270"
+    },
+    {
+     "text": "'Saved versions' label and select crammed on one line",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/phase3-knowledge-mobile.png": {
+   "purpose": "Mobile Quill Memory & skills skill editor",
+   "visible_text": [
+    "Quill · Memory & skills",
+    "Review native memory...",
+    "Start this teammate and wait for provisioning to finish before editing knowledge.",
+    "Skill name",
+    "hermbot-ui-1791359013876",
+    "Content",
+    "(front matter) --- name: hermbot-ui-1791359013876 description: Review a local UI acceptance report --- Verify source values and publish a concise report. Version two: check provenance.",
+    "Enable this skill after saving",
+    "Save reviewed content",
+    "Remove skill",
+    "Back"
+   ],
+   "components": [
+    "Modal",
+    "Inputs",
+    "Buttons"
+   ],
+   "state": "Editor view, save disabled",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "'Back' button wraps to second row close to modal bottom edge, almost touching the border",
+     "where": "y~775"
+    },
+    {
+     "text": "Saved versions control not visible (below fold)",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/phase3-library-desktop.png": {
+   "purpose": "Desktop file library detail for linked-page.txt",
+   "visible_text": [
+    "linked-page.txt",
+    "Keep files and versioned outputs, share selected versions with conversations, and find prior work.",
+    "Files",
+    "Search prior work",
+    "Search",
+    "phase3-result-1791318046522.md",
+    "Conversation All files · new uploads stay private",
+    "Version 1 · 0.2 KB · link",
+    "SHA-256: cbf3f738cc4646f250e5964ab74741b434912a67e1cce86c798bf71af1cf85c8",
+    "Original link",
+    "Example Domain This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.",
+    "Download",
+    "Use in this conversation",
+    "Add new version",
+    "Version history Version 1 · 10/6/2026, 8:21:02 PM",
+    "Share this version Scout",
+    "Share version",
+    "0 explicit task grants. Existing task copies remain with admitted work when a conversation share is revoked.",
+    "Back to library"
+   ],
+   "components": [
+    "Modal",
+    "Tabs-like buttons Files/Search prior work",
+    "Search input",
+    "Conversation select",
+    "Metadata",
+    "Preview block",
+    "Action buttons",
+    "Version/share selects"
+   ],
+   "state": "File detail of linked-page.txt",
+   "viewport": "1440x1000",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Modal title 'linked-page.txt' while Search field shows 'phase3-result-1791318046522.md' – mismatched file names",
+     "where": "title vs search"
+    },
+    {
+     "text": "'Conversation' and 'Share this version' labels sit inline with selects creating awkward wide empty selects",
+     "where": "y~374, 713"
+    }
+   ]
+  },
+  "test-results/phase3-library-mobile.png": {
+   "purpose": "Mobile file library detail for phase3-input csv",
+   "visible_text": [
+    "phase3-input-1791318046522.csv",
+    "Keep files and versioned outputs, share selected versions with conversations, and find prior work.",
+    "Files",
+    "Search prior work",
+    "Search",
+    "phase3-input-1791318046522.csv",
+    "Conversation All files · new uploads stay private",
+    "Version 2 · 0.0 KB · upload",
+    "SHA-256: ba5ab6906c4bb1f8c7107f1c73a2a2f9302cf27acdb5c506963abda33abe1ed6",
+    "Table: Item/Amount; First 4; Second 38",
+    "Download",
+    "Use in this conversation",
+    "Add new version",
+    "Version history Version 2 · 10/6/2026, 8:20:46 PM",
+    "Share this version Scout"
+   ],
+   "components": [
+    "Modal",
+    "CSV rendered as table",
+    "Buttons",
+    "Selects"
+   ],
+   "state": "File detail with CSV preview",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Modal bottom clips the 'Share this version' select mid-way; rest of share controls need scroll",
+     "where": "bottom y~790"
+    },
+    {
+     "text": "'Version history' label and select inline, cramped",
+     "where": "y~738"
+    }
+   ]
+  },
+  "test-results/phase3-pdf-preview.png": {
+   "purpose": "Desktop file library showing PDF preview of phase3-preview.pdf",
+   "visible_text": [
+    "phase3-preview.pdf",
+    "Files",
+    "Search prior work",
+    "Search phase3-preview.pdf",
+    "Conversation All files · new uploads stay private",
+    "Version 1 · 0.6 KB · upload",
+    "SHA-256: 91075dd46502afbd48191b5c69b7e75833364637adb01882ce38497359b01127",
+    "PDF viewer: 54ec1109-d031-4e32-8ecd-51c78dd2ba85, 1 / 1, Phase 3 document preview"
+   ],
+   "components": [
+    "Modal",
+    "Embedded PDF viewer with thumbnail sidebar",
+    "Selects"
+   ],
+   "state": "PDF preview loaded",
+   "viewport": "1440x1000",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "PDF viewer is cut off at modal bottom; download/share actions not visible without scrolling",
+     "where": "modal bottom"
+    },
+    {
+     "text": "PDF viewer uses dark theme inconsistent with light modal and shows internal artifact id as title",
+     "where": "viewer"
+    }
+   ]
+  },
+  "test-results/phase3-review.png": {
+   "purpose": "Desktop awaiting owner 'Your review is needed' draft approval",
+   "visible_text": [
+    "Phase 3 review UI 1791360028171",
+    "Phase 2 UI manager · Scout",
+    "Working",
+    "You 08:00 AM Ask hermbot_review kind review with summary Review this exact draft and payload {\"draft\":\"PHASE3_REVIEW_INITIAL\"}. End your turn. ...",
+    "Your review is needed",
+    "Review this exact draft",
+    "{ \"draft\": \"PHASE3_REVIEW_EDITED\" }",
+    "Expires 10/7/2026, 8:20:28 AM · approval e8a855a2",
+    "Allow once",
+    "Deny",
+    "Cancel review",
+    "Edit draft",
+    "Phase 2 UI manager · Needs your review",
+    "Needs your review",
+    "Phase 2 UI manager owns this task",
+    "Redirect",
+    "Stop task",
+    "PAST TEAMMATES",
+    "GROUPS Phase 3 review UI 1791360028171 2 teammates",
+    "File library"
+   ],
+   "components": [
+    "Sidebar",
+    "Review card with JSON draft",
+    "Four action buttons",
+    "Typing indicator row",
+    "Right panel work card"
+   ],
+   "state": "Review pending",
+   "viewport": "1440x1000",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Raw JSON draft shown in code block",
+     "where": "card"
+    },
+    {
+     "text": "Expiry text sits tight under JSON block with no spacing",
+     "where": "y~492"
+    },
+    {
+     "text": "Sidebar past teammates list cropped at bottom ('Phase 2 clone proof' half hidden)",
+     "where": "sidebar y~690"
+    },
+    {
+     "text": "Sidebar footer elements (File library) placed below Owner, different from other screens",
+     "where": "sidebar bottom"
+    }
+   ]
+  },
+  "test-results/phase4-connections-1440.png": {
+   "purpose": "Desktop Connections modal, OAuth setup tab",
+   "visible_text": [
+    "Connections",
+    "Connect applications, choose teammate access, and review external changes.",
+    "Connections",
+    "OAuth setup",
+    "Permissions",
+    "Activity",
+    "Register an OAuth app with the provider. Google needs Gmail, Calendar and Drive APIs and a test-user consent configuration. Slack needs user search:read plus channel read/history and chat:write bot scopes. GitHub needs repository access.",
+    "OAuth provider google",
+    "Client ID",
+    "Client secret (leave blank to keep existing)",
+    "Callback: http://localhost:8780/api/v1/connections/oauth/google/callback",
+    "Save OAuth application"
+   ],
+   "components": [
+    "Modal with tabs",
+    "Select",
+    "Two empty text inputs",
+    "Primary button"
+   ],
+   "state": "OAuth setup tab, empty form",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "None substantial; helper text tiny grey",
+     "where": "helper text"
+    }
+   ]
+  },
+  "test-results/phase4-connections-320.png": {
+   "purpose": "320px Connections modal, OAuth setup tab",
+   "visible_text": [
+    "Connections",
+    "Connect applications, choose teammate access, and review external changes.",
+    "Connections",
+    "OAuth setup",
+    "Permissions",
+    "Activity",
+    "Register an OAuth app with the provider. ...",
+    "OAuth provider google",
+    "Client ID"
+   ],
+   "components": [
+    "Modal",
+    "Wrapped tabs"
+   ],
+   "state": "OAuth setup",
+   "viewport": "320x568",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Modal clipped at bottom; Client ID input cut off, rest of form needs scroll",
+     "where": "bottom"
+    },
+    {
+     "text": "Tabs wrap onto two lines",
+     "where": "tab row"
+    }
+   ]
+  },
+  "test-results/phase4-connections-390.png": {
+   "purpose": "390px Connections modal OAuth setup",
+   "visible_text": [
+    "Connections",
+    "Connect applications, choose teammate access, and review external changes.",
+    "Connections",
+    "OAuth setup",
+    "Permissions",
+    "Activity",
+    "Register an OAuth app ...",
+    "OAuth provider google",
+    "Client ID",
+    "Client secret (leave blank to keep existing)",
+    "Callback: http://localhost:8780/api/v1/connections/oauth/google/callback",
+    "Save OAuth application"
+   ],
+   "components": [
+    "Modal",
+    "Tabs wrapped",
+    "Inputs",
+    "Save button"
+   ],
+   "state": "OAuth setup",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Tabs wrap: 'Activity' on its own second line",
+     "where": "tab row"
+    },
+    {
+     "text": "Callback URL long unbroken text near edge",
+     "where": "y~672"
+    }
+   ]
+  },
+  "test-results/phase4-connections-844.png": {
+   "purpose": "844x390 landscape Connections modal OAuth setup",
+   "visible_text": [
+    "Connections",
+    "Connect applications, choose teammate access, and review external changes.",
+    "Connections",
+    "OAuth setup",
+    "Permissions",
+    "Activity",
+    "Register an OAuth app...",
+    "OAuth provider google",
+    "Client ID"
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "OAuth setup, landscape",
+   "viewport": "844x390",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Modal exceeds viewport height: top touches the viewport top and Client ID input clipped at bottom",
+     "where": "modal"
+    },
+    {
+     "text": "Very little visible content in landscape",
+     "where": "entire"
+    }
+   ]
+  },
+  "test-results/phase4-mcp-recovery-closed.png": {
+   "purpose": "Desktop Connections Activity tab listing MCP operations (collapsed)",
+   "visible_text": [
+    "Connections",
+    "Activity",
+    "mcp.search_cloudflare_documentation · uncertain",
+    "Operation 2964033e-4481-4162-9c5d-fa3eea6dcc95",
+    "Exact action and receipt",
+    "Provider delivery or response is unavailable; reconcile before repeating a change",
+    "Check the provider before recording the actual outcome. Unknown outcomes prevent retry or reassignment. To close tracking without claiming an outcome, stop the task first.",
+    "Reconcile outcome",
+    "mcp.search_cloudflare_documentation · superseded",
+    "Operation f92e96b4-f815-4776-94dd-714d701ec90c",
+    "mcp.search_cloudflare_documentation · denied",
+    "Operation 755bd622-...",
+    "mcp.search_cloudflare_documentation · unresolved",
+    "Operation a8df463a-07dc-4324-a231-6c7fc1e303a2",
+    "Reconcile outcome"
+   ],
+   "components": [
+    "Modal",
+    "Activity cards",
+    "Disclosures",
+    "Reconcile outcome buttons"
+   ],
+   "state": "Activity tab; uncertain and unresolved items need reconciliation",
+   "viewport": "1440x1000",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Raw status words (uncertain, unresolved, superseded) appended to raw tool name 'mcp.search_cloudflare_documentation' with raw UUIDs",
+     "where": "cards"
+    },
+    {
+     "text": "Bottom card clipped at modal edge; Reconcile outcome button touches bottom border",
+     "where": "y~927"
+    },
+    {
+     "text": "Error text in red/brown over light with modest contrast",
+     "where": "cards"
+    }
+   ]
+  },
+  "test-results/phase4-mcp-recovery.png": {
+   "purpose": "Desktop Connections Activity with expanded unresolved action receipt JSON",
+   "visible_text": [
+    "mcp.search_cloudflare_documentation · unresolved",
+    "Operation a8df463a-...",
+    "Exact action and receipt",
+    "{ \"arguments\": { \"query\": \"Cloudflare Workers how to configure compatibility_date\" }, \"result\": { \"reconciled\": false, \"owner_evidence\": \"Public unauthenticated Cloudflare documentation search returned no usable receipt because its SSE stream stayed open. The task is stopped. No account mutation was possible; actual search outcome remains unknown. Close tracking without replay or a success/failure claim.\" } }",
+    "Provider delivery or response is unavailable; reconcile before repeating a change",
+    "Reconcile outcome",
+    "mcp.search_cloudflare_documentation · superseded",
+    "Operation cd36432c-...",
+    "mcp.search_cloudflare_documentation · denied",
+    "Operation a2dd67d8-..."
+   ],
+   "components": [
+    "Modal",
+    "Expanded JSON code block",
+    "Reconcile button"
+   ],
+   "state": "Receipt expanded",
+   "viewport": "1440x1000",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Raw JSON shown to user",
+     "where": "expanded block"
+    },
+    {
+     "text": "Last card cut off at modal bottom",
+     "where": "y~945"
+    }
+   ]
+  },
+  "test-results/phase4-mcp-review.png": {
+   "purpose": "Desktop Connections Activity with succeeded MCP result expanded (long raw text)",
+   "visible_text": [
+    "mcp.search_cloudflare_documentation · succeeded",
+    "Operation 57b52be6-d189-4482-97bd-3f3fa7131eb6",
+    "{ \"arguments\": { \"query\": \"Cloudflare Workers bindings reference\" }, \"result\": { \"content\": [ { \"text\": \"<result>\\n<url>https://developers.cloudflare.com/workers/reference/migrate-to-module-workers/</url>\\n<title>Migrate To Module Workers</title>... TODO KV namespace binding example ...\" ...",
+    "mcp.search_cloudflare_documentation · superseded",
+    "Operation a4de9764-a1c2-4af1-96fd-4feccb54bf6d",
+    "mcp.search_cloudflare_documentation · denied"
+   ],
+   "components": [
+    "Modal",
+    "Scrollable raw JSON block"
+   ],
+   "state": "Succeeded receipt expanded",
+   "viewport": "1440x1000",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Raw JSON with escaped newlines and markup dumped in UI; code block truncated at last line mid-text",
+     "where": "code block y~760"
+    },
+    {
+     "text": "Last card clipped at modal bottom",
+     "where": "y~935"
+    }
+   ]
+  },
+  "test-results/phase5-routines-1440.png": {
+   "purpose": "Desktop Routines modal: new routine form",
+   "visible_text": [
+    "Routines",
+    "Saved instructions that run on this machine. Docker and the computer must stay running and awake.",
+    "Back to routines",
+    "Name Browser form preview",
+    "Results conversation Quill",
+    "Teammate Quill",
+    "Instructions for each run Write a local report.",
+    "Each run has its own context and work item. Saved instructions and selected file versions are reused; your conversation is the destination for results. The teammate's memory, browser and workspace remain persistent.",
+    "Schedule Daily",
+    "Timezone UTC",
+    "Time in UTC 09:00 AM",
+    "Expected results",
+    "Result 1",
+    "Completed report"
+   ],
+   "components": [
+    "Modal form",
+    "Focused textarea with green outline",
+    "Selects",
+    "Time input",
+    "Fieldset for expected results"
+   ],
+   "state": "New routine form",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Modal bottom cuts off 'Completed report' input in Expected results",
+     "where": "modal bottom y~850"
+    }
+   ]
+  },
+  "test-results/phase5-routines-320.png": {
+   "purpose": "320px Routines new routine form",
+   "visible_text": [
+    "Routines",
+    "Saved instructions that run on this machine. Docker and the computer must stay running and awake.",
+    "Back to routines",
+    "Name Browser form preview",
+    "Results conversation Quill",
+    "Teammate Quill",
+    "Instructions for each run Write a local report."
+   ],
+   "components": [
+    "Modal form"
+   ],
+   "state": "New routine form",
+   "viewport": "320x568",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Textarea clipped at bottom of modal",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/phase5-routines-390.png": {
+   "purpose": "390px Routines new routine form",
+   "visible_text": [
+    "Routines",
+    "Saved instructions that run on this machine. Docker and the computer must stay running and awake.",
+    "Back to routines",
+    "Name Browser form preview",
+    "Results conversation Quill",
+    "Teammate Quill",
+    "Instructions for each run Write a local report.",
+    "Each run has its own context and work item. ...",
+    "Schedule Daily"
+   ],
+   "components": [
+    "Modal form"
+   ],
+   "state": "New routine form",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Schedule select at modal bottom edge cut",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/phase52-before-1440.png": {
+   "purpose": "Desktop Routines list (schedules) over empty workspace with no model configured (before state)",
+   "visible_text": [
+    "Your workspace",
+    "Connect a model to start your team. Set the provider URL, model, and API key in .env, then restart the services.",
+    "Loading conversation…",
+    "Your teammates 0",
+    "Groups 0",
+    "Bring the team together",
+    "Routines",
+    "Owner Local workspace",
+    "In this conversation",
+    "Work 0",
+    "Outputs 0",
+    "A clear view of the work.",
+    "Actual assignments appear here. Discussion and progress questions stay in the conversation.",
+    "Routines",
+    "Give a teammate work to run on a schedule. Results return to the chosen conversation. Keep this computer on for scheduled runs.",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "Active",
+    "Every hour · UTC · Unavailable teammate",
+    "Next run 10/24/2026, 9:13:53 PM on this device",
+    "Last run: skipped · Earlier run c0aceada-f70c-47b8-82d1-2551f27b94a3 remains unfinished or needs reconciliation",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Delete",
+    "Archived routines"
+   ],
+   "components": [
+    "Alert banner (yellow)",
+    "Empty sidebar",
+    "Modal list with routine card and action links",
+    "Empty right panel"
+   ],
+   "state": "Routines list with one active routine whose teammate is unavailable; app still loading",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Header banner says to configure model but conversation stuck on 'Loading conversation…'",
+     "where": "main area"
+    },
+    {
+     "text": "Routine shows 'Unavailable teammate' yet Active and 'Run now' enabled",
+     "where": "routine card"
+    },
+    {
+     "text": "Raw run UUID in last-run message",
+     "where": "routine card"
+    }
+   ]
+  },
+  "test-results/phase52-before-390.png": {
+   "purpose": "Mobile Routines list before",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work to run on a schedule. Results return to the chosen conversation. Keep this computer on for scheduled runs.",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "Active",
+    "Every hour · UTC · Unavailable teammate",
+    "Next run 10/24/2026, 9:13:53 PM on this device",
+    "Last run: skipped · Earlier run c0aceada-f70c-47b8-82d1-2551f27b94a3 remains unfinished or needs reconciliation",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Delete",
+    "Archived routines"
+   ],
+   "components": [
+    "Modal",
+    "Routine card"
+   ],
+   "state": "Same as desktop",
+   "viewport": "390x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "History link underlined while Edit/Pause not (inconsistent link styling)",
+     "where": "actions row"
+    },
+    {
+     "text": "Background banner text clipped",
+     "where": "top"
+    }
+   ]
+  },
+  "test-results/phase52-before-768.png": {
+   "purpose": "Tablet Routines list before",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work to run on a schedule. ...",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "Active",
+    "Every hour · UTC · Unavailable teammate",
+    "Next run 10/24/2026, 9:13:53 PM on this device",
+    "Last run: skipped ...",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Delete",
+    "Archived routines",
+    "Routines",
+    "Owner Local workspace"
+   ],
+   "components": [
+    "Modal",
+    "Clipped sidebar behind"
+   ],
+   "state": "Same",
+   "viewport": "768x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Sidebar behind modal shows clipped/offset logo and content cut at left edge (hermbot logo starts at x=0)",
+     "where": "left"
+    },
+    {
+     "text": "Background banner text cut off at left",
+     "where": "top"
+    }
+   ]
+  },
+  "test-results/phase52-empty-history-1440.png": {
+   "purpose": "Desktop Routines Events: trigger history empty",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives. Results return to the chosen conversation. Keep this computer and Docker running.",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Phase 5.2 browser 1792877057409",
+    "Work occurrences",
+    "No work occurrences yet. Only matching, eligible events create work.",
+    "Received events",
+    "No events recorded for this trigger yet.",
+    "(bg) Quill 04:15 PM The second attempt also failed; ... Slack returned a definitive failed receipt (operation_id 157d3882-...)"
+   ],
+   "components": [
+    "Modal with tabs",
+    "Empty states"
+   ],
+   "state": "Trigger history empty",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "None in modal; background text visible through scrim",
+     "where": "bg"
+    }
+   ]
+  },
+  "test-results/phase52-empty-history-320.png": {
+   "purpose": "320px trigger history empty",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives. Results return to the chosen conversation. Keep this computer and Docker running.",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Phase 5.2 browser 1792877057409",
+    "Work occurrences",
+    "No work occurrences yet. Only matching, eligible events create work.",
+    "Received events",
+    "No events recorded for this trigger yet."
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "Empty",
+   "viewport": "320x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Background app chrome shows clipped '+' and icons at left",
+     "where": "left bg"
+    }
+   ]
+  },
+  "test-results/phase52-empty-history-390.png": {
+   "purpose": "390px trigger history empty",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives...",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Phase 5.2 browser 1792877057409",
+    "Work occurrences",
+    "No work occurrences yet. Only matching, eligible events create work.",
+    "Received events",
+    "No events recorded for this trigger yet."
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "Empty",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": []
+  },
+  "test-results/phase52-empty-history-768.png": {
+   "purpose": "768 trigger history empty",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives. ...",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Phase 5.2 browser 1792877057409",
+    "Work occurrences",
+    "No work occurrences yet. Only matching, eligible events create work.",
+    "Received events",
+    "No events recorded for this trigger yet."
+   ],
+   "components": [
+    "Modal",
+    "Clipped sidebar behind"
+   ],
+   "state": "Empty",
+   "viewport": "768x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Sidebar behind scrim is cut off on left (logo 'hermbot' at x=0, truncated rows)",
+     "where": "left"
+    }
+   ]
+  },
+  "test-results/phase52-history-final-1440.png": {
+   "purpose": "Desktop trigger history with completed occurrence",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives. Results return to the chosen conversation. Keep this computer and Docker running.",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Phase 5.2 arithmetic event proof",
+    "Work occurrences",
+    "Completed",
+    "10/24/2026, 9:08:37 PM",
+    "1 event · saved revision 1",
+    "For the matching event, 173 + 268 = 441.",
+    "Open work and results",
+    "Received events",
+    "phase52.acceptance",
+    "Matched · All saved conditions matched · revision 1",
+    "Inspect event context",
+    "(bg) Work 8, Outputs 0, Finished work (8), Removed work (1)"
+   ],
+   "components": [
+    "Modal",
+    "Occurrence row",
+    "Received events row"
+   ],
+   "state": "Completed occurrence; 'Open work and results' disabled",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "'Open work and results' button disabled/faint though occurrence is completed",
+     "where": "y~562"
+    },
+    {
+     "text": "Modal bottom cuts off after divider following Inspect event context",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/phase52-history-final-320.png": {
+   "purpose": "320px trigger history with completed occurrence",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives. Results return to the chosen conversation. Keep this computer and Docker running.",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Phase 5.2 arithmetic event proof",
+    "Work occurrences",
+    "Completed",
+    "10/24/2026, 9:08:37 PM",
+    "1 event · saved revision 1",
+    "For the matching event, 173 + 268 = 441.",
+    "Open work and results",
+    "Received events",
+    "phase52.acceptance",
+    "Matched · All saved conditions matched · revision 1",
+    "Inspect event context"
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "Same",
+   "viewport": "320x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "'Open work and results' disabled faint",
+     "where": "y~632"
+    },
+    {
+     "text": "Final Inspect event context row clipped at modal bottom",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/phase52-history-final-390.png": {
+   "purpose": "390px trigger history completed",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives. Results return to the chosen conversation. Keep this computer and Docker running.",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Phase 5.2 arithmetic event proof",
+    "Work occurrences",
+    "Completed",
+    "10/24/2026, 9:08:37 PM",
+    "1 event · saved revision 1",
+    "For the matching event, 173 + 268 = 441.",
+    "Open work and results",
+    "Received events",
+    "phase52.acceptance",
+    "Matched · All saved conditions matched · revision 1",
+    "Inspect event context"
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "Same",
+   "viewport": "390x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "'Open work and results' disabled",
+     "where": "y~590"
+    }
+   ]
+  },
+  "test-results/phase52-history-final-768.png": {
+   "purpose": "768 trigger history completed",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives. Results return to the chosen conversation. Keep this computer and Docker running.",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Phase 5.2 arithmetic event proof",
+    "Work occurrences",
+    "Completed",
+    "10/24/2026, 9:08:37 PM",
+    "1 event · saved revision 1",
+    "For the matching event, 173 + 268 = 441.",
+    "Open work and results",
+    "Received events",
+    "phase52.acceptance",
+    "Matched · All saved conditions matched · revision 1",
+    "Inspect event context"
+   ],
+   "components": [
+    "Modal",
+    "Header of chat behind"
+   ],
+   "state": "Same",
+   "viewport": "768x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "'Open work and results' disabled",
+     "where": "y~562"
+    }
+   ]
+  },
+  "test-results/phase52-live-history-1440.png": {
+   "purpose": "Desktop live trigger history with expanded event context JSON",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives. Results return to the chosen conversation. Keep this computer and Docker running.",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Phase 5.2 arithmetic event proof",
+    "Work occurrences",
+    "Completed",
+    "10/24/2026, 9:08:37 PM",
+    "1 event · saved revision 1",
+    "For the matching event, 173 + 268 = 441.",
+    "Open work and results",
+    "Received events",
+    "phase52.acceptance",
+    "Matched · All saved conditions matched · revision 1",
+    "Inspect event context",
+    "{ \"key\": \"custom:phase52-2de3749a-38fd-4936-8c1a-d5bebc9a41d3\", \"event_type\": \"custom.event\", \"resource\": \"local-arithmetic\", \"resource_version\": \"\", \"actor\": \"\", \"occurred_at\": \"2026-10-24T21:08:37.523114Z\", ..."
+   ],
+   "components": [
+    "Modal",
+    "Expanded JSON"
+   ],
+   "state": "Context expanded; Open work and results enabled",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Raw JSON shown; truncated by modal bottom mid-line",
+     "where": "y~850"
+    }
+   ]
+  },
+  "test-results/phase52-live-history-320.png": {
+   "purpose": "320px live history",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives. Results return to the chosen conversation. Keep this computer and Docker running.",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Phase 5.2 arithmetic event proof",
+    "Work occurrences",
+    "Completed",
+    "10/24/2026, 9:08:37 PM",
+    "1 event · saved revision 1",
+    "For the matching event, 173 + 268 = 441.",
+    "Open work and results",
+    "Received events",
+    "phase52.acceptance",
+    "Matched · All saved conditions matched · revision 1",
+    "Inspect event context"
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "Context closed; Open work enabled",
+   "viewport": "320x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Received events list cut off at bottom",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/phase52-live-history-390.png": {
+   "purpose": "390px live history",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives. Results return to the chosen conversation. Keep this computer and Docker running.",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Phase 5.2 arithmetic event proof",
+    "Work occurrences",
+    "Completed",
+    "10/24/2026, 9:08:37 PM",
+    "1 event · saved revision 1",
+    "For the matching event, 173 + 268 = 441.",
+    "Open work and results",
+    "Received events",
+    "phase52.acceptance",
+    "Matched · All saved conditions matched · revision 1",
+    "Inspect event context"
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "Context expanded arrow, content below fold",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Inspect event context expanded but contents cut off",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/phase52-live-history-768.png": {
+   "purpose": "768 live history with JSON",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives. Results return to the chosen conversation. Keep this computer and Docker running.",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Phase 5.2 arithmetic event proof",
+    "Work occurrences",
+    "Completed",
+    "10/24/2026, 9:08:37 PM",
+    "1 event · saved revision 1",
+    "For the matching event, 173 + 268 = 441.",
+    "Open work and results",
+    "Received events",
+    "phase52.acceptance",
+    "Matched · All saved conditions matched · revision 1",
+    "Inspect event context",
+    "{ \"key\": \"custom:phase52-2de3749a-38fd-4936-8c1a-d5bebc9a41d3\", \"event_type\": \"custom.event\", \"resource\": \"local-arithmetic\", \"resource_version\": \"\", \"actor\": \"\", \"occurred_at\": \"2026-10-24T21:08:37.523114Z\", ..."
+   ],
+   "components": [
+    "Modal",
+    "Expanded JSON"
+   ],
+   "state": "Context expanded",
+   "viewport": "768x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "JSON cut off at modal bottom",
+     "where": "bottom"
+    },
+    {
+     "text": "Sidebar clipped behind",
+     "where": "left"
+    }
+   ]
+  },
+  "test-results/phase52-live-history-dark-390.png": {
+   "purpose": "Dark theme 390 live history",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives. Results return to the chosen conversation. Keep this computer and Docker running.",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Phase 5.2 arithmetic event proof",
+    "Work occurrences",
+    "Completed",
+    "10/24/2026, 9:08:37 PM",
+    "1 event · saved revision 1",
+    "For the matching event, 173 + 268 = 441.",
+    "Open work and results",
+    "Received events",
+    "phase52.acceptance",
+    "Matched · All saved conditions matched · revision 1",
+    "Inspect event context"
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "Dark theme; Open work and results button appears greyed/disabled",
+   "viewport": "390x844",
+   "theme": "dark",
+   "defects": [
+    {
+     "text": "'Open work and results' button grey fill with low-contrast label",
+     "where": "y~580"
+    },
+    {
+     "text": "Dark modal on dark bg lacks separation; bg text bleeds at edges",
+     "where": "edges"
+    }
+   ]
+  },
+  "test-results/phase52-source-form-1440.png": {
+   "purpose": "Desktop add event source form",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives. ...",
+    "Schedules",
+    "Events",
+    "Back to sources",
+    "Add an event source",
+    "Name",
+    "Phase 5.2 browser 1792877057409",
+    "Service",
+    "General webhook",
+    "Signing secret",
+    "whsec_…",
+    "Saved privately; never sent to a teammate or included in event history.",
+    "Generate signing secret",
+    "External providers need a reachable HTTPS endpoint. Localhost works for a sender on this machine. No tunnel or remote hosting is created automatically.",
+    "Signed event format",
+    "Saving setup pauses existing triggers using this source. Check the source, then save each trigger against its current access. Rebuilding a baseline skips historical input."
+   ],
+   "components": [
+    "Modal",
+    "Focused name input",
+    "Select",
+    "Secret input",
+    "Disclosure"
+   ],
+   "state": "Add source form",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Primary save button clipped at bottom (green sliver)",
+     "where": "y~850"
+    },
+    {
+     "text": "'Back to sources' centered while elsewhere left-aligned",
+     "where": "y~267"
+    }
+   ]
+  },
+  "test-results/phase52-source-form-320.png": {
+   "purpose": "320 add event source form",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives. ...",
+    "Schedules",
+    "Events",
+    "Back to sources",
+    "Add an event source",
+    "Name",
+    "Phase 5.2 browser 1792877057409",
+    "Service",
+    "General webhook",
+    "Signing secret",
+    "whsec_…",
+    "Saved privately; never sent to a teammate or included in event history.",
+    "Generate signing secret"
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "Add source form",
+   "viewport": "320x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Name value truncated 'Phase 5.2 browser 17928770574C' clipped inside input",
+     "where": "name input"
+    },
+    {
+     "text": "Content cut at bottom",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/phase52-source-form-390.png": {
+   "purpose": "390 add event source form",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives. ...",
+    "Schedules",
+    "Events",
+    "Back to sources",
+    "Add an event source",
+    "Name",
+    "Phase 5.2 browser 1792877057409",
+    "Service",
+    "General webhook",
+    "Signing secret",
+    "whsec_…",
+    "Saved privately; never sent to a teammate or included in event history.",
+    "Generate signing secret",
+    "External providers need a reachable HTTPS endpoint. Localhost works for a sender on this machine. No tunnel or remote hosting is created automatically."
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "Add source form",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Text cut at bottom",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/phase52-source-form-768.png": {
+   "purpose": "768 add event source form",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work on a schedule or when an event arrives. ...",
+    "Schedules",
+    "Events",
+    "Back to sources",
+    "Add an event source",
+    "Name",
+    "Phase 5.2 browser 1792877057409",
+    "Service",
+    "General webhook",
+    "Signing secret",
+    "whsec_…",
+    "Saved privately; never sent to a teammate or included in event history.",
+    "Generate signing secret",
+    "External providers need a reachable HTTPS endpoint. Localhost works for a sender on this machine. No tunnel or remote hosting is created automatically.",
+    "Signed event format",
+    "Saving setup pauses existing triggers using this source. Check the source, then save each trigger against its current access. Rebuilding a baseline skips historical input."
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "Add source form",
+   "viewport": "768x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Save button clipped at bottom",
+     "where": "y~850"
+    },
+    {
+     "text": "Clipped sidebar behind",
+     "where": "left"
+    }
+   ]
+  },
+  "test-results/phase52-sources-1440.png": {
+   "purpose": "Desktop event sources list",
+   "visible_text": [
+    "Routines",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Add source",
+    "Sources collect events while this computer and Docker are running. Saved triggers decide which events start work.",
+    "Phase 5.2 browser 1792877057409",
+    "Checking source",
+    "General webhook · Signed HTTP webhook",
+    "Last check: Not yet · Last event: Not yet",
+    "Setup",
+    "Deliveries",
+    "Check source",
+    "Pause source",
+    "Archive source",
+    "Phase 5.2 local signed event",
+    "Ready",
+    "Last check: 10/24/2026, 9:23:35 PM · Last event: 10/24/2026, 9:08:37 PM",
+    "Archived sources"
+   ],
+   "components": [
+    "Modal",
+    "Source cards with actions"
+   ],
+   "state": "Two sources: one Checking, one Ready",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "'Checking source' status for source never checked is ambiguous",
+     "where": "card top right"
+    }
+   ]
+  },
+  "test-results/phase52-sources-320.png": {
+   "purpose": "320 event sources list",
+   "visible_text": [
+    "Routines",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Add source",
+    "Sources collect events while this computer and Docker are running. Saved triggers decide which events start work.",
+    "Phase 5.2 browser 1792877057409",
+    "Checking source",
+    "General webhook · Signed HTTP webhook",
+    "Last check: Not yet · Last event: Not yet",
+    "Setup",
+    "Deliveries",
+    "Check source",
+    "Pause source",
+    "Archive source"
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "Sources list",
+   "viewport": "320x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "'Archive source' wraps to own row, below Check source",
+     "where": "actions"
+    },
+    {
+     "text": "Second source cut off",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/phase52-sources-390.png": {
+   "purpose": "390 sources list",
+   "visible_text": [
+    "Routines",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Add source",
+    "Sources collect events while this computer and Docker are running. Saved triggers decide which events start work.",
+    "Phase 5.2 browser 1792877057409",
+    "Checking source",
+    "General webhook · Signed HTTP webhook",
+    "Last check: Not yet · Last event: Not yet",
+    "Setup",
+    "Deliveries",
+    "Check source",
+    "Pause source",
+    "Archive source",
+    "Phase 5.2 local signed event",
+    "Ready",
+    "Last check: 10/24/2026, 9:23:35 PM · Last event: 10/24/2026, 9:08:37 PM",
+    "Archived sources"
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "Sources list",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Second source's action row clipped at bottom",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/phase52-sources-768.png": {
+   "purpose": "768 sources list",
+   "visible_text": [
+    "Routines",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "Add source",
+    "Sources collect events while this computer and Docker are running. Saved triggers decide which events start work.",
+    "Phase 5.2 browser 1792877057409",
+    "Checking source",
+    "General webhook · Signed HTTP webhook",
+    "Last check: Not yet · Last event: Not yet",
+    "Setup",
+    "Deliveries",
+    "Check source",
+    "Pause source",
+    "Archive source",
+    "Phase 5.2 local signed event",
+    "Ready",
+    "Last check: 10/24/2026, 9:23:35 PM · Last event: 10/24/2026, 9:08:37 PM",
+    "Archived sources"
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "Sources list",
+   "viewport": "768x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Clipped sidebar behind",
+     "where": "left"
+    }
+   ]
+  },
+  "test-results/phase52-trigger-form-1440.png": {
+   "purpose": "Desktop new event trigger form",
+   "visible_text": [
+    "Routines",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "New event trigger",
+    "Name",
+    "Phase 5.2 browser 1792877057409",
+    "When an event arrives from",
+    "Phase 5.2 browser 1792877057409 · General webhook",
+    "Checking source",
+    "Which events",
+    "Signed event received",
+    "Only when all conditions match",
+    "Every selected event type from this source can start work. Add conditions to narrow it.",
+    "Add condition",
+    "Ask this teammate",
+    "Scout",
+    "Deliver results to",
+    "Phase 5.2 local event acceptance"
+   ],
+   "components": [
+    "Modal",
+    "Selects",
+    "Checkbox",
+    "Add condition button"
+   ],
+   "state": "New trigger form",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Form clipped at bottom of modal",
+     "where": "y~850"
+    }
+   ]
+  },
+  "test-results/phase52-trigger-form-320.png": {
+   "purpose": "320 trigger form",
+   "visible_text": [
+    "Routines",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "New event trigger",
+    "Name",
+    "Phase 5.2 browser 1792877057409",
+    "When an event arrives from",
+    "Phase 5.2 browser 1792877057409 · General webhook",
+    "Checking source",
+    "Which events",
+    "Signed event received",
+    "Only when all conditions match",
+    "Every selected event type from this source can start work. Add conditions to narrow it."
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "New trigger form",
+   "viewport": "320x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Name input value truncated clipped",
+     "where": "name"
+    },
+    {
+     "text": "Select value truncated with ellipsis '· ·'",
+     "where": "select"
+    }
+   ]
+  },
+  "test-results/phase52-trigger-form-390.png": {
+   "purpose": "390 trigger form",
+   "visible_text": [
+    "Routines",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "New event trigger",
+    "Name",
+    "Phase 5.2 browser 1792877057409",
+    "When an event arrives from",
+    "Phase 5.2 browser 1792877057409 · General webhook",
+    "Checking source",
+    "Which events",
+    "Signed event received",
+    "Only when all conditions match",
+    "Every selected event type from this source can start work. Add conditions to narrow it."
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "New trigger form",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Select value truncated 'General web'",
+     "where": "select"
+    }
+   ]
+  },
+  "test-results/phase52-trigger-form-768.png": {
+   "purpose": "768 trigger form",
+   "visible_text": [
+    "Routines",
+    "Schedules",
+    "Events",
+    "Back to event triggers",
+    "New event trigger",
+    "Name",
+    "Phase 5.2 browser 1792877057409",
+    "When an event arrives from",
+    "Phase 5.2 browser 1792877057409 · General webhook",
+    "Checking source",
+    "Which events",
+    "Signed event received",
+    "Only when all conditions match",
+    "Every selected event type from this source can start work. Add conditions to narrow it.",
+    "Add condition",
+    "Ask this teammate",
+    "Scout",
+    "Deliver results to",
+    "Phase 5.2 local event acceptance"
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "New trigger form",
+   "viewport": "768x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Clipped sidebar behind",
+     "where": "left"
+    }
+   ]
+  },
+  "test-results/phase52-triggers-1440.png": {
+   "purpose": "Desktop event triggers list",
+   "visible_text": [
+    "Routines",
+    "Schedules",
+    "Events",
+    "New event trigger",
+    "Sources",
+    "Phase 5.2 browser 1792877057409",
+    "Paused",
+    "Signed event received · Phase 5.2 browser 1792877057409",
+    "Scout → Phase 5.2 local event acceptance",
+    "Edit",
+    "History",
+    "Resume",
+    "Archive",
+    "Phase 5.2 arithmetic event proof",
+    "Active",
+    "Signed event received · Phase 5.2 local signed event",
+    "Source: Ready · checked 10/24/2026, 9:23:35 PM",
+    "Latest occurrence: Completed",
+    "Pause"
+   ],
+   "components": [
+    "Modal",
+    "Trigger cards"
+   ],
+   "state": "One paused trigger, one active",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "'New event trigger', 'Resume', 'Pause', 'Archive' appear disabled/faded",
+     "where": "buttons"
+    },
+    {
+     "text": "Browser trigger shows paused though source is checking",
+     "where": "card"
+    }
+   ]
+  },
+  "test-results/phase52-triggers-320.png": {
+   "purpose": "320 triggers list",
+   "visible_text": [
+    "Routines",
+    "Schedules",
+    "Events",
+    "New event trigger",
+    "Sources",
+    "Phase 5.2 browser 1792877057409",
+    "Paused",
+    "Signed event received · Phase 5.2 browser 1792877057409",
+    "Scout → Phase 5.2 local event acceptance",
+    "Edit",
+    "History",
+    "Resume",
+    "Archive",
+    "Phase 5.2 arithmetic event proof",
+    "Active",
+    "Signed event received · Phase 5.2 local signed event",
+    "Source: Ready · checked 10/24/2026, 9:23:35 PM",
+    "Latest occurrence: Completed",
+    "Pause"
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "Triggers list",
+   "viewport": "320x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Content clipped at bottom",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/phase52-triggers-390.png": {
+   "purpose": "390 triggers list",
+   "visible_text": [
+    "Routines",
+    "Schedules",
+    "Events",
+    "New event trigger",
+    "Sources",
+    "Phase 5.2 browser 1792877057409",
+    "Paused",
+    "Signed event received · Phase 5.2 browser 1792877057409",
+    "Scout → Phase 5.2 local event acceptance",
+    "Edit",
+    "History",
+    "Resume",
+    "Archive",
+    "Phase 5.2 arithmetic event proof",
+    "Active",
+    "Signed event received · Phase 5.2 local signed event",
+    "Source: Ready · checked 10/24/2026, 9:23:35 PM",
+    "Latest occurrence: Completed",
+    "Pause"
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "Triggers list",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "New event trigger button disabled/faded",
+     "where": "top"
+    },
+    {
+     "text": "Resume/Archive/Pause faded",
+     "where": "cards"
+    }
+   ]
+  },
+  "test-results/phase52-triggers-768.png": {
+   "purpose": "768 triggers list",
+   "visible_text": [
+    "Routines",
+    "Schedules",
+    "Events",
+    "New event trigger",
+    "Sources",
+    "Phase 5.2 browser 1792877057409",
+    "Paused",
+    "Signed event received · Phase 5.2 browser 1792877057409",
+    "Scout → Phase 5.2 local event acceptance",
+    "Edit",
+    "History",
+    "Resume",
+    "Archive",
+    "Phase 5.2 arithmetic event proof",
+    "Active",
+    "Signed event received · Phase 5.2 local signed event",
+    "Source: Ready · checked 10/24/2026, 9:23:35 PM",
+    "Latest occurrence: Completed",
+    "Pause"
+   ],
+   "components": [
+    "Modal"
+   ],
+   "state": "Triggers list",
+   "viewport": "768x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "New event trigger disabled",
+     "where": "top"
+    },
+    {
+     "text": "Clipped sidebar behind",
+     "where": "left"
+    }
+   ]
+  },
+  "test-results/phase53-browser-failure.png": {
+   "purpose": "Desktop Routines new routine with team coordination permissions",
+   "visible_text": [
+    "Routines",
+    "Back to routines",
+    "Name Phase 5.3 browser draft — not saved",
+    "Results conversation Phase 5.3 recurring acceptance db8e16f80C…",
+    "Teammate Sage",
+    "Team coordination",
+    "Coordinate teammates",
+    "Management permission Manage Scout, Quill · until 10/26/2026",
+    "Collaborators for each run",
+    "Scout",
+    "Quill",
+    "Management operations",
+    "Authorized until 10/26/2026, 12:04:03 PM. Only selected collaborators participate. Permission is checked again for every run and action.",
+    "The active work budget is shared across the manager and collaborators. Connected-app changes keep their existing review rules."
+   ],
+   "components": [
+    "Modal form",
+    "Fieldset",
+    "Checkboxes"
+   ],
+   "state": "New routine draft with coordination",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Results conversation select value truncated 'db8e16f80C'",
+     "where": "select"
+    },
+    {
+     "text": "Modal clipped at bottom",
+     "where": "bottom"
+    },
+    {
+     "text": "Sage sidebar says 'Needs answer'",
+     "where": "sidebar"
+    }
+   ]
+  },
+  "test-results/phase53-management-1440.png": {
+   "purpose": "Desktop routine form with management operations expanded",
+   "visible_text": [
+    "Team coordination",
+    "Coordinate teammates",
+    "Management permission Manage Scout, Quill · until 10/27/2026",
+    "Collaborators for each run Scout Quill",
+    "Management operations",
+    "Assign work",
+    "Inspect results",
+    "Redirect work",
+    "Stop owned work",
+    "Reassign work",
+    "Authorized until 10/27/2026, 10:55:17 AM. ...",
+    "The active work budget is shared across the manager and collaborators. ...",
+    "Instructions for each run Coordinate the selected teammates and return a local report."
+   ],
+   "components": [
+    "Modal scrolled",
+    "Checkbox list",
+    "Textarea"
+   ],
+   "state": "Operations expanded; Assign work disabled checked",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Modal header scrolled out; modal top edge cuts 'Team coordination' legend",
+     "where": "top"
+    },
+    {
+     "text": "Bottom text cut off at modal bottom",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/phase53-management-320.png": {
+   "purpose": "320 routine form management operations",
+   "visible_text": [
+    "Teammate Sage",
+    "Team coordination",
+    "Coordinate teammates",
+    "Management permission Manage Scout, Quill · until 10/27/",
+    "Collaborators for each run Scout Quill",
+    "Management operations",
+    "Assign work",
+    "Inspect results",
+    "Redirect work",
+    "Stop owned work",
+    "Reassign work",
+    "Authorized until 10/27/2026, 10:55:17 AM. ...",
+    "The active work budget is shared across the manager and collaborators. ..."
+   ],
+   "components": [
+    "Modal scrolled",
+    "Checkbox list"
+   ],
+   "state": "Operations expanded",
+   "viewport": "320x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Management permission select value truncated 'until 10/27'",
+     "where": "select"
+    },
+    {
+     "text": "Top of modal sliced mid-select",
+     "where": "top"
+    }
+   ]
+  }
+ }
+}

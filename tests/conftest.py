@@ -1,0 +1,50 @@
+import os
+from dataclasses import replace
+from uuid import uuid4
+
+import pytest
+from psycopg.types.json import Jsonb
+
+from backend import db, service, worker
+
+
+@pytest.fixture(scope="session", autouse=True)
+def database():
+    if not os.environ.get("DATABASE_URL", "").endswith("/hermbot_test"):
+        pytest.exit("Tests require the isolated hermbot_test database", returncode=2)
+    db.initialize()
+    yield
+    db.pool.close()
+
+
+@pytest.fixture(autouse=True)
+def clean_database(monkeypatch):
+    with db.connection() as conn:
+        conn.execute('TRUNCATE timeline_entries,timeline_clocks,timeline_dirty,timeline_previews CASCADE')
+        conn.execute("TRUNCATE teaching_sessions,attention_pending,attention_items,notification_deliveries,push_subscriptions,notification_preferences,event_sources,event_trigger_definitions,routine_schedulers,routine_definitions,work_items,work_item_messages,connections,connector_apps,connector_permissions,connector_operations,connector_oauth_states,computer_controls,knowledge_versions,knowledge_proposals,owner_receipts,owner_sessions,lifecycle_proposals,bot_operations,attachments,message_reactions,thread_sessions,controls,routines,tool_receipts,approvals,artifact_access,artifacts,events,messages,attempts,dependencies,tasks,grants,sessions CASCADE")
+        conn.execute("INSERT INTO notification_preferences(owner,timezone) VALUES('owner','UTC')")
+        conn.execute("DELETE FROM participants WHERE bot_id NOT IN ('researcher','writer','reviewer')")
+        conn.execute("DELETE FROM conversations WHERE kind='group' OR bot_id NOT IN ('researcher','writer','reviewer')")
+        conn.execute("UPDATE conversations SET archived_at=NULL WHERE kind='dm' AND bot_id IN ('researcher','writer','reviewer')")
+        conn.execute("DELETE FROM bots WHERE id NOT IN ('researcher','writer','reviewer')")
+        environment = conn.execute("SELECT id FROM providers WHERE from_environment=true OR name='Environment provider' ORDER BY from_environment DESC LIMIT 1").fetchone()
+        conn.execute("UPDATE workspace_settings SET default_provider_id=%s,timezone='UTC',permitted_tools='[\"file\",\"terminal\",\"skills\"]',max_bots=10,max_active=3", (environment["id"],))
+        conn.execute("UPDATE workspace_settings SET active_budget_seconds=3600,decision_provider_id=NULL,decision_model='',decision_mode='disabled',decision_actions=false,execution_policy_revision=1,external_action_mode='requested'")
+        conn.execute("DELETE FROM providers WHERE id<>%s AND NOT EXISTS(SELECT 1 FROM bots WHERE bots.provider_id=providers.id)", (environment["id"],))
+        conn.execute("UPDATE bots SET status='active',desired_state='running',applied_revision=revision,enabled_tools='[\"file\",\"terminal\"]',enabled_skills='[]',readiness=%s", (Jsonb({"compatible": True}),))
+    monkeypatch.setattr(worker, "settings", replace(worker.settings, provider_configured=True, model_name="test"))
+
+
+@pytest.fixture
+def make_task():
+    def create(bot="researcher", manager=False, key=None, prompt="Investigate the supplied evidence"):
+        with db.connection() as conn:
+            conversation = conn.execute("SELECT id FROM conversations WHERE bot_id=%s", (bot,)).fetchone()["id"]
+            return service.create_task(conn, bot_id=bot, conversation_id=conversation, prompt=prompt,
+                                       request_key=key or str(uuid4()), managed_bot_ids=[b for b in ("researcher", "writer", "reviewer") if b != bot] if manager else None)
+    return create
+
+
+def row(task_id):
+    with db.connection() as conn:
+        return conn.execute("SELECT * FROM tasks WHERE id=%s", (task_id,)).fetchone()

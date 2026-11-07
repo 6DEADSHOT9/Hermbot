@@ -1,0 +1,4791 @@
+{
+ "agent": "teaching_refresh",
+ "files_read": [
+  "architecture/_work/REFRESH_BRIEF.md",
+  "architecture/_work/AGENT_BRIEF.md",
+  "backend/teaching.py",
+  "backend/migrations/018_teaching.sql",
+  "docker/teaching_capture.py",
+  "web/src/Teaching.tsx",
+  "plan/PHASE6-TEACHING.md",
+  "plan/PHASE6-TEACHING-REVIEW.md",
+  "tests/test_teaching.py",
+  "architecture/_work/remap/diffs/backend__app.py.diff",
+  "architecture/_work/remap/diffs/backend__capabilities.py.diff",
+  "architecture/_work/remap/diffs/backend__worker.py.diff",
+  "architecture/_work/remap/diffs/docker__hermes.Dockerfile.diff",
+  "architecture/_work/remap/diffs/docker__runtime_api.py.diff",
+  "architecture/_work/remap/diffs/plan__CHECKLIST.md.diff",
+  "architecture/_work/remap/diffs/plan__CONTEXT.md.diff",
+  "architecture/_work/remap/diffs/plan__ISSUES.md.diff",
+  "architecture/_work/remap/diffs/plan__PHASE-DETAILS.md.diff",
+  "architecture/_work/remap/diffs/plan__README.md.diff",
+  "architecture/_work/remap/diffs/plugins__hermbot____init__.py.diff",
+  "architecture/_work/remap/diffs/tests__conftest.py.diff",
+  "architecture/_work/remap/diffs/web__src__Computer.tsx.diff",
+  "architecture/_work/remap/diffs/web__src__Knowledge.tsx.diff"
+ ],
+ "files_not_fully_read": [
+  {
+   "path": "backend/app.py",
+   "why": "Read the teaching consult route, router registration order, owner/bot_identity and /internal/context (lines 1-25, 65-77, 410-475, 570-592); rest owned by other agents."
+  },
+  {
+   "path": "docker/runtime_api.py",
+   "why": "Read lines 20-40, 80-115, 262-300, 320-570 (skill read/write, computer control, teaching routes, RFB relay)."
+  },
+  {
+   "path": "backend/capabilities.py",
+   "why": "Read manifest (29-121) and prepare (158-186)."
+  },
+  {
+   "path": "backend/worker.py",
+   "why": "Read main() startup/shutdown (655-690)."
+  },
+  {
+   "path": "plugins/hermbot/__init__.py",
+   "why": "Read post() and admitted_execution (15-110) plus before_turn/llm_request."
+  },
+  {
+   "path": "web/src/Computer.tsx",
+   "why": "Read lines 1-45 containing all teaching edits."
+  },
+  {
+   "path": "web/src/Knowledge.tsx",
+   "why": "Read only the teaching edit region (1-40)."
+  },
+  {
+   "path": "backend/knowledge.py",
+   "why": "Read KnowledgeRequest, validate_name, guard and apply (17-118)."
+  },
+  {
+   "path": "backend/service.py",
+   "why": "Read active_task, create_task header, TERMINAL, cancel header."
+  },
+  {
+   "path": "plan/ISSUES.md",
+   "why": "Grepped for teaching/secure input/skill_view; read C65 (904-910), P3-05..P3-10 (110-115), SKILL-03 (303), M28 (1175-1180)."
+  }
+ ],
+ "module_notes": {
+  "backend/teaching.py": {
+   "purpose": "Owner-private demonstration teaching: capture collection, encrypted evidence/draft revisions, bounded vision draft generation, task-scoped candidate tests and native skill publication.",
+   "layer": "domain",
+   "responsibilities": [
+    "Define 19 owner-authenticated teaching routes under /api/v1/bots/{bot_id}/teaching plus the /teaching-private-input barrier (router-level Depends(owner)).",
+    "Create at most one active (preparing/recording/paused/finalizing) recording per bot, bound to the owner viewer hash and the current desktop lease epoch, only when the caller holds input-ready control.",
+    "Relay capture control actions (start/pause/private/resume/finish/discard) to the runtime adapter with a monotonically increasing capture_revision and an expected owner revision.",
+    "Provide a repeatable private-input barrier that pauses capture before Secure input typing and records an omitted marker.",
+    "Collect volatile runtime capture batches (ack-based), encrypt them with Fernet, stage them in the MinIO bucket, read them back, then commit a chunk manifest and advance last_seq; mark sessions interrupted when the runtime collector no longer holds the session.",
+    "Advertise 'ready' only after the full sealed tail is persisted and the runtime capture revision matches.",
+    "Serve decrypted timeline events (without images), a derived step summary and individual JPEG frames for owner review.",
+    "Freeze owner-reviewed evidence (text plus at most 12 selected frames, <=6 MiB) as an encrypted, hashed, immutable revision.",
+    "Queue and run one workspace-wide generation job at a time: send a random vision canary plus reviewed evidence to the bot's OpenAI-compatible provider, verify image support, validate SKILL.md output, bounded repair, fence late results by job token and evidence hash.",
+    "Save owner-edited drafts with strict hermbot-* name and YAML frontmatter validation and keep draft history.",
+    "Create candidate test tasks in the bot's DM conversation and bind them to evidence hash, draft hash, encrypted candidate copy and a material configuration hash.",
+    "Expose the candidate only to its own test task (candidate()), fence it when configuration changes and mark consultation.",
+    "Record owner verification of a completed, consulted test.",
+    "Publish only the current, consulted, owner-verified candidate through knowledge.guard/knowledge.apply (native CAS, knowledge_versions, configuration refresh) with a native readback hash check and a provenance row.",
+    "Toggle retention pinning, delete sessions (stopping active candidate tests), expire unpinned sessions after expires_at, purge private objects/chunks/revisions and scrub encrypted test data.",
+    "Garbage-collect unreferenced staged objects under teaching/ at most once per minute.",
+    "Run the maintain and generate_one loops every second inside the worker process."
+   ],
+   "functions": [
+    {
+     "name": "encode",
+     "line": 27,
+     "desc": "JSON-serialise then Fernet-encrypt a value."
+    },
+    {
+     "name": "decode",
+     "line": 31,
+     "desc": "Decrypt and parse an encrypted JSON value (None passes through)."
+    },
+    {
+     "name": "require",
+     "line": 35,
+     "desc": "Lock a session row FOR UPDATE scoped to bot; 404 for missing/deleted/deleting; 409 on expected revision mismatch."
+    },
+    {
+     "name": "remember",
+     "line": 46,
+     "desc": "Insert an immutable encrypted evidence/draft revision keyed by (session, kind, sha256); duplicates ignored."
+    },
+    {
+     "name": "stop_tests",
+     "line": 53,
+     "desc": "Cancel every non-terminal task linked to the session's teaching tests via service.cancel."
+    },
+    {
+     "name": "projection",
+     "line": 62,
+     "desc": "Public session fields returned by list/control/start (no encrypted payloads)."
+    },
+    {
+     "name": "store",
+     "line": 85,
+     "desc": "Construct an ArtifactStore (boto3 S3 client to MinIO); monkeypatched in tests."
+    },
+    {
+     "name": "read_chunk",
+     "line": 89,
+     "desc": "Fetch <=6 MiB ciphertext, Fernet-decrypt, verify sha256 and size, parse events; 502 on mismatch."
+    },
+    {
+     "name": "iter_events",
+     "line": 101,
+     "desc": "Load chunk manifest ordered by first_seq and lazily yield decrypted events chunk by chunk."
+    },
+    {
+     "name": "timeline",
+     "line": 110,
+     "desc": "Materialise all events (used by tests)."
+    },
+    {
+     "name": "collect",
+     "line": 114,
+     "desc": "One collector pass: GET /teaching/batch?ack, detect collector restart, apply paused/empty-batch state, enforce contiguous seq, encrypt/put/read-back chunk, commit manifest and state."
+    },
+    {
+     "name": "summarize",
+     "line": 176,
+     "desc": "Derive human-readable observed steps: coalesce printable typing, flag modifier/shortcut keys, pointer clicks with geometry, omitted markers."
+    },
+    {
+     "name": "validate_skill",
+     "line": 215,
+     "desc": "Require hermbot-[a-z0-9][a-z0-9-]{0,55} name, YAML frontmatter with matching name and single-line description; return content sha256."
+    },
+    {
+     "name": "config_hash",
+     "line": 234,
+     "desc": "Digest of bot configuration, provider revision, runtime inventory, workspace permitted tools/external action mode and accessible connections."
+    },
+    {
+     "name": "candidate",
+     "line": 256,
+     "desc": "Return the decrypted candidate for a task's teaching test (non-deleted session); 409 if config_hash changed; optionally stamp consulted_at."
+    },
+    {
+     "name": "Start",
+     "line": 277,
+     "desc": "Body: goal and expected_result (3-4000 chars)."
+    },
+    {
+     "name": "Change",
+     "line": 282,
+     "desc": "Body base: expected_revision >= 1."
+    },
+    {
+     "name": "Control",
+     "line": 286,
+     "desc": "Body: action in start|pause|private|resume|finish|discard."
+    },
+    {
+     "name": "Evidence",
+     "line": 290,
+     "desc": "Body: reviewed text (10-30000) and <=12 frame sequences."
+    },
+    {
+     "name": "Draft",
+     "line": 295,
+     "desc": "Body: skill name (<=64) and SKILL.md content (20-50000)."
+    },
+    {
+     "name": "Test",
+     "line": 300,
+     "desc": "Body: fresh inputs, checks and optional management grant_id."
+    },
+    {
+     "name": "Report",
+     "line": 306,
+     "desc": "Body: test_id, passed flag and observations (10-8000)."
+    },
+    {
+     "name": "Publish",
+     "line": 312,
+     "desc": "Body: test_id, expected_native_hash (64 hex) and enable (default False)."
+    },
+    {
+     "name": "routes",
+     "line": 318,
+     "desc": "Factory returning the owner-authenticated APIRouter with all teaching routes."
+    },
+    {
+     "name": "routes.listing",
+     "line": 322,
+     "desc": "List up to 50 non-deleted sessions for a bot, newest first."
+    },
+    {
+     "name": "routes.start",
+     "line": 334,
+     "desc": "Create a preparing session after verifying the caller holds input-ready computer control; idempotent via owner_receipts."
+    },
+    {
+     "name": "routes.private_barrier",
+     "line": 365,
+     "desc": "Bot-level privacy barrier: if a recording/paused session exists, apply the private action; always answers {paused: true}."
+    },
+    {
+     "name": "routes.detail",
+     "line": 381,
+     "desc": "Decrypted info/evidence/draft, tests with task status/output and currency flag, publications with knowledge version."
+    },
+    {
+     "name": "routes.revisions",
+     "line": 425,
+     "desc": "List evidence/draft revision hashes and timestamps."
+    },
+    {
+     "name": "routes.revision",
+     "line": 434,
+     "desc": "Return one decrypted historical draft revision."
+    },
+    {
+     "name": "routes.control",
+     "line": 446,
+     "desc": "Revision-checked, idempotent capture transition; local discard before any runtime collector exists; otherwise POST /teaching/control then update state/capture_revision."
+    },
+    {
+     "name": "routes.private",
+     "line": 501,
+     "desc": "Session-level private barrier delegating to control with the current revision and a fresh idempotency key."
+    },
+    {
+     "name": "routes.events",
+     "line": 520,
+     "desc": "Timeline: all decrypted events without image payloads plus summarize() steps."
+    },
+    {
+     "name": "routes.frame",
+     "line": 530,
+     "desc": "Stream one recorded frame as image/jpeg with Cache-Control: no-store."
+    },
+    {
+     "name": "routes.evidence",
+     "line": 543,
+     "desc": "Freeze reviewed text plus selected frames as encrypted evidence; resets generation job."
+    },
+    {
+     "name": "routes.generate",
+     "line": 570,
+     "desc": "Queue a generation job with job_token and provider id/revision/model/evidence_hash snapshot."
+    },
+    {
+     "name": "routes.cancel_generation",
+     "line": 601,
+     "desc": "Set job_state cancelled and clear job_token (fences late output)."
+    },
+    {
+     "name": "routes.draft",
+     "line": 611,
+     "desc": "Validate and save an owner-edited draft; record draft revision; reset job."
+    },
+    {
+     "name": "routes.test",
+     "line": 631,
+     "desc": "Create a candidate test task and teaching_tests binding; idempotent."
+    },
+    {
+     "name": "routes.report",
+     "line": 687,
+     "desc": "Record owner pass/fail and encrypted observations for a completed, consulted test."
+    },
+    {
+     "name": "routes.publish",
+     "line": 704,
+     "desc": "Exact-candidate publication through knowledge.apply plus native readback and provenance row; idempotent."
+    },
+    {
+     "name": "routes.keep",
+     "line": 773,
+     "desc": "Toggle the pinned flag (exempts from expiry)."
+    },
+    {
+     "name": "routes.delete",
+     "line": 783,
+     "desc": "Reject active captures; cancel candidate tests; mark deleting for the maintain loop."
+    },
+    {
+     "name": "vision_canary",
+     "line": 798,
+     "desc": "Build a 240x80 PNG of six shuffled colour bands (SystemRandom) and return its data URL and expected order."
+    },
+    {
+     "name": "generate_one",
+     "line": 831,
+     "desc": "Reap stale running jobs, claim one queued job under a global advisory lock, call provider /chat/completions with canary+evidence, validate/repair, store fenced draft."
+    },
+    {
+     "name": "garbage_collect",
+     "line": 960,
+     "desc": "Every >=60 s delete unreferenced teaching/ objects belonging to deleted sessions or older than 24 h."
+    },
+    {
+     "name": "maintain",
+     "line": 985,
+     "desc": "Collect active sessions, expire unpinned sessions, stop their tests, discard runtime tails and purge private data for deleting/discarded sessions, then GC."
+    },
+    {
+     "name": "run",
+     "line": 1049,
+     "desc": "Async entry: two 1-second loops (maintain, generate_one) in threads until STOP."
+    }
+   ],
+   "env": [
+    "CONFIG_ENCRYPTION_KEY",
+    "STORAGE_PASSWORD",
+    "STORAGE_ENDPOINT"
+   ],
+   "notes": [
+    {
+     "text": "Routes are registered before the generic product router so /bots/{bot_id}/{action} cannot swallow /teaching (review finding).",
+     "evidence": [
+      "backend/app.py:580-581",
+      "backend/product.py:96",
+      "plan/PHASE6-TEACHING-REVIEW.md:19"
+     ]
+    },
+    {
+     "text": "All private payloads use Fernet (CONFIG_ENCRYPTION_KEY) both in PostgreSQL columns and MinIO objects.",
+     "evidence": [
+      "backend/teaching.py:27-32",
+      "backend/teaching.py:151",
+      "backend/secrets.py:12-24"
+     ]
+    },
+    {
+     "text": "Collector state changes (paused/ready from batches) do not bump the owner-facing revision; only the collector-restart path does.",
+     "evidence": [
+      "backend/teaching.py:124",
+      "backend/teaching.py:131",
+      "backend/teaching.py:138",
+      "backend/teaching.py:171"
+     ]
+    },
+    {
+     "text": "control() performs the runtime call inside the DB transaction that holds the session row lock and the owner_receipts advisory lock; a retried key replays at the runtime via same-revision/same-action idempotency.",
+     "evidence": [
+      "backend/teaching.py:457-498",
+      "backend/registry.py:178-190",
+      "docker/teaching_capture.py:100-103"
+     ]
+    }
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "New module (phase 6.2).",
+     "evidence": [
+      "backend/teaching.py:1"
+     ]
+    }
+   ]
+  },
+  "backend/migrations/018_teaching.sql": {
+   "purpose": "Schema version 18: teaching sessions, encrypted chunk manifests, immutable revisions, candidate tests and publications.",
+   "layer": "persistence",
+   "responsibilities": [
+    "Create teaching_sessions with owner revision, capture_revision, viewer_hash, epoch, capture state/reason, last_seq/retained_bytes, encrypted info/evidence/draft, hashes, job fields, pinned and a 7-day expires_at default.",
+    "Enforce at most one active capture per bot with a partial unique index on state in (preparing, recording, paused, finalizing).",
+    "Create teaching_chunks keyed by (session_id, first_seq) with a unique object_key, sha256 and size.",
+    "Create teaching_revisions keyed by (session_id, kind, sha256) with kind CHECK in (evidence, draft).",
+    "Create teaching_tests bound 1:1 to a task (unique task_id, ON DELETE CASCADE) with evidence/draft/config hashes, encrypted candidate/checks/report, consulted_at and owner_passed.",
+    "Create teaching_publications linking session, test and knowledge_versions with UNIQUE(session_id, draft_hash, test_id).",
+    "Record schema_versions 18."
+   ],
+   "functions": [],
+   "notes": [
+    {
+     "text": "No CHECK constraint on teaching_sessions.state or job_state; allowed values are only enforced by code.",
+     "evidence": [
+      "backend/migrations/018_teaching.sql:4",
+      "backend/migrations/018_teaching.sql:7"
+     ]
+    },
+    {
+     "text": "teaching_publications FKs (session, test) have no ON DELETE CASCADE, unlike chunks/revisions/tests; sessions are tombstoned (state 'deleted'), never hard-deleted.",
+     "evidence": [
+      "backend/migrations/018_teaching.sql:33-34",
+      "backend/teaching.py:1036"
+     ]
+    }
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "New migration.",
+     "evidence": [
+      "backend/migrations/018_teaching.sql:1-38"
+     ]
+    }
+   ]
+  },
+  "docker/teaching_capture.py": {
+   "purpose": "Volatile in-runtime observer of accepted RFB client bytes plus the bounded per-container capture buffer; never authorizes input.",
+   "layer": "runtime",
+   "responsibilities": [
+    "Parse accepted client-to-server RFB bytes across arbitrary fragmentation (skip 14-byte handshake; SetPixelFormat, SetEncodings, FramebufferUpdateRequest, KeyEvent, PointerEvent, ClientCutText, EnableContinuousUpdates, Fence, SetDesktopSize, QEMU extended key).",
+    "Emit semantic key/pointer events; replace clipboard and geometry-change messages with 'omitted' markers so clipboard payloads are never retained.",
+    "Raise on unknown message types/QEMU sub-types so the adapter pauses capture instead of guessing.",
+    "Hold one recording per runtime: session, viewer, epoch, state, reason, revision, generation, seq, buffer and byte counters under an RLock.",
+    "Apply revision-fenced, idempotent control actions; reject other-session or other-viewer/epoch actions except finish/discard.",
+    "Bump generation on every transition/pause so late frames from an earlier generation are dropped.",
+    "Append events with monotonically increasing seq, generation and monotonic time; pause at 8 MiB unacknowledged or 256 MiB total.",
+    "Only observe input while recording, from the bound viewer/epoch, and while the collector has polled within 15 s; coalesce unpressed pointer moves; request a keyframe at most every 0.5 s.",
+    "Validate frames (<=2 MiB decoded, Pillow-read dimensions) and append them only for the current generation while recording.",
+    "Pause on disconnect of the bound viewer only.",
+    "Serve ack-based batches (~3 MiB) and refresh the liveness heartbeat only on idle or acknowledged progress."
+   ],
+   "functions": [
+    {
+     "name": "AcceptedRFB",
+     "line": 10,
+     "desc": "Stateful accepted-RFB message parser."
+    },
+    {
+     "name": "AcceptedRFB.feed",
+     "line": 15,
+     "desc": "Append bytes, consume handshake, frame messages by type/size, emit key/pointer/omitted events."
+    },
+    {
+     "name": "Capture",
+     "line": 68,
+     "desc": "Volatile capture state machine and buffer."
+    },
+    {
+     "name": "Capture.status",
+     "line": 82,
+     "desc": "Snapshot session/state/reason/generation/seq/epoch/total/revision."
+    },
+    {
+     "name": "Capture.control",
+     "line": 88,
+     "desc": "Start/resume/pause/private/finish/discard with revision fencing and same-revision replay."
+    },
+    {
+     "name": "Capture.append",
+     "line": 125,
+     "desc": "Size-limited append with seq/generation/time stamps."
+    },
+    {
+     "name": "Capture.observe",
+     "line": 137,
+     "desc": "Fenced input observation; returns a generation when a keyframe is due."
+    },
+    {
+     "name": "Capture.pause",
+     "line": 162,
+     "desc": "Pause a recording with a reason and new generation."
+    },
+    {
+     "name": "Capture.disconnect",
+     "line": 168,
+     "desc": "Pause only when the disconnecting viewer is the recording viewer."
+    },
+    {
+     "name": "Capture.frame",
+     "line": 173,
+     "desc": "Decode/size-check an image data URL and append a frame event for the current generation."
+    },
+    {
+     "name": "Capture.batch",
+     "line": 198,
+     "desc": "Drop acknowledged events, refresh heartbeat on progress, return status plus <=~3 MiB of events."
+    }
+   ],
+   "notes": [
+    {
+     "text": "segment is incremented when geometry changes but never written into events; and the adapter passes capture.geometry itself as the geometry argument, so the comparison never differs.",
+     "evidence": [
+      "docker/teaching_capture.py:80",
+      "docker/teaching_capture.py:144-146",
+      "docker/teaching_capture.py:132",
+      "docker/runtime_api.py:534-535"
+     ]
+    },
+    {
+     "text": "After the parser raises, its buffer keeps the unparseable bytes, so every later feed on that WebSocket raises again and capture re-pauses until reconnect.",
+     "evidence": [
+      "docker/teaching_capture.py:34-35",
+      "docker/runtime_api.py:532-537"
+     ]
+    }
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "New runtime module copied into the image at /opt/hermbot/teaching_capture.py.",
+     "evidence": [
+      "docker/hermes.Dockerfile:10",
+      "docker/runtime_api.py:25",
+      "docker/runtime_api.py:30"
+     ]
+    }
+   ]
+  },
+  "web/src/Teaching.tsx": {
+   "purpose": "Teaching panel (Teach a workflow) embedded in the Computer and Memory & skills panels.",
+   "layer": "ui",
+   "responsibilities": [
+    "Poll the recording list and selected detail every 2 s; load draft history and timeline on demand.",
+    "Create a demonstration (goal, expected result) only when the viewer holds input-ready control (mine).",
+    "Drive capture controls (start/resume, pause, finish, discard) with expected revisions and idempotency keys via mutate().",
+    "Show a persistent recording banner whenever any session is recording.",
+    "Render the evidence timeline with per-frame checkboxes and lazy-loaded frame images; prefill reviewed text from goal/expected result and derived steps.",
+    "Save reviewed evidence (<=12 frames), queue/cancel generation and show job_state.",
+    "Edit SKILL.md and name, load historical drafts, save exact drafts.",
+    "Run candidate tests only after handback (button disabled while mine) and with saved draft/evidence; show test status, consultation, output and reports.",
+    "Record owner pass/fail observations for current, completed, consulted tests.",
+    "Prepare publication by reading the current native skill hash, then publish with optional enable; list publications.",
+    "Show retention/expiry, toggle Keep, delete private recording."
+   ],
+   "functions": [
+    {
+     "name": "captureLabel",
+     "line": 10,
+     "desc": "Human label for capture states."
+    },
+    {
+     "name": "activeCapture",
+     "line": 11,
+     "desc": "Exported predicate for preparing/recording/paused/finalizing."
+    },
+    {
+     "name": "Teaching",
+     "line": 13,
+     "desc": "Main panel component."
+    },
+    {
+     "name": "Teaching.change",
+     "line": 28,
+     "desc": "Wrapper: busy flag, run mutation, invalidate teaching/detail/state queries, scoped error."
+    },
+    {
+     "name": "Teaching.command",
+     "line": 29,
+     "desc": "POST control with the current revision."
+    }
+   ],
+   "notes": [
+    {
+     "text": "onActive prop is never passed by Computer.tsx or Knowledge.tsx.",
+     "evidence": [
+      "web/src/Teaching.tsx:13",
+      "web/src/Teaching.tsx:25",
+      "web/src/Computer.tsx:40",
+      "web/src/Knowledge.tsx:34"
+     ]
+    },
+    {
+     "text": "Knowledge panel embeds Teaching with mine={false}, so recording cannot be started there but tests can be run.",
+     "evidence": [
+      "web/src/Knowledge.tsx:34",
+      "web/src/Teaching.tsx:41",
+      "web/src/Teaching.tsx:50"
+     ]
+    }
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "New component.",
+     "evidence": [
+      "web/src/Teaching.tsx:1-60"
+     ]
+    }
+   ]
+  },
+  "plan/PHASE6-TEACHING.md": {
+   "purpose": "Researched acceptance contract for phase 6.2 demonstration teaching.",
+   "layer": "doc",
+   "responsibilities": [
+    "Define scope: action timeline plus selected keyframes on the selected bot desktop only; self-contained SKILL.md deliverable; no macro replay/training.",
+    "Map existing integration points (computer, runtime adapter, RFB filter, thumbnail, Secure input, knowledge, plugin/capabilities).",
+    "Record research references and broader patterns (event log, promotion pipeline, durable jobs, idempotency, fencing).",
+    "Specify user flow, capture states/invariants, accepted-RFB observation, protected input, storage/retention/limits.",
+    "Specify draft generation, task-scoped candidate testing, publication/enable/rollback, records/API contracts, UI states, recovery matrix.",
+    "Define implementation slices 6.2.0-6.2.6, acceptance matrix and real demonstration exit criteria."
+   ],
+   "functions": [],
+   "changes_since_previous_pass": [
+    {
+     "text": "Header now says implementation authorized and built locally with owner acceptance pending.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:3"
+     ]
+    }
+   ]
+  },
+  "plan/PHASE6-TEACHING-REVIEW.md": {
+   "purpose": "Implementation summary, corrected review findings, verification evidence and pending owner acceptance for phase 6.2.",
+   "layer": "doc",
+   "responsibilities": [
+    "Summarise what was implemented (entry points, observer, collector, encrypted storage, generation, candidate consultation, publication).",
+    "List 12 review findings with cause/correction/evidence.",
+    "Record verification: 654 backend tests incl. 16 teaching tests, TS/Vite build, UI fixture checks, disposable runtime/desktop checks, vision probe, integrity audit.",
+    "List pending real-owner acceptance steps and the prepared fixture."
+   ],
+   "functions": [],
+   "changes_since_previous_pass": [
+    {
+     "text": "New document.",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:1-54"
+     ]
+    }
+   ]
+  },
+  "backend/app.py": {
+   "changes_since_previous_pass": [
+    {
+     "text": "Imports teaching and adds TeachingConsult body plus POST /internal/teaching/consult (bot-authenticated candidate consultation).",
+     "evidence": [
+      "backend/app.py:1-2",
+      "backend/app.py:21",
+      "backend/app.py:420-435"
+     ]
+    },
+    {
+     "text": "Registers teaching.routes(owner) first among routers so generic /bots/{bot_id}/{action} does not match teaching paths.",
+     "evidence": [
+      "backend/app.py:580"
+     ]
+    }
+   ],
+   "functions": [
+    {
+     "name": "TeachingConsult",
+     "line": 420,
+     "desc": "Body: runtime session_id and candidate sha256."
+    },
+    {
+     "name": "teaching_consult",
+     "line": 426,
+     "desc": "Resolve active task for bot session, verify candidate sha and skill_view admission, return candidate and stamp consulted_at."
+    }
+   ]
+  },
+  "docker/runtime_api.py": {
+   "changes_since_previous_pass": [
+    {
+     "text": "Adds its own directory to sys.path and imports AcceptedRFB/Capture; one module-level Capture per runtime.",
+     "evidence": [
+      "docker/runtime_api.py:25",
+      "docker/runtime_api.py:30",
+      "docker/runtime_api.py:37"
+     ]
+    },
+    {
+     "text": "Computer handback and takeover pause capture before changing the lease.",
+     "evidence": [
+      "docker/runtime_api.py:390",
+      "docker/runtime_api.py:399"
+     ]
+    },
+    {
+     "text": "New POST /teaching/control (viewer/epoch fenced except finish/discard; final and start/resume keyframes) and GET /teaching/batch.",
+     "evidence": [
+      "docker/runtime_api.py:439-467"
+     ]
+    },
+    {
+     "text": "teaching_frame captures a 1440x1000 thumbnail 0.2 s after input and appends it only for the matching generation; failures pause capture.",
+     "evidence": [
+      "docker/runtime_api.py:470-482"
+     ]
+    },
+    {
+     "text": "RFB relay records the admitted lease epoch in the filter predicate, feeds filtered bytes to AcceptedRFB and Capture.observe under capture.lock, schedules keyframes, and pauses on unsupported observations and on disconnect.",
+     "evidence": [
+      "docker/runtime_api.py:509-542",
+      "docker/runtime_api.py:559"
+     ]
+    }
+   ],
+   "functions": [
+    {
+     "name": "TeachingControl",
+     "line": 439,
+     "desc": "Body: session uuid, action literal, 64-hex viewer, epoch, revision>=1."
+    },
+    {
+     "name": "teaching_control",
+     "line": 448,
+     "desc": "Fence by input readiness and lease epoch, take finish/start/resume frames, apply Capture.control."
+    },
+    {
+     "name": "teaching_batch",
+     "line": 466,
+     "desc": "Return Capture.batch(ack)."
+    },
+    {
+     "name": "teaching_frame",
+     "line": 470,
+     "desc": "Delayed thumbnail keyframe for a given generation."
+    }
+   ]
+  },
+  "backend/capabilities.py": {
+   "changes_since_previous_pass": [
+    {
+     "text": "manifest() injects the task's teaching candidate (non-peer views) as an enabled skill, replacing any same-named installed skill, and adds teaching_candidate (including content) to the fingerprinted facts.",
+     "evidence": [
+      "backend/capabilities.py:57-63",
+      "backend/capabilities.py:95",
+      "backend/capabilities.py:99"
+     ]
+    },
+    {
+     "text": "prepare() reads the candidate (stamping consulted_at) instead of the native skill when the selected name is the candidate.",
+     "evidence": [
+      "backend/capabilities.py:159",
+      "backend/capabilities.py:173-175"
+     ]
+    }
+   ]
+  },
+  "backend/worker.py": {
+   "changes_since_previous_pass": [
+    {
+     "text": "Worker starts teaching.run(STOP) as a fourth background asyncio task and cancels/gathers it on shutdown.",
+     "evidence": [
+      "backend/worker.py:13",
+      "backend/worker.py:664",
+      "backend/worker.py:687-688"
+     ]
+    }
+   ]
+  },
+  "plugins/hermbot/__init__.py": {
+   "changes_since_previous_pass": [
+    {
+     "text": "skill_view for the task's teaching candidate is answered by POST /internal/teaching/consult (file_path requests rejected) instead of native skill_view.",
+     "evidence": [
+      "plugins/hermbot/__init__.py:96-101"
+     ]
+    }
+   ]
+  },
+  "docker/hermes.Dockerfile": {
+   "changes_since_previous_pass": [
+    {
+     "text": "COPY docker/teaching_capture.py to /opt/hermbot/teaching_capture.py.",
+     "evidence": [
+      "docker/hermes.Dockerfile:10"
+     ]
+    }
+   ]
+  },
+  "web/src/Computer.tsx": {
+   "changes_since_previous_pass": [
+    {
+     "text": "Closing the computer panel fires a keepalive POST to teaching-private-input (privacy pause).",
+     "evidence": [
+      "web/src/Computer.tsx:16"
+     ]
+    },
+    {
+     "text": "Secure input first awaits the teaching-private-input barrier, aborts with an error if refused, and only types into the original RFB instance if it is still current and still owned.",
+     "evidence": [
+      "web/src/Computer.tsx:21-24"
+     ]
+    },
+    {
+     "text": "Embeds <Teaching botId mine> in the computer panel.",
+     "evidence": [
+      "web/src/Computer.tsx:6",
+      "web/src/Computer.tsx:40"
+     ]
+    }
+   ]
+  },
+  "web/src/Knowledge.tsx": {
+   "changes_since_previous_pass": [
+    {
+     "text": "Embeds <Teaching botId mine={false}> in Memory & skills while open.",
+     "evidence": [
+      "web/src/Knowledge.tsx:5",
+      "web/src/Knowledge.tsx:34"
+     ]
+    }
+   ]
+  },
+  "tests/conftest.py": {
+   "changes_since_previous_pass": [
+    {
+     "text": "clean_database also truncates teaching_sessions (cascades to chunks/revisions/tests).",
+     "evidence": [
+      "tests/conftest.py:23"
+     ]
+    }
+   ]
+  }
+ },
+ "route_notes": {
+  "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching": {
+   "purpose": "List recordings for a bot.",
+   "auth": "Owner (router Depends(owner)); bot must exist (registry.require_bot).",
+   "request": "Path bot_id.",
+   "response": "Up to 50 projection() rows (id, revision, state, reason, last_seq, retained_bytes, skill_name, hashes, job_state, error, pinned, expires_at, created_at), newest first, excluding state 'deleted'.",
+   "tables": [
+    "table:teaching_sessions",
+    "table:bots"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:321-331",
+    "backend/teaching.py:62-82",
+    "web/src/Teaching.tsx:19"
+   ]
+  },
+  "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching": {
+   "purpose": "Prepare a new demonstration session.",
+   "auth": "Owner; additionally the caller's viewer identity must hold human control with input_ready on the runtime (GET /computer); Idempotency-Key header required (8-200 chars).",
+   "request": "JSON {goal, expected_result} (3-4000 chars each).",
+   "response": "projection() of the new 'preparing' session; replayed from owner_receipts for the same key; 409 if key reused with a different body, if not input-ready, or if an active session exists.",
+   "tables": [
+    "table:teaching_sessions",
+    "table:owner_receipts",
+    "table:bots"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:333-362",
+    "backend/registry.py:178-190",
+    "backend/migrations/018_teaching.sql:12",
+    "web/src/Teaching.tsx:41",
+    "tests/test_teaching.py:154-175"
+   ]
+  },
+  "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching-private-input": {
+   "purpose": "Bot-level privacy barrier used before Secure input typing and on computer panel close.",
+   "auth": "Owner; viewer identity must equal the recording's viewer_hash (via control) and runtime must still see the viewer input-ready with matching epoch; no Idempotency-Key (a fresh 'private-<uuid>' key is generated).",
+   "request": "Empty POST.",
+   "response": "{paused: true} (also when no recording/paused session exists); 409 propagated from control/runtime when ownership changed.",
+   "tables": [
+    "table:teaching_sessions",
+    "table:owner_receipts"
+   ],
+   "ui_callers": [
+    "file:web/src/Computer.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:364-378",
+    "backend/teaching.py:500-517",
+    "web/src/Computer.tsx:16",
+    "web/src/Computer.tsx:22",
+    "tests/test_teaching.py:167-169"
+   ]
+  },
+  "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}": {
+   "purpose": "Full decrypted session detail for review.",
+   "auth": "Owner (bearer OWNER_TOKEN or owner session cookie) via router-level Depends(owner); session scoped to bot_id by require().",
+   "request": "Path bot_id, session_id.",
+   "response": "projection + info, evidence (text and frames with images), draft text, tests (task status/output/conversation, hashes, consulted_at, owner_passed, decrypted checks/report, current flag computed against current draft/evidence/config hash) and publications joined to knowledge_versions.version.",
+   "tables": [
+    "table:teaching_sessions",
+    "table:teaching_tests",
+    "table:tasks",
+    "table:teaching_publications",
+    "table:knowledge_versions"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:380-422",
+    "web/src/Teaching.tsx:20"
+   ]
+  },
+  "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/revisions": {
+   "purpose": "List immutable evidence/draft revisions.",
+   "auth": "Owner (bearer OWNER_TOKEN or owner session cookie) via router-level Depends(owner); session scoped to bot_id by require().",
+   "request": "Path ids.",
+   "response": "[{kind, sha256, created_at}] newest first.",
+   "tables": [
+    "table:teaching_sessions",
+    "table:teaching_revisions"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:424-431",
+    "web/src/Teaching.tsx:22"
+   ]
+  },
+  "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/revisions/{digest}": {
+   "purpose": "Load one historical draft.",
+   "auth": "Owner (bearer OWNER_TOKEN or owner session cookie) via router-level Depends(owner); session scoped to bot_id by require().",
+   "request": "Path digest (draft sha256).",
+   "response": "Decrypted {name, content, evidence_hash}; 404 if not a draft revision.",
+   "tables": [
+    "table:teaching_sessions",
+    "table:teaching_revisions"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:433-443",
+    "web/src/Teaching.tsx:49"
+   ]
+  },
+  "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/control": {
+   "purpose": "Capture lifecycle transition.",
+   "auth": "Owner; Idempotency-Key header; viewer identity must equal recording viewer_hash except for finish/discard; runtime additionally requires input readiness and lease epoch except for finish/discard.",
+   "request": "JSON {expected_revision, action in start|pause|private|resume|finish|discard}.",
+   "response": "projection() after update (state finalizing for finish, else runtime state; capture_revision+1, revision+1); local 'discarded' without runtime when capture_revision is 0; 409 on revision/transition/ownership errors; 503 when runtime unreachable.",
+   "tables": [
+    "table:teaching_sessions",
+    "table:owner_receipts"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:445-498",
+    "docker/runtime_api.py:447-462",
+    "docker/teaching_capture.py:88-123",
+    "web/src/Teaching.tsx:29",
+    "web/src/Teaching.tsx:43"
+   ]
+  },
+  "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/private": {
+   "purpose": "Session-scoped privacy barrier (same as private action).",
+   "auth": "Owner; same ownership checks as control; no Idempotency-Key header (generated).",
+   "request": "Empty POST.",
+   "response": "projection() after a 'private' transition.",
+   "tables": [
+    "table:teaching_sessions",
+    "table:owner_receipts"
+   ],
+   "ui_callers": [],
+   "evidence": [
+    "backend/teaching.py:500-517"
+   ]
+  },
+  "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/timeline": {
+   "purpose": "Review timeline and derived steps.",
+   "auth": "Owner (bearer OWNER_TOKEN or owner session cookie) via router-level Depends(owner); session scoped to bot_id by require().",
+   "request": "Path ids.",
+   "response": "{events: all decrypted events without image, steps: summarize(events)}; 502 on chunk integrity failure.",
+   "tables": [
+    "table:teaching_sessions",
+    "table:teaching_chunks",
+    "bucket:hermbot"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:519-527",
+    "backend/teaching.py:89-107",
+    "backend/teaching.py:176-212",
+    "web/src/Teaching.tsx:23"
+   ]
+  },
+  "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/frames/{seq}": {
+   "purpose": "Serve one recorded keyframe.",
+   "auth": "Owner (bearer OWNER_TOKEN or owner session cookie) via router-level Depends(owner); session scoped to bot_id by require().",
+   "request": "Path seq.",
+   "response": "image/jpeg bytes with Cache-Control: no-store; 404 if not a frame.",
+   "tables": [
+    "table:teaching_sessions",
+    "table:teaching_chunks",
+    "bucket:hermbot"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:529-540",
+    "web/src/Teaching.tsx:46"
+   ]
+  },
+  "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/evidence": {
+   "purpose": "Freeze owner-reviewed evidence.",
+   "auth": "Owner (bearer OWNER_TOKEN or owner session cookie) via router-level Depends(owner); session scoped to bot_id by require(). expected_revision checked twice (before reading chunks and before writing).",
+   "request": "JSON {expected_revision, text (10-30000), frame_sequences (<=12, unique, frames of this recording)}.",
+   "response": "{saved: true}; 409 unless state ready/interrupted; 422 for foreign/duplicate frames; 413 above 6 MiB.",
+   "tables": [
+    "table:teaching_sessions",
+    "table:teaching_revisions",
+    "table:teaching_chunks",
+    "bucket:hermbot"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:542-567",
+    "web/src/Teaching.tsx:47",
+    "tests/test_teaching.py:196-219"
+   ]
+  },
+  "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/generate": {
+   "purpose": "Queue model draft generation.",
+   "auth": "Owner (bearer OWNER_TOKEN or owner session cookie) via router-level Depends(owner); session scoped to bot_id by require().",
+   "request": "JSON {expected_revision}.",
+   "response": "{queued: true} (also when already queued/running, without changes); 409 without evidence_hash or provider.",
+   "tables": [
+    "table:teaching_sessions",
+    "table:bots",
+    "table:providers"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:569-598",
+    "web/src/Teaching.tsx:47"
+   ]
+  },
+  "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/cancel-generation": {
+   "purpose": "Cancel generation.",
+   "auth": "Owner (bearer OWNER_TOKEN or owner session cookie) via router-level Depends(owner); session scoped to bot_id by require().",
+   "request": "JSON {expected_revision}.",
+   "response": "{cancelled: true}; sets job_state cancelled from any job state and clears job_token.",
+   "tables": [
+    "table:teaching_sessions"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:600-608",
+    "web/src/Teaching.tsx:47",
+    "tests/test_teaching.py:302-334"
+   ]
+  },
+  "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/draft": {
+   "purpose": "Save an exact owner-edited draft.",
+   "auth": "Owner (bearer OWNER_TOKEN or owner session cookie) via router-level Depends(owner); session scoped to bot_id by require().",
+   "request": "JSON {expected_revision, name, content}.",
+   "response": "{saved: true, sha256}; 422 on name/frontmatter validation; 409 without evidence.",
+   "tables": [
+    "table:teaching_sessions",
+    "table:teaching_revisions"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:610-628",
+    "backend/teaching.py:215-231",
+    "web/src/Teaching.tsx:49"
+   ]
+  },
+  "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test": {
+   "purpose": "Run a task-scoped candidate test.",
+   "auth": "Owner; Idempotency-Key header (also used as tasks.request_key 'teaching:<key>'); optional grant_id validated by create_task.",
+   "request": "JSON {expected_revision, inputs, checks, grant_id?}.",
+   "response": "{task_id, conversation_id}; 409 unless draft and evidence saved and no generation queued/running.",
+   "tables": [
+    "table:teaching_sessions",
+    "table:teaching_tests",
+    "table:tasks",
+    "table:conversations",
+    "table:owner_receipts"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:630-684",
+    "backend/service.py:87-101",
+    "web/src/Teaching.tsx:50"
+   ]
+  },
+  "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test-report": {
+   "purpose": "Owner verification of a test.",
+   "auth": "Owner (bearer OWNER_TOKEN or owner session cookie) via router-level Depends(owner); session scoped to bot_id by require().",
+   "request": "JSON {expected_revision, test_id, passed, observations}.",
+   "response": "{recorded: true}; 409 unless the task is completed and consulted_at is set.",
+   "tables": [
+    "table:teaching_sessions",
+    "table:teaching_tests",
+    "table:tasks"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:686-701",
+    "web/src/Teaching.tsx:51",
+    "tests/test_teaching.py:285-295"
+   ]
+  },
+  "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/publish": {
+   "purpose": "Publish the verified candidate as a native skill version.",
+   "auth": "Owner; Idempotency-Key header; knowledge.guard (no busy work/attempts, computer handed back, bot running, no pending operation).",
+   "request": "JSON {expected_revision, test_id, expected_native_hash, enable (default false)}.",
+   "response": "{version, operation_id, status: 'refresh_pending'}; 409 for unverified/stale/unconsulted test or native CAS conflict; 502 if native readback hash differs.",
+   "tables": [
+    "table:teaching_sessions",
+    "table:teaching_tests",
+    "table:tasks",
+    "table:teaching_publications",
+    "table:knowledge_versions",
+    "table:bots",
+    "table:bot_operations",
+    "table:owner_receipts"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:703-770",
+    "backend/knowledge.py:43-118",
+    "web/src/Teaching.tsx:53",
+    "tests/test_teaching.py:463-541"
+   ]
+  },
+  "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/keep": {
+   "purpose": "Toggle retention pin.",
+   "auth": "Owner (bearer OWNER_TOKEN or owner session cookie) via router-level Depends(owner); session scoped to bot_id by require().",
+   "request": "JSON {expected_revision}.",
+   "response": "{saved: true}; flips pinned; expires_at is unchanged.",
+   "tables": [
+    "table:teaching_sessions"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:772-780",
+    "web/src/Teaching.tsx:56"
+   ]
+  },
+  "route:backend/teaching.py:DELETE /api/v1/bots/{bot_id}/teaching/{session_id}": {
+   "purpose": "Delete a private recording.",
+   "auth": "Owner (bearer OWNER_TOKEN or owner session cookie) via router-level Depends(owner); session scoped to bot_id by require().",
+   "request": "JSON body {expected_revision} on DELETE.",
+   "response": "{deleting: true}; 409 for active captures; cancels candidate test tasks; purge is asynchronous in maintain().",
+   "tables": [
+    "table:teaching_sessions",
+    "table:teaching_tests",
+    "table:tasks"
+   ],
+   "ui_callers": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:782-793",
+    "backend/teaching.py:53-59",
+    "backend/teaching.py:1005-1044",
+    "web/src/Teaching.tsx:56",
+    "tests/test_teaching.py:544-568"
+   ]
+  },
+  "route:backend/app.py:POST /internal/teaching/consult": {
+   "purpose": "Plugin skill_view consultation of the task's teaching candidate.",
+   "auth": "Bot bearer token (bot_identity) plus an active attempt for the runtime session (service.active_task, grant check); candidate sha256 must match; skill_view must be in the task's allowed_tools.",
+   "request": "JSON {session_id (runtime session), sha256}.",
+   "response": "{name, content, sha256, teaching_test_id}; stamps teaching_tests.consulted_at; 409 when not assigned or config changed; 403 without skill_view.",
+   "tables": [
+    "table:teaching_tests",
+    "table:teaching_sessions",
+    "table:attempts",
+    "table:tasks"
+   ],
+   "ui_callers": [],
+   "evidence": [
+    "backend/app.py:420-435",
+    "backend/teaching.py:256-274",
+    "plugins/hermbot/__init__.py:96-101"
+   ]
+  },
+  "route:docker/runtime_api.py:POST /teaching/control": {
+   "purpose": "Runtime capture transition.",
+   "auth": "Runtime adapter bearer (Depends(authorize)); for actions other than finish/discard the viewer must be input-ready and the lease epoch must equal body.epoch.",
+   "request": "JSON {session (uuid), action, viewer (64 hex), epoch, revision>=1}.",
+   "response": "Capture.status(): {session, state, reason, generation, seq, epoch, total, revision}; 409 on ownership/revision errors.",
+   "tables": [],
+   "ui_callers": [],
+   "evidence": [
+    "docker/runtime_api.py:439-462",
+    "docker/teaching_capture.py:82-123"
+   ]
+  },
+  "route:docker/runtime_api.py:GET /teaching/batch": {
+   "purpose": "Ack-based drain of volatile capture events.",
+   "auth": "Runtime adapter bearer (Depends(authorize)).",
+   "request": "Query ack (last committed seq).",
+   "response": "Capture.status() plus events with seq > ack (<= ~3 MiB, at least one).",
+   "tables": [],
+   "ui_callers": [],
+   "evidence": [
+    "docker/runtime_api.py:465-467",
+    "docker/teaching_capture.py:198-210"
+   ]
+  }
+ },
+ "table_notes": {
+  "table:teaching_sessions": {
+   "purpose": "One row per demonstration: ownership binding, capture state, encrypted goal/evidence/draft, generation job, retention.",
+   "writers": [
+    "file:backend/teaching.py"
+   ],
+   "readers": [
+    "file:backend/teaching.py",
+    "file:backend/capabilities.py",
+    "file:backend/app.py"
+   ],
+   "state_machine": "sm:teaching-session",
+   "columns": "id, bot_id->bots, revision (owner CAS), capture_revision (runtime fence), viewer_hash, epoch, state, reason, last_seq, retained_bytes, info_encrypted, evidence_encrypted/hash, draft_encrypted/hash, skill_name, job_state/job_token/job_started_at/job_provider, error, pinned, expires_at (now()+7 days), created_at, updated_at",
+   "evidence": [
+    "backend/migrations/018_teaching.sql:1-12",
+    "backend/teaching.py:354-357",
+    "backend/teaching.py:1036-1038"
+   ]
+  },
+  "table:teaching_chunks": {
+   "purpose": "Manifest of encrypted capture chunks in MinIO (teaching/<session>/<first_seq>-<sha256>).",
+   "writers": [
+    "file:backend/teaching.py"
+   ],
+   "readers": [
+    "file:backend/teaching.py"
+   ],
+   "state_machine": null,
+   "evidence": [
+    "backend/migrations/018_teaching.sql:13-17",
+    "backend/teaching.py:146",
+    "backend/teaching.py:160-163",
+    "backend/teaching.py:1033",
+    "backend/teaching.py:966"
+   ]
+  },
+  "table:teaching_revisions": {
+   "purpose": "Immutable encrypted evidence and draft revisions (content-addressed by sha256).",
+   "writers": [
+    "file:backend/teaching.py"
+   ],
+   "readers": [
+    "file:backend/teaching.py"
+   ],
+   "state_machine": null,
+   "evidence": [
+    "backend/migrations/018_teaching.sql:18-23",
+    "backend/teaching.py:46-50",
+    "backend/teaching.py:562",
+    "backend/teaching.py:617-623",
+    "backend/teaching.py:936-946",
+    "backend/teaching.py:1034"
+   ]
+  },
+  "table:teaching_tests": {
+   "purpose": "Binding of a candidate test task to evidence/draft/config hashes, an encrypted candidate copy, checks, consultation stamp and owner verdict.",
+   "writers": [
+    "file:backend/teaching.py"
+   ],
+   "readers": [
+    "file:backend/teaching.py",
+    "file:backend/capabilities.py",
+    "file:backend/app.py"
+   ],
+   "state_machine": "sm:teaching-test",
+   "evidence": [
+    "backend/migrations/018_teaching.sql:24-31",
+    "backend/teaching.py:662-675",
+    "backend/teaching.py:268",
+    "backend/teaching.py:696-699",
+    "backend/teaching.py:1039-1042"
+   ]
+  },
+  "table:teaching_publications": {
+   "purpose": "Provenance link from a teaching session/test to the knowledge version it published.",
+   "writers": [
+    "file:backend/teaching.py"
+   ],
+   "readers": [
+    "file:backend/teaching.py"
+   ],
+   "state_machine": "sm:teaching-publication",
+   "evidence": [
+    "backend/migrations/018_teaching.sql:32-37",
+    "backend/teaching.py:747-757",
+    "backend/teaching.py:418-421"
+   ]
+  }
+ },
+ "extra_nodes": [
+  {
+   "id": "concept:teaching-capture-buffer",
+   "kind": "concept",
+   "label": "Volatile capture buffer (per runtime)",
+   "purpose": "Module-level Capture() inside each bot runtime adapter holding unacknowledged events (<=8 MiB, <=256 MiB per session total).",
+   "facts": {
+    "lost_on_runtime_restart": true,
+    "heartbeat_seconds": 15,
+    "frame_interval_seconds": 0.5
+   },
+   "evidence": [
+    "docker/runtime_api.py:37",
+    "docker/teaching_capture.py:127-130",
+    "docker/teaching_capture.py:141",
+    "docker/teaching_capture.py:158"
+   ]
+  },
+  {
+   "id": "concept:teaching-object-prefix",
+   "kind": "concept",
+   "label": "MinIO teaching/ prefix",
+   "purpose": "Fernet-encrypted capture chunks stored in bucket 'hermbot' under teaching/<session_id>/<first_seq>-<sha256>; not Library artifacts.",
+   "facts": {
+    "bucket": "hermbot",
+    "gc_orphan_age_seconds": 86400
+   },
+   "evidence": [
+    "backend/teaching.py:146-153",
+    "backend/artifacts.py:13",
+    "backend/teaching.py:960-982"
+   ]
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching",
+   "kind": "http",
+   "label": "poll recordings (2s)",
+   "evidence": [
+    "web/src/Teaching.tsx:19"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching",
+   "kind": "http",
+   "label": "Prepare demonstration",
+   "evidence": [
+    "web/src/Teaching.tsx:41"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}",
+   "kind": "http",
+   "label": "poll detail (2s)",
+   "evidence": [
+    "web/src/Teaching.tsx:20"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/revisions",
+   "kind": "http",
+   "label": "draft history",
+   "evidence": [
+    "web/src/Teaching.tsx:22"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/revisions/{digest}",
+   "kind": "http",
+   "label": "load earlier draft",
+   "evidence": [
+    "web/src/Teaching.tsx:49"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/control",
+   "kind": "http",
+   "label": "start/resume/pause/finish/discard",
+   "evidence": [
+    "web/src/Teaching.tsx:29",
+    "web/src/Teaching.tsx:43"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/timeline",
+   "kind": "http",
+   "label": "evidence timeline",
+   "evidence": [
+    "web/src/Teaching.tsx:23"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/frames/{seq}",
+   "kind": "http",
+   "label": "frame <img>",
+   "evidence": [
+    "web/src/Teaching.tsx:46"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/evidence",
+   "kind": "http",
+   "label": "save reviewed evidence",
+   "evidence": [
+    "web/src/Teaching.tsx:47"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/generate",
+   "kind": "http",
+   "label": "generate draft",
+   "evidence": [
+    "web/src/Teaching.tsx:47"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/cancel-generation",
+   "kind": "http",
+   "label": "cancel generation",
+   "evidence": [
+    "web/src/Teaching.tsx:47"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/draft",
+   "kind": "http",
+   "label": "save exact draft",
+   "evidence": [
+    "web/src/Teaching.tsx:49"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test",
+   "kind": "http",
+   "label": "run candidate test",
+   "evidence": [
+    "web/src/Teaching.tsx:50"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test-report",
+   "kind": "http",
+   "label": "verify/fail checks",
+   "evidence": [
+    "web/src/Teaching.tsx:51"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/knowledge.py:GET /api/v1/bots/{bot_id}/knowledge/skills/{name}",
+   "kind": "http",
+   "label": "prepare publication (native hash)",
+   "evidence": [
+    "web/src/Teaching.tsx:53"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/publish",
+   "kind": "http",
+   "label": "publish reviewed draft",
+   "evidence": [
+    "web/src/Teaching.tsx:53"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/keep",
+   "kind": "http",
+   "label": "keep / seven-day expiry",
+   "evidence": [
+    "web/src/Teaching.tsx:56"
+   ]
+  },
+  {
+   "source": "file:web/src/Teaching.tsx",
+   "target": "route:backend/teaching.py:DELETE /api/v1/bots/{bot_id}/teaching/{session_id}",
+   "kind": "http",
+   "label": "delete private recording",
+   "evidence": [
+    "web/src/Teaching.tsx:56"
+   ]
+  },
+  {
+   "source": "file:web/src/Computer.tsx",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching-private-input",
+   "kind": "http",
+   "label": "privacy barrier before Secure input",
+   "evidence": [
+    "web/src/Computer.tsx:22"
+   ]
+  },
+  {
+   "source": "file:web/src/Computer.tsx",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching-private-input",
+   "kind": "http",
+   "label": "keepalive privacy pause on panel close",
+   "evidence": [
+    "web/src/Computer.tsx:16"
+   ]
+  },
+  {
+   "source": "file:web/src/Computer.tsx",
+   "target": "file:web/src/Teaching.tsx",
+   "kind": "renders",
+   "label": "Teaching panel (mine)",
+   "evidence": [
+    "web/src/Computer.tsx:40"
+   ]
+  },
+  {
+   "source": "file:web/src/Knowledge.tsx",
+   "target": "file:web/src/Teaching.tsx",
+   "kind": "renders",
+   "label": "Teaching panel (mine=false)",
+   "evidence": [
+    "web/src/Knowledge.tsx:34"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching-private-input",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/private",
+   "kind": "calls",
+   "label": "delegates to private()",
+   "evidence": [
+    "backend/teaching.py:377"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/private",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/control",
+   "kind": "calls",
+   "label": "control(action=private)",
+   "evidence": [
+    "backend/teaching.py:510-517"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching",
+   "target": "table:teaching_sessions",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/teaching.py:328"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching",
+   "target": "table:teaching_sessions",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:354-357"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching",
+   "target": "table:owner_receipts",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:354-357"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching-private-input",
+   "target": "table:teaching_sessions",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/teaching.py:371-374"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}",
+   "target": "table:teaching_sessions",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/teaching.py:383-421"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}",
+   "target": "table:teaching_tests",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/teaching.py:383-421"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}",
+   "target": "table:tasks",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/teaching.py:383-421"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}",
+   "target": "table:teaching_publications",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/teaching.py:383-421"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}",
+   "target": "table:knowledge_versions",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/teaching.py:383-421"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/revisions",
+   "target": "table:teaching_revisions",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/teaching.py:428-431"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/revisions/{digest}",
+   "target": "table:teaching_revisions",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/teaching.py:437-440"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/control",
+   "target": "table:teaching_sessions",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:458-497"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/control",
+   "target": "table:owner_receipts",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:458-497"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/timeline",
+   "target": "table:teaching_chunks",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/teaching.py:523"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/frames/{seq}",
+   "target": "table:teaching_chunks",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/teaching.py:533"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/evidence",
+   "target": "table:teaching_sessions",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:548-566"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/evidence",
+   "target": "table:teaching_revisions",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:548-566"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/evidence",
+   "target": "table:teaching_chunks",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/teaching.py:548-566"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/generate",
+   "target": "table:teaching_sessions",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:578-597"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/generate",
+   "target": "table:providers",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/teaching.py:578-597"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/cancel-generation",
+   "target": "table:teaching_sessions",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:604-607"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/draft",
+   "target": "table:teaching_sessions",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:617-627"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/draft",
+   "target": "table:teaching_revisions",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:617-627"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test",
+   "target": "table:teaching_tests",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:647-676"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test",
+   "target": "table:tasks",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:647-676"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test",
+   "target": "table:conversations",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/teaching.py:647-676"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test",
+   "target": "table:teaching_sessions",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:647-676"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test-report",
+   "target": "table:teaching_tests",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:690-700"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test-report",
+   "target": "table:tasks",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/teaching.py:690-700"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/publish",
+   "target": "table:teaching_publications",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:714-758",
+    "backend/knowledge.py:96-111"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/publish",
+   "target": "table:knowledge_versions",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:714-758",
+    "backend/knowledge.py:96-111"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/publish",
+   "target": "table:bot_operations",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:714-758",
+    "backend/knowledge.py:96-111"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/publish",
+   "target": "table:bots",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:714-758",
+    "backend/knowledge.py:96-111"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/publish",
+   "target": "table:teaching_tests",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/teaching.py:714-758",
+    "backend/knowledge.py:96-111"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/keep",
+   "target": "table:teaching_sessions",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:776-779"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:DELETE /api/v1/bots/{bot_id}/teaching/{session_id}",
+   "target": "table:teaching_sessions",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:788-792"
+   ]
+  },
+  {
+   "source": "route:backend/teaching.py:DELETE /api/v1/bots/{bot_id}/teaching/{session_id}",
+   "target": "table:tasks",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/teaching.py:788-792"
+   ]
+  },
+  {
+   "source": "route:backend/app.py:POST /internal/teaching/consult",
+   "target": "table:teaching_tests",
+   "kind": "writes",
+   "label": "writes",
+   "evidence": [
+    "backend/app.py:428-435",
+    "backend/teaching.py:268"
+   ]
+  },
+  {
+   "source": "route:backend/app.py:POST /internal/teaching/consult",
+   "target": "table:attempts",
+   "kind": "reads",
+   "label": "reads",
+   "evidence": [
+    "backend/app.py:428-435",
+    "backend/teaching.py:268"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::routes.start",
+   "target": "route:docker/runtime_api.py:GET /computer",
+   "kind": "http",
+   "label": "verify input-ready human control",
+   "evidence": [
+    "backend/teaching.py:342"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::routes.control",
+   "target": "route:docker/runtime_api.py:POST /teaching/control",
+   "kind": "http",
+   "label": "capture transition",
+   "evidence": [
+    "backend/teaching.py:477-488"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::collect",
+   "target": "route:docker/runtime_api.py:GET /teaching/batch",
+   "kind": "polls",
+   "label": "ack-based batch",
+   "evidence": [
+    "backend/teaching.py:120"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::maintain",
+   "target": "route:docker/runtime_api.py:GET /teaching/batch",
+   "kind": "polls",
+   "label": "identify volatile tail before purge",
+   "evidence": [
+    "backend/teaching.py:1011"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::maintain",
+   "target": "route:docker/runtime_api.py:POST /teaching/control",
+   "kind": "http",
+   "label": "discard volatile tail",
+   "evidence": [
+    "backend/teaching.py:1013-1024"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::routes.publish",
+   "target": "route:docker/runtime_api.py:GET /skills/{name}",
+   "kind": "http",
+   "label": "native readback hash check",
+   "evidence": [
+    "backend/teaching.py:742-746"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::routes.publish",
+   "target": "fn:backend/knowledge.py::apply",
+   "kind": "calls",
+   "label": "native CAS write + version + configure op",
+   "evidence": [
+    "backend/teaching.py:729-741"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::routes.publish",
+   "target": "fn:backend/knowledge.py::guard",
+   "kind": "calls",
+   "label": "busy/handback/running guard",
+   "evidence": [
+    "backend/teaching.py:729"
+   ]
+  },
+  {
+   "source": "fn:backend/knowledge.py::apply",
+   "target": "route:docker/runtime_api.py:PUT /skills/{name}",
+   "kind": "http",
+   "label": "PUT skill with expected_hash",
+   "evidence": [
+    "backend/knowledge.py:85-90"
+   ]
+  },
+  {
+   "source": "fn:backend/worker.py::main",
+   "target": "fn:backend/teaching.py::run",
+   "kind": "spawns",
+   "label": "teaching_sync background task",
+   "evidence": [
+    "backend/worker.py:664"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::run",
+   "target": "fn:backend/teaching.py::maintain",
+   "kind": "calls",
+   "label": "1s loop in thread",
+   "evidence": [
+    "backend/teaching.py:1050-1061"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::run",
+   "target": "fn:backend/teaching.py::generate_one",
+   "kind": "calls",
+   "label": "1s loop in thread",
+   "evidence": [
+    "backend/teaching.py:1050-1061"
+   ]
+  },
+  {
+   "source": "file:backend/teaching.py",
+   "target": "svc:worker",
+   "kind": "runs-in",
+   "label": "maintain/generate loops",
+   "evidence": [
+    "backend/worker.py:664",
+    "compose.yaml:109"
+   ]
+  },
+  {
+   "source": "file:backend/teaching.py",
+   "target": "svc:api",
+   "kind": "runs-in",
+   "label": "owner routes",
+   "evidence": [
+    "backend/app.py:580"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::collect",
+   "target": "bucket:hermbot",
+   "kind": "writes",
+   "label": "put encrypted chunk teaching/<sid>/...",
+   "evidence": [
+    "backend/teaching.py:146-153"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::collect",
+   "target": "bucket:hermbot",
+   "kind": "reads",
+   "label": "read-back verification before manifest",
+   "evidence": [
+    "backend/teaching.py:154-155"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::read_chunk",
+   "target": "bucket:hermbot",
+   "kind": "reads",
+   "label": "decrypt + sha/size check",
+   "evidence": [
+    "backend/teaching.py:89-98"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::maintain",
+   "target": "bucket:hermbot",
+   "kind": "writes",
+   "label": "delete session objects",
+   "evidence": [
+    "backend/teaching.py:1025-1031"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::garbage_collect",
+   "target": "bucket:hermbot",
+   "kind": "writes",
+   "label": "delete orphan teaching/ objects",
+   "evidence": [
+    "backend/teaching.py:972-981"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::collect",
+   "target": "table:teaching_chunks",
+   "kind": "writes",
+   "label": "commit chunk manifest",
+   "evidence": [
+    "backend/teaching.py:160-163"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::collect",
+   "target": "table:teaching_sessions",
+   "kind": "writes",
+   "label": "last_seq/state/interrupted",
+   "evidence": [
+    "backend/teaching.py:122-126",
+    "backend/teaching.py:170-173"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::maintain",
+   "target": "table:teaching_sessions",
+   "kind": "writes",
+   "label": "expiry/deleting/deleted",
+   "evidence": [
+    "backend/teaching.py:1000-1002",
+    "backend/teaching.py:1035-1038"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::maintain",
+   "target": "table:teaching_tests",
+   "kind": "writes",
+   "label": "scrub candidate/checks/report",
+   "evidence": [
+    "backend/teaching.py:1039-1042"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::maintain",
+   "target": "table:teaching_chunks",
+   "kind": "writes",
+   "label": "delete manifest rows",
+   "evidence": [
+    "backend/teaching.py:1033"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::maintain",
+   "target": "table:teaching_revisions",
+   "kind": "writes",
+   "label": "delete revisions",
+   "evidence": [
+    "backend/teaching.py:1034"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::stop_tests",
+   "target": "fn:backend/service.py::cancel",
+   "kind": "calls",
+   "label": "cancel candidate tasks",
+   "evidence": [
+    "backend/teaching.py:58-59"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::generate_one",
+   "target": "table:teaching_sessions",
+   "kind": "writes",
+   "label": "job state + fenced draft",
+   "evidence": [
+    "backend/teaching.py:833-849",
+    "backend/teaching.py:923-957"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::generate_one",
+   "target": "table:teaching_revisions",
+   "kind": "writes",
+   "label": "draft revision",
+   "evidence": [
+    "backend/teaching.py:936-946"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::generate_one",
+   "target": "table:providers",
+   "kind": "reads",
+   "label": "provider snapshot",
+   "evidence": [
+    "backend/teaching.py:844-846"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::generate_one",
+   "target": "actor:model-provider",
+   "kind": "http",
+   "label": "POST {base_url}/chat/completions with vision canary + reviewed evidence",
+   "evidence": [
+    "backend/teaching.py:865-882"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::generate_one",
+   "target": "env:CONFIG_ENCRYPTION_KEY",
+   "kind": "uses-secret",
+   "label": "decrypt provider secret_encrypted / evidence",
+   "evidence": [
+    "backend/teaching.py:880",
+    "backend/teaching.py:854"
+   ]
+  },
+  {
+   "source": "file:backend/teaching.py",
+   "target": "env:CONFIG_ENCRYPTION_KEY",
+   "kind": "uses-secret",
+   "label": "Fernet for all private payloads",
+   "evidence": [
+    "backend/teaching.py:27-32",
+    "backend/teaching.py:95",
+    "backend/teaching.py:151",
+    "backend/secrets.py:12-16"
+   ]
+  },
+  {
+   "source": "fn:plugins/hermbot/__init__.py::admitted_execution",
+   "target": "route:backend/app.py:POST /internal/teaching/consult",
+   "kind": "http",
+   "label": "skill_view of teaching candidate",
+   "evidence": [
+    "plugins/hermbot/__init__.py:96-101"
+   ]
+  },
+  {
+   "source": "fn:backend/app.py::teaching_consult",
+   "target": "fn:backend/teaching.py::candidate",
+   "kind": "calls",
+   "label": "verify + consulted=True",
+   "evidence": [
+    "backend/app.py:429",
+    "backend/app.py:435"
+   ]
+  },
+  {
+   "source": "fn:backend/app.py::teaching_consult",
+   "target": "fn:backend/capabilities.py::manifest",
+   "kind": "calls",
+   "label": "skill_view admission",
+   "evidence": [
+    "backend/app.py:432-434"
+   ]
+  },
+  {
+   "source": "fn:backend/app.py::teaching_consult",
+   "target": "fn:backend/service.py::active_task",
+   "kind": "calls",
+   "label": "resolve session task",
+   "evidence": [
+    "backend/app.py:428"
+   ]
+  },
+  {
+   "source": "fn:backend/capabilities.py::manifest",
+   "target": "fn:backend/teaching.py::candidate",
+   "kind": "calls",
+   "label": "inject task-scoped candidate skill",
+   "evidence": [
+    "backend/capabilities.py:57-61"
+   ]
+  },
+  {
+   "source": "fn:backend/capabilities.py::prepare",
+   "target": "fn:backend/teaching.py::candidate",
+   "kind": "calls",
+   "label": "consult candidate in prepare",
+   "evidence": [
+    "backend/capabilities.py:173"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::routes.test",
+   "target": "fn:backend/service.py::create_task",
+   "kind": "calls",
+   "label": "DM test task",
+   "evidence": [
+    "backend/teaching.py:651-661"
+   ]
+  },
+  {
+   "source": "fn:docker/runtime_api.py::screen",
+   "target": "fn:docker/teaching_capture.py::AcceptedRFB",
+   "kind": "calls",
+   "label": "parse filtered accepted RFB bytes",
+   "evidence": [
+    "docker/runtime_api.py:509",
+    "docker/runtime_api.py:533"
+   ]
+  },
+  {
+   "source": "fn:docker/runtime_api.py::screen",
+   "target": "fn:docker/teaching_capture.py::Capture",
+   "kind": "calls",
+   "label": "observe under capture.lock; disconnect pause",
+   "evidence": [
+    "docker/runtime_api.py:526-538",
+    "docker/runtime_api.py:559"
+   ]
+  },
+  {
+   "source": "fn:docker/runtime_api.py::screen",
+   "target": "fn:docker/runtime_api.py::teaching_frame",
+   "kind": "spawns",
+   "label": "keyframe task after input",
+   "evidence": [
+    "docker/runtime_api.py:541-542"
+   ]
+  },
+  {
+   "source": "fn:docker/runtime_api.py::teaching_control",
+   "target": "fn:docker/teaching_capture.py::Capture",
+   "kind": "calls",
+   "label": "Capture.control",
+   "evidence": [
+    "docker/runtime_api.py:456"
+   ]
+  },
+  {
+   "source": "fn:docker/runtime_api.py::teaching_control",
+   "target": "fn:docker/runtime_api.py::ready_for_input",
+   "kind": "calls",
+   "label": "viewer/epoch fence",
+   "evidence": [
+    "docker/runtime_api.py:451-452"
+   ]
+  },
+  {
+   "source": "fn:docker/runtime_api.py::teaching_batch",
+   "target": "fn:docker/teaching_capture.py::Capture",
+   "kind": "calls",
+   "label": "Capture.batch",
+   "evidence": [
+    "docker/runtime_api.py:467"
+   ]
+  },
+  {
+   "source": "fn:docker/runtime_api.py::control",
+   "target": "fn:docker/teaching_capture.py::Capture",
+   "kind": "calls",
+   "label": "pause on handback/takeover",
+   "evidence": [
+    "docker/runtime_api.py:390",
+    "docker/runtime_api.py:399"
+   ]
+  },
+  {
+   "source": "file:web/src/Computer.tsx",
+   "target": "route:docker/runtime_api.py:WEBSOCKET /computer/ws",
+   "kind": "http",
+   "label": "noVNC RFB bytes relayed via backend WS; observed after native filter",
+   "evidence": [
+    "web/src/Computer.tsx:18",
+    "docker/runtime_api.py:516-535"
+   ]
+  },
+  {
+   "source": "file:docker/runtime_api.py",
+   "target": "file:docker/teaching_capture.py",
+   "kind": "imports",
+   "label": "sys.path-relative import inside image",
+   "evidence": [
+    "docker/runtime_api.py:25",
+    "docker/runtime_api.py:30"
+   ]
+  },
+  {
+   "source": "file:docker/teaching_capture.py",
+   "target": "svc:hermbot-bot-*",
+   "kind": "runs-in",
+   "label": "copied into runtime image",
+   "evidence": [
+    "docker/hermes.Dockerfile:10"
+   ]
+  },
+  {
+   "source": "file:docker/hermes.Dockerfile",
+   "target": "file:docker/teaching_capture.py",
+   "kind": "documents",
+   "label": "COPY into /opt/hermbot",
+   "evidence": [
+    "docker/hermes.Dockerfile:10"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "file:backend/teaching.py",
+   "kind": "tests",
+   "label": "16 teaching tests",
+   "evidence": [
+    "tests/test_teaching.py:100-578"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "file:docker/teaching_capture.py",
+   "kind": "tests",
+   "label": "parser/capture unit tests",
+   "evidence": [
+    "tests/test_teaching.py:100-151",
+    "tests/test_teaching.py:433-446",
+    "tests/test_teaching.py:571-578"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:backend/teaching.py",
+   "kind": "documents",
+   "label": "acceptance contract",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:1-7"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "target": "file:backend/teaching.py",
+   "kind": "documents",
+   "label": "implementation review",
+   "evidence": [
+    "plan/PHASE6-TEACHING-REVIEW.md:1-13"
+   ]
+  },
+  {
+   "source": "fn:backend/teaching.py::routes.frame",
+   "target": "actor:owner",
+   "kind": "pushes",
+   "label": "private JPEG frames (no-store)",
+   "evidence": [
+    "backend/teaching.py:536-540"
+   ]
+  }
+ ],
+ "state_machines": [
+  {
+   "id": "sm:teaching-session",
+   "entity": "teaching recording",
+   "table": "table:teaching_sessions",
+   "column": "state",
+   "states": [
+    {
+     "name": "preparing",
+     "desc": "Created after input-ready takeover; no runtime collector yet (capture_revision 0).",
+     "terminal": false
+    },
+    {
+     "name": "recording",
+     "desc": "Runtime capture accepts input/frames from the bound viewer/epoch.",
+     "terminal": false
+    },
+    {
+     "name": "paused",
+     "desc": "Explicit pause, private barrier, handback/takeover, disconnect, lost persistence heartbeat, storage limit, unsupported input or frame failure.",
+     "terminal": false
+    },
+    {
+     "name": "finalizing",
+     "desc": "Finish sent; collector draining the sealed tail.",
+     "terminal": false
+    },
+    {
+     "name": "ready",
+     "desc": "Entire tail persisted; evidence review allowed.",
+     "terminal": false
+    },
+    {
+     "name": "interrupted",
+     "desc": "Runtime collector no longer holds the session (restart); retained prefix reviewable.",
+     "terminal": false
+    },
+    {
+     "name": "discarded",
+     "desc": "Owner discarded during capture; maintain() purges it like a delete.",
+     "terminal": false
+    },
+    {
+     "name": "deleting",
+     "desc": "Owner delete or expiry; tests cancelled; purge pending/retrying.",
+     "terminal": false
+    },
+    {
+     "name": "deleted",
+     "desc": "Tombstone: objects, chunks, revisions removed; info/evidence/draft cleared.",
+     "terminal": true
+    },
+    {
+     "name": "failed",
+     "desc": "Listed in expiry SQL and plan but never set by any code path (dead state).",
+     "terminal": false
+    }
+   ],
+   "transitions": [
+    {
+     "from": "(new)",
+     "to": "preparing",
+     "trigger": "POST teaching (start route)",
+     "evidence": [
+      "backend/teaching.py:354-357",
+      "backend/migrations/018_teaching.sql:4"
+     ]
+    },
+    {
+     "from": "preparing",
+     "to": "recording",
+     "trigger": "control start -> runtime start",
+     "evidence": [
+      "backend/teaching.py:462",
+      "backend/teaching.py:489-492",
+      "docker/teaching_capture.py:110-111"
+     ]
+    },
+    {
+     "from": "paused",
+     "to": "recording",
+     "trigger": "control resume (same viewer/epoch only)",
+     "evidence": [
+      "backend/teaching.py:463",
+      "docker/teaching_capture.py:96-99",
+      "docker/teaching_capture.py:112"
+     ]
+    },
+    {
+     "from": "recording",
+     "to": "paused",
+     "trigger": "control pause or private",
+     "evidence": [
+      "backend/teaching.py:464-465",
+      "docker/teaching_capture.py:113-114"
+     ]
+    },
+    {
+     "from": "paused",
+     "to": "paused",
+     "trigger": "control private (adds omitted marker)",
+     "evidence": [
+      "backend/teaching.py:465",
+      "docker/teaching_capture.py:121-122"
+     ]
+    },
+    {
+     "from": "recording",
+     "to": "paused",
+     "trigger": "collector observes runtime pause (handback/takeover/disconnect/heartbeat/limit/unsupported/frame failure)",
+     "evidence": [
+      "backend/teaching.py:128-133",
+      "backend/teaching.py:136-140",
+      "docker/runtime_api.py:390",
+      "docker/runtime_api.py:399",
+      "docker/runtime_api.py:537",
+      "docker/runtime_api.py:559",
+      "docker/teaching_capture.py:127-130",
+      "docker/teaching_capture.py:141-143"
+     ]
+    },
+    {
+     "from": "recording",
+     "to": "finalizing",
+     "trigger": "control finish",
+     "evidence": [
+      "backend/teaching.py:466",
+      "backend/teaching.py:489"
+     ]
+    },
+    {
+     "from": "paused",
+     "to": "finalizing",
+     "trigger": "control finish",
+     "evidence": [
+      "backend/teaching.py:466",
+      "backend/teaching.py:489"
+     ]
+    },
+    {
+     "from": "finalizing",
+     "to": "ready",
+     "trigger": "collector persisted last event and capture revision matches (or empty batch)",
+     "evidence": [
+      "backend/teaching.py:136-140",
+      "backend/teaching.py:164-172",
+      "docker/teaching_capture.py:115"
+     ]
+    },
+    {
+     "from": "preparing",
+     "to": "discarded",
+     "trigger": "control discard with capture_revision 0 (local, no runtime)",
+     "evidence": [
+      "backend/teaching.py:471-476"
+     ]
+    },
+    {
+     "from": "recording|paused|finalizing",
+     "to": "discarded",
+     "trigger": "control discard via runtime",
+     "evidence": [
+      "backend/teaching.py:467",
+      "backend/teaching.py:477-492",
+      "docker/teaching_capture.py:116"
+     ]
+    },
+    {
+     "from": "recording|paused|finalizing",
+     "to": "interrupted",
+     "trigger": "collector: batch session differs (runtime restarted) and capture_revision > 0",
+     "evidence": [
+      "backend/teaching.py:117",
+      "backend/teaching.py:121-126",
+      "tests/test_teaching.py:226-235"
+     ]
+    },
+    {
+     "from": "ready|interrupted|discarded|failed",
+     "to": "deleting",
+     "trigger": "DELETE (non-active only)",
+     "evidence": [
+      "backend/teaching.py:786-791"
+     ]
+    },
+    {
+     "from": "preparing|recording|paused|ready|interrupted|discarded|failed",
+     "to": "deleting",
+     "trigger": "expiry: NOT pinned AND expires_at < now() (finalizing excluded)",
+     "evidence": [
+      "backend/teaching.py:1000-1002"
+     ]
+    },
+    {
+     "from": "deleting|discarded",
+     "to": "deleted",
+     "trigger": "maintain purge succeeds (requires runtime reachable)",
+     "evidence": [
+      "backend/teaching.py:1005-1038"
+     ]
+    }
+   ],
+   "notes": "Owner-facing revision increments on owner actions and collector-restart interruption only; collector state syncs are fenced by capture_revision. Unique partial index allows one active (preparing/recording/paused/finalizing) row per bot. No transition from any state is unconditional; 'deleting' is reachable from every state except finalizing/deleting/deleted."
+  },
+  {
+   "id": "sm:teaching-capture",
+   "entity": "volatile runtime capture",
+   "table": null,
+   "column": "Capture.state (in memory)",
+   "states": [
+    {
+     "name": "(none)",
+     "desc": "Fresh adapter process; no session.",
+     "terminal": false
+    },
+    {
+     "name": "paused",
+     "desc": "Initial state of a newly started session (before revision 1 applies) and any pause.",
+     "terminal": false
+    },
+    {
+     "name": "recording",
+     "desc": "Observing accepted input and frames.",
+     "terminal": false
+    },
+    {
+     "name": "ready",
+     "desc": "Finished; batches continue until drained.",
+     "terminal": false
+    },
+    {
+     "name": "discarded",
+     "desc": "Buffer cleared.",
+     "terminal": true
+    }
+   ],
+   "transitions": [
+    {
+     "from": "(none)|ready|discarded (other session)",
+     "to": "paused",
+     "trigger": "start for a new session resets buffer (rejected if another session is recording/paused)",
+     "evidence": [
+      "docker/teaching_capture.py:90-95"
+     ]
+    },
+    {
+     "from": "paused",
+     "to": "recording",
+     "trigger": "start/resume with revision+1",
+     "evidence": [
+      "docker/teaching_capture.py:104-112"
+     ]
+    },
+    {
+     "from": "recording",
+     "to": "paused",
+     "trigger": "pause/private/pause()/disconnect/limit/heartbeat",
+     "evidence": [
+      "docker/teaching_capture.py:113-114",
+      "docker/teaching_capture.py:127-130",
+      "docker/teaching_capture.py:141-143",
+      "docker/teaching_capture.py:162-171"
+     ]
+    },
+    {
+     "from": "recording|paused",
+     "to": "ready",
+     "trigger": "finish",
+     "evidence": [
+      "docker/teaching_capture.py:115"
+     ]
+    },
+    {
+     "from": "any",
+     "to": "discarded",
+     "trigger": "discard (no viewer/epoch check)",
+     "evidence": [
+      "docker/teaching_capture.py:96-99",
+      "docker/teaching_capture.py:116",
+      "docker/teaching_capture.py:119-120"
+     ]
+    },
+    {
+     "from": "any",
+     "to": "(none)",
+     "trigger": "runtime process restart (module-level Capture)",
+     "evidence": [
+      "docker/runtime_api.py:37"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sm:teaching-job",
+   "entity": "draft generation job",
+   "table": "table:teaching_sessions",
+   "column": "job_state",
+   "states": [
+    {
+     "name": "idle",
+     "desc": "Default; also after saving evidence or a draft.",
+     "terminal": false
+    },
+    {
+     "name": "queued",
+     "desc": "Waiting for the single workspace generation slot.",
+     "terminal": false
+    },
+    {
+     "name": "running",
+     "desc": "Provider call in progress (job_started_at set).",
+     "terminal": false
+    },
+    {
+     "name": "completed",
+     "desc": "Draft stored and fenced by token/evidence hash.",
+     "terminal": false
+    },
+    {
+     "name": "failed",
+     "desc": "Provider/validation error, vision check failure or >4 min stale.",
+     "terminal": false
+    },
+    {
+     "name": "cancelled",
+     "desc": "Owner cancel, delete or expiry.",
+     "terminal": false
+    }
+   ],
+   "transitions": [
+    {
+     "from": "idle|completed|failed|cancelled",
+     "to": "queued",
+     "trigger": "POST generate (no-op when queued/running)",
+     "evidence": [
+      "backend/teaching.py:575-597"
+     ]
+    },
+    {
+     "from": "queued",
+     "to": "running",
+     "trigger": "generate_one claims oldest queued ready/interrupted session if nothing running",
+     "evidence": [
+      "backend/teaching.py:836-849"
+     ]
+    },
+    {
+     "from": "running",
+     "to": "completed",
+     "trigger": "valid output and job_token/evidence_hash/state still match",
+     "evidence": [
+      "backend/teaching.py:923-934"
+     ]
+    },
+    {
+     "from": "running",
+     "to": "failed",
+     "trigger": "exception with matching token",
+     "evidence": [
+      "backend/teaching.py:947-957"
+     ]
+    },
+    {
+     "from": "running",
+     "to": "failed",
+     "trigger": "stale reaper: running for > 4 minutes",
+     "evidence": [
+      "backend/teaching.py:833-835"
+     ]
+    },
+    {
+     "from": "any",
+     "to": "cancelled",
+     "trigger": "cancel-generation (from ANY job state, including idle/completed)",
+     "evidence": [
+      "backend/teaching.py:604-607"
+     ]
+    },
+    {
+     "from": "any",
+     "to": "idle",
+     "trigger": "save evidence or save draft (clears job_token, fencing in-flight output)",
+     "evidence": [
+      "backend/teaching.py:564",
+      "backend/teaching.py:625"
+     ]
+    },
+    {
+     "from": "any",
+     "to": "cancelled",
+     "trigger": "DELETE or expiry",
+     "evidence": [
+      "backend/teaching.py:790",
+      "backend/teaching.py:1001"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sm:teaching-test",
+   "entity": "candidate test",
+   "table": "table:teaching_tests",
+   "column": "tasks.status + consulted_at + owner_passed (+ hash currency)",
+   "states": [
+    {
+     "name": "created",
+     "desc": "Task created in DM conversation; candidate visible only to this task.",
+     "terminal": false
+    },
+    {
+     "name": "consulted",
+     "desc": "consulted_at stamped by skill_view consult or prepare.",
+     "terminal": false
+    },
+    {
+     "name": "completed",
+     "desc": "tasks.status completed; reportable only if consulted.",
+     "terminal": false
+    },
+    {
+     "name": "verified_passed",
+     "desc": "owner_passed true with encrypted observations.",
+     "terminal": false
+    },
+    {
+     "name": "verified_failed",
+     "desc": "owner_passed false with observations.",
+     "terminal": false
+    },
+    {
+     "name": "stale",
+     "desc": "draft/evidence/config hash no longer current (computed, not stored).",
+     "terminal": false
+    },
+    {
+     "name": "cancelled",
+     "desc": "Task cancelled because source deleted/expired.",
+     "terminal": true
+    },
+    {
+     "name": "scrubbed",
+     "desc": "Candidate/checks replaced with encrypted empty strings and report cleared after purge.",
+     "terminal": true
+    }
+   ],
+   "transitions": [
+    {
+     "from": "(new)",
+     "to": "created",
+     "trigger": "POST test",
+     "evidence": [
+      "backend/teaching.py:651-676"
+     ]
+    },
+    {
+     "from": "created",
+     "to": "consulted",
+     "trigger": "/internal/teaching/consult or prepare(skills=[candidate])",
+     "evidence": [
+      "backend/app.py:435",
+      "backend/capabilities.py:173",
+      "backend/teaching.py:267-268"
+     ]
+    },
+    {
+     "from": "created|consulted",
+     "to": "completed",
+     "trigger": "task completes through normal execution",
+     "evidence": [
+      "backend/teaching.py:694"
+     ]
+    },
+    {
+     "from": "completed (consulted)",
+     "to": "verified_passed|verified_failed",
+     "trigger": "POST test-report (re-recordable)",
+     "evidence": [
+      "backend/teaching.py:694-699"
+     ]
+    },
+    {
+     "from": "any",
+     "to": "stale",
+     "trigger": "new evidence/draft save or config_hash change; candidate() raises 409",
+     "evidence": [
+      "backend/teaching.py:265-266",
+      "backend/teaching.py:413-415",
+      "backend/teaching.py:723-724"
+     ]
+    },
+    {
+     "from": "created|consulted",
+     "to": "cancelled",
+     "trigger": "DELETE/expiry -> stop_tests",
+     "evidence": [
+      "backend/teaching.py:53-59",
+      "backend/teaching.py:788",
+      "backend/teaching.py:1003-1004"
+     ]
+    },
+    {
+     "from": "any",
+     "to": "scrubbed",
+     "trigger": "maintain purge",
+     "evidence": [
+      "backend/teaching.py:1039-1042"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sm:teaching-publication",
+   "entity": "teaching publication",
+   "table": "table:teaching_publications",
+   "column": "(row existence; response status)",
+   "states": [
+    {
+     "name": "unpublished",
+     "desc": "No row.",
+     "terminal": false
+    },
+    {
+     "name": "refresh_pending",
+     "desc": "Native write verified by readback, knowledge version and configure operation recorded; runtime refresh tracked by sm:bot-operation.",
+     "terminal": true
+    }
+   ],
+   "transitions": [
+    {
+     "from": "unpublished",
+     "to": "refresh_pending",
+     "trigger": "POST publish (owner-verified current consulted test, guard, CAS, readback)",
+     "evidence": [
+      "backend/teaching.py:718-763",
+      "backend/knowledge.py:110-111"
+     ]
+    },
+    {
+     "from": "refresh_pending",
+     "to": "refresh_pending",
+     "trigger": "same idempotency key replays receipt; different key with same (session, draft, test) hits ON CONFLICT DO NOTHING",
+     "evidence": [
+      "backend/teaching.py:748",
+      "backend/migrations/018_teaching.sql:36",
+      "backend/registry.py:183-187"
+     ]
+    }
+   ],
+   "notes": "Status 'refresh_pending' is a constant in the response, not a stored column."
+  }
+ ],
+ "features": [
+  {
+   "id": "feature:teaching",
+   "title": "Demonstration teaching (phase 6.2)",
+   "purpose": "Lets the owner teach a teammate a reusable procedure by demonstrating it on the bot's private computer: capture accepted input and keyframes privately, review and freeze exact evidence, have the bot's vision model draft a SKILL.md, test that exact candidate on fresh inputs in an ordinary task without installing it, verify the actual result, and publish it as a versioned native skill.",
+   "logic": [
+    {
+     "step": "Owner takes over the computer; runtime pauses any capture, drains admitted tools and marks the viewer/epoch input-ready.",
+     "evidence": [
+      "docker/runtime_api.py:398-414"
+     ]
+    },
+    {
+     "step": "POST /teaching checks mine && input_ready via native GET /computer and inserts a 'preparing' session with viewer_hash, lease epoch and encrypted goal (idempotent, one active per bot).",
+     "evidence": [
+      "backend/teaching.py:341-362",
+      "backend/migrations/018_teaching.sql:12"
+     ]
+    },
+    {
+     "step": "Start/resume go to runtime /teaching/control with capture_revision+1; runtime re-checks readiness/epoch, sets recording and takes an initial keyframe.",
+     "evidence": [
+      "backend/teaching.py:477-493",
+      "docker/runtime_api.py:448-462"
+     ]
+    },
+    {
+     "step": "Accepted RFB bytes (after the native RfbClientFilter) are parsed into key/pointer/omitted events and appended only while recording for the bound viewer/epoch and a fresh collector heartbeat; keyframes every >=0.5 s after input.",
+     "evidence": [
+      "docker/runtime_api.py:509-542",
+      "docker/teaching_capture.py:137-160"
+     ]
+    },
+    {
+     "step": "Secure input and panel close call the private barrier: runtime pauses, bumps generation (dropping late frames) and stores an 'omitted private step' marker before keys are sent.",
+     "evidence": [
+      "web/src/Computer.tsx:16",
+      "web/src/Computer.tsx:21-24",
+      "backend/teaching.py:364-378",
+      "docker/teaching_capture.py:118-122"
+     ]
+    },
+    {
+     "step": "Worker maintain loop collects batches every second: contiguous-seq check, Fernet encrypt, put to MinIO, read back, commit chunk + last_seq; collector restart => interrupted.",
+     "evidence": [
+      "backend/teaching.py:114-173",
+      "backend/teaching.py:985-998"
+     ]
+    },
+    {
+     "step": "Finish sets finalizing; ready is set only once the last event is persisted and the capture revision matches.",
+     "evidence": [
+      "backend/teaching.py:489",
+      "backend/teaching.py:164-172"
+     ]
+    },
+    {
+     "step": "Owner reviews timeline/steps and frames, edits text and selects <=12 frames; PUT evidence freezes an encrypted, hashed revision and resets any job.",
+     "evidence": [
+      "backend/teaching.py:519-567",
+      "web/src/Teaching.tsx:44-48"
+     ]
+    },
+    {
+     "step": "Generate queues a job snapshotting provider id/revision/model/evidence_hash; generate_one runs one job workspace-wide, sends a vision canary plus evidence to /chat/completions, validates and stores the draft if still current.",
+     "evidence": [
+      "backend/teaching.py:569-598",
+      "backend/teaching.py:831-957"
+     ]
+    },
+    {
+     "step": "Owner edits and saves the exact draft (strict name/frontmatter validation, draft history).",
+     "evidence": [
+      "backend/teaching.py:610-628",
+      "backend/teaching.py:215-231"
+     ]
+    },
+    {
+     "step": "Owner hands back and runs a test: a DM task with fresh inputs/checks plus a teaching_tests row binding evidence/draft/config hashes.",
+     "evidence": [
+      "backend/teaching.py:630-684",
+      "web/src/Teaching.tsx:50"
+     ]
+    },
+    {
+     "step": "During the test task the candidate appears as an enabled skill only for that task; skill_view/prepare fetch it through the backend and stamp consulted_at.",
+     "evidence": [
+      "backend/capabilities.py:57-63",
+      "plugins/hermbot/__init__.py:96-101",
+      "backend/app.py:425-435"
+     ]
+    },
+    {
+     "step": "Owner records observations and pass/fail for the completed, consulted test.",
+     "evidence": [
+      "backend/teaching.py:686-701"
+     ]
+    },
+    {
+     "step": "Publish rechecks current hashes, consultation and owner pass, runs knowledge.guard/apply (native CAS, version, configure operation), verifies native readback and records provenance; response 'refresh_pending'.",
+     "evidence": [
+      "backend/teaching.py:703-770"
+     ]
+    },
+    {
+     "step": "Retention: unpinned sessions expire after 7 days; delete/expiry cancels tests, discards the runtime tail and purges objects, chunks, revisions and encrypted test data; orphan objects are GC'd.",
+     "evidence": [
+      "backend/teaching.py:782-793",
+      "backend/teaching.py:999-1046",
+      "backend/teaching.py:960-982",
+      "backend/migrations/018_teaching.sql:9"
+     ]
+    }
+   ],
+   "components": [
+    "file:backend/teaching.py",
+    "file:backend/migrations/018_teaching.sql",
+    "file:docker/teaching_capture.py",
+    "file:web/src/Teaching.tsx",
+    "file:plan/PHASE6-TEACHING.md",
+    "file:plan/PHASE6-TEACHING-REVIEW.md",
+    "file:tests/test_teaching.py",
+    "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching",
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching",
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching-private-input",
+    "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}",
+    "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/revisions",
+    "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/revisions/{digest}",
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/control",
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/private",
+    "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/timeline",
+    "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/frames/{seq}",
+    "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/evidence",
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/generate",
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/cancel-generation",
+    "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/draft",
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test",
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test-report",
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/publish",
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/keep",
+    "route:backend/teaching.py:DELETE /api/v1/bots/{bot_id}/teaching/{session_id}",
+    "route:backend/app.py:POST /internal/teaching/consult",
+    "route:docker/runtime_api.py:POST /teaching/control",
+    "route:docker/runtime_api.py:GET /teaching/batch",
+    "table:teaching_sessions",
+    "table:teaching_chunks",
+    "table:teaching_revisions",
+    "table:teaching_tests",
+    "table:teaching_publications",
+    "fn:backend/teaching.py::collect",
+    "fn:backend/teaching.py::maintain",
+    "fn:backend/teaching.py::generate_one",
+    "fn:backend/teaching.py::candidate",
+    "fn:backend/teaching.py::config_hash",
+    "fn:backend/teaching.py::validate_skill",
+    "fn:backend/teaching.py::summarize",
+    "fn:backend/teaching.py::garbage_collect",
+    "fn:backend/teaching.py::run",
+    "fn:docker/teaching_capture.py::AcceptedRFB",
+    "fn:docker/teaching_capture.py::Capture",
+    "fn:docker/runtime_api.py::teaching_control",
+    "fn:docker/runtime_api.py::teaching_batch",
+    "fn:docker/runtime_api.py::teaching_frame",
+    "fn:docker/runtime_api.py::screen",
+    "fn:backend/app.py::teaching_consult",
+    "fn:backend/capabilities.py::manifest",
+    "fn:backend/capabilities.py::prepare",
+    "fn:plugins/hermbot/__init__.py::admitted_execution",
+    "fn:backend/knowledge.py::apply",
+    "fn:backend/knowledge.py::guard",
+    "file:web/src/Computer.tsx",
+    "file:web/src/Knowledge.tsx",
+    "bucket:hermbot",
+    "actor:model-provider",
+    "actor:owner",
+    "svc:worker",
+    "svc:hermbot-bot-*"
+   ],
+   "data": [
+    {
+     "text": "teaching_sessions: owner revision, capture_revision, viewer_hash/epoch binding, state/reason, last_seq/retained_bytes, Fernet info/evidence/draft, evidence_hash/draft_hash/skill_name, job_state/job_token/job_started_at/job_provider, error, pinned, expires_at.",
+     "evidence": [
+      "backend/migrations/018_teaching.sql:1-11"
+     ]
+    },
+    {
+     "text": "teaching_chunks: (session_id, first_seq) PK, last_seq, unique object_key, sha256 of plaintext, size.",
+     "evidence": [
+      "backend/migrations/018_teaching.sql:13-17"
+     ]
+    },
+    {
+     "text": "teaching_revisions: (session_id, kind evidence|draft, sha256) PK, data_encrypted.",
+     "evidence": [
+      "backend/migrations/018_teaching.sql:18-23"
+     ]
+    },
+    {
+     "text": "teaching_tests: task_id unique (cascade with tasks), evidence/draft/config hashes, candidate/checks/report encrypted, consulted_at, owner_passed.",
+     "evidence": [
+      "backend/migrations/018_teaching.sql:24-31"
+     ]
+    },
+    {
+     "text": "teaching_publications: session/test/knowledge_version links plus evidence/draft hashes, UNIQUE(session_id, draft_hash, test_id).",
+     "evidence": [
+      "backend/migrations/018_teaching.sql:32-37"
+     ]
+    },
+    {
+     "text": "MinIO bucket hermbot, prefix teaching/<session>/<first_seq>-<sha256>: Fernet ciphertext of JSON event arrays (frames as data URLs).",
+     "evidence": [
+      "backend/teaching.py:144-153"
+     ]
+    },
+    {
+     "text": "Touches tasks (test tasks, cancellation), knowledge_versions/bots/bot_operations (publish), owner_receipts (idempotency), providers (generation), conversations (DM).",
+     "evidence": [
+      "backend/teaching.py:647-661",
+      "backend/knowledge.py:91-111",
+      "backend/registry.py:181-190",
+      "backend/teaching.py:844-846"
+     ]
+    },
+    {
+     "text": "Volatile runtime buffer: events with seq, generation, monotonic time, geometry; frames with image data URL, sha256 and dimensions.",
+     "evidence": [
+      "docker/teaching_capture.py:132",
+      "docker/teaching_capture.py:187-196"
+     ]
+    }
+   ],
+   "state_machines": [
+    "sm:teaching-session",
+    "sm:teaching-capture",
+    "sm:teaching-job",
+    "sm:teaching-test",
+    "sm:teaching-publication"
+   ],
+   "decisions": [
+    {
+     "decision": "Record a structured action timeline plus selected keyframes, not continuous video.",
+     "why": "Video is unnecessary to teach/inspect and adds storage/transcoding; keyframes plus events suffice.",
+     "alternatives": "Continuous screen video; DOM/ARIA capture from the browser.",
+     "tradeoffs": "Cheaper and reviewable, but frames are periodic snapshots (0.2 s after input, <=2/s) not proof of outcome; no DOM semantics.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:9",
+      "plan/PHASE6-TEACHING.md:96-98",
+      "plan/PHASE6-TEACHING.md:123"
+     ]
+    },
+    {
+     "decision": "Observe the accepted RFB stream after the unchanged native RfbClientFilter, in a Hermbot-owned parser.",
+     "why": "Only accepted input should be recorded; the native gate stays the security authority; WebSocket packets are not actions.",
+     "alternatives": "Record in the browser/noVNC; patch the native filter; use a third-party recorder.",
+     "tradeoffs": "Keeps Hermes unmodified, but the parser must track protocol details and raises (pauses) on unknown messages.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:21",
+      "plan/PHASE6-TEACHING.md:90-92",
+      "plan/PHASE6-TEACHING-REVIEW.md:8",
+      "docker/runtime_api.py:516-535"
+     ]
+    },
+    {
+     "decision": "Explicit server-acknowledged private-input barrier before Secure input typing; capture stays paused until explicit resume.",
+     "why": "Secure input emits ordinary VNC keys that a recorder cannot distinguish; a frontend indicator is insufficient.",
+     "alternatives": "Password-field detection in pixels; OCR redaction after capture.",
+     "tradeoffs": "Reliable for the Secure input path only; secrets typed through the normal keyboard while recording are captured.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:23",
+      "plan/PHASE6-TEACHING.md:102-107",
+      "web/src/Computer.tsx:21-24"
+     ]
+    },
+    {
+     "decision": "Fence capture by viewer hash, lease epoch, revision and generation.",
+     "why": "Prevent stale tabs/collectors or a new owner session from appending to an older recording and drop late frames across privacy transitions.",
+     "alternatives": "Single global recording flag.",
+     "tradeoffs": "A new takeover epoch or new login identity cannot resume the old session (finish/discard only).",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:57",
+      "plan/PHASE6-TEACHING-REVIEW.md:22-23",
+      "docker/teaching_capture.py:96-105",
+      "docker/teaching_capture.py:181"
+     ]
+    },
+    {
+     "decision": "Volatile runtime buffer with ack-based durable collection by the worker; ready only after the sealed tail is persisted.",
+     "why": "Avoid plaintext fallback in bot workspaces; database must not advertise missing chunks; liveness must reflect committed progress.",
+     "alternatives": "Runtime writes directly to storage; push from runtime.",
+     "tradeoffs": "Runtime restart loses the unacknowledged tail (interrupted); collector outage pauses recording after 15 s.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:119-121",
+      "plan/PHASE6-TEACHING-REVIEW.md:21",
+      "docker/teaching_capture.py:141",
+      "docker/teaching_capture.py:200-201",
+      "backend/teaching.py:164-169"
+     ]
+    },
+    {
+     "decision": "Stage encrypted object, read it back, then commit manifest; GC unreferenced objects separately.",
+     "why": "Dual-write safety: a manifest must never point at missing/corrupt data.",
+     "alternatives": "Transactional outbox; manifest first.",
+     "tradeoffs": "Orphan objects possible until GC (24 h or session deletion).",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:121",
+      "backend/teaching.py:154-163",
+      "backend/teaching.py:960-982"
+     ]
+    },
+    {
+     "decision": "Application-level Fernet encryption (CONFIG_ENCRYPTION_KEY) for chunks and all private columns; not Library artifacts.",
+     "why": "Keep recordings owner-private, outside automatic indexing/sharing.",
+     "alternatives": "MinIO server-side encryption; Library artifacts with ACLs.",
+     "tradeoffs": "Single workspace key; plaintext still exists in tasks.input for test prompts and in model provider requests.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:117",
+      "plan/PHASE6-TEACHING-REVIEW.md:10",
+      "backend/teaching.py:27-32"
+     ]
+    },
+    {
+     "decision": "Owner freezes exact reviewed evidence; only that text and selected frames go to the provider.",
+     "why": "OpenAdapt-style exact approved upload bytes; edits revoke prior processing/test binding.",
+     "alternatives": "Send the whole recording; automatic redaction.",
+     "tradeoffs": "Owner effort; frames may still contain secrets that review misses.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:42",
+      "plan/PHASE6-TEACHING.md:110",
+      "backend/teaching.py:557-566",
+      "web/src/Teaching.tsx:47"
+     ]
+    },
+    {
+     "decision": "Vision canary image with random colour bands, accepting 5/6 matches.",
+     "why": "An OpenAI-compatible text endpoint does not prove image support; verify image processing without demanding perfect colour naming.",
+     "alternatives": "Trust provider metadata; separate probe.",
+     "tradeoffs": "Extra image per request; a lucky/partial reader passes; does not verify procedure accuracy.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:129",
+      "plan/PHASE6-TEACHING-REVIEW.md:41",
+      "backend/teaching.py:798-828",
+      "backend/teaching.py:903-909"
+     ]
+    },
+    {
+     "decision": "One generation job at a time for the workspace via advisory lock + running check.",
+     "why": "Plan's proposed starting limit for the local workspace.",
+     "alternatives": "Per-bot concurrency.",
+     "tradeoffs": "Head-of-line blocking up to 120 s per job (4 min reaper).",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:123",
+      "backend/teaching.py:836-838"
+     ]
+    },
+    {
+     "decision": "Task-scoped candidate exposed through capabilities + plugin middleware + backend consult, not by installing/enabling the skill.",
+     "why": "Normal native skill reads use globally installed files; temporary installation would affect other tasks.",
+     "alternatives": "Temporarily install candidate; paste draft into the prompt.",
+     "tradeoffs": "Candidate content also travels in the capability manifest/context; consultation proof relies on consulted_at.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:150-152",
+      "plan/PHASE6-TEACHING-REVIEW.md:24",
+      "backend/capabilities.py:57-63",
+      "plugins/hermbot/__init__.py:96-101"
+     ]
+    },
+    {
+     "decision": "Bind tests to evidence hash, draft hash and a material configuration hash; publication requires all current.",
+     "why": "Earlier passed tests could authorize changed inputs (review finding).",
+     "alternatives": "Bind to draft only.",
+     "tradeoffs": "Any runtime/provider/connection/config change makes tests stale and blocks an in-flight test task (candidate() raises 409).",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:25",
+      "backend/teaching.py:234-253",
+      "backend/teaching.py:718-728"
+     ]
+    },
+    {
+     "decision": "Reuse knowledge.guard/apply with native readback for publication.",
+     "why": "Native CAS, immutable knowledge_versions and queued runtime refresh already exist.",
+     "alternatives": "Separate teaching install path.",
+     "tradeoffs": "Requires idle bot and handed-back computer; publish without enable actively removes the skill from enabled_skills.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:166",
+      "backend/teaching.py:729-746",
+      "backend/knowledge.py:82-83"
+     ]
+    },
+    {
+     "decision": "Expected-revision CAS on every owner mutation plus Idempotency-Key receipts on start/control/test/publish.",
+     "why": "UI refresh/reconnect must not create duplicate recordings/tests/publications.",
+     "alternatives": "Last-write-wins.",
+     "tradeoffs": "Frequent 409 'Reload' errors during polling-driven UI; owner_receipts growth (one per private barrier).",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:82",
+      "plan/PHASE6-TEACHING.md:187",
+      "backend/teaching.py:41-42",
+      "backend/teaching.py:360-362",
+      "backend/teaching.py:516"
+     ]
+    },
+    {
+     "decision": "7-day default retention with Keep pin; delete/expiry purge via retrying background job; tombstone rows.",
+     "why": "Plan's retention defaults; published skill must not depend on recording.",
+     "alternatives": "Immediate synchronous purge.",
+     "tradeoffs": "Purge depends on reaching the bot runtime; tombstones keep hashes/skill_name.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:125",
+      "backend/teaching.py:999-1044"
+     ]
+    }
+   ],
+   "invariants": [
+    {
+     "text": "At most one active capture session per bot.",
+     "enforcement": "Partial unique index on bot_id for active states plus an explicit check under the bot lock at creation.",
+     "evidence": [
+      "backend/migrations/018_teaching.sql:12",
+      "backend/teaching.py:348-353"
+     ]
+    },
+    {
+     "text": "Only accepted input from the bound viewer/epoch while recording is retained.",
+     "enforcement": "Observer runs on gate output; Capture.observe checks state, viewer, admitted epoch and heartbeat under capture.lock.",
+     "evidence": [
+      "docker/runtime_api.py:526-535",
+      "docker/teaching_capture.py:139-143"
+     ]
+    },
+    {
+     "text": "No frame from an earlier generation (e.g. before a privacy pause) is retained.",
+     "enforcement": "Every transition/pause bumps generation; frame() appends only if generation matches and state is recording.",
+     "evidence": [
+      "docker/teaching_capture.py:108",
+      "docker/teaching_capture.py:166",
+      "docker/teaching_capture.py:181"
+     ]
+    },
+    {
+     "text": "Clipboard contents are never retained.",
+     "enforcement": "ClientCutText parsed and replaced by an 'omitted' event.",
+     "evidence": [
+      "docker/teaching_capture.py:29",
+      "docker/teaching_capture.py:63-64",
+      "tests/test_teaching.py:100-117"
+     ]
+    },
+    {
+     "text": "Retained sequence is contiguous; ready only after the whole tail persisted.",
+     "enforcement": "Seq gap raises 502; ready state applied only when last event seq == runtime seq and revisions match.",
+     "evidence": [
+      "backend/teaching.py:142-143",
+      "backend/teaching.py:165-169"
+     ]
+    },
+    {
+     "text": "Manifest rows only reference verified objects.",
+     "enforcement": "read_chunk after put before INSERT.",
+     "evidence": [
+      "backend/teaching.py:154-163"
+     ]
+    },
+    {
+     "text": "Private payloads at rest are encrypted.",
+     "enforcement": "encode()/encrypt() for columns; cipher().encrypt for objects.",
+     "evidence": [
+      "backend/teaching.py:27-28",
+      "backend/teaching.py:151",
+      "tests/test_teaching.py:171-172",
+      "tests/test_teaching.py:186"
+     ]
+    },
+    {
+     "text": "Generation output is applied only if still requested for the same evidence.",
+     "enforcement": "UPDATE guarded by job_token, evidence_hash and state.",
+     "evidence": [
+      "backend/teaching.py:925"
+     ]
+    },
+    {
+     "text": "A candidate is visible only to its own test task (not peers) and only while configuration is unchanged.",
+     "enforcement": "candidate() joins by task_id and bot; manifest skips peer views; config_hash check.",
+     "evidence": [
+      "backend/teaching.py:259-266",
+      "backend/capabilities.py:58"
+     ]
+    },
+    {
+     "text": "Publication only for the current consulted, completed, owner-verified candidate with matching native CAS and readback.",
+     "enforcement": "publish() checks, knowledge.apply expected_hash, readback sha compare.",
+     "evidence": [
+      "backend/teaching.py:718-746"
+     ]
+    },
+    {
+     "text": "Owner mutations are serialized per session.",
+     "enforcement": "require() takes FOR UPDATE and compares expected revision.",
+     "evidence": [
+      "backend/teaching.py:36-42"
+     ]
+    },
+    {
+     "text": "Capture control at the runtime is idempotent per revision.",
+     "enforcement": "Same revision + same action returns status; different action 409; non-consecutive revision 409.",
+     "evidence": [
+      "docker/teaching_capture.py:100-105",
+      "tests/test_teaching.py:136-141"
+     ]
+    }
+   ],
+   "failures": [
+    {
+     "text": "Runtime/adapter restart loses the volatile buffer; collector sees another/no session and marks interrupted; retained prefix remains reviewable.",
+     "evidence": [
+      "backend/teaching.py:121-126",
+      "plan/PHASE6-TEACHING-REVIEW.md:20"
+     ]
+    },
+    {
+     "text": "Storage/DB failure in collect: maintain records an error; runtime heartbeat lapses after 15 s so next input pauses capture.",
+     "evidence": [
+      "backend/teaching.py:993-998",
+      "docker/teaching_capture.py:141-143",
+      "tests/test_teaching.py:433-446"
+     ]
+    },
+    {
+     "text": "Unsupported RFB message: capture pauses ('unsupported observation'); the parser stays wedged for that connection until reconnect.",
+     "evidence": [
+      "docker/runtime_api.py:536-537",
+      "docker/teaching_capture.py:34-35"
+     ]
+    },
+    {
+     "text": "Screen capture failure pauses capture with 'retained prefix only'.",
+     "evidence": [
+      "docker/runtime_api.py:481-482"
+     ]
+    },
+    {
+     "text": "Buffer limits (8 MiB unacked / 256 MiB total) pause capture.",
+     "evidence": [
+      "docker/teaching_capture.py:127-130"
+     ]
+    },
+    {
+     "text": "Provider failure/invalid output: one repair turn, max_tokens->max_completion_tokens retry on structured 400, 100 KB/120 s caps; job failed with visible reason; stale running jobs reaped after 4 min.",
+     "evidence": [
+      "backend/teaching.py:871-957",
+      "backend/teaching.py:833-835"
+     ]
+    },
+    {
+     "text": "Configuration change during a test: candidate() raises 409 wherever manifest is computed, so the test task's context/tool calls fail; owner must prepare a fresh test.",
+     "evidence": [
+      "backend/teaching.py:265-266",
+      "backend/app.py:465"
+     ]
+    },
+    {
+     "text": "Native readback mismatch on publish returns 502 and rolls back DB changes while the native file may already be written; a retry replays (same-content write returns replayed).",
+     "evidence": [
+      "backend/teaching.py:742-746",
+      "docker/runtime_api.py:91-93"
+     ]
+    },
+    {
+     "text": "Deletion/expiry purge requires a reachable runtime: native.request raises (503) before object deletion and the bare except swallows it, so rows stay 'deleting' and objects persist until the runtime is reachable.",
+     "evidence": [
+      "backend/teaching.py:1008-1044",
+      "backend/native.py:32-35"
+     ]
+    },
+    {
+     "text": "A session left in 'finalizing' while the runtime is unreachable never expires (finalizing excluded from expiry) and can only be discarded through the runtime.",
+     "evidence": [
+      "backend/teaching.py:1001",
+      "backend/teaching.py:477"
+     ]
+    },
+    {
+     "text": "Unpinning (Use seven-day expiry) does not reset expires_at, so an older session expires on the next tick.",
+     "evidence": [
+      "backend/teaching.py:776-779",
+      "web/src/Teaching.tsx:56"
+     ]
+    }
+   ],
+   "security": [
+    {
+     "text": "Private input: Secure input waits for the server-acknowledged barrier and aborts if refused; barrier pauses capture, bumps generation and stores only a generic 'private step' marker (no value, length or keys).",
+     "evidence": [
+      "web/src/Computer.tsx:21-24",
+      "docker/teaching_capture.py:118-122",
+      "tests/test_teaching.py:120-133"
+     ]
+    },
+    {
+     "text": "Ordinary keyboard typing while recording is retained as keysyms and summarized into 'Observed typed keys' text that pre-fills the evidence box; unless the owner edits it, typed values are sent to the provider.",
+     "evidence": [
+      "docker/teaching_capture.py:40-43",
+      "backend/teaching.py:180-196",
+      "web/src/Teaching.tsx:27"
+     ]
+    },
+    {
+     "text": "Secrets in frames: full-screen thumbnails (1440x1000) can contain secrets; no automatic redaction; UI warns owners to exclude frames.",
+     "evidence": [
+      "docker/runtime_api.py:476",
+      "web/src/Teaching.tsx:47",
+      "plan/PHASE6-TEACHING.md:113"
+     ]
+    },
+    {
+     "text": "Clipboard payloads are dropped at parse time.",
+     "evidence": [
+      "docker/teaching_capture.py:63-64"
+     ]
+    },
+    {
+     "text": "Encryption at rest with Fernet (CONFIG_ENCRYPTION_KEY) for goal, evidence, drafts, revisions, candidate, checks, reports and MinIO chunks; frame endpoint sends Cache-Control: no-store.",
+     "evidence": [
+      "backend/teaching.py:27-32",
+      "backend/teaching.py:151",
+      "backend/teaching.py:539"
+     ]
+    },
+    {
+     "text": "Test inputs and checks are also embedded in the plaintext test task prompt (tasks.input), so checks_encrypted does not keep them private.",
+     "evidence": [
+      "backend/teaching.py:650",
+      "backend/service.py:156"
+     ]
+    },
+    {
+     "text": "Retention/expiry: 7-day default, Keep pin, delete/expiry purge objects, chunks, revisions and encrypted test fields; tombstone keeps hashes, skill_name, reason/error; published skills, test conversations and provider-side data remain (stated in UI).",
+     "evidence": [
+      "backend/migrations/018_teaching.sql:9",
+      "backend/teaching.py:1000-1042",
+      "web/src/Teaching.tsx:56"
+     ]
+    },
+    {
+     "text": "Garbage collection deletes unreferenced teaching/ objects for deleted sessions or older than 24 h, at most once per minute.",
+     "evidence": [
+      "backend/teaching.py:960-982"
+     ]
+    },
+    {
+     "text": "Provider data: reviewed text, a canary and selected frames go to the bot provider's base_url with its decrypted bearer secret; no redirects; responses capped at 100 KB; prompt marks evidence as non-authoritative and forbids secrets/coordinates.",
+     "evidence": [
+      "backend/teaching.py:856-882"
+     ]
+    },
+    {
+     "text": "All owner routes require owner auth and bot-scoped session lookup; another bot's path returns 404; unauthenticated 401.",
+     "evidence": [
+      "backend/teaching.py:319",
+      "backend/teaching.py:36-40",
+      "tests/test_teaching.py:174-175"
+     ]
+    },
+    {
+     "text": "Consult endpoint requires the bot's own credential, an active attempt for the runtime session, matching sha256 and skill_view admission.",
+     "evidence": [
+      "backend/app.py:425-435"
+     ]
+    },
+    {
+     "text": "Demonstration text and frames are declared untrusted evidence in the generation prompt; generation has no tools.",
+     "evidence": [
+      "backend/teaching.py:859",
+      "plan/PHASE6-TEACHING.md:111"
+     ]
+    }
+   ],
+   "reimplement": {
+    "order": [
+     "Migration: sessions (revision, capture_revision, viewer/epoch, state, encrypted payload columns, job fields, retention) with partial unique active index; chunks, revisions, tests, publications.",
+     "Runtime: accepted-RFB parser on filtered bytes and a lock-protected Capture with revision/generation fencing, limits, heartbeat and ack-based batch; /teaching/control and /teaching/batch; keyframe helper; pause on takeover/handback/disconnect.",
+     "Backend session routes: start (input-ready check), control (idempotent, CAS, local discard before collector), private barrier.",
+     "Worker collector: ack poll, encrypt, stage, read back, commit manifest, interrupted on session mismatch; ready only after tail.",
+     "Review: timeline/frames, evidence freeze with size/frame limits and revisions.",
+     "Generation job: queue snapshot, single-slot worker, vision canary, schema validation/repair, token fencing, stale reaper.",
+     "Draft save/validation and history.",
+     "Candidate tests: task creation, config hash, manifest injection, plugin consult route, consulted stamp.",
+     "Owner report and publication via knowledge guard/apply, readback, provenance.",
+     "Retention: keep, delete, expiry, purge, GC; UI panel in Computer and Memory & skills; Secure input barrier."
+    ],
+    "model": [
+     "teaching_sessions(id, bot_id, revision, capture_revision, viewer_hash, epoch, state, reason, last_seq, retained_bytes, info_encrypted, evidence_encrypted, evidence_hash, draft_encrypted, draft_hash, skill_name, job_state, job_token, job_started_at, job_provider, error, pinned, expires_at)",
+     "teaching_chunks(session_id, first_seq, last_seq, object_key, sha256, size)",
+     "teaching_revisions(session_id, kind, sha256, data_encrypted)",
+     "teaching_tests(id, session_id, task_id, evidence_hash, draft_hash, candidate_encrypted, skill_name, config_hash, checks_encrypted, consulted_at, owner_passed, report_encrypted)",
+     "teaching_publications(id, session_id, test_id, knowledge_version_id, evidence_hash, draft_hash)"
+    ],
+    "interfaces": [
+     "Owner REST: /api/v1/bots/{bot_id}/teaching[/{session_id}[/control|/private|/timeline|/frames/{seq}|/evidence|/generate|/cancel-generation|/draft|/test|/test-report|/publish|/keep|/revisions[/{digest}]]] and /teaching-private-input",
+     "Runtime: POST /teaching/control {session, action, viewer, epoch, revision}; GET /teaching/batch?ack",
+     "Internal: POST /internal/teaching/consult {session_id, sha256} (bot bearer)",
+     "teaching.candidate(conn, task, consulted=False) used by capabilities.manifest/prepare",
+     "teaching.run(stop) in worker"
+    ],
+    "pitfalls": [
+     {
+      "text": "Register the teaching router before the generic /bots/{bot_id}/{action} router.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:19",
+       "plan/ISSUES.md:907-908",
+       "backend/app.py:580-581"
+      ]
+     },
+     {
+      "text": "Do not collect a prepared session (capture_revision 0) or it is marked interrupted before Start.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:20",
+       "backend/teaching.py:117"
+      ]
+     },
+     {
+      "text": "Refresh the liveness heartbeat only on acknowledged progress, not on every poll.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:21",
+       "docker/teaching_capture.py:200-201"
+      ]
+     },
+     {
+      "text": "Fence collector state writes by capture revision so a stale pre-finish batch cannot overwrite newer state.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:22",
+       "backend/teaching.py:138",
+       "backend/teaching.py:167"
+      ]
+     },
+     {
+      "text": "Serialize observation with privacy transitions and fence async frames by generation.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:23",
+       "docker/runtime_api.py:526",
+       "docker/teaching_capture.py:181"
+      ]
+     },
+     {
+      "text": "Never temporarily install a candidate; use task-scoped consultation.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:24",
+       "plan/PHASE6-TEACHING.md:152"
+      ]
+     },
+     {
+      "text": "Bind tests to evidence/draft/config hashes and require consultation for publication.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:25",
+       "plan/ISSUES.md:908"
+      ]
+     },
+     {
+      "text": "Disconnect/read-only viewers must not pause the owner's recording.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:26",
+       "docker/teaching_capture.py:168-171",
+       "tests/test_teaching.py:571-578"
+      ]
+     },
+     {
+      "text": "Cancel referenced tests before deleting source.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:27",
+       "backend/teaching.py:788"
+      ]
+     },
+     {
+      "text": "Secure input must type into the same RFB connection it fenced.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:28",
+       "web/src/Computer.tsx:23"
+      ]
+     },
+     {
+      "text": "Iterate chunks; do not load whole recordings for a frame.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:29",
+       "backend/teaching.py:101-107"
+      ]
+     },
+     {
+      "text": "Handle structured max_tokens rejection with max_completion_tokens; an HTTP 400 is not proof of missing image support.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:31",
+       "plan/ISSUES.md:908",
+       "backend/teaching.py:888-895"
+      ]
+     },
+     {
+      "text": "Hermes caches skills: a native write is not ready until the runtime refresh completes.",
+      "evidence": [
+       "plan/ISSUES.md:112",
+       "backend/teaching.py:762"
+      ]
+     },
+     {
+      "text": "skill_view must never preprocess/run templates; candidate bodies must not leak beyond the task.",
+      "evidence": [
+       "plan/ISSUES.md:303",
+       "plugins/hermbot/__init__.py:102-106"
+      ]
+     },
+     {
+      "text": "Chat-borne secrets propagate into task input/attempts; keep private data out of test prompts.",
+      "evidence": [
+       "plan/ISSUES.md:1177",
+       "backend/teaching.py:650"
+      ]
+     },
+     {
+      "text": "Takeover must drain admitted tools before input readiness; recording start depends on it.",
+      "evidence": [
+       "plan/ISSUES.md:115",
+       "backend/teaching.py:343-344"
+      ]
+     }
+    ]
+   },
+   "tests": {
+    "covered": [
+     {
+      "text": "Parser handles 1/2/7/1000-byte fragmentation, drops clipboard payload, rejects unknown types.",
+      "evidence": [
+       "tests/test_teaching.py:100-117"
+      ]
+     },
+     {
+      "text": "Privacy barrier drops late frames and post-private keys; epoch change pauses.",
+      "evidence": [
+       "tests/test_teaching.py:120-133"
+      ]
+     },
+     {
+      "text": "Runtime control idempotency, revision skip rejection, drag boundary coalescing and buffer-limit pause.",
+      "evidence": [
+       "tests/test_teaching.py:136-151"
+      ]
+     },
+     {
+      "text": "Start idempotency/409 on changed body; start control; teaching-private-input pauses; stale revision 409; goal encrypted; cross-bot 404; unauthenticated 401.",
+      "evidence": [
+       "tests/test_teaching.py:154-175"
+      ]
+     },
+     {
+      "text": "Encrypted persistence, duplicate poll safety, finish->ready, frame selection validation, evidence freeze, delete purge of objects.",
+      "evidence": [
+       "tests/test_teaching.py:177-223"
+      ]
+     },
+     {
+      "text": "Collector restart marks interrupted.",
+      "evidence": [
+       "tests/test_teaching.py:226-235"
+      ]
+     },
+     {
+      "text": "Candidate visible only to its task (not other tasks/peers), not enabled, no knowledge version; consulted stamp; report requires completion; config change fences candidate.",
+      "evidence": [
+       "tests/test_teaching.py:238-299"
+      ]
+     },
+     {
+      "text": "Draft name/frontmatter validation; cancel clears job token.",
+      "evidence": [
+       "tests/test_teaching.py:302-334"
+      ]
+     },
+     {
+      "text": "Generation with vision canary and exact reviewed text; encrypted draft stored.",
+      "evidence": [
+       "tests/test_teaching.py:337-399"
+      ]
+     },
+     {
+      "text": "Publish rejects unknown/unverified tests.",
+      "evidence": [
+       "tests/test_teaching.py:402-410"
+      ]
+     },
+     {
+      "text": "Prepared session not collected; local discard then purge.",
+      "evidence": [
+       "tests/test_teaching.py:413-430"
+      ]
+     },
+     {
+      "text": "Heartbeat not refreshed by failed persistence; capture pauses.",
+      "evidence": [
+       "tests/test_teaching.py:433-446"
+      ]
+     },
+     {
+      "text": "Step summary coalesces typing and flags shortcuts/private markers.",
+      "evidence": [
+       "tests/test_teaching.py:449-460"
+      ]
+     },
+     {
+      "text": "Exact publication: stale evidence 409, native CAS write, idempotent replay, refresh_pending, one publication and version, not enabled.",
+      "evidence": [
+       "tests/test_teaching.py:463-541"
+      ]
+     },
+     {
+      "text": "Deleting source cancels active test task and hides candidate.",
+      "evidence": [
+       "tests/test_teaching.py:544-568"
+      ]
+     },
+     {
+      "text": "Read-only viewer activity/disconnect does not pause the owner's recording.",
+      "evidence": [
+       "tests/test_teaching.py:571-578"
+      ]
+     }
+    ],
+    "gaps": [
+     "No test for expiry (expires_at) or the pinned/keep toggle.",
+     "No test of the real runtime routes (/teaching/control, /teaching/batch, teaching_frame) or the RFB relay integration; native.request is monkeypatched.",
+     "No test of generate_one failure paths (repair turn, max_tokens fallback, vision check failure, stale reaper, provider change).",
+     "No test of the /internal/teaching/consult route or plugin skill_view branch end to end.",
+     "No test of deletion when the runtime is unreachable, or of garbage_collect age logic (fake objects lack LastModified).",
+     "No test that publish with enable=false on an already enabled skill disables it.",
+     "No UI tests in the repo for Teaching.tsx (only fixture evidence under test-results).",
+     "Real owner demonstration and native installed-skill use are pending."
+    ]
+   },
+   "limits": [
+    {
+     "text": "Real owner acceptance not done; milestone unchecked.",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:3",
+      "plan/PHASE6-TEACHING-REVIEW.md:45-50",
+      "plan/ISSUES.md:910"
+     ]
+    },
+    {
+     "text": "At most 12 frames and 6 MiB of reviewed evidence per generation; 50 KB draft; 100 KB provider response; 120 s deadline.",
+     "evidence": [
+      "backend/teaching.py:292",
+      "backend/teaching.py:558-559",
+      "backend/teaching.py:297",
+      "backend/teaching.py:871",
+      "backend/teaching.py:886"
+     ]
+    },
+    {
+     "text": "Only OpenAI-compatible /chat/completions providers with image_url input are supported.",
+     "evidence": [
+      "backend/teaching.py:862-879"
+     ]
+    },
+    {
+     "text": "Capture covers keys, pointer and keyframes only; no IME/composition semantics, no DOM; coordinates are evidence only.",
+     "evidence": [
+      "backend/teaching.py:176-212",
+      "plan/PHASE6-TEACHING.md:94"
+     ]
+    },
+    {
+     "text": "One recording per bot runtime and one generation job per workspace.",
+     "evidence": [
+      "backend/migrations/018_teaching.sql:12",
+      "backend/teaching.py:836-838"
+     ]
+    },
+    {
+     "text": "Listing shows only the 50 newest sessions.",
+     "evidence": [
+      "backend/teaching.py:328"
+     ]
+    },
+    {
+     "text": "Candidate is SKILL.md only; file_path requests are refused.",
+     "evidence": [
+      "plugins/hermbot/__init__.py:99-100"
+     ]
+    },
+    {
+     "text": "Recording cannot be resumed after a new takeover epoch or a different owner credential (finish/discard only).",
+     "evidence": [
+      "backend/teaching.py:459-460",
+      "docker/teaching_capture.py:96-99"
+     ]
+    },
+    {
+     "text": "Retained-size display uses formatFileSize which tops out at KB.",
+     "evidence": [
+      "web/src/Teaching.tsx:42",
+      "web/src/api.ts:39"
+     ]
+    }
+   ]
+  }
+ ],
+ "feature_fragments": [
+  {
+   "id": "feature:computer",
+   "logic": [
+    {
+     "step": "Takeover and handback now pause any teaching capture before changing the lease.",
+     "evidence": [
+      "docker/runtime_api.py:390",
+      "docker/runtime_api.py:399"
+     ]
+    },
+    {
+     "step": "The RFB relay records the admitted lease epoch and feeds filtered bytes to the teaching observer under capture.lock; disconnect pauses only the recording viewer.",
+     "evidence": [
+      "docker/runtime_api.py:509-542",
+      "docker/runtime_api.py:559"
+     ]
+    },
+    {
+     "step": "Secure input first calls the teaching-private-input barrier and types only into the same, still-current RFB connection; closing the panel requests a privacy pause.",
+     "evidence": [
+      "web/src/Computer.tsx:16",
+      "web/src/Computer.tsx:21-24"
+     ]
+    },
+    {
+     "step": "The computer panel embeds the Teaching panel.",
+     "evidence": [
+      "web/src/Computer.tsx:40"
+     ]
+    }
+   ],
+   "components": [
+    "file:docker/teaching_capture.py",
+    "file:web/src/Teaching.tsx",
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching-private-input",
+    "route:docker/runtime_api.py:POST /teaching/control",
+    "route:docker/runtime_api.py:GET /teaching/batch"
+   ],
+   "security": [
+    {
+     "text": "Secure input is now blocked (with an error) if the privacy barrier cannot be acknowledged.",
+     "evidence": [
+      "web/src/Computer.tsx:22"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:knowledge",
+   "logic": [
+    {
+     "step": "Teaching publication reuses knowledge.guard and knowledge.apply (native CAS, knowledge_versions, configure operation) and adds a teaching_publications provenance row after native readback.",
+     "evidence": [
+      "backend/teaching.py:729-757"
+     ]
+    },
+    {
+     "step": "Memory & skills embeds the Teaching panel (mine=false).",
+     "evidence": [
+      "web/src/Knowledge.tsx:34"
+     ]
+    }
+   ],
+   "components": [
+    "table:teaching_publications",
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/publish",
+    "file:web/src/Teaching.tsx"
+   ],
+   "failures": [
+    {
+     "text": "Publishing from teaching with enable=false removes the skill from enabled_skills via knowledge.apply.",
+     "evidence": [
+      "backend/teaching.py:738",
+      "backend/knowledge.py:82-83"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:tools",
+   "logic": [
+    {
+     "step": "capabilities.manifest injects a task-scoped teaching candidate as an enabled skill (non-peer views) and includes teaching_candidate in the fingerprinted facts; prepare() reads the candidate instead of the native skill.",
+     "evidence": [
+      "backend/capabilities.py:57-63",
+      "backend/capabilities.py:95",
+      "backend/capabilities.py:173-175"
+     ]
+    },
+    {
+     "step": "Plugin skill_view for the candidate calls /internal/teaching/consult; native skill_view remains for all other skills.",
+     "evidence": [
+      "plugins/hermbot/__init__.py:96-106"
+     ]
+    }
+   ],
+   "components": [
+    "route:backend/app.py:POST /internal/teaching/consult",
+    "fn:backend/app.py::teaching_consult",
+    "fn:backend/teaching.py::candidate"
+   ],
+   "invariants": [
+    {
+     "text": "Candidate never appears in peer capability views.",
+     "enforcement": "candidate() only called when task and not peer.",
+     "evidence": [
+      "backend/capabilities.py:58",
+      "tests/test_teaching.py:277"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:execution",
+   "logic": [
+    {
+     "step": "Candidate tests are ordinary assignment tasks (orchestration_version 2, coordination_version 1, optional grant) in the bot DM; deleting/expiring the source cancels them through service.cancel.",
+     "evidence": [
+      "backend/teaching.py:651-661",
+      "backend/teaching.py:53-59"
+     ]
+    },
+    {
+     "step": "Worker runs teaching.run alongside execution monitor, intake and routine loops.",
+     "evidence": [
+      "backend/worker.py:661-664"
+     ]
+    }
+   ]
+  }
+ ],
+ "flows": [
+  {
+   "id": "flow:m",
+   "title": "Teach by demonstration",
+   "summary": "Owner records a workflow on the bot computer, reviews frozen evidence, the bot's model drafts a SKILL.md, a task-scoped test consults the exact candidate, the owner verifies and publishes a native skill, and the runtime refreshes.",
+   "steps": [
+    {
+     "text": "Owner takes over the bot computer; runtime pauses capture, drains admitted tools and writes the input-ready marker.",
+     "nodes": [
+      "actor:owner",
+      "file:web/src/Computer.tsx",
+      "route:docker/runtime_api.py:POST /computer/control",
+      "fn:docker/runtime_api.py::control"
+     ],
+     "evidence": [
+      "docker/runtime_api.py:385-414"
+     ]
+    },
+    {
+     "text": "Owner enters goal/expected result; backend verifies input-ready control via runtime GET /computer and creates a 'preparing' session bound to viewer hash and lease epoch.",
+     "nodes": [
+      "file:web/src/Teaching.tsx",
+      "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching",
+      "route:docker/runtime_api.py:GET /computer",
+      "table:teaching_sessions",
+      "table:owner_receipts"
+     ],
+     "evidence": [
+      "web/src/Teaching.tsx:41",
+      "backend/teaching.py:341-362"
+     ]
+    },
+    {
+     "text": "Owner starts recording; backend posts /teaching/control (capture_revision+1); runtime checks readiness/epoch, sets recording and takes an initial keyframe.",
+     "nodes": [
+      "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/control",
+      "route:docker/runtime_api.py:POST /teaching/control",
+      "fn:docker/teaching_capture.py::Capture"
+     ],
+     "evidence": [
+      "backend/teaching.py:445-498",
+      "docker/runtime_api.py:448-462",
+      "docker/teaching_capture.py:88-123"
+     ]
+    },
+    {
+     "text": "Owner demonstrates through noVNC; accepted bytes pass the native RfbClientFilter, are parsed by AcceptedRFB and appended by Capture.observe; keyframes follow input at most every 0.5 s.",
+     "nodes": [
+      "file:web/src/Computer.tsx",
+      "route:docker/runtime_api.py:WEBSOCKET /computer/ws",
+      "fn:docker/runtime_api.py::screen",
+      "fn:docker/teaching_capture.py::AcceptedRFB",
+      "fn:docker/runtime_api.py::teaching_frame"
+     ],
+     "evidence": [
+      "docker/runtime_api.py:509-542",
+      "docker/teaching_capture.py:15-65",
+      "docker/teaching_capture.py:137-160",
+      "docker/runtime_api.py:470-482"
+     ]
+    },
+    {
+     "text": "Before secret entry, Secure input posts teaching-private-input; the private action pauses capture, bumps generation and stores an omitted marker; only then are keys typed into the same connection.",
+     "nodes": [
+      "file:web/src/Computer.tsx",
+      "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching-private-input",
+      "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/private",
+      "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/control",
+      "route:docker/runtime_api.py:POST /teaching/control"
+     ],
+     "evidence": [
+      "web/src/Computer.tsx:21-24",
+      "backend/teaching.py:364-378",
+      "backend/teaching.py:500-517",
+      "docker/teaching_capture.py:118-122"
+     ]
+    },
+    {
+     "text": "Worker collector polls /teaching/batch with ack, encrypts each batch, stores it under teaching/ in MinIO, reads it back and commits the chunk manifest and last_seq.",
+     "nodes": [
+      "svc:worker",
+      "fn:backend/teaching.py::maintain",
+      "fn:backend/teaching.py::collect",
+      "route:docker/runtime_api.py:GET /teaching/batch",
+      "bucket:hermbot",
+      "table:teaching_chunks",
+      "table:teaching_sessions"
+     ],
+     "evidence": [
+      "backend/teaching.py:985-998",
+      "backend/teaching.py:114-173",
+      "docker/teaching_capture.py:198-210"
+     ]
+    },
+    {
+     "text": "Owner resumes on a safe screen, then finishes; runtime takes a final frame and becomes ready; DB is finalizing until the collector persists the sealed tail, then ready.",
+     "nodes": [
+      "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/control",
+      "route:docker/runtime_api.py:POST /teaching/control",
+      "fn:backend/teaching.py::collect",
+      "table:teaching_sessions"
+     ],
+     "evidence": [
+      "docker/runtime_api.py:454-456",
+      "backend/teaching.py:489",
+      "backend/teaching.py:164-172"
+     ]
+    },
+    {
+     "text": "Owner reviews the timeline, derived steps and frames, edits the procedure and selects up to 12 frames.",
+     "nodes": [
+      "file:web/src/Teaching.tsx",
+      "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/timeline",
+      "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/frames/{seq}",
+      "fn:backend/teaching.py::summarize",
+      "fn:backend/teaching.py::read_chunk"
+     ],
+     "evidence": [
+      "backend/teaching.py:519-540",
+      "backend/teaching.py:176-212",
+      "web/src/Teaching.tsx:44-47"
+     ]
+    },
+    {
+     "text": "Saving evidence freezes an encrypted, hashed evidence revision and resets the generation job.",
+     "nodes": [
+      "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/evidence",
+      "table:teaching_sessions",
+      "table:teaching_revisions"
+     ],
+     "evidence": [
+      "backend/teaching.py:542-567"
+     ]
+    },
+    {
+     "text": "Owner requests generation; job is queued with provider id/revision/model and evidence hash.",
+     "nodes": [
+      "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/generate",
+      "table:teaching_sessions",
+      "table:providers"
+     ],
+     "evidence": [
+      "backend/teaching.py:569-598"
+     ]
+    },
+    {
+     "text": "generate_one (single workspace slot) sends a vision canary plus reviewed text/frames to the provider, checks the canary, validates SKILL.md (one repair turn) and stores the token-fenced draft and draft revision.",
+     "nodes": [
+      "fn:backend/teaching.py::generate_one",
+      "fn:backend/teaching.py::vision_canary",
+      "actor:model-provider",
+      "fn:backend/teaching.py::validate_skill",
+      "table:teaching_sessions",
+      "table:teaching_revisions"
+     ],
+     "evidence": [
+      "backend/teaching.py:831-957"
+     ]
+    },
+    {
+     "text": "Owner edits and saves the exact draft, hands back the computer and runs a candidate test with fresh inputs and checks; a DM task and teaching_tests binding (evidence/draft/config hashes) are created.",
+     "nodes": [
+      "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/draft",
+      "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test",
+      "fn:backend/service.py::create_task",
+      "table:tasks",
+      "table:teaching_tests"
+     ],
+     "evidence": [
+      "backend/teaching.py:610-684",
+      "web/src/Teaching.tsx:49-50"
+     ]
+    },
+    {
+     "text": "The test task sees the candidate as an enabled, task-scoped skill; skill_view goes through the plugin to /internal/teaching/consult, which verifies task, sha256 and skill_view admission and stamps consulted_at.",
+     "nodes": [
+      "fn:backend/capabilities.py::manifest",
+      "fn:plugins/hermbot/__init__.py::admitted_execution",
+      "route:backend/app.py:POST /internal/teaching/consult",
+      "fn:backend/teaching.py::candidate",
+      "table:teaching_tests"
+     ],
+     "evidence": [
+      "backend/capabilities.py:57-63",
+      "plugins/hermbot/__init__.py:96-101",
+      "backend/app.py:425-435",
+      "backend/teaching.py:256-274"
+     ]
+    },
+    {
+     "text": "After the task completes, owner inspects actual results and records pass/fail observations.",
+     "nodes": [
+      "file:web/src/Teaching.tsx",
+      "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test-report",
+      "table:teaching_tests"
+     ],
+     "evidence": [
+      "backend/teaching.py:686-701",
+      "web/src/Teaching.tsx:51"
+     ]
+    },
+    {
+     "text": "Owner prepares publication (reads native skill hash) and publishes; backend rechecks hashes/consultation/verdict, runs knowledge.guard/apply (native CAS PUT, knowledge_versions, configuration), reads the skill back and records a teaching_publications row.",
+     "nodes": [
+      "route:backend/knowledge.py:GET /api/v1/bots/{bot_id}/knowledge/skills/{name}",
+      "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/publish",
+      "fn:backend/knowledge.py::guard",
+      "fn:backend/knowledge.py::apply",
+      "route:docker/runtime_api.py:PUT /skills/{name}",
+      "route:docker/runtime_api.py:GET /skills/{name}",
+      "table:knowledge_versions",
+      "table:teaching_publications"
+     ],
+     "evidence": [
+      "web/src/Teaching.tsx:53",
+      "backend/teaching.py:703-770",
+      "backend/knowledge.py:43-118"
+     ]
+    },
+    {
+     "text": "A queued configure operation refreshes the runtime so Hermes sees the new skill; response is refresh_pending and readiness is shown in Memory & skills.",
+     "nodes": [
+      "fn:backend/registry.py::enqueue",
+      "table:bot_operations",
+      "svc:hermbot-bot-*"
+     ],
+     "evidence": [
+      "backend/knowledge.py:110-111",
+      "backend/teaching.py:762",
+      "web/src/Teaching.tsx:53"
+     ]
+    }
+   ]
+  }
+ ],
+ "discrepancies": [
+  {
+   "text": "Publishing from teaching with Enable unchecked sends enable=False, and knowledge.apply removes the skill from enabled_skills; republishing an already enabled skill therefore disables it, while the UI says 'Enable is a separate choice'.",
+   "severity": "medium",
+   "nodes": [
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/publish",
+    "fn:backend/knowledge.py::apply",
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:315",
+    "backend/teaching.py:738",
+    "backend/knowledge.py:82-83",
+    "web/src/Teaching.tsx:53"
+   ]
+  },
+  {
+   "text": "The full candidate SKILL.md content is placed in capabilities.manifest facts (teaching_candidate) and therefore returned by /internal/context and injected into every turn's model context, contradicting SKILL-03's rule that procedure bodies are not in capability discovery and weakening consulted_at as proof of consultation.",
+   "severity": "medium",
+   "nodes": [
+    "fn:backend/capabilities.py::manifest",
+    "route:backend/app.py:POST /internal/context",
+    "fn:backend/teaching.py::candidate"
+   ],
+   "evidence": [
+    "backend/capabilities.py:95",
+    "backend/capabilities.py:116",
+    "backend/app.py:465",
+    "plugins/hermbot/__init__.py:112-120",
+    "backend/teaching.py:269-274",
+    "plan/ISSUES.md:303"
+   ]
+  },
+  {
+   "text": "Deletion/expiry purge calls the bot runtime before deleting MinIO objects; if the runtime is unreachable (bot stopped/deleted) native.request raises and the bare except skips the purge, so private recordings stay in 'deleting' with objects retained indefinitely. Review doc says deletion 'retries private-object deletion' without this dependency.",
+   "severity": "high",
+   "nodes": [
+    "fn:backend/teaching.py::maintain",
+    "bucket:hermbot",
+    "table:teaching_sessions"
+   ],
+   "evidence": [
+    "backend/teaching.py:1008-1044",
+    "backend/native.py:32-35",
+    "plan/PHASE6-TEACHING-REVIEW.md:10"
+   ]
+  },
+  {
+   "text": "Test inputs and checks are stored encrypted in teaching_tests.checks_encrypted but are also embedded in plaintext in the test task prompt (tasks.input) and attempts.",
+   "severity": "medium",
+   "nodes": [
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test",
+    "table:teaching_tests",
+    "table:tasks"
+   ],
+   "evidence": [
+    "backend/teaching.py:650",
+    "backend/teaching.py:673",
+    "backend/service.py:156",
+    "plan/ISSUES.md:1177"
+   ]
+  },
+  {
+   "text": "'Use seven-day expiry' (unpin) does not reset expires_at (fixed at creation + 7 days), so unpinning an older recording deletes it on the next maintain tick.",
+   "severity": "medium",
+   "nodes": [
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/keep",
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "backend/teaching.py:776-779",
+    "backend/migrations/018_teaching.sql:9",
+    "web/src/Teaching.tsx:56",
+    "backend/teaching.py:1001"
+   ]
+  },
+  {
+   "text": "State 'failed' appears in the expiry SQL and the plan's capture lifecycle, but no code path ever sets teaching_sessions.state='failed' (dead state).",
+   "severity": "low",
+   "nodes": [
+    "table:teaching_sessions"
+   ],
+   "evidence": [
+    "backend/teaching.py:1001",
+    "plan/PHASE6-TEACHING.md:77"
+   ]
+  },
+  {
+   "text": "Review doc says segment accompanies retained observations, but Capture.segment is never written into events, and the adapter passes capture.geometry itself as the geometry argument so the segment counter never increments.",
+   "severity": "low",
+   "nodes": [
+    "fn:docker/teaching_capture.py::Capture"
+   ],
+   "evidence": [
+    "plan/PHASE6-TEACHING-REVIEW.md:8",
+    "docker/teaching_capture.py:80",
+    "docker/teaching_capture.py:132",
+    "docker/teaching_capture.py:144-146",
+    "docker/runtime_api.py:534-535"
+   ]
+  },
+  {
+   "text": "Plan recovery matrix says a new viewer/lease epoch can resume via explicit takeover creating a new segment; code rejects resume/pause/private for a different viewer or epoch (only finish/discard allowed).",
+   "severity": "low",
+   "nodes": [
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/control",
+    "fn:docker/teaching_capture.py::Capture"
+   ],
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:202",
+    "backend/teaching.py:459-460",
+    "docker/teaching_capture.py:96-99",
+    "docker/runtime_api.py:451-452"
+   ]
+  },
+  {
+   "text": "A session stuck in 'finalizing' (runtime unreachable after finish) is excluded from expiry and cannot be deleted (active) or discarded without the runtime.",
+   "severity": "low",
+   "nodes": [
+    "table:teaching_sessions",
+    "fn:backend/teaching.py::maintain"
+   ],
+   "evidence": [
+    "backend/teaching.py:1001",
+    "backend/teaching.py:786",
+    "backend/teaching.py:477"
+   ]
+  },
+  {
+   "text": "POST /teaching/{session_id}/private has no UI caller; the UI uses the bot-level teaching-private-input route, which calls the private() function directly.",
+   "severity": "low",
+   "nodes": [
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/private",
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching-private-input"
+   ],
+   "evidence": [
+    "backend/teaching.py:377",
+    "backend/teaching.py:500-517",
+    "web/src/Computer.tsx:22"
+   ]
+  },
+  {
+   "text": "Teaching component's onActive prop is never supplied by its two embedders (dead prop).",
+   "severity": "low",
+   "nodes": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "web/src/Teaching.tsx:13",
+    "web/src/Teaching.tsx:25",
+    "web/src/Computer.tsx:40",
+    "web/src/Knowledge.tsx:34"
+   ]
+  },
+  {
+   "text": "Plan says generation/test/publication each have their own queued/running/completed/failed/cancelled state; tests derive status from tasks.status and publications have no state column (constant 'refresh_pending').",
+   "severity": "low",
+   "nodes": [
+    "table:teaching_tests",
+    "table:teaching_publications"
+   ],
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:77",
+    "backend/teaching.py:762",
+    "backend/migrations/018_teaching.sql:24-37"
+   ]
+  },
+  {
+   "text": "Plan says retries resume the same generation job; code marks running jobs older than 4 minutes failed and requires an owner retry.",
+   "severity": "low",
+   "nodes": [
+    "fn:backend/teaching.py::generate_one"
+   ],
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:131",
+    "backend/teaching.py:833-835"
+   ]
+  },
+  {
+   "text": "Collector final UPDATE always overwrites reason with the batch reason even when the capture revision does not match (state is fenced, reason is not).",
+   "severity": "low",
+   "nodes": [
+    "fn:backend/teaching.py::collect"
+   ],
+   "evidence": [
+    "backend/teaching.py:165-172"
+   ]
+  },
+  {
+   "text": "Every computer-panel close and every Secure input while a recording is recording/paused writes a new owner_receipts row and an extra 'private step' omitted marker; pane close is labelled as a private step.",
+   "severity": "low",
+   "nodes": [
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching-private-input",
+    "table:owner_receipts"
+   ],
+   "evidence": [
+    "web/src/Computer.tsx:16",
+    "backend/teaching.py:516",
+    "docker/teaching_capture.py:121-122"
+   ]
+  },
+  {
+   "text": "UI captureLabel has no label for 'failed' or 'deleted'; Discard is disabled in 'finalizing' though the backend allows it.",
+   "severity": "low",
+   "nodes": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "web/src/Teaching.tsx:10",
+    "web/src/Teaching.tsx:43",
+    "backend/teaching.py:467"
+   ]
+  },
+  {
+   "text": "AcceptedRFB keeps the bytes that raised, so after one unsupported message every later feed on that connection raises and re-pauses capture until reconnect.",
+   "severity": "low",
+   "nodes": [
+    "fn:docker/teaching_capture.py::AcceptedRFB"
+   ],
+   "evidence": [
+    "docker/teaching_capture.py:34-35",
+    "docker/runtime_api.py:532-537"
+   ]
+  }
+ ],
+ "system_design": {
+  "isolation": [
+   {
+    "text": "Capture state lives only inside each bot's runtime container (module-level Capture); one recording per bot; other bots and the owner's host are never observed.",
+    "tag": "documented",
+    "evidence": [
+     "docker/runtime_api.py:37",
+     "plan/PHASE6-TEACHING.md:9",
+     "web/src/Teaching.tsx:41"
+    ]
+   },
+   {
+    "text": "Candidate skill is isolated to its test task via teaching_tests.task_id; peers and other tasks never see it; nothing is installed until publish.",
+    "tag": "documented",
+    "evidence": [
+     "backend/teaching.py:259-262",
+     "backend/capabilities.py:58",
+     "tests/test_teaching.py:272-279"
+    ]
+   },
+   {
+    "text": "Recordings are stored outside the Library/artifact tables under a teaching/ prefix and served only through owner routes.",
+    "tag": "documented",
+    "evidence": [
+     "plan/PHASE6-TEACHING-REVIEW.md:10",
+     "backend/teaching.py:146"
+    ]
+   }
+  ],
+  "durability": [
+   {
+    "text": "Volatile runtime buffer -> ack-based worker collection -> encrypted MinIO object verified before manifest commit; ready only after the sealed tail is persisted; runtime restart yields 'interrupted' with the committed prefix.",
+    "tag": "documented",
+    "evidence": [
+     "backend/teaching.py:114-173",
+     "plan/PHASE6-TEACHING.md:119-121"
+    ]
+   },
+   {
+    "text": "Generation jobs are durable rows (queued/running) processed by the worker; stale running jobs fail after 4 minutes.",
+    "tag": "inferred",
+    "evidence": [
+     "backend/teaching.py:833-849"
+    ]
+   },
+   {
+    "text": "Idempotency receipts make start/control/test/publish replay-safe across UI retries; runtime control replays by revision.",
+    "tag": "documented",
+    "evidence": [
+     "backend/registry.py:178-190",
+     "docker/teaching_capture.py:100-103"
+    ]
+   }
+  ],
+  "security": [
+   {
+    "text": "Fernet encryption at rest for every private teaching payload; frame responses are no-store; consult requires bot credential + active session + sha match.",
+    "tag": "documented",
+    "evidence": [
+     "backend/teaching.py:27-32",
+     "backend/teaching.py:151",
+     "backend/teaching.py:539",
+     "backend/app.py:425-435"
+    ]
+   },
+   {
+    "text": "Privacy is enforced at the Secure-input path and explicit pauses only; normal typing and screen content are captured and can reach the provider after owner review.",
+    "tag": "inferred",
+    "evidence": [
+     "docker/teaching_capture.py:40-43",
+     "backend/teaching.py:180-196",
+     "backend/teaching.py:864"
+    ]
+   }
+  ],
+  "concurrency": [
+   {
+    "text": "Owner mutations serialize on the session row (FOR UPDATE) and an advisory lock per idempotency key; runtime HTTP calls happen while those locks are held.",
+    "tag": "inferred",
+    "evidence": [
+     "backend/teaching.py:36-38",
+     "backend/registry.py:181",
+     "backend/teaching.py:477-488"
+    ]
+   },
+   {
+    "text": "Workspace-wide single generation slot via pg_advisory_xact_lock('teaching-generation') plus a running-row check.",
+    "tag": "documented",
+    "evidence": [
+     "backend/teaching.py:836-838",
+     "plan/PHASE6-TEACHING.md:123"
+    ]
+   },
+   {
+    "text": "Runtime capture is guarded by a threading.RLock shared with the RFB receive loop.",
+    "tag": "documented",
+    "evidence": [
+     "docker/teaching_capture.py:70",
+     "docker/runtime_api.py:526"
+    ]
+   }
+  ],
+  "workers": [
+   {
+    "text": "teaching.run adds two 1-second thread loops (maintain, generate_one) to the worker process.",
+    "tag": "documented",
+    "evidence": [
+     "backend/teaching.py:1049-1061",
+     "backend/worker.py:664"
+    ]
+   }
+  ],
+  "tradeoffs": [
+   {
+    "decision": "Pull-based collection from a volatile runtime buffer",
+    "benefit": "No plaintext persistence in bot volumes; backend controls encryption and manifests.",
+    "cost": "Runtime restart loses the unacknowledged tail; collector outage pauses recording after 15 s.",
+    "tag": "documented",
+    "evidence": [
+     "plan/PHASE6-TEACHING.md:119",
+     "docker/teaching_capture.py:141"
+    ]
+   },
+   {
+    "decision": "Reuse bot's configured provider for vision drafting from the worker",
+    "benefit": "No new provider config; bounded, tool-less transformation.",
+    "cost": "Requires OpenAI-compatible image support; evidence leaves the workspace to the provider.",
+    "tag": "documented",
+    "evidence": [
+     "plan/PHASE6-TEACHING.md:129",
+     "backend/teaching.py:872-882"
+    ]
+   },
+   {
+    "decision": "Config-hash binding of tests",
+    "benefit": "Publication proves the candidate was tested against the current runtime/provider/connections.",
+    "cost": "Any configuration drift blocks the running test and forces retests.",
+    "tag": "documented",
+    "evidence": [
+     "plan/PHASE6-TEACHING-REVIEW.md:25",
+     "backend/teaching.py:265-266"
+    ]
+   },
+   {
+    "decision": "Tombstoned sessions with background purge",
+    "benefit": "Retryable deletion and preserved provenance hashes.",
+    "cost": "Purge depends on runtime reachability; rows never removed.",
+    "tag": "inferred",
+    "evidence": [
+     "backend/teaching.py:1008-1044"
+    ]
+   }
+  ]
+ },
+ "corrections": [
+  {
+   "agent": "runtime",
+   "find": "admitted_execution(): call /internal/context; enforce work revision, routing-first, conversation-only intents, allowed_tools, preparation and enabled-skill checks; run skill_view raw (preprocess=False)",
+   "replace": "admitted_execution(): call /internal/context; enforce work revision, routing-first, conversation-only intents, allowed_tools, preparation and enabled-skill checks; answer skill_view of the task's teaching candidate via POST /internal/teaching/consult, otherwise run skill_view raw (preprocess=False)",
+   "evidence": [
+    "plugins/hermbot/__init__.py:96-106"
+   ]
+  },
+  {
+   "agent": "web",
+   "find": "Secure input field types characters into the focused remote field via RFB.sendKey and clears immediately; Enter/Tab/Escape helpers.",
+   "replace": "Secure input field clears immediately, first POSTs the teaching-private-input privacy barrier (aborting with an error if refused), then types characters via RFB.sendKey into the same still-current connection; Enter/Tab/Escape helpers.",
+   "evidence": [
+    "web/src/Computer.tsx:21-24"
+   ]
+  },
+  {
+   "agent": "web",
+   "find": "Secure input: types each code point via rfb.sendKey (Unicode keysyms 0x01000000|cp) and clears the field",
+   "replace": "Secure input: clears the field, awaits the teaching-private-input barrier, then types each code point via sendKey (Unicode keysyms 0x01000000|cp) on the original RFB instance if still current",
+   "evidence": [
+    "web/src/Computer.tsx:21-24"
+   ]
+  }
+ ],
+ "unknowns": [
+  {
+   "text": "Whether tools.bot_desktop.thumbnail.thumbnail_data_url always returns JPEG (frame route hard-codes image/jpeg).",
+   "nodes": [
+    "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/frames/{seq}",
+    "fn:docker/runtime_api.py::teaching_frame"
+   ]
+  },
+  {
+   "text": "Whether capability_filter strips teaching_candidate content from the injected context; before_turn passes the raw /internal/context JSON.",
+   "nodes": [
+    "fn:backend/capabilities.py::manifest"
+   ]
+  }
+ ]
+}

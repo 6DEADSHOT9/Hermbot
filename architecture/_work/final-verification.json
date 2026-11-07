@@ -1,0 +1,593 @@
+{
+ "index_html_sha256": "9b76383e25a5f715c13704de68f8052683a5b08a4e3936f8c7d3cd7d99638255",
+ "published": "index.html (version 3, built from this exact file)",
+ "gate": [
+  "PASS Every non-excluded file maps to a node (count matches a fresh walk of the repo) :: 754/754 files represented; inventory=754",
+  "PASS Every Python module has a node :: 85 modules",
+  "PASS Every HTTP route has a node :: 144 routes",
+  "PASS Every table and column is present :: 67 tables, 729 columns",
+  "PASS Every compose service, network, volume and port is present :: 26 compose objects",
+  "PASS Every env var name is present :: 50 env var names",
+  "PASS Every plugin tool and hook is present :: 26 tools/hooks",
+  "PASS Every web file is present :: 35 web files",
+  "PASS Every UI API call is recorded and either mapped to a route or explained as a discrepancy :: 108 calls; 108 mapped to routes; 0 explained as discrepancies",
+  "PASS Every binary, evidence and archive file was opened and summarised (image size, JUnit counts, JSON keys, gzip records) :: 462 files opened mechanically",
+  "PASS Every feature has every panel section filled :: 20 features x 11 sections",
+  "PASS Every design rationale is labelled documented/inferred/unknown :: 304 decisions",
+  "PASS Every flow a\u2013l has steps and every step is evidenced :: 165 steps across 12 flows",
+  "PASS Every node is evidenced or marked unknown :: 1864 nodes",
+  "PASS Every edge is evidenced or marked unknown :: 7740 edges",
+  "PASS Every evidence citation points at an existing file and line :: 21188 citations checked",
+  "PASS No edge points at an unresolved node :: 0 unresolved references",
+  "PASS No .env value appears in model.json or index.html (sha256 token match + substring, values never printed) :: 19 .env values checked; 1 non-secret values equal public defaults (PUBLIC_URL)",
+  "PASS Every file's current content has been read (sha256 matches the read ledger; new or edited files must be re-read) :: 753 files hashed; 753 in read ledger"
+ ],
+ "views_checked": {
+  "start/390/light": {
+   "title": "Start here",
+   "nodes": null,
+   "html": 11,
+   "overflow": false
+  },
+  "glossary/390/light": {
+   "title": "Glossary",
+   "nodes": null,
+   "html": 45,
+   "overflow": false
+  },
+  "context/390/light": {
+   "title": "System context",
+   "nodes": 13,
+   "html": null,
+   "overflow": false
+  },
+  "deploy/390/light": {
+   "title": "Deployment & security",
+   "nodes": 122,
+   "html": null,
+   "overflow": false
+  },
+  "backend/390/light": {
+   "title": "Backend layers",
+   "nodes": 56,
+   "html": null,
+   "overflow": false
+  },
+  "runtime/390/light": {
+   "title": "Bot runtime",
+   "nodes": 68,
+   "html": null,
+   "overflow": false
+  },
+  "er/390/light": {
+   "title": "Data model",
+   "nodes": 68,
+   "html": null,
+   "overflow": false
+  },
+  "api/390/light": {
+   "title": "API map",
+   "nodes": 235,
+   "html": null,
+   "overflow": false
+  },
+  "frontend/390/light": {
+   "title": "Frontend",
+   "nodes": 143,
+   "html": null,
+   "overflow": false
+  },
+  "features/390/light": {
+   "title": "Features",
+   "nodes": 33,
+   "html": null,
+   "overflow": false
+  },
+  "flows/390/light": {
+   "title": "Flows",
+   "nodes": 126,
+   "html": null,
+   "overflow": false
+  },
+  "sms/390/light": {
+   "title": "State machines",
+   "nodes": 8,
+   "html": null,
+   "overflow": false
+  },
+  "heat/390/light": {
+   "title": "Test coverage",
+   "nodes": null,
+   "html": 128,
+   "overflow": false
+  },
+  "docs/390/light": {
+   "title": "Docs & history",
+   "nodes": 138,
+   "html": null,
+   "overflow": false
+  },
+  "disc/390/light": {
+   "title": "Discrepancies",
+   "nodes": 274,
+   "html": null,
+   "overflow": false
+  },
+  "all/390/light": {
+   "title": "Full graph",
+   "nodes": 1864,
+   "html": null,
+   "overflow": false
+  },
+  "start/1440/light": {
+   "title": "Start here",
+   "nodes": null,
+   "html": 11,
+   "overflow": false
+  },
+  "glossary/1440/light": {
+   "title": "Glossary",
+   "nodes": null,
+   "html": 45,
+   "overflow": false
+  },
+  "context/1440/light": {
+   "title": "System context",
+   "nodes": 13,
+   "html": null,
+   "overflow": false
+  },
+  "deploy/1440/light": {
+   "title": "Deployment & security",
+   "nodes": 122,
+   "html": null,
+   "overflow": false
+  },
+  "backend/1440/light": {
+   "title": "Backend layers",
+   "nodes": 56,
+   "html": null,
+   "overflow": false
+  },
+  "runtime/1440/light": {
+   "title": "Bot runtime",
+   "nodes": 68,
+   "html": null,
+   "overflow": false
+  },
+  "er/1440/light": {
+   "title": "Data model",
+   "nodes": 68,
+   "html": null,
+   "overflow": false
+  },
+  "api/1440/light": {
+   "title": "API map",
+   "nodes": 235,
+   "html": null,
+   "overflow": false
+  },
+  "frontend/1440/light": {
+   "title": "Frontend",
+   "nodes": 143,
+   "html": null,
+   "overflow": false
+  },
+  "features/1440/light": {
+   "title": "Features",
+   "nodes": 33,
+   "html": null,
+   "overflow": false
+  },
+  "flows/1440/light": {
+   "title": "Flows",
+   "nodes": 126,
+   "html": null,
+   "overflow": false
+  },
+  "sms/1440/light": {
+   "title": "State machines",
+   "nodes": 8,
+   "html": null,
+   "overflow": false
+  },
+  "heat/1440/light": {
+   "title": "Test coverage",
+   "nodes": null,
+   "html": 128,
+   "overflow": false
+  },
+  "docs/1440/light": {
+   "title": "Docs & history",
+   "nodes": 138,
+   "html": null,
+   "overflow": false
+  },
+  "disc/1440/light": {
+   "title": "Discrepancies",
+   "nodes": 274,
+   "html": null,
+   "overflow": false
+  },
+  "all/1440/light": {
+   "title": "Full graph",
+   "nodes": 1864,
+   "html": null,
+   "overflow": false
+  },
+  "start/390/dark": {
+   "title": "Start here",
+   "nodes": null,
+   "html": 11,
+   "overflow": false
+  },
+  "glossary/390/dark": {
+   "title": "Glossary",
+   "nodes": null,
+   "html": 45,
+   "overflow": false
+  },
+  "context/390/dark": {
+   "title": "System context",
+   "nodes": 13,
+   "html": null,
+   "overflow": false
+  },
+  "deploy/390/dark": {
+   "title": "Deployment & security",
+   "nodes": 122,
+   "html": null,
+   "overflow": false
+  },
+  "backend/390/dark": {
+   "title": "Backend layers",
+   "nodes": 56,
+   "html": null,
+   "overflow": false
+  },
+  "runtime/390/dark": {
+   "title": "Bot runtime",
+   "nodes": 68,
+   "html": null,
+   "overflow": false
+  },
+  "er/390/dark": {
+   "title": "Data model",
+   "nodes": 68,
+   "html": null,
+   "overflow": false
+  },
+  "api/390/dark": {
+   "title": "API map",
+   "nodes": 235,
+   "html": null,
+   "overflow": false
+  },
+  "frontend/390/dark": {
+   "title": "Frontend",
+   "nodes": 143,
+   "html": null,
+   "overflow": false
+  },
+  "features/390/dark": {
+   "title": "Features",
+   "nodes": 33,
+   "html": null,
+   "overflow": false
+  },
+  "flows/390/dark": {
+   "title": "Flows",
+   "nodes": 126,
+   "html": null,
+   "overflow": false
+  },
+  "sms/390/dark": {
+   "title": "State machines",
+   "nodes": 8,
+   "html": null,
+   "overflow": false
+  },
+  "heat/390/dark": {
+   "title": "Test coverage",
+   "nodes": null,
+   "html": 128,
+   "overflow": false
+  },
+  "docs/390/dark": {
+   "title": "Docs & history",
+   "nodes": 138,
+   "html": null,
+   "overflow": false
+  },
+  "disc/390/dark": {
+   "title": "Discrepancies",
+   "nodes": 274,
+   "html": null,
+   "overflow": false
+  },
+  "all/390/dark": {
+   "title": "Full graph",
+   "nodes": 1864,
+   "html": null,
+   "overflow": false
+  },
+  "start/1440/dark": {
+   "title": "Start here",
+   "nodes": null,
+   "html": 11,
+   "overflow": false
+  },
+  "glossary/1440/dark": {
+   "title": "Glossary",
+   "nodes": null,
+   "html": 45,
+   "overflow": false
+  },
+  "context/1440/dark": {
+   "title": "System context",
+   "nodes": 13,
+   "html": null,
+   "overflow": false
+  },
+  "deploy/1440/dark": {
+   "title": "Deployment & security",
+   "nodes": 122,
+   "html": null,
+   "overflow": false
+  },
+  "backend/1440/dark": {
+   "title": "Backend layers",
+   "nodes": 56,
+   "html": null,
+   "overflow": false
+  },
+  "runtime/1440/dark": {
+   "title": "Bot runtime",
+   "nodes": 68,
+   "html": null,
+   "overflow": false
+  },
+  "er/1440/dark": {
+   "title": "Data model",
+   "nodes": 68,
+   "html": null,
+   "overflow": false
+  },
+  "api/1440/dark": {
+   "title": "API map",
+   "nodes": 235,
+   "html": null,
+   "overflow": false
+  },
+  "frontend/1440/dark": {
+   "title": "Frontend",
+   "nodes": 143,
+   "html": null,
+   "overflow": false
+  },
+  "features/1440/dark": {
+   "title": "Features",
+   "nodes": 33,
+   "html": null,
+   "overflow": false
+  },
+  "flows/1440/dark": {
+   "title": "Flows",
+   "nodes": 126,
+   "html": null,
+   "overflow": false
+  },
+  "sms/1440/dark": {
+   "title": "State machines",
+   "nodes": 8,
+   "html": null,
+   "overflow": false
+  },
+  "heat/1440/dark": {
+   "title": "Test coverage",
+   "nodes": null,
+   "html": 128,
+   "overflow": false
+  },
+  "docs/1440/dark": {
+   "title": "Docs & history",
+   "nodes": 138,
+   "html": null,
+   "overflow": false
+  },
+  "disc/1440/dark": {
+   "title": "Discrepancies",
+   "nodes": 274,
+   "html": null,
+   "overflow": false
+  },
+  "all/1440/dark": {
+   "title": "Full graph",
+   "nodes": 1864,
+   "html": null,
+   "overflow": false
+  }
+ },
+ "flows": {
+  "flow:a": {
+   "steps": 30,
+   "steps_with_highlight": 30,
+   "steps_without_graph_nodes": []
+  },
+  "flow:b": {
+   "steps": 15,
+   "steps_with_highlight": 15,
+   "steps_without_graph_nodes": []
+  },
+  "flow:c": {
+   "steps": 17,
+   "steps_with_highlight": 17,
+   "steps_without_graph_nodes": []
+  },
+  "flow:d": {
+   "steps": 13,
+   "steps_with_highlight": 13,
+   "steps_without_graph_nodes": []
+  },
+  "flow:e": {
+   "steps": 12,
+   "steps_with_highlight": 12,
+   "steps_without_graph_nodes": []
+  },
+  "flow:f": {
+   "steps": 14,
+   "steps_with_highlight": 14,
+   "steps_without_graph_nodes": []
+  },
+  "flow:g": {
+   "steps": 11,
+   "steps_with_highlight": 11,
+   "steps_without_graph_nodes": []
+  },
+  "flow:h": {
+   "steps": 16,
+   "steps_with_highlight": 16,
+   "steps_without_graph_nodes": []
+  },
+  "flow:i": {
+   "steps": 9,
+   "steps_with_highlight": 9,
+   "steps_without_graph_nodes": []
+  },
+  "flow:j": {
+   "steps": 9,
+   "steps_with_highlight": 9,
+   "steps_without_graph_nodes": []
+  },
+  "flow:k": {
+   "steps": 9,
+   "steps_with_highlight": 9,
+   "steps_without_graph_nodes": []
+  },
+  "flow:l": {
+   "steps": 10,
+   "steps_with_highlight": 10,
+   "steps_without_graph_nodes": []
+  }
+ },
+ "state_machines_rendered": 32,
+ "features_expanded": 20,
+ "page_errors": [],
+ "images_viewed_and_captioned": {
+  "test-results batch 1": 66,
+  "test-results batch 2": 65,
+  ".taste-skill + archive png": 104
+ },
+ "write_audit": {
+  "write_edit_targets_main_and_13_task_transcripts": "38 under architecture/, 0 elsewhere in the repository",
+  "write_edit_targets_12_subagent_transcripts": "30 under architecture/, 0 elsewhere",
+  "shell_writes_to_other_project_folders": 0,
+  "tool_calls_at_06:15_IST (when PHASE6-TEACHING, PHASE-DETAILS, CONTEXT, README, CHECKLIST changed)": 0,
+  "tool_calls_at_04:34:47_IST (when CONNECTED-WORK-COORDINATION changed)": "1: cat > architecture/_work/agents/scratch-tests/groups_meta.json",
+  "repo_wide_changed_files_outside_architecture": [
+   "plan/PHASE6-TEACHING.md",
+   "plan/PHASE-DETAILS.md",
+   "plan/CONTEXT.md",
+   "plan/README.md",
+   "plan/CHECKLIST.md",
+   "plan/CONNECTED-WORK-COORDINATION.md"
+  ],
+  "owner_confirmation": "Owner confirmed in-session that the six plan-doc changes were theirs or another of their sessions."
+ },
+ "images_detail_review": {
+  "1": 66,
+  "2": 65,
+  "3": 104,
+  "total_with_detail": 235
+ },
+ "freshness": {
+  "built_at": "2026-10-27 21:29",
+  "files_hashed": 753,
+  "ledger_entries": 753,
+  "unread_new": [],
+  "unread_changed": [],
+  "deleted": [],
+  "recent_reads": [
+   {
+    "path": "plan/CHECKLIST.md",
+    "read_at": "2026-10-27T20:56:56",
+    "read_by": [
+     "docs_refresh"
+    ],
+    "sha256": "47d6bfebfa2b1856eeedc520aa415d6fc2dd196f7526d036b44e51c45626230d"
+   },
+   {
+    "path": "plan/CONNECTED-WORK-COORDINATION.md",
+    "read_at": "2026-10-27T20:56:56",
+    "read_by": [
+     "docs_refresh"
+    ],
+    "sha256": "56fb80196e84ed59f1df1e51df18095bf7e495068c8b265d0e3abbb0efb77b04"
+   },
+   {
+    "path": "plan/CONTEXT.md",
+    "read_at": "2026-10-27T20:56:56",
+    "read_by": [
+     "docs_refresh"
+    ],
+    "sha256": "e11384f177c9a9627896a76e791ee737f928b6269420f9289af0c7d52c6e99e7"
+   },
+   {
+    "path": "plan/PHASE-DETAILS.md",
+    "read_at": "2026-10-27T20:56:56",
+    "read_by": [
+     "docs_refresh"
+    ],
+    "sha256": "82162c7c365cec47b6e1978bbc7524047dd08c1bc409921627b9bc9c27cf6b1e"
+   },
+   {
+    "path": "plan/README.md",
+    "read_at": "2026-10-27T20:56:56",
+    "read_by": [
+     "docs_refresh"
+    ],
+    "sha256": "20592f2f79a05f5ff4e3c12eda2105e894d4ee1e3da6e235e15f8c640ce2c198"
+   }
+  ]
+ },
+ "readability": {
+  "start_page": true,
+  "glossary_terms": 45,
+  "plain_features": 20,
+  "plain_flows": 12,
+  "plain_state_machines": 32,
+  "plain_discrepancies": 21
+ },
+ "refresh_2026_10_28": {
+  "index_sha256": "62137d9a4a40471b9295f2d1003776ef32d3a61d0d82b24e037f586b1a4f8f6c",
+  "bytes": 5028182,
+  "gate": "19/19 PASS",
+  "files": "786/786 represented; ledger 785/785 read; 0 not fully read",
+  "new_files": 32,
+  "changed_files": 18,
+  "citations_remapped": 642,
+  "citations_hand_checked": "needs_check emptied (code_refresh, docs2_refresh)",
+  "corrections_applied": 32,
+  "new": {
+   "feature": "feature:teaching",
+   "flow": "flow:m (16 steps)",
+   "state_machines": 5,
+   "routes": 21
+  },
+  "browser": {
+   "screenshots": 64,
+   "bad_views": 0,
+   "errors": 0,
+   "flows_all_steps_highlight": 13,
+   "interact": "pass",
+   "interact2": "pass (harness fix: tap evaluations return null)"
+  },
+  "ui_changes": [
+   "feature expanded view uses grouped zones with summary links",
+   "map refits when the side panel opens until the user pans/zooms",
+   "panel opens before layout on desktop"
+  ],
+  "writes_outside_architecture": "none by this session (scratchpad only for temporary screenshots and the read-back of the published page)",
+  "at": "2026-10-28T00:41:37"
+ }
+}

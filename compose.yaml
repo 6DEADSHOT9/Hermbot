@@ -1,0 +1,229 @@
+name: hermbot
+
+x-app-env: &app-env
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/configure.py}
+  OWNER_TOKEN: ${OWNER_TOKEN:?Run scripts/configure.py}
+  INTERNAL_TOKEN: ${INTERNAL_TOKEN:?Run scripts/configure.py}
+  SUPERVISOR_TOKEN: ${SUPERVISOR_TOKEN:?Run scripts/configure.py}
+  STORAGE_PASSWORD: ${STORAGE_PASSWORD:?Run scripts/configure.py}
+  RESEARCHER_TOKEN: ${RESEARCHER_TOKEN}
+  WRITER_TOKEN: ${WRITER_TOKEN}
+  REVIEWER_TOKEN: ${REVIEWER_TOKEN}
+  RESEARCHER_API_KEY: ${RESEARCHER_API_KEY}
+  WRITER_API_KEY: ${WRITER_API_KEY}
+  REVIEWER_API_KEY: ${REVIEWER_API_KEY}
+  MODEL_NAME: ${MODEL_NAME:-}
+  MODEL_BASE_URL: ${MODEL_BASE_URL:-}
+  MODEL_API_KEY: ${MODEL_API_KEY:-}
+  MAX_RECOVERIES: ${MAX_RECOVERIES:-2}
+  CONFIG_ENCRYPTION_KEY: ${CONFIG_ENCRYPTION_KEY:?Run scripts/upgrade_config.py}
+  PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8780}
+  VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+  VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+
+x-runtime-env: &runtime-env
+  MODEL_NAME: ${MODEL_NAME:-}
+  MODEL_BASE_URL: ${MODEL_BASE_URL:-}
+  MODEL_API_KEY: ${MODEL_API_KEY:-}
+  HERMBOT_API_URL: http://api:8000
+
+x-runtime: &runtime
+  image: hermbot-hermes:phase4
+  build:
+    context: .
+    dockerfile: docker/hermes.Dockerfile
+  init: true
+  read_only: true
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+  tmpfs:
+    - /tmp:rw,nosuid,nodev,size=512m,mode=1777
+    - /run:rw,nosuid,nodev,noexec,size=32m,mode=0755
+    - /opt/data/plugins:rw,nosuid,nodev,noexec,size=4m,mode=0755
+  restart: unless-stopped
+  mem_limit: 2g
+  cpus: 1.5
+  depends_on:
+    api:
+      condition: service_healthy
+  healthcheck:
+    test: ["CMD", "/opt/hermes/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8642/health',timeout=3)"]
+    interval: 10s
+    timeout: 5s
+    start_period: 40s
+    retries: 12
+
+services:
+  runtime-image:
+    image: hermbot-hermes:phase4
+    build:
+      context: .
+      dockerfile: docker/hermes.Dockerfile
+    entrypoint: [/opt/hermes/.venv/bin/python, -c, "print('Pinned Hermes runtime image is ready')"]
+    network_mode: none
+  postgres:
+    image: postgres@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hermbot
+      POSTGRES_USER: hermbot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    networks: [control]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hermbot -d hermbot"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+  storage:
+    image: minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    command: server /data
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: hermbot
+      MINIO_ROOT_PASSWORD: ${STORAGE_PASSWORD}
+    volumes: [storage-data:/data]
+    networks: [control]
+  api:
+    image: hermbot-app:phase1
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+      MODEL_BROKER_TOKEN_FILE: /run/model-broker/pairing.sha256
+    volumes:
+      - type: bind
+        source: ${MODEL_BROKER_PAIRING_FILE:-./docker/model-broker-unconfigured.sha256}
+        target: /run/model-broker/pairing.sha256
+        read_only: true
+        bind:
+          create_host_path: false
+    ports: ["127.0.0.1:8780:8000"]
+    networks: [control, researcher-net, writer-net, reviewer-net]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      storage:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health',timeout=3)"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+  worker:
+    image: hermbot-app:phase1
+    command: python -m backend.worker
+    restart: unless-stopped
+    environment: *app-env
+    networks: [control, researcher-net, writer-net, reviewer-net]
+    depends_on:
+      api:
+        condition: service_healthy
+      runtime-image:
+        condition: service_completed_successfully
+  event-worker:
+    image: hermbot-app:phase1
+    command: python -m backend.trigger_worker
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:rw,nosuid,nodev,noexec,size=16m"]
+    mem_limit: 384m
+    cpus: 0.5
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      CONFIG_ENCRYPTION_KEY: ${CONFIG_ENCRYPTION_KEY}
+    networks: [control]
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,time; assert time.time()-os.stat('/tmp/hermbot-events-heartbeat').st_mtime<30"]
+      interval: 10s
+      timeout: 3s
+      start_period: 30s
+      retries: 3
+  notification-worker:
+    image: hermbot-app:phase1
+    command: python -m backend.notification_worker
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:rw,nosuid,nodev,noexec,size=16m"]
+    mem_limit: 256m
+    cpus: 0.5
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      CONFIG_ENCRYPTION_KEY: ${CONFIG_ENCRYPTION_KEY}
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8780}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+    networks: [control]
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,time; assert time.time()-os.stat('/tmp/hermbot-notifications-heartbeat').st_mtime<30"]
+      interval: 10s
+      timeout: 3s
+      start_period: 30s
+      retries: 3
+  supervisor:
+    image: hermbot-app:phase1
+    command: uvicorn backend.supervisor:app --host 0.0.0.0 --port 8001
+    restart: unless-stopped
+    environment:
+      SUPERVISOR_TOKEN: ${SUPERVISOR_TOKEN}
+      HERMBOT_RUNTIME_IMAGE: hermbot-hermes:phase4
+    volumes: [/var/run/docker.sock:/var/run/docker.sock, supervisor-state:/var/lib/hermbot-supervisor]
+    user: "0:0"
+    networks: [control]
+  hermes-researcher:
+    <<: *runtime
+    profiles: [legacy]
+    environment:
+      <<: *runtime-env
+      API_SERVER_KEY: ${RESEARCHER_API_KEY}
+      HERMBOT_BOT_TOKEN: ${RESEARCHER_TOKEN}
+      BOT_ROLE: "You are Scout, the researcher. Investigate evidence, analyze data, and help teammates with research or code."
+    volumes: [researcher-data:/opt/data, researcher-workspace:/workspace]
+    networks: [researcher-net]
+  hermes-writer:
+    <<: *runtime
+    profiles: [legacy]
+    environment:
+      <<: *runtime-env
+      API_SERVER_KEY: ${WRITER_API_KEY}
+      HERMBOT_BOT_TOKEN: ${WRITER_TOKEN}
+      BOT_ROLE: "You are Quill, the writer. Turn evidence and data into clear outputs. Collaborate when research or review would help."
+    volumes: [writer-data:/opt/data, writer-workspace:/workspace]
+    networks: [writer-net]
+  hermes-reviewer:
+    <<: *runtime
+    profiles: [legacy]
+    environment:
+      <<: *runtime-env
+      API_SERVER_KEY: ${REVIEWER_API_KEY}
+      HERMBOT_BOT_TOKEN: ${REVIEWER_TOKEN}
+      BOT_ROLE: "You are Sage, the reviewer. Check reasoning, run local code/tests, coordinate assigned work, and combine verified results."
+    volumes: [reviewer-data:/opt/data, reviewer-workspace:/workspace]
+    networks: [reviewer-net]
+
+networks:
+  control:
+  researcher-net:
+  writer-net:
+  reviewer-net:
+
+volumes:
+  supervisor-state:
+  postgres-data:
+  storage-data:
+  researcher-data:
+  researcher-workspace:
+  writer-data:
+  writer-workspace:
+  reviewer-data:
+  reviewer-workspace:

@@ -1,0 +1,1076 @@
+{
+ "agent": "docs_refresh",
+ "files_read": [
+  "plan/README.md",
+  "plan/CHECKLIST.md",
+  "plan/PHASE-DETAILS.md",
+  "plan/CONTEXT.md",
+  "plan/CONNECTED-WORK-COORDINATION.md"
+ ],
+ "module_notes": {
+  "plan/README.md": {
+   "purpose": "Approved amended product roadmap: fixed decisions, architecture, management rules, phases 1-8 + 6A, test matrix and defaults; now records Oct 27 owner decisions.",
+   "layer": "doc",
+   "responsibilities": [
+    {
+     "text": "Fixed decisions: Hermes sole harness (harness independence deferred Oct 11), unmodified source, one container per bot, VM-per-bot deferred, connector approvals with native-tool coverage limit.",
+     "evidence": [
+      "plan/README.md:9-23"
+     ]
+    },
+    {
+     "text": "Status ledger: Phase 4 accepted Oct 19 (447 tests); 5.1 passed; 5.2 Oct 25 (547); 5.3 (581); 5.4 and Phase 5 exit Oct 26 (638 tests); remote hosting deferred.",
+     "evidence": [
+      "plan/README.md:26"
+     ]
+    },
+    {
+     "text": "Evaluations deferred Oct 19 with no suite selected; baseline evaluations precede issue-fix backlog, C36 only exception.",
+     "evidence": [
+      "plan/README.md:28",
+      "plan/README.md:34"
+     ]
+    },
+    {
+     "text": "Connected-work coordination: Oct 26 scheduled after Phase 5; Oct 27 deferred with no new start date; Oct 27 holds 6.1 voice and selects 6.2 teaching next (the researched plan is now implemented locally; real owner acceptance pending, review in PHASE6-TEACHING-REVIEW.md).",
+     "evidence": [
+      "plan/README.md:30"
+     ]
+    },
+    {
+     "text": "VM isolation preserved for reconsideration after Phases 1-8 (Oct 24); does not defer mobile use.",
+     "evidence": [
+      "plan/README.md:32"
+     ]
+    },
+    {
+     "text": "Deferred harness-independence design retained as research; four source patches replaced by supported middleware.",
+     "evidence": [
+      "plan/README.md:44-56"
+     ]
+    },
+    {
+     "text": "Components, collaboration plugin, manager grant model and rules, /api/v1, SSE/WebSocket.",
+     "evidence": [
+      "plan/README.md:58-152"
+     ]
+    },
+    {
+     "text": "Phase sequence Phase 6 -> 6A -> 7 -> 8; 33 original + four mobile milestones.",
+     "evidence": [
+      "plan/README.md:156"
+     ]
+    },
+    {
+     "text": "Phase 5.4 section still says planning complete, implementation not started.",
+     "evidence": [
+      "plan/README.md:349"
+     ]
+    },
+    {
+     "text": "6.1 Voice marked On hold by owner Oct 27; proceed with 6.2 first.",
+     "evidence": [
+      "plan/README.md:363-369"
+     ]
+    },
+    {
+     "text": "6.2 Demonstration teaching links PHASE6-TEACHING.md and PHASE6-TEACHING-REVIEW.md, selected while voice is held; implementation is built locally and real owner acceptance is pending.",
+     "evidence": [
+      "plan/README.md:371-378"
+     ]
+    },
+    {
+     "text": "Phase 6A mobile (Android, Agentsims research reference), Phase 7 release, Phase 8 sharing.",
+     "evidence": [
+      "plan/README.md:397-490"
+     ]
+    },
+    {
+     "text": "Test matrix, defaults (3 bots, ten-bot/three-task validation, depth 3, ten handoffs, groups of six) and exclusions.",
+     "evidence": [
+      "plan/README.md:492-530"
+     ]
+    }
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "Oct 27 owner decision: connected-service coordination deferred again, no new start date.",
+     "evidence": [
+      "plan/README.md:30"
+     ]
+    },
+    {
+     "text": "Oct 27 owner decision: Phase 6.1 voice on hold; Phase 6.2 demonstration teaching selected next, with new PHASE6-TEACHING.md link.",
+     "evidence": [
+      "plan/README.md:30",
+      "plan/README.md:365",
+      "plan/README.md:373"
+     ]
+    },
+    {
+     "text": "Section 5.4 stale text persists (unchanged).",
+     "evidence": [
+      "plan/README.md:349"
+     ]
+    }
+   ]
+  },
+  "plan/CHECKLIST.md": {
+   "purpose": "Milestone checklist mirroring the roadmap with completion evidence, cross-cutting follow-ups and deferred items; now with 6.1 hold and 6.2 selection.",
+   "layer": "doc",
+   "responsibilities": [
+    {
+     "text": "Completion dates: P1 Oct 6, P2 Oct 7 (staging/HTTPS deferred), P3 Oct 7, P4 Oct 19, 5.1 Oct 20, 5.2 Oct 25 (547), 5.3 (581), 5.4 + exit Oct 26 (638); Phase 6, 6A, 7, 8 pending.",
+     "evidence": [
+      "plan/CHECKLIST.md:3"
+     ]
+    },
+    {
+     "text": "Evaluation framework deferred Oct 19; baseline-evaluations-before-backlog ordering; C36 verified and closed.",
+     "evidence": [
+      "plan/CHECKLIST.md:9",
+      "plan/CHECKLIST.md:11"
+     ]
+    },
+    {
+     "text": "Connected-service coordination deferred again Oct 27, no start date; not a Phase 5 gate; implementation not started.",
+     "evidence": [
+      "plan/CHECKLIST.md:10"
+     ]
+    },
+    {
+     "text": "VM isolation revisit after Phases 1-8.",
+     "evidence": [
+      "plan/CHECKLIST.md:17"
+     ]
+    },
+    {
+     "text": "Phases 1-5 boxes checked with evidence; staging/HTTPS unchecked; Phase 4 record: 447 tests, 17 groups archived.",
+     "evidence": [
+      "plan/CHECKLIST.md:19-227"
+     ]
+    },
+    {
+     "text": "5.4 and Phase 5 exit checked complete for local scope with 638 tests and owner-confirmed closed-tab push.",
+     "evidence": [
+      "plan/CHECKLIST.md:217-227"
+     ]
+    },
+    {
+     "text": "6.1 Voice: owner hold Oct 27, boxes unchecked.",
+     "evidence": [
+      "plan/CHECKLIST.md:231-239"
+     ]
+    },
+    {
+     "text": "6.2 Demonstration teaching: selected next; implementation built and locally deployed (654 backend tests, isolated capture/UI checks per PHASE6-TEACHING-REVIEW.md); milestone and requirement boxes stay unchecked until real owner acceptance.",
+     "evidence": [
+      "plan/CHECKLIST.md:240-249"
+     ]
+    },
+    {
+     "text": "6.3, 6.4, 6A, 7, 8 unchecked.",
+     "evidence": [
+      "plan/CHECKLIST.md:250-360"
+     ]
+    },
+    {
+     "text": "Cumulative verification section references work-outcomes review.",
+     "evidence": [
+      "plan/CHECKLIST.md:362-366"
+     ]
+    }
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "New Oct 27 coordination deferral wording (previously after-Phase-5 plan).",
+     "evidence": [
+      "plan/CHECKLIST.md:10"
+     ]
+    },
+    {
+     "text": "New 6.1 hold note and 6.2 section with PHASE6-TEACHING link and selection.",
+     "evidence": [
+      "plan/CHECKLIST.md:233",
+      "plan/CHECKLIST.md:240-242"
+     ]
+    },
+    {
+     "text": "Line 10 still instructs resuming with Phase 6.1 voice planning, contradicting the hold.",
+     "evidence": [
+      "plan/CHECKLIST.md:10"
+     ]
+    },
+    {
+     "text": "Stale Phase 4 private-write gate sentence persists.",
+     "evidence": [
+      "plan/CHECKLIST.md:364"
+     ]
+    }
+   ]
+  },
+  "plan/PHASE-DETAILS.md": {
+   "purpose": "Expanded user workflows, boundaries, dependencies and acceptance for phases 1-8 and 6A, with open decisions.",
+   "layer": "doc",
+   "responsibilities": [
+    {
+     "text": "Status table: Phases 1-4 complete locally; Phase 5 row says 5.4 implemented, push/cleanup/exit pending.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:9-19"
+     ]
+    },
+    {
+     "text": "Preserved decisions: Hermes unmodified, container per bot, evaluations-first, staging deferred, mobile 6A, coordination follows Phase 5.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:23-31"
+     ]
+    },
+    {
+     "text": "Phases 1-4 detail incl. completed-phase caveats (secret propagation defect, ZIP backlog).",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:33-161"
+     ]
+    },
+    {
+     "text": "5.1-5.3 details; 5.2 notes coordination is a separate follow-up.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:167-201"
+     ]
+    },
+    {
+     "text": "5.4 says implementation has not started.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:203-213"
+     ]
+    },
+    {
+     "text": "6.1 voice: owner hold Oct 27, scope pending; speech services/retention/latency undecided.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:219-229"
+     ]
+    },
+    {
+     "text": "6.2 teaching: selected next, researched plan linked; the capture/privacy/draft/test/publication contracts now have a local implementation and PHASE6-TEACHING-REVIEW.md records verification and remaining owner acceptance.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:231-241"
+     ]
+    },
+    {
+     "text": "6.3, 6.4 scope; 6A Android with Agentsims reference; Phase 7 recovery/visibility/release; Phase 8 membership/isolation unresolved.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:243-375"
+     ]
+    },
+    {
+     "text": "Open discussion decisions before implementation.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:377-381"
+     ]
+    }
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "Oct 27 hold of 6.1 and selection of 6.2 added with PHASE6-TEACHING link.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:221",
+      "plan/PHASE-DETAILS.md:233"
+     ]
+    },
+    {
+     "text": "Header still reads Updated 2026-10-26 and decision list line 30 omits the Oct 27 coordination deferral.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:3",
+      "plan/PHASE-DETAILS.md:30"
+     ]
+    },
+    {
+     "text": "Stale 5.4 status/section text persists.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:15",
+      "plan/PHASE-DETAILS.md:205"
+     ]
+    }
+   ]
+  },
+  "plan/CONTEXT.md": {
+   "purpose": "Carried-forward context: owner decisions, architecture rules, research and dated delivery log through Oct 27 voice hold, teaching research and Phase 6.2 implementation.",
+   "layer": "doc",
+   "responsibilities": [
+    {
+     "text": "Harness decisions Oct 10/11/13 incl. patches removed and work-controller refactor.",
+     "evidence": [
+      "plan/CONTEXT.md:9-17"
+     ]
+    },
+    {
+     "text": "Current-state section frozen at Phase 3/4-pending wording.",
+     "evidence": [
+      "plan/CONTEXT.md:21-23"
+     ]
+    },
+    {
+     "text": "Original transfer handoff retained as historical.",
+     "evidence": [
+      "plan/CONTEXT.md:25-37"
+     ]
+    },
+    {
+     "text": "Owner decision table, architecture, collaboration and defaults.",
+     "evidence": [
+      "plan/CONTEXT.md:39-116"
+     ]
+    },
+    {
+     "text": "UX/visual context and research findings.",
+     "evidence": [
+      "plan/CONTEXT.md:118-201"
+     ]
+    },
+    {
+     "text": "Dated log: Phase 3, skills/tools Oct 10, controller/tool admission/coordination Oct 13, VM deferral Oct 24, 6A placement Oct 25, 5.2, coordination plan, 5.3, 5.4, Phase 5 completion and notification retest Oct 26.",
+     "evidence": [
+      "plan/CONTEXT.md:228-352"
+     ]
+    },
+    {
+     "text": "Oct 27: coordination deferred again after owner said 'well do this later, what's next'; Phase 6.1 voice initially named next.",
+     "evidence": [
+      "plan/CONTEXT.md:355-357"
+     ]
+    },
+    {
+     "text": "Oct 27: owner holds 6.1 and moves to 6.2; PHASE6-TEACHING research (ShowUI-Aloha, Chrome Recorder, Playwright, rrweb, etc.); proposal: admitted desktop input plus keyframes, privacy barrier, immutable evidence, task-scoped candidate tests, reviewed native publication; seven slices. (Implementation followed later on Oct 27; see the 'Phase 6.2 implementation' section at CONTEXT.md:369-373.)",
+     "evidence": [
+      "plan/CONTEXT.md:360-366"
+     ]
+    }
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "Two new sections for Oct 27: coordination deferral and voice hold/teaching research.",
+     "evidence": [
+      "plan/CONTEXT.md:355-366"
+     ]
+    },
+    {
+     "text": "Oct 27 sections supersede each other (6.1 named next, then held) without editing earlier text.",
+     "evidence": [
+      "plan/CONTEXT.md:357",
+      "plan/CONTEXT.md:362"
+     ]
+    }
+   ]
+  },
+  "plan/CONNECTED-WORK-COORDINATION.md": {
+   "purpose": "Researched post-Phase 5 plan for shared admission, correlation, one accountable teammate and operation idempotency across connected services; deferred, not started.",
+   "layer": "doc",
+   "responsibilities": [
+    {
+     "text": "Status: researched, deferred again Oct 27, no implementation or date.",
+     "evidence": [
+      "plan/CONNECTED-WORK-COORDINATION.md:3"
+     ]
+    },
+    {
+     "text": "Placement: after Phase 5; not a Phase 5 gate; evaluation-before-backlog remains.",
+     "evidence": [
+      "plan/CONNECTED-WORK-COORDINATION.md:5-11"
+     ]
+    },
+    {
+     "text": "Problem and principle: one accountable teammate per logical request within purpose/workspace; independent purposes may fan out.",
+     "evidence": [
+      "plan/CONNECTED-WORK-COORDINATION.md:13-26"
+     ]
+    },
+    {
+     "text": "Research table (Trigger.dev, Camunda, Inngest, Dapr, Restate, provider webhooks, Workato) and two 2026 preprints.",
+     "evidence": [
+      "plan/CONNECTED-WORK-COORDINATION.md:28-47"
+     ]
+    },
+    {
+     "text": "Solution: four identities, atomic shared admission, correlation, one owner with handover, operation identity/reconciliation, causation and loop suppression.",
+     "evidence": [
+      "plan/CONNECTED-WORK-COORDINATION.md:49-100"
+     ]
+    },
+    {
+     "text": "Five-step implementation sequence and acceptance cases.",
+     "evidence": [
+      "plan/CONNECTED-WORK-COORDINATION.md:102-125"
+     ]
+    },
+    {
+     "text": "Limits: no universal exactly-once; native tool actions outside operation ledger; no Hermes patch.",
+     "evidence": [
+      "plan/CONNECTED-WORK-COORDINATION.md:127-131"
+     ]
+    },
+    {
+     "text": "Sources list.",
+     "evidence": [
+      "plan/CONNECTED-WORK-COORDINATION.md:133-152"
+     ]
+    }
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "Status line now records Oct 27 deferral again; no new date or milestone.",
+     "evidence": [
+      "plan/CONNECTED-WORK-COORDINATION.md:3"
+     ]
+    }
+   ]
+  }
+ },
+ "edges": [
+  {
+   "source": "file:plan/README.md",
+   "target": "feature:coordination",
+   "kind": "documents",
+   "label": "coordination deferred Oct 27",
+   "evidence": [
+    "plan/README.md:30"
+   ]
+  },
+  {
+   "source": "file:plan/README.md",
+   "target": "feature:knowledge",
+   "kind": "documents",
+   "label": "6.2 demonstration teaching selected",
+   "evidence": [
+    "plan/README.md:371-378"
+   ]
+  },
+  {
+   "source": "file:plan/README.md",
+   "target": "feature:attention",
+   "kind": "documents",
+   "label": "5.4 attention/notifications",
+   "evidence": [
+    "plan/README.md:347-353"
+   ]
+  },
+  {
+   "source": "file:plan/README.md",
+   "target": "feature:routines",
+   "kind": "documents",
+   "label": "5.1 routines",
+   "evidence": [
+    "plan/README.md:322-327"
+   ]
+  },
+  {
+   "source": "file:plan/README.md",
+   "target": "feature:events",
+   "kind": "documents",
+   "label": "5.2 event triggers",
+   "evidence": [
+    "plan/README.md:329-335"
+   ]
+  },
+  {
+   "source": "file:plan/README.md",
+   "target": "feature:management",
+   "kind": "documents",
+   "label": "manager grants and rules",
+   "evidence": [
+    "plan/README.md:102-136"
+   ]
+  },
+  {
+   "source": "file:plan/README.md",
+   "target": "feature:connectors",
+   "kind": "documents",
+   "label": "Phase 4 connections",
+   "evidence": [
+    "plan/README.md:281-314"
+   ]
+  },
+  {
+   "source": "file:plan/README.md",
+   "target": "feature:computer",
+   "kind": "documents",
+   "label": "3.3 and 6A mobile device use",
+   "evidence": [
+    "plan/README.md:263-269"
+   ]
+  },
+  {
+   "source": "file:plan/README.md",
+   "target": "feature:ops",
+   "kind": "documents",
+   "label": "Phase 7 release",
+   "evidence": [
+    "plan/README.md:429-453"
+   ]
+  },
+  {
+   "source": "file:plan/README.md",
+   "target": "feature:auth",
+   "kind": "documents",
+   "label": "Phase 8 membership",
+   "evidence": [
+    "plan/README.md:455-490"
+   ]
+  },
+  {
+   "source": "file:plan/README.md",
+   "target": "feature:lifecycle",
+   "kind": "documents",
+   "label": "Phase 2 bot lifecycle",
+   "evidence": [
+    "plan/README.md:212-217"
+   ]
+  },
+  {
+   "source": "file:plan/README.md",
+   "target": "feature:testing",
+   "kind": "documents",
+   "label": "test matrix",
+   "evidence": [
+    "plan/README.md:492-515"
+   ]
+  },
+  {
+   "source": "file:plan/CHECKLIST.md",
+   "target": "feature:knowledge",
+   "kind": "documents",
+   "label": "6.2 selected, 6.1 held",
+   "evidence": [
+    "plan/CHECKLIST.md:231-249"
+   ]
+  },
+  {
+   "source": "file:plan/CHECKLIST.md",
+   "target": "feature:coordination",
+   "kind": "documents",
+   "label": "deferred again Oct 27",
+   "evidence": [
+    "plan/CHECKLIST.md:10"
+   ]
+  },
+  {
+   "source": "file:plan/CHECKLIST.md",
+   "target": "feature:attention",
+   "kind": "documents",
+   "label": "5.4 complete",
+   "evidence": [
+    "plan/CHECKLIST.md:217-227"
+   ]
+  },
+  {
+   "source": "file:plan/CHECKLIST.md",
+   "target": "feature:testing",
+   "kind": "documents",
+   "label": "milestone evidence and cumulative verification",
+   "evidence": [
+    "plan/CHECKLIST.md:362-366"
+   ]
+  },
+  {
+   "source": "file:plan/CHECKLIST.md",
+   "target": "feature:ops",
+   "kind": "documents",
+   "label": "phase 7 pending",
+   "evidence": [
+    "plan/CHECKLIST.md:298-322"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE-DETAILS.md",
+   "target": "feature:knowledge",
+   "kind": "documents",
+   "label": "6.2 teaching scope",
+   "evidence": [
+    "plan/PHASE-DETAILS.md:231-241"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE-DETAILS.md",
+   "target": "feature:attention",
+   "kind": "documents",
+   "label": "5.4 details",
+   "evidence": [
+    "plan/PHASE-DETAILS.md:203-213"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE-DETAILS.md",
+   "target": "feature:events",
+   "kind": "documents",
+   "label": "5.2 details",
+   "evidence": [
+    "plan/PHASE-DETAILS.md:175-187"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE-DETAILS.md",
+   "target": "feature:routines",
+   "kind": "documents",
+   "label": "5.1/5.3 recurring",
+   "evidence": [
+    "plan/PHASE-DETAILS.md:167-201"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE-DETAILS.md",
+   "target": "feature:computer",
+   "kind": "documents",
+   "label": "6A mobile and 3.3 takeover",
+   "evidence": [
+    "plan/PHASE-DETAILS.md:119-123"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE-DETAILS.md",
+   "target": "feature:auth",
+   "kind": "documents",
+   "label": "Phase 8 isolation",
+   "evidence": [
+    "plan/PHASE-DETAILS.md:337-375"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE-DETAILS.md",
+   "target": "feature:ops",
+   "kind": "documents",
+   "label": "Phase 7 detail",
+   "evidence": [
+    "plan/PHASE-DETAILS.md:303-335"
+   ]
+  },
+  {
+   "source": "file:plan/CONTEXT.md",
+   "target": "feature:knowledge",
+   "kind": "documents",
+   "label": "Oct 27 teaching research",
+   "evidence": [
+    "plan/CONTEXT.md:360-366"
+   ]
+  },
+  {
+   "source": "file:plan/CONTEXT.md",
+   "target": "feature:coordination",
+   "kind": "documents",
+   "label": "Oct 27 deferral",
+   "evidence": [
+    "plan/CONTEXT.md:355-357"
+   ]
+  },
+  {
+   "source": "file:plan/CONTEXT.md",
+   "target": "feature:runtime-gate",
+   "kind": "documents",
+   "label": "tool admission and patch removal",
+   "evidence": [
+    "plan/CONTEXT.md:11-17"
+   ]
+  },
+  {
+   "source": "file:plan/CONTEXT.md",
+   "target": "feature:intake",
+   "kind": "documents",
+   "label": "work controller authorization",
+   "evidence": [
+    "plan/CONTEXT.md:242-248"
+   ]
+  },
+  {
+   "source": "file:plan/CONTEXT.md",
+   "target": "feature:outcomes",
+   "kind": "documents",
+   "label": "accepted deliverables",
+   "evidence": [
+    "plan/CONTEXT.md:257-261"
+   ]
+  },
+  {
+   "source": "file:plan/CONTEXT.md",
+   "target": "feature:notifications",
+   "kind": "documents",
+   "label": "5.4 implementation",
+   "evidence": [
+    "plan/CONTEXT.md:325-331"
+   ]
+  },
+  {
+   "source": "file:plan/CONNECTED-WORK-COORDINATION.md",
+   "target": "feature:coordination",
+   "kind": "documents",
+   "label": "post-Phase 5 plan",
+   "evidence": [
+    "plan/CONNECTED-WORK-COORDINATION.md:1-11"
+   ]
+  },
+  {
+   "source": "file:plan/CONNECTED-WORK-COORDINATION.md",
+   "target": "feature:events",
+   "kind": "documents",
+   "label": "overlapping triggers",
+   "evidence": [
+    "plan/CONNECTED-WORK-COORDINATION.md:13-26"
+   ]
+  },
+  {
+   "source": "file:plan/CONNECTED-WORK-COORDINATION.md",
+   "target": "feature:connectors",
+   "kind": "documents",
+   "label": "operation identity and reconciliation",
+   "evidence": [
+    "plan/CONNECTED-WORK-COORDINATION.md:88-94"
+   ]
+  },
+  {
+   "source": "file:plan/CONNECTED-WORK-COORDINATION.md",
+   "target": "file:backend/triggers.py",
+   "kind": "documents",
+   "label": "per-trigger admission",
+   "evidence": [
+    "plan/CONNECTED-WORK-COORDINATION.md:72"
+   ]
+  },
+  {
+   "source": "file:plan/README.md",
+   "target": "file:plan/PHASE6-TEACHING.md",
+   "kind": "documents",
+   "label": "teaching plan link",
+   "evidence": [
+    "plan/README.md:373"
+   ]
+  },
+  {
+   "source": "file:plan/CONTEXT.md",
+   "target": "file:plan/PHASE6-TEACHING.md",
+   "kind": "documents",
+   "label": "teaching research",
+   "evidence": [
+    "plan/CONTEXT.md:362"
+   ]
+  },
+  {
+   "source": "file:plan/README.md",
+   "target": "file:plan/VM-ISOLATION.md",
+   "kind": "documents",
+   "label": "VM deferral",
+   "evidence": [
+    "plan/README.md:32"
+   ]
+  },
+  {
+   "source": "file:plan/CONNECTED-WORK-COORDINATION.md",
+   "target": "feature:execution",
+   "kind": "documents",
+   "label": "operation/ownership dispatch checks",
+   "evidence": [
+    "plan/CONNECTED-WORK-COORDINATION.md:82-86"
+   ]
+  }
+ ],
+ "feature_fragments": [
+  {
+   "id": "feature:coordination",
+   "decisions": [
+    {
+     "decision": "Connected-service coordination deferred again on Oct 27 with no new start date",
+     "why": "Owner said to do it later after revisiting the design",
+     "alternatives": "Start after Phase 5 immediately",
+     "tradeoffs": "Overlapping handler admission can still create multiple work roots",
+     "tag": "documented",
+     "evidence": [
+      "plan/CHECKLIST.md:10",
+      "plan/CONNECTED-WORK-COORDINATION.md:3",
+      "plan/CONTEXT.md:357"
+     ]
+    },
+    {
+     "decision": "One accountable teammate per logical request within a purpose and workspace, independent purposes may fan out",
+     "why": "Access to a service makes a teammate eligible, not responsible for every event",
+     "alternatives": "Every eligible bot handles every matching event",
+     "tradeoffs": "Needs purpose grouping and legacy trigger migration",
+     "tag": "documented",
+     "evidence": [
+      "plan/CONNECTED-WORK-COORDINATION.md:17-19",
+      "plan/CONNECTED-WORK-COORDINATION.md:70"
+     ]
+    },
+    {
+     "decision": "Four separate identities (delivery, resource, work, operation) and database-enforced shared admission",
+     "why": "Resource ID alone cannot identify duplicates; atomic claim needed",
+     "alternatives": "Per-trigger independent admission (current)",
+     "tradeoffs": "Requires migration and provider-specific normalization",
+     "tag": "documented",
+     "evidence": [
+      "plan/CONNECTED-WORK-COORDINATION.md:51-70"
+     ]
+    }
+   ],
+   "limits": [
+    {
+     "text": "Plan only; implementation not started; no universal exactly-once guarantee.",
+     "evidence": [
+      "plan/CONNECTED-WORK-COORDINATION.md:3",
+      "plan/CONNECTED-WORK-COORDINATION.md:131"
+     ]
+    },
+    {
+     "text": "Connector ledger cannot cover independently authenticated native browser/terminal actions.",
+     "evidence": [
+      "plan/CONNECTED-WORK-COORDINATION.md:131"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:knowledge",
+   "decisions": [
+    {
+     "decision": "Phase 6.2 demonstration teaching selected next while 6.1 voice is held",
+     "why": "Owner: keep 6.1 on hold and move forward with 6.2",
+     "alternatives": "Proceed with voice planning",
+     "tradeoffs": "Voice scope remains pending with unsettled services",
+     "tag": "documented",
+     "evidence": [
+      "plan/README.md:365",
+      "plan/README.md:373",
+      "plan/CHECKLIST.md:233",
+      "plan/CHECKLIST.md:242",
+      "plan/CONTEXT.md:360"
+     ]
+    },
+    {
+     "decision": "Teaching built from admitted desktop input and keyframes with a privacy barrier, reviewed immutable evidence, task-scoped candidate tests and reviewed native publication",
+     "why": "Current secure input is ordinary VNC key traffic; pasted instructions are not native skill testing",
+     "alternatives": "Macro engine, training stack, global automatic enablement",
+     "tradeoffs": "Needs recorder/privacy/vision-provider validation",
+     "tag": "documented",
+     "evidence": [
+      "plan/CONTEXT.md:364",
+      "plan/PHASE-DETAILS.md:233-241"
+     ]
+    }
+   ],
+   "limits": [
+    {
+     "text": "6.2 implemented locally but real owner acceptance not done (the plan's validation items were exercised only with fixtures/synthetic checks); recorder protocol, middleware contract, vision support and retention need validation.",
+     "evidence": [
+      "plan/README.md:373",
+      "plan/CONTEXT.md:366"
+     ]
+    },
+    {
+     "text": "Secret entry excluded across action text, accessibility data, screenshots and video, not just one field.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:235"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:attention",
+   "decisions": [
+    {
+     "decision": "5.4 inbox plus quiet-hours browser push accepted for local scope Oct 26",
+     "why": "Owner-confirmed closed-tab exact-result push and cleanup",
+     "alternatives": "Remote hosting",
+     "tradeoffs": "Desktop localhost secure origin only; Hermbot must be awake",
+     "tag": "documented",
+     "evidence": [
+      "plan/CHECKLIST.md:217-227",
+      "plan/CONTEXT.md:345-347",
+      "plan/CONTEXT.md:322"
+     ]
+    }
+   ],
+   "limits": [
+    {
+     "text": "Phone over plain-HTTP LAN lacks secure-origin exception; display depends on browser/OS permissions.",
+     "evidence": [
+      "plan/CONTEXT.md:322"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:ops",
+   "decisions": [
+    {
+     "decision": "Linux staging/HTTPS and remote hosting remain deferred; local-only operation",
+     "why": "Owner decision Oct 7",
+     "alternatives": "Staging deployment in Phase 2",
+     "tradeoffs": "Phase 7 deployed-release gate must be revisited",
+     "tag": "documented",
+     "evidence": [
+      "plan/CHECKLIST.md:103",
+      "plan/PHASE-DETAILS.md:333",
+      "plan/README.md:26"
+     ]
+    }
+   ],
+   "limits": [
+    {
+     "text": "VM isolation deferred until after Phases 1-8.",
+     "evidence": [
+      "plan/README.md:32",
+      "plan/CHECKLIST.md:17"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:testing",
+   "decisions": [
+    {
+     "decision": "Baseline evaluations precede issue-fix backlog; C36 only exception",
+     "why": "Owner decision Oct 19",
+     "alternatives": "Fix backlog first",
+     "tradeoffs": "Backlog defects stay open",
+     "tag": "documented",
+     "evidence": [
+      "plan/README.md:34",
+      "plan/CHECKLIST.md:11"
+     ]
+    }
+   ],
+   "limits": [
+    {
+     "text": "Evaluation implementation deferred, no suite selected.",
+     "evidence": [
+      "plan/README.md:28",
+      "plan/CHECKLIST.md:9"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:runtime-gate",
+   "decisions": [
+    {
+     "decision": "Hermes source unmodified; four patches replaced by supported middleware and private adapter",
+     "why": "Owner rule against source patches",
+     "alternatives": "Harness-independent adapter platform (deferred Oct 11)",
+     "tradeoffs": "Generalized adapter refactor not built",
+     "tag": "documented",
+     "evidence": [
+      "plan/README.md:11-12",
+      "plan/README.md:56",
+      "plan/CONTEXT.md:17"
+     ]
+    }
+   ],
+   "limits": [
+    {
+     "text": "Connector review does not cover independently authenticated native actions.",
+     "evidence": [
+      "plan/README.md:22"
+     ]
+    }
+   ]
+  }
+ ],
+ "discrepancies": [
+  {
+   "text": "README Phase 5.4 section says planning complete and implementation/acceptance not started, while the same file and CHECKLIST record 5.4 and Phase 5 exit accepted Oct 26 (638 tests).",
+   "severity": "medium",
+   "nodes": [
+    "file:plan/README.md",
+    "file:plan/CHECKLIST.md"
+   ],
+   "evidence": [
+    "plan/README.md:349",
+    "plan/README.md:26",
+    "plan/CHECKLIST.md:217-227"
+   ]
+  },
+  {
+   "text": "PHASE-DETAILS status table says 5.4 push/cleanup and phase exit pending and section 5.4 says implementation not started; contradicts CHECKLIST and CONTEXT completion.",
+   "severity": "medium",
+   "nodes": [
+    "file:plan/PHASE-DETAILS.md",
+    "file:plan/CHECKLIST.md",
+    "file:plan/CONTEXT.md"
+   ],
+   "evidence": [
+    "plan/PHASE-DETAILS.md:15",
+    "plan/PHASE-DETAILS.md:205",
+    "plan/CHECKLIST.md:227",
+    "plan/CONTEXT.md:345-347"
+   ]
+  },
+  {
+   "text": "CHECKLIST line 10 says to resume the roadmap with Phase 6.1 voice planning, but the same file, README and PHASE-DETAILS hold 6.1 and select 6.2.",
+   "severity": "medium",
+   "nodes": [
+    "file:plan/CHECKLIST.md",
+    "file:plan/README.md"
+   ],
+   "evidence": [
+    "plan/CHECKLIST.md:10",
+    "plan/CHECKLIST.md:233",
+    "plan/README.md:365",
+    "plan/PHASE-DETAILS.md:221"
+   ]
+  },
+  {
+   "text": "CHECKLIST cumulative verification says work-outcomes change does not close the remaining Phase 4 private-write gate, but Phase 4 is recorded complete Oct 19.",
+   "severity": "low",
+   "nodes": [
+    "file:plan/CHECKLIST.md"
+   ],
+   "evidence": [
+    "plan/CHECKLIST.md:364",
+    "plan/CHECKLIST.md:147"
+   ]
+  },
+  {
+   "text": "PHASE-DETAILS header says Updated 2026-10-26 and its preserved-decision list omits the Oct 27 coordination deferral and 6.1/6.2 decisions, though body sections include them.",
+   "severity": "low",
+   "nodes": [
+    "file:plan/PHASE-DETAILS.md"
+   ],
+   "evidence": [
+    "plan/PHASE-DETAILS.md:3",
+    "plan/PHASE-DETAILS.md:30",
+    "plan/PHASE-DETAILS.md:221",
+    "plan/PHASE-DETAILS.md:233"
+   ]
+  },
+  {
+   "text": "CONTEXT 'Current state and next step' and earlier sections still describe Phase 4 as pending its private writes and no boxes complete; CONTEXT line 349 and 357 name coordination and 6.1 as next, superseded by line 360.",
+   "severity": "low",
+   "nodes": [
+    "file:plan/CONTEXT.md"
+   ],
+   "evidence": [
+    "plan/CONTEXT.md:23",
+    "plan/CONTEXT.md:205",
+    "plan/CONTEXT.md:349",
+    "plan/CONTEXT.md:357",
+    "plan/CONTEXT.md:360"
+   ]
+  },
+  {
+   "text": "CONNECTED-WORK plan claim that admission is independent per trigger holds in code: admit_pending iterates per trigger_id with per-trigger locks, no shared cross-trigger claim.",
+   "severity": "low",
+   "nodes": [
+    "file:plan/CONNECTED-WORK-COORDINATION.md",
+    "file:backend/triggers.py"
+   ],
+   "evidence": [
+    "plan/CONNECTED-WORK-COORDINATION.md:72",
+    "backend/triggers.py:371-374"
+   ]
+  },
+  {
+   "text": "Docs record 6.1 voice as unimplemented and the code agrees; 6.2 teaching is now implemented (backend/teaching.py, docker/teaching_capture.py, web/src/Teaching.tsx) and the docs record it as built locally with real owner acceptance pending.",
+   "severity": "low",
+   "nodes": [
+    "file:plan/README.md"
+   ],
+   "evidence": [
+    "plan/README.md:363-378"
+   ]
+  }
+ ]
+}

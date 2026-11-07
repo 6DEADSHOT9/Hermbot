@@ -1,0 +1,5 @@
+cryptography==46.0.5
+httpx==0.28.1
+websockets==15.0.1
+PyJWT==2.15.1
+keyring==25.7.0; sys_platform == 'darwin'

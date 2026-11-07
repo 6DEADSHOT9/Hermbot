@@ -1,0 +1,5738 @@
+{
+ "agent": "detail3",
+ "files_read": [
+  ".taste-skill/after/connections-1440.png",
+  ".taste-skill/after/connections-390.png",
+  ".taste-skill/after/create-group-1440.png",
+  ".taste-skill/after/create-group-390.png",
+  ".taste-skill/after/create-teammate-1440.png",
+  ".taste-skill/after/create-teammate-390.png",
+  ".taste-skill/after/dark-390.png",
+  ".taste-skill/after/dark-owner-menu-390.png",
+  ".taste-skill/after/dark-routines-390.png",
+  ".taste-skill/after/file-library-1440.png",
+  ".taste-skill/after/file-library-390.png",
+  ".taste-skill/after/knowledge-1440.png",
+  ".taste-skill/after/knowledge-320.png",
+  ".taste-skill/after/knowledge-390.png",
+  ".taste-skill/after/knowledge-768.png",
+  ".taste-skill/after/knowledge-844.png",
+  ".taste-skill/after/navigation-1440.png",
+  ".taste-skill/after/navigation-320.png",
+  ".taste-skill/after/navigation-390.png",
+  ".taste-skill/after/navigation-768.png",
+  ".taste-skill/after/navigation-844.png",
+  ".taste-skill/after/owner-menu-1440.png",
+  ".taste-skill/after/owner-menu-390.png",
+  ".taste-skill/after/routines-1440.png",
+  ".taste-skill/after/routines-320.png",
+  ".taste-skill/after/routines-390.png",
+  ".taste-skill/after/routines-768.png",
+  ".taste-skill/after/routines-844.png",
+  ".taste-skill/after/workspace-1440.png",
+  ".taste-skill/after/workspace-320.png",
+  ".taste-skill/after/workspace-390.png",
+  ".taste-skill/after/workspace-768.png",
+  ".taste-skill/after/workspace-844.png",
+  ".taste-skill/after/workspace-settings-1440.png",
+  ".taste-skill/after/workspace-settings-390.png",
+  ".taste-skill/before/desktop-fold.jpg",
+  ".taste-skill/before/desktop-page-01.jpg",
+  ".taste-skill/before/knowledge-1440.png",
+  ".taste-skill/before/knowledge-390.png",
+  ".taste-skill/before/knowledge-768.png",
+  ".taste-skill/before/mobile-fold.jpg",
+  ".taste-skill/before/mobile-page-01.jpg",
+  ".taste-skill/before/navigation-1440.png",
+  ".taste-skill/before/navigation-390.png",
+  ".taste-skill/before/navigation-768.png",
+  ".taste-skill/before/routines-1440.png",
+  ".taste-skill/before/routines-390.png",
+  ".taste-skill/before/routines-768.png",
+  ".taste-skill/before/tablet-fold.jpg",
+  ".taste-skill/before/tablet-page-01.jpg",
+  ".taste-skill/before/workspace-1440.png",
+  ".taste-skill/before/workspace-390.png",
+  ".taste-skill/before/workspace-768.png",
+  ".taste-skill/refined/knowledge-1440.png",
+  ".taste-skill/refined/knowledge-320.png",
+  ".taste-skill/refined/knowledge-390.png",
+  ".taste-skill/refined/knowledge-768.png",
+  ".taste-skill/refined/knowledge-844.png",
+  ".taste-skill/refined/navigation-1440.png",
+  ".taste-skill/refined/navigation-320.png",
+  ".taste-skill/refined/navigation-390.png",
+  ".taste-skill/refined/navigation-768.png",
+  ".taste-skill/refined/navigation-844.png",
+  ".taste-skill/refined/routines-1440.png",
+  ".taste-skill/refined/routines-320.png",
+  ".taste-skill/refined/routines-390.png",
+  ".taste-skill/refined/routines-768.png",
+  ".taste-skill/refined/routines-844.png",
+  ".taste-skill/refined/workspace-1440.png",
+  ".taste-skill/refined/workspace-320.png",
+  ".taste-skill/refined/workspace-390.png",
+  ".taste-skill/refined/workspace-768.png",
+  ".taste-skill/refined/workspace-844.png",
+  ".taste-skill/work-details/after/finished-1440.png",
+  ".taste-skill/work-details/after/finished-320.png",
+  ".taste-skill/work-details/after/finished-390.png",
+  ".taste-skill/work-details/after/finished-card-1440.png",
+  ".taste-skill/work-details/after/finished-card-320.png",
+  ".taste-skill/work-details/after/finished-card-390.png",
+  ".taste-skill/work-details/after/inspect-1440.png",
+  ".taste-skill/work-details/after/inspect-320.png",
+  ".taste-skill/work-details/after/inspect-390.png",
+  ".taste-skill/work-details/after/outputs-1440.png",
+  ".taste-skill/work-details/after/outputs-320.png",
+  ".taste-skill/work-details/after/outputs-390.png",
+  ".taste-skill/work-details/after/removed-1440.png",
+  ".taste-skill/work-details/after/removed-320.png",
+  ".taste-skill/work-details/after/removed-390.png",
+  ".taste-skill/work-details/after/removed-row-1440.png",
+  ".taste-skill/work-details/after/removed-row-320.png",
+  ".taste-skill/work-details/after/removed-row-390.png",
+  ".taste-skill/work-details/before/finished-1440.png",
+  ".taste-skill/work-details/before/finished-320.png",
+  ".taste-skill/work-details/before/finished-390.png",
+  ".taste-skill/work-details/before/inspect-1440.png",
+  ".taste-skill/work-details/before/inspect-320.png",
+  ".taste-skill/work-details/before/inspect-390.png",
+  ".taste-skill/work-details/before/outputs-1440.png",
+  ".taste-skill/work-details/before/outputs-320.png",
+  ".taste-skill/work-details/before/outputs-390.png",
+  ".taste-skill/work-details/before/removed-1440.png",
+  ".taste-skill/work-details/before/removed-320.png",
+  ".taste-skill/work-details/before/removed-390.png",
+  "plan/archive/grokbot-design-reference.png"
+ ],
+ "module_notes": {
+  ".taste-skill/after/connections-1440.png": {
+   "purpose": "Connections modal over workspace, Connections tab with fixture connector cards (1440 desktop)",
+   "visible_text": [
+    "hermbot logo with asterisk",
+    "Find a teammate...",
+    "Research (clipped item)",
+    "Sage / Review",
+    "Past teammates 15",
+    "Groups 6 +",
+    "The dawn of ai / 3 teammates",
+    "Kaggle competitions / 3 teammates",
+    "Anthropic ipo / 3 teammates",
+    "Project chat temp2 / 3 teammates",
+    "Manik's task / 3 teammates",
+    "Project chat3 / 3 teammates",
+    "Routines",
+    "Owner / Local workspace",
+    "Scout",
+    "Research, e...",
+    "Ready",
+    "Connections",
+    "Connect applications, choose teammate access, and review external changes.",
+    "Connections",
+    "OAuth setup",
+    "Permissions",
+    "Activity",
+    "App connections keep enabled tools available. App access follows the permissions set here. Connector changes require approval or standing permission. Actions in a separately signed-in browser use that website's account access.",
+    "Phase 4 UI fixture 1791415342992 edited · github",
+    "revoked · Account not verified",
+    "No teammates assigned · 2 actions",
+    "Edit access",
+    "Connect account",
+    "Use access token",
+    "Phase 4 UI fixture 1791415958997 edited · github",
+    "Phase 4 UI fixture 1791417399450 edited · github",
+    "Phase 4 native policy proof · github",
+    "Your team works in the background. You stay in control.",
+    "send · new line"
+   ],
+   "components": [
+    "dimmed sidebar",
+    "modal dialog with close x",
+    "4-tab strip (Connections active, underlined)",
+    "intro paragraph",
+    "scrollable list of connector cards each with 3 buttons (Edit access, green primary Connect account, Use access token)",
+    "dimmed chat header icons",
+    "composer behind overlay"
+   ],
+   "state": "Connections modal open, Connections tab active, list scrolled to top and cut off at bottom",
+   "viewport": "1440x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Header subtitle behind modal truncated 'Research, e' (modal overlaps header)",
+     "where": "top-left behind modal"
+    },
+    {
+     "text": "Last card 'Phase 4 native policy proof' is clipped at modal bottom edge with no visible scrollbar or fade cue",
+     "where": "modal bottom"
+    },
+    {
+     "text": "Test fixture data (Phase 4 UI fixture timestamps) shown as real connections; repeated identical revoked cards are noisy",
+     "where": "card list"
+    },
+    {
+     "text": "Tiny close 'x' glyph is very small, low touch target",
+     "where": "modal top-right"
+    },
+    {
+     "text": "Sidebar top item 'Research' clipped under search box",
+     "where": "sidebar y~140"
+    },
+    {
+     "text": "Metadata text (revoked / No teammates assigned) very small and light grey, low contrast",
+     "where": "inside cards"
+    }
+   ]
+  },
+  ".taste-skill/after/connections-390.png": {
+   "purpose": "Connections modal on mobile with wrapped tabs and stacked buttons",
+   "visible_text": [
+    "Scout",
+    "Connections",
+    "Connect applications, choose teammate access, and review external changes.",
+    "Connections",
+    "OAuth setup",
+    "Permissions",
+    "Activity",
+    "App connections keep enabled tools available. App access follows the permissions set here. Connector changes require approval or standing permission. Actions in a separately signed-in browser use that website's account access.",
+    "Phase 4 UI fixture 1791415342992 edited · github",
+    "revoked · Account not verified",
+    "No teammates assigned · 2 actions",
+    "Edit access",
+    "Connect account",
+    "Use access token",
+    "Phase 4 UI fixture 1791415958997 edited · github",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "hamburger menu",
+    "avatar",
+    "overflow ... menu",
+    "layers icon",
+    "modal with close x",
+    "wrapped tab strip (Activity on second row)",
+    "connector cards with wrapped buttons"
+   ],
+   "state": "Connections modal open, scrolled top",
+   "viewport": "390x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Tab strip wraps to two rows; 'Activity' orphaned on second line",
+     "where": "below intro"
+    },
+    {
+     "text": "Use access token button wraps onto its own row, uneven button layout",
+     "where": "each card"
+    },
+    {
+     "text": "Modal fills nearly full height; background chat barely visible; close x tiny",
+     "where": "top-right of modal"
+    },
+    {
+     "text": "Fixture test data shown in cards",
+     "where": "cards"
+    }
+   ]
+  },
+  ".taste-skill/after/create-group-1440.png": {
+   "purpose": "Create group conversation modal 'Bring your team together' (1440)",
+   "visible_text": [
+    "hermbot logo with asterisk",
+    "Find a teammate...",
+    "Research (clipped item)",
+    "Sage / Review",
+    "Past teammates 15",
+    "Groups 6 +",
+    "The dawn of ai / 3 teammates",
+    "Kaggle competitions / 3 teammates",
+    "Anthropic ipo / 3 teammates",
+    "Project chat temp2 / 3 teammates",
+    "Manik's task / 3 teammates",
+    "Project chat3 / 3 teammates",
+    "Routines",
+    "Owner / Local workspace",
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "You 08:40 AM",
+    "Bring your team together",
+    "Create a conversation for a shared outcome. Each teammate keeps its own workspace.",
+    "Conversation name",
+    "Project chat",
+    "Scout / Research, evidence, and data analysis",
+    "Sage / Review, code validation, and coordination",
+    "Quill / Writing, synthesis, and clear deliverables",
+    "Create conversation",
+    "Me... (clipped)",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control.",
+    "send · new line"
+   ],
+   "components": [
+    "dimmed sidebar",
+    "modal with X",
+    "name text input",
+    "3 checkbox teammate cards with avatars (all checked)",
+    "full-width green Create conversation button",
+    "composer partially behind modal"
+   ],
+   "state": "Create group modal open, defaults filled, all three teammates selected",
+   "viewport": "1440x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Modal sits over composer; placeholder 'Me' clipped by modal edge",
+     "where": "bottom-left of modal/composer"
+    },
+    {
+     "text": "Native small checkboxes not styled to match design",
+     "where": "teammate cards"
+    },
+    {
+     "text": "Overlay dim is weak; background chat still legible/distracting",
+     "where": "backdrop"
+    },
+    {
+     "text": "Sidebar top 'Research' item clipped",
+     "where": "sidebar y~140"
+    }
+   ]
+  },
+  ".taste-skill/after/create-group-390.png": {
+   "purpose": "Create group modal on mobile",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, and data analys...",
+    "through Slack unless that access is available.",
+    "Reply",
+    "Bring your team together",
+    "Create a conversation for a shared outcome. Each teammate keeps its own workspace.",
+    "Conversation name",
+    "Project chat",
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Sage",
+    "Review, code validation, and coordination",
+    "Quill",
+    "Writing, synthesis, and clear deliverables",
+    "Create conversation",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "header with hamburger, avatar, ... and layers icon",
+    "modal",
+    "input",
+    "3 teammate checkbox cards",
+    "Create conversation button",
+    "composer behind"
+   ],
+   "state": "Modal open",
+   "viewport": "390x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Header subtitle truncated with ellipsis 'analys...'",
+     "where": "header"
+    },
+    {
+     "text": "Native checkboxes unstyled and tiny",
+     "where": "teammate cards"
+    },
+    {
+     "text": "Composer send button and toolbar peek out below modal, cluttered",
+     "where": "bottom"
+    }
+   ]
+  },
+  ".taste-skill/after/create-teammate-1440.png": {
+   "purpose": "Create teammate form modal, long form clipped at bottom (1440)",
+   "visible_text": [
+    "hermbot logo with asterisk",
+    "Find a teammate...",
+    "Research (clipped item)",
+    "Sage / Review",
+    "Past teammates 15",
+    "Groups 6 +",
+    "The dawn of ai / 3 teammates",
+    "Kaggle competitions / 3 teammates",
+    "Anthropic ipo / 3 teammates",
+    "Project chat temp2 / 3 teammates",
+    "Manik's task / 3 teammates",
+    "Project chat3 / 3 teammates",
+    "Routines",
+    "Owner / Local workspace",
+    "Create teammate",
+    "Each teammate has a persistent Hermes runtime and private workspace.",
+    "Name",
+    "Avatar",
+    "An emoji",
+    "Role",
+    "Provider",
+    "Workspace default",
+    "Model",
+    "Provider default",
+    "Color",
+    "Expertise",
+    "research, writing",
+    "Tools",
+    "Read and edit local files",
+    "Run local commands",
+    "Consult installed skills",
+    "Maintain curated memory",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "modal with tiny x",
+    "Name input",
+    "Avatar input",
+    "Role textarea with resize handle",
+    "Provider select",
+    "Model select",
+    "Color input (renders as flat line)",
+    "Expertise input",
+    "Tools checkbox list (2 checked, 2 unchecked)"
+   ],
+   "state": "Create teammate modal open, empty fields, scrolled top, content continues below",
+   "viewport": "1440x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Color control renders as a thin horizontal line, not a recognizable color picker/swatch",
+     "where": "Color field"
+    },
+    {
+     "text": "No visible footer with Create/Cancel buttons; submit hidden below fold with no scroll cue",
+     "where": "modal bottom"
+    },
+    {
+     "text": "Name input has no placeholder while Avatar/Expertise do; inconsistent",
+     "where": "Name field"
+    },
+    {
+     "text": "'Tools' label is small and misaligned with the field labels (indented, smaller font)",
+     "where": "Tools section"
+    },
+    {
+     "text": "Native select arrows and checkboxes unstyled",
+     "where": "Provider/Model/Tools"
+    },
+    {
+     "text": "Modal bottom edge cuts off Maintain curated memory row tightly",
+     "where": "modal bottom"
+    }
+   ]
+  },
+  ".taste-skill/after/create-teammate-390.png": {
+   "purpose": "Create teammate modal on mobile, clipped after Expertise label",
+   "visible_text": [
+    "Scout",
+    "Create teammate",
+    "Each teammate has a persistent Hermes runtime and private workspace.",
+    "Name",
+    "Avatar",
+    "An emoji",
+    "Role",
+    "Provider",
+    "Workspace default",
+    "Model",
+    "Provider default",
+    "Color",
+    "Expertise",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "modal",
+    "stacked form fields",
+    "textarea with resize handle",
+    "selects",
+    "color field line"
+   ],
+   "state": "Modal open, scrolled top",
+   "viewport": "390x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Color control renders as a flat line, not a swatch",
+     "where": "Color field"
+    },
+    {
+     "text": "Expertise input cut off at modal bottom; no scroll indicator, submit invisible",
+     "where": "modal bottom"
+    },
+    {
+     "text": "Modal covers nearly whole screen leaving little context; close x tiny",
+     "where": "top-right"
+    }
+   ]
+  },
+  ".taste-skill/after/dark-390.png": {
+   "purpose": "Dark theme Scout chat on mobile",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, and data analys...",
+    "through Slack unless that access is available.",
+    "Reply",
+    "You 09:27 AM",
+    "find out why did that happpen",
+    "Scout 09:28 AM",
+    "The task record shows the deliverables failed because \"Execution cancelled: Execution time budget exhausted.\" That is the clearest underlying cause available. The browser's \"explicit stop requested\" message was the cancellation symptom; the accessible record does not identify who or what initiated it. A status lookup for the prior assignment was denied as outside this operation, so I could not inspect lower-level cancellation logs. I should not have assumed you had intentionally stopped it.",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "header",
+    "user bubble (dark green)",
+    "Scout message with avatar",
+    "Reply + thumbs up actions",
+    "composer with checkbox, doc icon, clock icon, send button",
+    "mention dropdown",
+    "another bubble cut at bottom"
+   ],
+   "state": "Chat conversation, dark theme",
+   "viewport": "390x844",
+   "theme": "dark",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Header subtitle truncated 'analys...'",
+     "where": "header"
+    },
+    {
+     "text": "Send button is low-contrast grey-green on dark",
+     "where": "composer right"
+    },
+    {
+     "text": "Footer helper text very dim",
+     "where": "bottom"
+    },
+    {
+     "text": "Next bubble partially hidden behind composer",
+     "where": "y~630"
+    },
+    {
+     "text": "Native checkbox bright white against dark theme",
+     "where": "composer"
+    }
+   ]
+  },
+  ".taste-skill/after/dark-owner-menu-390.png": {
+   "purpose": "Dark theme sidebar drawer with owner menu open on mobile",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "Research",
+    "Sage",
+    "Review",
+    "Past teammates 15",
+    "Groups 6",
+    "The dawn of ai",
+    "3 teammates",
+    "Kaggle competitions",
+    "3 teammates",
+    "Anthropic ipo",
+    "3 teammates",
+    "Connections",
+    "File library",
+    "Workspace settings",
+    "Switch to light theme",
+    "Sign out",
+    "Owner",
+    "Local workspace"
+   ],
+   "components": [
+    "sidebar drawer over dimmed chat",
+    "logo",
+    "team icon and + buttons",
+    "search",
+    "teammate list",
+    "groups list",
+    "popover menu with icons",
+    "owner footer with chevron"
+   ],
+   "state": "Drawer open with owner menu popover expanded",
+   "viewport": "390x844",
+   "theme": "dark",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Owner menu popover covers lower groups list; a group item peeks behind the popover edge",
+     "where": "y~540"
+    },
+    {
+     "text": "'Owner' name is green-tinted and low contrast vs Local workspace subtext",
+     "where": "footer"
+    },
+    {
+     "text": "Sage avatar and 'Research' item clipped at list top",
+     "where": "y~130"
+    },
+    {
+     "text": "Background chat text bleeds through at right of drawer edge, narrow dim region",
+     "where": "right of drawer"
+    }
+   ]
+  },
+  ".taste-skill/after/dark-routines-390.png": {
+   "purpose": "Dark theme Routines modal with one hourly routine on mobile",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, and data analys...",
+    "through Slack unless that access is available.",
+    "Reply",
+    "You 09:27 AM",
+    "Routines",
+    "Give a teammate work to run on a schedule. Results return to the chosen conversation. Keep this computer on for scheduled runs.",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "Active",
+    "Every hour · UTC · Scout",
+    "Next run 10/20/2026, 9:13:53 AM on this device",
+    "Last run: Needs attention",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Delete",
+    "Archived routines",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "modal with x",
+    "New routine primary button (light green)",
+    "Refresh button",
+    "routine card with title and Active status dot",
+    "schedule meta lines",
+    "action row Edit/History/Run now(primary)/Pause/Delete(red-orange)",
+    "Archived routines disclosure",
+    "composer behind"
+   ],
+   "state": "Routines modal open with one active routine; last run needs attention",
+   "viewport": "390x844",
+   "theme": "dark",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Modal drawn over chat with composer not dimmed enough; composer and message text visible and crowding the modal bottom edge",
+     "where": "bottom"
+    },
+    {
+     "text": "Edit/History/Pause are plain text with no affordance, cramped in a single row; Delete in salmon is close to Pause",
+     "where": "action row"
+    },
+    {
+     "text": "Close x tiny and low contrast",
+     "where": "modal top-right"
+    },
+    {
+     "text": "Routine title wraps next to 'Active' status, status competes with title",
+     "where": "routine card header"
+    },
+    {
+     "text": "Modal bottom is flush against the composer top, no breathing room",
+     "where": "y~655"
+    }
+   ]
+  },
+  ".taste-skill/after/file-library-1440.png": {
+   "purpose": "File library modal with search, upload, import link and file list (1440)",
+   "visible_text": [
+    "File library",
+    "Keep files and versioned outputs, share selected versions with conversations, and find prior work.",
+    "Files",
+    "Search prior work",
+    "Search",
+    "Filename or document text",
+    "Conversation",
+    "All files · new uploads stay private",
+    "Upload a file",
+    "https://...",
+    "Import link",
+    "phase4-github-issue-inspection.md",
+    "v1 · 0.5 KB · bot",
+    "phase4-github-connector-receipt.md",
+    "v1 · 0.2 KB · bot",
+    "Phase 4 reviewed reply receipt evidence",
+    "v1 · 0.8 KB · bot",
+    "Phase 4 review acceptance receipt",
+    "v1 · 0.5 KB · bot",
+    "Your team works in the background. You stay in control.",
+    "sidebar: hermbot, Find a teammate..., Sage, Past teammates 15, Groups 6, group list, Routines, Owner"
+   ],
+   "components": [
+    "modal with x",
+    "Files / Search prior work toggle buttons",
+    "Search input",
+    "Conversation select",
+    "Upload a file button",
+    "URL input + Import link button",
+    "file rows list",
+    "dimmed sidebar"
+   ],
+   "state": "File library modal open, list clipped at bottom",
+   "viewport": "1440x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Files and Search prior work tabs look like plain buttons with no clear active state",
+     "where": "below description"
+    },
+    {
+     "text": "Last file row is cut off at modal bottom with no scroll cue",
+     "where": "modal bottom"
+    },
+    {
+     "text": "File rows have no actions (download/share) visible; rows are unlabeled cards with tiny meta text",
+     "where": "file list"
+    },
+    {
+     "text": "Test fixture filenames (phase4...) as content",
+     "where": "list"
+    },
+    {
+     "text": "Header subtitle behind modal truncated 'Research, e'",
+     "where": "top"
+    },
+    {
+     "text": "Upload a file is full-width plain outlined button, heavy visual weight same as secondary controls; hierarchy unclear",
+     "where": "upload row"
+    }
+   ]
+  },
+  ".taste-skill/after/file-library-390.png": {
+   "purpose": "File library modal on mobile",
+   "visible_text": [
+    "File library",
+    "Keep files and versioned outputs, share selected versions with conversations, and find prior work.",
+    "Files",
+    "Search prior work",
+    "Search",
+    "Filename or document text",
+    "Conversation",
+    "All files · new uploads stay private",
+    "Upload a file",
+    "https://...",
+    "Import link",
+    "phase4-github-issue-inspection.md",
+    "v1 · 0.5 KB · bot",
+    "phase4-github-connector-receipt.md",
+    "v1 · 0.2 KB · bot",
+    "Phase 4 reviewed reply receipt evidence",
+    "v1 · 0.8 KB · bot",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "modal",
+    "tab-like buttons",
+    "search input",
+    "select",
+    "upload button",
+    "url input",
+    "Import link button on separate row",
+    "file cards"
+   ],
+   "state": "Modal open, list clipped",
+   "viewport": "390x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Import link button drops under the URL input, left-aligned, unbalanced layout",
+     "where": "below URL field"
+    },
+    {
+     "text": "Last file row cut off at modal bottom",
+     "where": "bottom"
+    },
+    {
+     "text": "No active state on Files tab",
+     "where": "tabs"
+    },
+    {
+     "text": "Header behind modal shows only partial Scout logo",
+     "where": "top"
+    }
+   ]
+  },
+  ".taste-skill/after/knowledge-1440.png": {
+   "purpose": "Scout Memory & skills modal over three-column workspace with right Work panel (1440x900)",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "Scout / Research",
+    "Sage / Review",
+    "Past teammates 15",
+    "Groups 6",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Project chat temp2",
+    "Manik's task",
+    "Project chat3",
+    "Routines",
+    "Owner / Local workspace",
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "Inspect failures, reconcile before reassigning, and combine results when done. [{\"id\": \"eedb54d6-aeb6-425f-9447-41e2b7d1d179\", \"bot_id\": \"writer\", \"status\": \"completed\", \"output\": \"[Protocol fixture] Artifact b9c708ac-1347-5db1-af33-3deb517f6031 is ready.\", \"error\": null, \"artifacts\": [{\"id\": \"b9c708ac-1347-5db1-af33-3deb517f6031\", \"name\":",
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Curated memory",
+    "Skills",
+    "Your teammate automatically consults relevant enabled skills for each assignment. Enabling a skill does not change its tool or application access.",
+    "Find a skill",
+    "Create skill",
+    "Import SKILL.md",
+    "Save a completed workflow",
+    "Completed task",
+    "Choose completed work",
+    "Review workflow draft",
+    "In this conversation",
+    "Work 19",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Removed work (1)",
+    "Each teammate has its own private workspace.",
+    "Message...",
+    "Coordinate team",
+    "@ Mention",
+    "send · new line"
+   ],
+   "components": [
+    "left sidebar",
+    "chat transcript",
+    "modal with x",
+    "Curated memory heading (empty, no content)",
+    "Skills section with Find input",
+    "Create skill / Import SKILL.md buttons",
+    "Save a completed workflow select + disabled Review workflow draft button",
+    "right 'In this conversation' panel with Work/Outputs tabs",
+    "work card",
+    "disclosures Finished work/Removed work",
+    "footer note"
+   ],
+   "state": "Memory & skills modal open; Curated memory and skill list not loaded/empty",
+   "viewport": "1440x900",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Curated memory section is empty: no 'Personal notes/User profile' cards and no 'Tools & application access' disclosure, unlike mobile; looks broken",
+     "where": "modal under description"
+    },
+    {
+     "text": "No skill list appears under Create skill/Import buttons (empty) while mobile shows claude-code etc.",
+     "where": "Skills section"
+    },
+    {
+     "text": "Raw JSON dump in chat transcript behind modal (leaked object text)",
+     "where": "chat background"
+    },
+    {
+     "text": "Section headings 'Curated memory' 'Skills' 'Save a completed workflow' use light weight and inconsistent hierarchy; large gaps",
+     "where": "modal"
+    },
+    {
+     "text": "Disabled Review workflow draft button very faint",
+     "where": "modal bottom-left"
+    },
+    {
+     "text": "Modal is clipped on right by close x tiny; Create skill and Import SKILL.md buttons different heights/misaligned",
+     "where": "buttons row"
+    },
+    {
+     "text": "Find a skill input has no placeholder/label icon",
+     "where": "input"
+    }
+   ]
+  },
+  ".taste-skill/after/knowledge-320.png": {
+   "purpose": "Memory & skills modal at 320x568 narrow phone",
+   "visible_text": [
+    "Scout",
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Tools & application access",
+    "Curated memory",
+    "Personal notes",
+    "No saved entries",
+    "User profile",
+    "No saved entries",
+    "Skills",
+    "Your teammate automatically consults relevant enabled skills for",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "modal with wrapped two-line title",
+    "disclosure",
+    "two memory cards",
+    "Skills heading"
+   ],
+   "state": "Modal open at top",
+   "viewport": "320x568",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Title wraps to two lines 'Scout · Memory & / skills'",
+     "where": "modal title"
+    },
+    {
+     "text": "Skills description cut off mid-sentence at the modal bottom; modal overlaps the footer helper text which shows through below",
+     "where": "bottom"
+    },
+    {
+     "text": "Header behind is cropped, only partial Scout name visible",
+     "where": "top"
+    },
+    {
+     "text": "Tiny x close",
+     "where": "top-right"
+    }
+   ]
+  },
+  ".taste-skill/after/knowledge-390.png": {
+   "purpose": "Memory & skills modal on mobile 390",
+   "visible_text": [
+    "Scout",
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Tools & application access",
+    "Curated memory",
+    "Personal notes",
+    "No saved entries",
+    "User profile",
+    "No saved entries",
+    "Skills",
+    "Your teammate automatically consults relevant enabled skills for each assignment. Enabling a skill does not change its tool or application access.",
+    "Find a skill",
+    "Create skill",
+    "Import SKILL.md",
+    "claude-code",
+    "Delegate coding to Claude Code CLI (features, PRs).",
+    "Enable",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "modal",
+    "disclosure",
+    "memory cards",
+    "skills search",
+    "buttons",
+    "skill row with Enable button"
+   ],
+   "state": "Modal open top",
+   "viewport": "390x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Skill card clipped at bottom; Enable button cut mid-card",
+     "where": "bottom"
+    },
+    {
+     "text": "Create skill and Import SKILL.md differing heights/vertical misalignment",
+     "where": "buttons row"
+    },
+    {
+     "text": "Find a skill input has no placeholder",
+     "where": "input"
+    }
+   ]
+  },
+  ".taste-skill/after/knowledge-768.png": {
+   "purpose": "Memory & skills modal at tablet 768x900",
+   "visible_text": [
+    "Scout",
+    "Ready",
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Tools & application access",
+    "Curated memory",
+    "Personal notes",
+    "No saved entries",
+    "User profile",
+    "No saved entries",
+    "Skills",
+    "Your teammate automatically consults relevant enabled skills for each assignment. Enabling a skill does not change its tool or application access.",
+    "Find a skill",
+    "Create skill",
+    "Import SKILL.md",
+    "claude-code",
+    "Delegate coding to Claude Code CLI (features, PRs).",
+    "codex",
+    "Delegate coding to OpenAI Codex CLI (features, PRs).",
+    "computer-use",
+    "Enable",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "header with hamburger and icons (team, book, monitor, Ready, layers)",
+    "modal",
+    "skill rows each with Enable button"
+   ],
+   "state": "Modal open, skills list clipped",
+   "viewport": "768x900",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Third skill row (computer-use) clipped at modal bottom with description cut",
+     "where": "bottom"
+    },
+    {
+     "text": "Header subtitle under Scout missing",
+     "where": "header"
+    },
+    {
+     "text": "Enable buttons small and tight to card edge",
+     "where": "right of rows"
+    },
+    {
+     "text": "Create skill / Import SKILL.md buttons mismatched heights",
+     "where": "buttons row"
+    }
+   ]
+  },
+  ".taste-skill/after/knowledge-844.png": {
+   "purpose": "Memory & skills modal in landscape phone 844x390",
+   "visible_text": [
+    "Ready",
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Tools & application access",
+    "Curated memory",
+    "Personal notes",
+    "No saved entries",
+    "User profile",
+    "No saved entries",
+    "Message...",
+    "Your team w..."
+   ],
+   "components": [
+    "modal almost full height",
+    "disclosure",
+    "memory cards",
+    "composer behind"
+   ],
+   "state": "Modal open in landscape; very little content visible",
+   "viewport": "844x390",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Only ~half the modal content visible; modal nearly fills viewport height with title at top clipped to the viewport; scrolling required",
+     "where": "whole modal"
+    },
+    {
+     "text": "Modal bottom edge touches viewport bottom and cuts User profile card",
+     "where": "bottom"
+    },
+    {
+     "text": "Header title 'Scout' hidden behind modal",
+     "where": "top"
+    }
+   ]
+  },
+  ".taste-skill/after/navigation-1440.png": {
+   "purpose": "Three-column workspace: sidebar, Scout chat with raw task context, right Work panel (1440x900)",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "Scout / Research",
+    "Sage / Review",
+    "Past teammates 15",
+    "Groups 6",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Project chat temp2",
+    "Manik's task",
+    "Project chat3",
+    "3 teammates (x6)",
+    "Routines",
+    "Owner / Local workspace",
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "Authenticated Hermbot task context (authority comes only from this context): {\"task_id\": \"530e5403-ea23-4a80-880d-c951e8fa7762\", \"context\": \"chat\", \"bot_id\": \"researcher\", \"management_targets\": null, \"deadline\": \"2026-10-06T09:03:12.263939+00:00\", \"instruction\": \"Use the hermbot tools for all teammate collaboration. Stop when asked. End your turn while waiting for children or reviews.\"}",
+    "Reply",
+    "You 08:45 AM",
+    "[POC:research] Research and explicitly delegate report writing to Quill.",
+    "Quill 08:45 AM",
+    "[Protocol fixture] Artifact d748d3b5-94d7-5c1c-ace4-ce79c5c53802 is ready.",
+    "Scout 08:45 AM",
+    "[Protocol fixture] Completed and combined the supplied task updates. Your delegated work has updates. Inspect failures, reconcile before reassigning, and combine results when done. [{\"id\": \"0a267635-ae77-4556-ab33-52a50af2cf1f\", \"bot_id\": \"writer\", \"status\": \"completed\", ... \"name\": \"fixture-report.md\"}]}]",
+    "Authenticated Hermbot task context ... \"task_id\": \"5903848e-34c1-4afc-ab4f-07c396baa714\" ...",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "send · new line",
+    "In this conversation",
+    "Work 19",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Removed work (1)",
+    "Each teammate has its own private workspace.",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "left sidebar with Scout and Sage selected/hovered",
+    "chat header with team, book, monitor icons, Ready, highlighted layers toggle",
+    "message transcript",
+    "composer",
+    "right context panel with tabs Work/Outputs",
+    "work card with links",
+    "collapsible Finished/Removed work",
+    "footer note"
+   ],
+   "state": "Scout chat with right panel open; both Scout (active) and Sage (hover/active) highlighted",
+   "viewport": "1440x900",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Raw system/task JSON ('Authenticated Hermbot task context ...') is rendered as chat message body, exposing internal data",
+     "where": "chat transcript"
+    },
+    {
+     "text": "Long unbroken JSON/UUID strings wrap awkwardly",
+     "where": "Scout message"
+    },
+    {
+     "text": "Last message is clipped by composer top edge, text cut mid-line",
+     "where": "y~690"
+    },
+    {
+     "text": "Both Scout and Sage rows appear highlighted, ambiguous active state",
+     "where": "sidebar top"
+    },
+    {
+     "text": "Small '-' glyph artifact above Scout row",
+     "where": "sidebar y~135"
+    },
+    {
+     "text": "Right panel is mostly empty below the one card; footer note very small",
+     "where": "right panel"
+    },
+    {
+     "text": "Work/Outputs counts and links tiny, low-contrast grey text",
+     "where": "right panel"
+    },
+    {
+     "text": "Header subtitle small and low contrast",
+     "where": "header"
+    }
+   ]
+  },
+  ".taste-skill/after/navigation-320.png": {
+   "purpose": "Mobile nav drawer at 320x568, sidebar scrolled to groups",
+   "visible_text": [
+    "hermbot",
+    "Kaggle competitions (clipped)",
+    "3 teammates",
+    "Anthropic ipo",
+    "Project chat temp2",
+    "Manik's task",
+    "Project chat3",
+    "Routines",
+    "Owner",
+    "Local workspace",
+    "Find a teammate..."
+   ],
+   "components": [
+    "drawer 282px wide",
+    "logo",
+    "team and + icons",
+    "search",
+    "groups list",
+    "Routines",
+    "owner footer with chevron",
+    "dimmed chat sliver on right"
+   ],
+   "state": "Drawer open, list scrolled so teammates and group header not visible",
+   "viewport": "320x568",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "'Kaggle competitions' title clipped at the top under search box",
+     "where": "y~137"
+    },
+    {
+     "text": "Scout/Sage and group header are scrolled out of sight so drawer shows only groups; no sticky hierarchy",
+     "where": "list"
+    },
+    {
+     "text": "Remaining dimmed strip at right shows clipped text fragments ('ction', 'ol.')",
+     "where": "right sliver"
+    },
+    {
+     "text": "Header icons behind drawer partially cut",
+     "where": "top-right"
+    }
+   ]
+  },
+  ".taste-skill/after/navigation-390.png": {
+   "purpose": "Mobile nav drawer 390 with full list",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "Research (clipped)",
+    "Sage",
+    "Review",
+    "Past teammates 15",
+    "Groups 6 +",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Project chat temp2",
+    "Manik's task",
+    "Project chat3",
+    "3 teammates (x6)",
+    "Routines",
+    "Owner",
+    "Local workspace"
+   ],
+   "components": [
+    "drawer",
+    "logo",
+    "team + plus icons",
+    "search",
+    "teammate rows",
+    "Past teammates collapsed",
+    "Groups header",
+    "group rows",
+    "Routines",
+    "owner footer"
+   ],
+   "state": "Drawer open",
+   "viewport": "390x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Scout row clipped at top, only 'Research' and orange avatar bottom visible, under search",
+     "where": "y~140"
+    },
+    {
+     "text": "Dimmed backdrop shows stray text fragments of chat clipped",
+     "where": "right 90px strip"
+    },
+    {
+     "text": "Drawer has no explicit close affordance",
+     "where": "drawer"
+    },
+    {
+     "text": "Past teammates/Groups headers small low-contrast",
+     "where": "y~258,308"
+    }
+   ]
+  },
+  ".taste-skill/after/navigation-768.png": {
+   "purpose": "Tablet 768x900 drawer open over chat",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "Scout / Research",
+    "Sage / Review",
+    "Past teammates 15",
+    "Groups 6 +",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Project chat temp2",
+    "Manik's task",
+    "Project chat3",
+    "3 teammates (x6)",
+    "Routines",
+    "Owner",
+    "Local workspace",
+    "...alysis",
+    "Ready",
+    "...as an inactive draft before, so I haven't independently verified its",
+    "...mes · 2026-10-20T08:20:22.788689+00:00 · saved revision 2",
+    "...el task is created."
+   ],
+   "components": [
+    "drawer 300px",
+    "logo",
+    "search",
+    "Scout (active) and Sage rows with online dots",
+    "groups",
+    "Routines",
+    "owner",
+    "dimmed chat with header icons"
+   ],
+   "state": "Drawer open at tablet, Scout selected",
+   "viewport": "768x900",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Drawer overlays most content at tablet width though 468px remain; drawer pattern instead of persistent sidebar",
+     "where": "whole left"
+    },
+    {
+     "text": "Small stray '-' mark above Scout row",
+     "where": "y~135"
+    },
+    {
+     "text": "Chat text bleeds as clipped fragments next to drawer",
+     "where": "right"
+    }
+   ]
+  },
+  ".taste-skill/after/navigation-844.png": {
+   "purpose": "Landscape phone 844x390 drawer, scrolled to bottom of list",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "Project chat temp2",
+    "3 teammates",
+    "Manik's task",
+    "Project chat3",
+    "Routines",
+    "Owner",
+    "Local workspace",
+    "...alysis",
+    "Ready",
+    "that intercepted request.",
+    "...ntrol."
+   ],
+   "components": [
+    "drawer with sticky logo and search",
+    "scrolled group list",
+    "Routines",
+    "Owner footer"
+   ],
+   "state": "Drawer open in landscape",
+   "viewport": "844x390",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Only ~3 list rows visible because logo, search and owner footer consume most of the 390px height",
+     "where": "whole drawer"
+    },
+    {
+     "text": "Header 'Scout' title hidden behind dim; partial subtitle 'alysis'",
+     "where": "top"
+    },
+    {
+     "text": "Footer Owner row tight to bottom edge",
+     "where": "bottom"
+    }
+   ]
+  },
+  ".taste-skill/after/owner-menu-1440.png": {
+   "purpose": "Owner account popover open in desktop sidebar (light), no right panel (1440x844)",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "Research",
+    "Sage / Review",
+    "Past teammates 15",
+    "Groups 6",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Connections",
+    "File library",
+    "Workspace settings",
+    "Switch to dark theme",
+    "Sign out",
+    "Owner",
+    "Local workspace",
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "You 08:40 AM",
+    "Intercepted UI request; no model task is created.",
+    "Scout 08:40 AM",
+    "Understood. No model task was created.",
+    "You 08:42 AM",
+    "Intercepted UI request; no model task is created.",
+    "Scout 08:42 AM",
+    "No model task was created from that intercepted request.",
+    "Reply",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control.",
+    "send · new line"
+   ],
+   "components": [
+    "sidebar",
+    "owner popover with 4 items + divider + Sign out",
+    "chat messages with green user bubbles",
+    "composer"
+   ],
+   "state": "Owner popover open",
+   "viewport": "1440x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Popover covers lower group rows (Project chat temp2, Manik's task, Project chat3, Routines)",
+     "where": "sidebar y 540-765"
+    },
+    {
+     "text": "Popover icon/text small, subtle shadow, edge hardly distinct from sidebar",
+     "where": "popover"
+    },
+    {
+     "text": "Scout row clipped to 'Research' at top of list",
+     "where": "y~140"
+    },
+    {
+     "text": "First message partially clipped at top ('Reply' cut)",
+     "where": "y~70"
+    }
+   ]
+  },
+  ".taste-skill/after/owner-menu-390.png": {
+   "purpose": "Owner popover in mobile drawer (light)",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "Research",
+    "Sage",
+    "Review",
+    "Past teammates 15",
+    "Groups 6",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Connections",
+    "File library",
+    "Workspace settings",
+    "Switch to dark theme",
+    "Sign out",
+    "Owner",
+    "Local workspace"
+   ],
+   "components": [
+    "drawer",
+    "owner popover",
+    "chevron up"
+   ],
+   "state": "Drawer + popover open",
+   "viewport": "390x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Popover hides remaining groups, Routines item not reachable while open",
+     "where": "y 540-765"
+    },
+    {
+     "text": "Scout row clipped at top",
+     "where": "y~140"
+    },
+    {
+     "text": "Stray dimmed chat text fragments at right",
+     "where": "right strip"
+    }
+   ]
+  },
+  ".taste-skill/after/routines-1440.png": {
+   "purpose": "Routines modal over desktop three-column workspace (1440x900)",
+   "visible_text": [
+    "Routines",
+    "Give a teammate work to run on a schedule. Results return to the chosen conversation. Keep this computer on for scheduled runs.",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "Active",
+    "Every hour · UTC · Scout",
+    "Next run 10/20/2026, 9:13:53 AM on this device",
+    "Last run: Needs attention",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Delete",
+    "Archived routines",
+    "hermbot",
+    "Find a teammate...",
+    "Scout / Research",
+    "Sage / Review",
+    "Past teammates 15",
+    "Groups 6",
+    "group list",
+    "Routines",
+    "Owner / Local workspace",
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "Hermbot delegation but not a generic spawn tool.",
+    "You 09:14 AM",
+    "do a lot of internet research on elon musk",
+    "why ...",
+    "Scout",
+    "I didn't choose to abandon it—the browser tool returned \"execution cancelled: explicit stop requested,\" so I",
+    "In this conversation",
+    "Work 19",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Finished work (18)",
+    "Removed work (1)",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "modal with x",
+    "New routine primary + Refresh secondary",
+    "routine card with Active status dot",
+    "meta lines",
+    "action row Edit/History/Run now/Pause/Delete(red)",
+    "Archived routines disclosure",
+    "dimmed sidebar, chat, right panel"
+   ],
+   "state": "Routines modal open, centered",
+   "viewport": "1440x900",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Modal centered over chat; underlying chat bubbles clipped ('Reply','do a', 'star', 'read') are visible along the modal edge, cluttered",
+     "where": "left/right modal edges"
+    },
+    {
+     "text": "Edit/History/Pause rendered as bare text links with inconsistent weight vs Run now",
+     "where": "action row"
+    },
+    {
+     "text": "Very large empty area; modal contains only one routine, no empty/secondary states",
+     "where": "modal"
+    },
+    {
+     "text": "Tiny close x",
+     "where": "top-right of modal"
+    },
+    {
+     "text": "Small '-' glyph above Scout in sidebar",
+     "where": "y~135"
+    }
+   ]
+  },
+  ".taste-skill/after/routines-320.png": {
+   "purpose": "Routines modal at 320x568, clipped at bottom",
+   "visible_text": [
+    "Scout",
+    "Routines",
+    "Give a teammate work to run on a schedule. Results return to the chosen conversation. Keep this computer on for scheduled runs.",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "Active",
+    "Every hour · UTC · Scout",
+    "Next run 10/20/2026, 9:13:53 AM on this device",
+    "Last run: Needs attention",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Delete",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "modal with x",
+    "New routine primary + Refresh secondary",
+    "routine card with Active status dot",
+    "meta lines",
+    "action row Edit/History/Run now/Pause/Delete(red)",
+    "header behind"
+   ],
+   "state": "Modal open; Archived routines row cut off",
+   "viewport": "320x568",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Delete wraps to its own row, right-aligned, orphaned from the action row",
+     "where": "below Pause"
+    },
+    {
+     "text": "Archived routines disclosure is cut off / only divider line visible at bottom; modal overlaps page footer text",
+     "where": "bottom"
+    },
+    {
+     "text": "Title 'Hourly YouTube trending video names' wraps next to Active",
+     "where": "card header"
+    },
+    {
+     "text": "Header hidden/cropped behind modal",
+     "where": "top"
+    }
+   ]
+  },
+  ".taste-skill/after/routines-390.png": {
+   "purpose": "Routines modal on mobile 390 (light)",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, and data analys...",
+    "You 09:27 AM",
+    "find out why did that happpen",
+    "Reply",
+    "Routines",
+    "Give a teammate work to run on a schedule. Results return to the chosen conversation. Keep this computer on for scheduled runs.",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "Active",
+    "Every hour · UTC · Scout",
+    "Next run 10/20/2026, 9:13:53 AM on this device",
+    "Last run: Needs attention",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Delete",
+    "Archived routines",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "modal with x",
+    "New routine primary + Refresh secondary",
+    "routine card with Active status dot",
+    "meta lines",
+    "action row Edit/History/Run now/Pause/Delete(red)",
+    "Archived routines disclosure",
+    "composer behind"
+   ],
+   "state": "Routines modal open",
+   "viewport": "390x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Header subtitle truncated 'analys...'",
+     "where": "header"
+    },
+    {
+     "text": "Modal bottom abuts composer top with no spacing",
+     "where": "y~655"
+    },
+    {
+     "text": "Edit/History/Pause text actions crowded and low affordance",
+     "where": "action row"
+    },
+    {
+     "text": "Close x tiny",
+     "where": "top-right"
+    },
+    {
+     "text": "Typo in user content 'happpen' (fixture)",
+     "where": "chat behind"
+    }
+   ]
+  },
+  ".taste-skill/after/routines-768.png": {
+   "purpose": "Routines modal at tablet 768x900",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "Thanks for saving it. I'd only seen it as an inactive draft before, so I haven't independently verified its current status.",
+    "Reply",
+    "system 08:20 AM",
+    "Hourly YouTube trending video names · 2026-10-20T08:20:22.788689+00:00 · saved revision 2",
+    "Routines",
+    "Give a teammate work to run on a schedule. Results return to the chosen conversation. Keep this computer on for scheduled runs.",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "Active",
+    "Every hour · UTC · Scout",
+    "Next run 10/20/2026, 9:13:53 AM on this device",
+    "Last run: Needs attention",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Delete",
+    "Archived routines",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "modal with x",
+    "New routine primary + Refresh secondary",
+    "routine card with Active status dot",
+    "meta lines",
+    "action row Edit/History/Run now/Pause/Delete(red)",
+    "Archived routines disclosure",
+    "header icons",
+    "composer behind"
+   ],
+   "state": "Routines modal open",
+   "viewport": "768x900",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Modal sits mid-screen cropping the system message line at its top edge",
+     "where": "y~230"
+    },
+    {
+     "text": "Raw ISO timestamp in system message '2026-10-20T08:20:22.788689+00:00'",
+     "where": "chat behind"
+    },
+    {
+     "text": "Edit/History/Pause low-affordance text links",
+     "where": "action row"
+    }
+   ]
+  },
+  ".taste-skill/after/routines-844.png": {
+   "purpose": "Routines modal in landscape phone 844x390",
+   "visible_text": [
+    "Ready",
+    "Routines",
+    "Give a teammate work to run on a schedule. Results return to the chosen conversation. Keep this computer on for scheduled runs.",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "Active",
+    "Every hour · UTC · Scout",
+    "Next run 10/20/2026, 9:13:53 AM on this device",
+    "Last run: Needs attention",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Delete",
+    "Archived routines",
+    "Message",
+    "Your team w..."
+   ],
+   "components": [
+    "modal with x",
+    "New routine primary + Refresh secondary",
+    "routine card with Active status dot",
+    "meta lines",
+    "action row Edit/History/Run now/Pause/Delete(red)",
+    "Archived routines disclosure"
+   ],
+   "state": "Routines modal open, fills full height",
+   "viewport": "844x390",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Modal fills nearly entire viewport height (top 10px to 380px) with no margin; header hidden",
+     "where": "whole modal"
+    },
+    {
+     "text": "Edit link shows underline/focus ring styling inconsistent with History/Pause",
+     "where": "Edit"
+    },
+    {
+     "text": "Close x tiny and close to top edge",
+     "where": "top-right"
+    },
+    {
+     "text": "Archived routines row touches modal bottom edge",
+     "where": "bottom"
+    }
+   ]
+  },
+  ".taste-skill/after/workspace-1440.png": {
+   "purpose": "Desktop workspace with Your teammates section expanded (1440x900)",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "Your teammates 3",
+    "Quill / Writing",
+    "Scout / Research",
+    "Sage / Review",
+    "Past teammates 15",
+    "Groups 6 +",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Project chat temp2",
+    "Manik's task",
+    "Routines",
+    "Owner / Local workspace",
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "You 08:38 AM",
+    "[POC:research] Research the supplied material and ask Quill to produce the report.",
+    "Scout 08:38 AM",
+    "[Protocol fixture] Assignments accepted; yielding to the worker.",
+    "You 08:43 AM",
+    "[POC:research] Ask Quill to write.",
+    "Quill 08:43 AM",
+    "[Protocol fixture] Artifact bd1ed456-b459-5fbf-bd3f-dc216d9bdd3d is ready.",
+    "Scout 08:43 AM",
+    "[Protocol fixture] Completed and combined the supplied task updates. Your delegated work has updates. Inspect failures, reconcile before reassigning, and combine results when done. [{\"id\": \"47fcab99-3314-4610-9aa6-62226e7b77ef\", \"bot_id\": \"writer\", \"status\": \"completed\", \"output\": \"[Protocol fixture] Artifact bd1ed456-",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "In this conversation",
+    "Work 19",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Removed work (1)",
+    "Each teammate has its own private workspace.",
+    "send · new line"
+   ],
+   "components": [
+    "sidebar with section headers",
+    "teammate rows with status dots",
+    "groups list clipped by Routines",
+    "chat transcript",
+    "composer",
+    "right panel",
+    "footer note"
+   ],
+   "state": "Scout selected, right panel on Work tab",
+   "viewport": "1440x900",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Manik's task group row is cut off at the bottom of the scroll area right above Routines (partial text 'Manik's task' and avatar), no fade",
+     "where": "sidebar y~750-775"
+    },
+    {
+     "text": "Last chat message clipped by composer, text cut mid-line with raw JSON",
+     "where": "y~690"
+    },
+    {
+     "text": "Raw protocol/JSON text in message body",
+     "where": "Scout 08:43 message"
+    },
+    {
+     "text": "Right panel mostly empty",
+     "where": "right"
+    },
+    {
+     "text": "Tiny low-contrast count badges and link text",
+     "where": "right panel / sidebar badges"
+    }
+   ]
+  },
+  ".taste-skill/after/workspace-320.png": {
+   "purpose": "Mobile chat at 320x568",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, a...",
+    "You 09:27 AM",
+    "find out why did that happpen",
+    "Reply",
+    "Scout 09:28 AM",
+    "The task record shows the deliverables failed because \"Execution cancelled: Execution time budget exhausted.\" That is the clearest underlying cause available. The browser's \"explicit stop requested\" message was the cancellation...",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "header hamburger, avatar, title, ... menu, layers icon",
+    "user bubble",
+    "Scout message",
+    "composer card"
+   ],
+   "state": "Chat view",
+   "viewport": "320x568",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Composer plus footer take ~190px of 568px leaving only ~300px for chat",
+     "where": "bottom"
+    },
+    {
+     "text": "Header subtitle truncated 'a...'",
+     "where": "header"
+    },
+    {
+     "text": "Scout message text cut mid-line behind composer",
+     "where": "y~365"
+    },
+    {
+     "text": "Send button low-contrast grey-green",
+     "where": "composer"
+    }
+   ]
+  },
+  ".taste-skill/after/workspace-390.png": {
+   "purpose": "Mobile chat at 390x844 (light)",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, and data analys...",
+    "You 09:27 AM",
+    "find out why did that happpen",
+    "Reply",
+    "Scout 09:28 AM",
+    "The task record shows the deliverables failed because \"Execution cancelled: Execution time budget exhausted.\" That is the clearest underlying cause available. The browser's \"explicit stop requested\" message was the cancellation symptom; the accessible record does not identify who or what initiated it. A status lookup for the prior assignment was denied as outside this operation, so I could not inspect lower-level cancellation logs. I should not have assumed you had intentionally stopped it.",
+    "You 09:29 PM",
+    "continue",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "header",
+    "user bubbles",
+    "Scout message",
+    "composer"
+   ],
+   "state": "Chat view",
+   "viewport": "390x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Header subtitle truncated",
+     "where": "header"
+    },
+    {
+     "text": "Last user bubble 'continue' clipped by composer bottom edge",
+     "where": "y~640"
+    },
+    {
+     "text": "Send button low contrast",
+     "where": "composer"
+    },
+    {
+     "text": "Footer helper text very small",
+     "where": "bottom"
+    },
+    {
+     "text": "Timestamp 09:29 PM vs previous AM ordering inconsistent (fixture)",
+     "where": "You bubble"
+    }
+   ]
+  },
+  ".taste-skill/after/workspace-768.png": {
+   "purpose": "Tablet chat view with long Slack delivery receipts from Quill (768x900)",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "Reply",
+    "Quill 10:23 PM",
+    "Slack delivery outcome 4d327c24-b5cb-4397-990e-116e6513d622 (slack_delivery, revision 2) is fulfilled with provider_receipt. Definitive receipt operation_id 2c971d61-a5bb-4071-887b-01610b1141cf returned status=succeeded, ok=true, channel D0C7ZKR4FPD, ts 1791757367.125079. The receipt confirms the message containing the supplied Google Doc link was posted to the DM for confirmed @dhruv (member U093R57QTRT). No duplicate send was attempted. I attempted the requested readback through slack.history for D0C7ZKR4FPD, but Slack returned missing_scope for that action. Therefore the provider receipt confirms the send, but I could not independently verify it by reading the DM history.",
+    "Quill 10:23 PM",
+    "Read-only Slack search verification attempted; no mutations or repeat send. Search for distinctive Doc ID/link token 1QdNxQZTp0bx8lc51wpxjpJGXmO2MQkkpLrxLbtOs9zI succeeded but returned total=0, matches=[]. Search for in:D0C7ZKR4FPD Starlink India report also succeeded but returned total=0, matches=[]. Unlike the earlier history readback, slack.search was not blocked by missing_scope. It did not surface the message, so search cannot independently verify the DM. These zero-result searches do not establish that the message was not delivered; the successful post receipt remains the delivery evidence.",
+    "Scout 10:26 PM",
+    "The evidence shows ... (clipped)",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "header with hamburger, avatar, title, subtitle, icon row (team, book, monitor, Ready, layers)",
+    "transcript of assistant messages with avatars and Reply/thumb actions",
+    "inline monospace token",
+    "composer card"
+   ],
+   "state": "Chat, no sidebar, no right panel",
+   "viewport": "768x900",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Very long dense paragraphs with raw IDs, tokens and receipts; hard to scan",
+     "where": "Quill messages"
+    },
+    {
+     "text": "Scout 10:26 PM message clipped under composer mid-line",
+     "where": "y~695"
+    },
+    {
+     "text": "Sidebar and right panel unavailable at tablet width (hidden behind hamburger/layers)",
+     "where": "layout"
+    },
+    {
+     "text": "Footer helper text tiny and low contrast",
+     "where": "bottom"
+    }
+   ]
+  },
+  ".taste-skill/after/workspace-844.png": {
+   "purpose": "Landscape phone chat 844x390 with oversized header/composer",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "Scout 08:42 AM",
+    "No model task was created from that intercepted request.",
+    "Reply",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "header (72px)",
+    "single message",
+    "composer card (~140px)",
+    "footer text"
+   ],
+   "state": "Chat view landscape",
+   "viewport": "844x390",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Header (72px) plus composer (~140px) plus footer consume about 80% of 390px height, leaving ~65px for messages",
+     "where": "whole viewport"
+    },
+    {
+     "text": "Scout message header row clipped under the app header",
+     "where": "y~72"
+    },
+    {
+     "text": "Send button low-contrast",
+     "where": "composer right"
+    }
+   ]
+  },
+  ".taste-skill/after/workspace-settings-1440.png": {
+   "purpose": "Workspace settings modal, Workspace tab (1440x844)",
+   "visible_text": [
+    "Workspace settings",
+    "Manage your teammates, model providers and permissions.",
+    "Workspace",
+    "Providers",
+    "Teammates",
+    "Grants",
+    "Timezone",
+    "UTC",
+    "Default provider",
+    "Environment provider",
+    "Maximum teammates",
+    "10",
+    "Concurrent executions",
+    "3",
+    "Active work budget (minutes)",
+    "60",
+    "Shared across teammates in each new work item. Waiting for you does not consume active time.",
+    "Connected app actions",
+    "Execute actions I explicitly request",
+    "Account permissions still apply. Actions outside your request require review.",
+    "Execution assessments",
+    "Decision provider",
+    "Environment provider",
+    "Your team works in the background. You stay in control.",
+    "sidebar: hermbot, Find a teammate..., Sage, Groups, Routines, Owner"
+   ],
+   "components": [
+    "modal with x",
+    "4 underlined tabs (Workspace active)",
+    "text input",
+    "selects",
+    "paired number inputs",
+    "helper texts",
+    "'Execution assessments' sub-heading"
+   ],
+   "state": "Workspace tab, form clipped at bottom",
+   "viewport": "1440x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "'Execution assessments' sub-heading is tiny, grey and visually tied to following label instead of section; weak hierarchy",
+     "where": "y~708"
+    },
+    {
+     "text": "No visible Save/Apply button; form clipped at bottom with no scroll cue",
+     "where": "modal bottom"
+    },
+    {
+     "text": "Helper text very small (~10px) and low contrast",
+     "where": "below Active work budget and Connected app actions"
+    },
+    {
+     "text": "Native select arrows unstyled",
+     "where": "selects"
+    },
+    {
+     "text": "Timezone is free text input with no hint",
+     "where": "Timezone"
+    }
+   ]
+  },
+  ".taste-skill/after/workspace-settings-390.png": {
+   "purpose": "Workspace settings modal on mobile",
+   "visible_text": [
+    "Workspace settings",
+    "Manage your teammates, model providers and permissions.",
+    "Workspace",
+    "Providers",
+    "Teammates",
+    "Grants",
+    "Timezone",
+    "UTC",
+    "Default provider",
+    "Environment provider",
+    "Maximum teammates",
+    "10",
+    "Concurrent executions",
+    "3",
+    "Active work budget (minutes)",
+    "60",
+    "Shared across teammates in each new work item. Waiting for you does not consume active time.",
+    "Connected app actions",
+    "Execute actions I explicitly request",
+    "Account permissions still apply. Actions outside your (clipped)",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "modal",
+    "tabs on one row",
+    "stacked fields",
+    "number spinner on Active work budget"
+   ],
+   "state": "Workspace tab",
+   "viewport": "390x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Helper text under Connected app actions cut off at modal bottom mid-line",
+     "where": "bottom"
+    },
+    {
+     "text": "Number spinner arrows visible only on one numeric field (inconsistent with other numeric inputs)",
+     "where": "Active work budget"
+    },
+    {
+     "text": "No save button visible",
+     "where": "bottom"
+    }
+   ]
+  },
+  ".taste-skill/before/desktop-fold.jpg": {
+   "purpose": "Login screen 'Your team, your workspace.' above-the-fold (desktop)",
+   "visible_text": [
+    "hermbot",
+    "Your team, your workspace.",
+    "Enter the owner token from your local .env file to open this private workspace.",
+    "Owner token",
+    "Open workspace",
+    "Runs continue here when you close the browser."
+   ],
+   "components": [
+    "centered white card with rounded corners",
+    "logo with asterisk",
+    "heading",
+    "helper text with monospace .env",
+    "labelled token input",
+    "full-width green primary button with arrow icon",
+    "footnote"
+   ],
+   "state": "Login, empty token field",
+   "viewport": "1440x900",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Card is small relative to canvas; huge empty pale-green space",
+     "where": "whole viewport"
+    },
+    {
+     "text": "Footnote 'Runs continue here...' tiny and low contrast",
+     "where": "card bottom"
+    },
+    {
+     "text": "Helper text low contrast grey",
+     "where": "below heading"
+    },
+    {
+     "text": "Token field is plain text input without show/hide or password type indicator",
+     "where": "Owner token field"
+    },
+    {
+     "text": "Label 'Owner token' very small",
+     "where": "above input"
+    }
+   ]
+  },
+  ".taste-skill/before/desktop-page-01.jpg": {
+   "purpose": "Full page capture of login screen, half the canvas gray (capture artifact)",
+   "visible_text": [
+    "hermbot",
+    "Your team, your workspace.",
+    "Enter the owner token from your local .env file to open this private workspace.",
+    "Owner token",
+    "Open workspace",
+    "Runs continue here when you close the browser."
+   ],
+   "components": [
+    "login card at left",
+    "empty pale-green area",
+    "solid gray area on right half"
+   ],
+   "state": "Login; capture appears wider than layout",
+   "viewport": "1600x500",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Right half of image is solid mid-gray (800px), a capture/rendering artifact",
+     "where": "x 800-1600"
+    },
+    {
+     "text": "Login card is off-center (left within the 800px green region) and small, text illegible at this scale",
+     "where": "left half"
+    },
+    {
+     "text": "Image downscaled/blurry; small text unreadable",
+     "where": "card"
+    }
+   ]
+  },
+  ".taste-skill/before/knowledge-1440.png": {
+   "purpose": "Before: Memory & skills modal over blurred background (1440x900)",
+   "visible_text": [
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Tools & application access",
+    "Curated memory",
+    "Skills",
+    "Your teammate automatically consults relevant enabled skills for each assignment. Enabling a skill does not change its tool or application access.",
+    "Find a skill",
+    "Create skill",
+    "Import SKILL.md",
+    "Save a completed workflow",
+    "Completed task",
+    "Choose completed work",
+    "Review workflow draft",
+    "(blurred) hermbot, Find a teammate..., YOUR TEAM, Quill Writing, Scout Research, Sage Review, PAST TEAMMATES, GROUPS, The dawn of ai, Kaggle competitions, Routines, Connections, File library, Private workspace, Owner, In this conversation, Work, Outputs, Finished work, Removed work"
+   ],
+   "components": [
+    "blurred backdrop (backdrop-blur)",
+    "modal with x",
+    "Tools & application access disclosure",
+    "Curated memory heading (empty)",
+    "Skills section",
+    "Find a skill input",
+    "Create skill / Import SKILL.md buttons",
+    "Save a completed workflow select + disabled Review button",
+    "sidebar with Connections and File library button blocks and bottom icon row (blurred)"
+   ],
+   "state": "Modal open; curated memory and skills list empty",
+   "viewport": "1440x900",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Curated memory section empty: no cards under heading",
+     "where": "modal y~310"
+    },
+    {
+     "text": "No skills listed beneath Create skill/Import",
+     "where": "Skills section"
+    },
+    {
+     "text": "Create skill and Import SKILL.md buttons mismatched size and font (different heights and font sizes), misaligned baseline",
+     "where": "buttons row"
+    },
+    {
+     "text": "Body text is light grey low contrast; font mixes (system Arial) vs headings",
+     "where": "description"
+    },
+    {
+     "text": "Labels 'Find a skill', 'Completed task' small and tight to inputs",
+     "where": "labels"
+    },
+    {
+     "text": "Disabled Review workflow draft button almost invisible",
+     "where": "bottom-left"
+    },
+    {
+     "text": "Backdrop blur makes background unreadable (not necessarily defect)",
+     "where": "backdrop"
+    }
+   ]
+  },
+  ".taste-skill/before/knowledge-390.png": {
+   "purpose": "Before: Memory & skills modal on mobile with skills list",
+   "visible_text": [
+    "Scout",
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Tools & application access",
+    "Curated memory",
+    "Personal notes",
+    "No saved entries",
+    "User profile",
+    "No saved entries",
+    "Skills",
+    "Your teammate automatically consults relevant enabled skills for each assignment. Enabling a skill does not change its tool or application access.",
+    "Find a skill",
+    "Create skill",
+    "Import SKILL.md",
+    "claude-code",
+    "Delegate coding to Claude Code CLI (features, PRs).",
+    "Enable",
+    "codex",
+    "Delegate coding to OpenAI Codex CLI (features, PRs).",
+    "computer-use"
+   ],
+   "components": [
+    "modal",
+    "disclosure",
+    "memory cards",
+    "skill search",
+    "buttons",
+    "skill rows with Enable"
+   ],
+   "state": "Modal open top, blurred backdrop",
+   "viewport": "390x900",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Create skill and Import SKILL.md differ in size and are misaligned (Import is smaller and offset up)",
+     "where": "buttons row"
+    },
+    {
+     "text": "Close x tiny and light grey",
+     "where": "top-right"
+    },
+    {
+     "text": "Last skill row clipped at bottom",
+     "where": "y~840"
+    },
+    {
+     "text": "Grey small helper text low contrast; footer behind modal faint",
+     "where": "bottom"
+    },
+    {
+     "text": "Mixed font rendering (system sans) inconsistent with brand type",
+     "where": "whole modal"
+    }
+   ]
+  },
+  ".taste-skill/before/knowledge-768.png": {
+   "purpose": "Before: Memory & skills modal at tablet 768x900",
+   "visible_text": [
+    "Scout",
+    "Ready",
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Tools & application access",
+    "Curated memory",
+    "Personal notes",
+    "No saved entries",
+    "User profile",
+    "No saved entries",
+    "Skills",
+    "Your teammate automatically consults relevant enabled skills for each assignment. Enabling a skill does not change its tool or application access.",
+    "Find a skill",
+    "Create skill",
+    "Import SKILL.md",
+    "claude-code",
+    "Delegate coding to Claude Code CLI (features, PRs).",
+    "codex",
+    "Delegate coding to OpenAI Codex CLI (features, PRs).",
+    "computer-use",
+    "Drive the desktop background-first; escalate on signal.",
+    "Enable"
+   ],
+   "components": [
+    "blurred app behind (sidebar, chat)",
+    "modal",
+    "disclosure",
+    "memory cards",
+    "skills search",
+    "buttons",
+    "skill rows with Enable"
+   ],
+   "state": "Modal open, skills list clipped at bottom (fourth row cut)",
+   "viewport": "768x900",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Create skill and Import SKILL.md mismatched size/offset",
+     "where": "buttons row"
+    },
+    {
+     "text": "Description text light grey, low contrast",
+     "where": "descriptions"
+    },
+    {
+     "text": "Skill row at bottom clipped by modal edge",
+     "where": "bottom"
+    },
+    {
+     "text": "Enable buttons small plain",
+     "where": "right of rows"
+    },
+    {
+     "text": "Heavy blur makes background unreadable; fonts mix system Arial and brand",
+     "where": "whole"
+    }
+   ]
+  },
+  ".taste-skill/before/mobile-fold.jpg": {
+   "purpose": "Login screen on mobile fold",
+   "visible_text": [
+    "hermbot",
+    "Your team, your workspace.",
+    "Enter the owner token from your local .env file to open this private workspace.",
+    "Owner token",
+    "Open workspace",
+    "Runs continue here when you close the browser."
+   ],
+   "components": [
+    "white rounded card",
+    "logo",
+    "heading",
+    "helper text",
+    "token input",
+    "green primary button with arrow",
+    "footnote"
+   ],
+   "state": "Login, empty input",
+   "viewport": "390x844",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Heading wraps with large line gap 'Your team, your / workspace.'",
+     "where": "heading"
+    },
+    {
+     "text": "Footnote tiny and low contrast",
+     "where": "card bottom"
+    },
+    {
+     "text": "Card floats mid-screen with big empty areas above and below; token input no autocomplete/show affordance",
+     "where": "whole viewport"
+    },
+    {
+     "text": "Helper text grey low contrast",
+     "where": "below heading"
+    }
+   ]
+  },
+  ".taste-skill/before/mobile-page-01.jpg": {
+   "purpose": "Mobile login full-page capture with half-width gray artifact (1560x844)",
+   "visible_text": [
+    "hermbot",
+    "Your team, your workspace.",
+    "Enter the owner token from your local .env file to open this private workspace.",
+    "Owner token",
+    "Open workspace",
+    "Runs continue here when you close the browser."
+   ],
+   "components": [
+    "login card in left 390px",
+    "solid gray area right"
+   ],
+   "state": "Login; capture artifact",
+   "viewport": "1560x844",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Right 1170px of image is solid gray fill, a capture artifact (image wider than page)",
+     "where": "x 390-1560"
+    },
+    {
+     "text": "Heading wraps with large line gap",
+     "where": "heading"
+    },
+    {
+     "text": "Footnote tiny low contrast",
+     "where": "card bottom"
+    }
+   ]
+  },
+  ".taste-skill/before/navigation-1440.png": {
+   "purpose": "Before: desktop workspace with original sidebar (Your team, Connections/File library blocks) (1440x900)",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "YOUR TEAM 3",
+    "Quill / Writing",
+    "Scout / Research",
+    "Sage / Review",
+    "PAST TEAMMATES 15",
+    "GROUPS 6 +",
+    "The dawn of ai / 3 teammates",
+    "Kaggle competitions / 3 teammates",
+    "Routines",
+    "Connections",
+    "File library",
+    "Private workspace",
+    "Owner / Local workspace",
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "Reply",
+    "Scout 08:38 AM",
+    "[Protocol fixture] Assignments accepted; yielding to the worker.",
+    "You 08:43 AM",
+    "[POC:research] Ask Quill to write.",
+    "Quill 08:43 AM",
+    "[Protocol fixture] Artifact bd1ed456-b459-5fbf-bd3f-dc216d9bdd3d is ready.",
+    "Scout 08:43 AM",
+    "[Protocol fixture] Completed and combined the supplied task updates. ... \"name\": \"fixture-report.md\"}]}]",
+    "Authenticated Hermbot task context (authority comes only from this context): {\"task_id\": \"530e5403-ea23-4a80-880d-c951e8fa7762\", ... End your",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "In this conversation",
+    "Work 19",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Removed work (1)",
+    "Each teammate has its own private workspace.",
+    "send · new line",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "sidebar with uppercase section headers, status dots, Connections and File library buttons, Private workspace badge, owner footer with theme/settings/sign-out icons",
+    "chat",
+    "composer",
+    "right panel"
+   ],
+   "state": "Scout selected, right panel Work tab",
+   "viewport": "1440x900",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "'Request history · revision 1' rendered in much larger font than sibling '0 of 1 required results ready' (inconsistent typography)",
+     "where": "right panel work card"
+    },
+    {
+     "text": "Work card title 'Hourly YouTube trending...' in lighter weight/Arial mismatched with brand font; fonts mixed",
+     "where": "right panel"
+    },
+    {
+     "text": "Connections / File library buttons in sidebar are heavy plain blocks cluttering the sidebar; Routines list tight to Kaggle group row",
+     "where": "sidebar y 660-790"
+    },
+    {
+     "text": "Groups list cut off: only 2 groups visible, others hidden before Routines",
+     "where": "sidebar y~630"
+    },
+    {
+     "text": "Raw JSON in chat message",
+     "where": "Scout message"
+    },
+    {
+     "text": "Last message clipped under composer",
+     "where": "y~690"
+    },
+    {
+     "text": "Tiny footer helper text",
+     "where": "bottom"
+    }
+   ]
+  },
+  ".taste-skill/before/navigation-390.png": {
+   "purpose": "Before: mobile drawer with original sidebar (900px tall)",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "YOUR TEAM 3",
+    "Quill / Writing",
+    "Scout / Research",
+    "Sage / Review",
+    "PAST TEAMMATES 15",
+    "GROUPS 6 +",
+    "The dawn of ai / 3 teammates",
+    "Kaggle competitions / 3 teammates",
+    "Routines",
+    "Connections",
+    "File library",
+    "Private workspace",
+    "Owner / Local workspace",
+    "...spawning.",
+    "_subagent_spawn command ... returned; this session ... gation but not a",
+    "n musk",
+    "n musk's",
+    "y about him",
+    "ndia. I want",
+    "ened, how",
+    "thing. then",
+    "to Dhruv via"
+   ],
+   "components": [
+    "drawer 260px",
+    "header icons",
+    "search",
+    "section headers",
+    "teammate rows",
+    "groups",
+    "Routines",
+    "Connections and File library buttons",
+    "Private workspace",
+    "owner footer with 3 icons"
+   ],
+   "state": "Drawer open",
+   "viewport": "390x900",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Kaggle competitions row cropped at its bottom before Routines (3 teammates clipped)",
+     "where": "y~630"
+    },
+    {
+     "text": "Drawer 260px wide leaves a visible slice of chat with stray text fragments",
+     "where": "right strip"
+    },
+    {
+     "text": "Connections/File library big buttons consume vertical space",
+     "where": "y 696-790"
+    },
+    {
+     "text": "Owner footer icons small and tight"
+    }
+   ]
+  },
+  ".taste-skill/before/navigation-768.png": {
+   "purpose": "Before: tablet 768x900 persistent sidebar with chat",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "YOUR TEAM 3",
+    "Quill / Writing",
+    "Scout / Research",
+    "Sage / Review",
+    "PAST TEAMMATES 15",
+    "GROUPS 6",
+    "The dawn of ai / 3 teammates",
+    "Kaggle competi... (clipped)",
+    "Routines",
+    "Connections",
+    "File library",
+    "Private workspace",
+    "Owner / Local workspace",
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "You 09:24 AM",
+    "why did you stop ?",
+    "Scout 09:24 AM",
+    "I didn't choose to abandon it—the browser tool returned \"execution cancelled: explicit stop requested,\" so I stopped rather than retrying. I had written the research draft, but had not generated the Word file or sent anything. I also found no Slack connection in the available account connections, so I can't send to Dhruv through Slack unless that access is available.",
+    "You 09:27 AM",
+    "find out why did that happpen",
+    "Scout 09:28 AM",
+    "The task record shows the deliverables failed because \"Execution cancelled: Execution time budget exhausted.\" That is the clearest underlying cause available. The browser's \"explicit stop requested\" message was the cancellation symptom; the accessible record does not identify who or what initiated it. A status lookup for the prior assignment was denied as outside this operation, so I",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention"
+   ],
+   "components": [
+    "sidebar 214px",
+    "header",
+    "chat bubbles",
+    "composer"
+   ],
+   "state": "Chat with persistent sidebar",
+   "viewport": "768x900",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Logo and header icons stack: people icon and + button wrap below/over the hermbot wordmark, overlapping vertically",
+     "where": "sidebar top y 30-90"
+    },
+    {
+     "text": "'Kaggle competi...' row clipped mid-text by Routines region",
+     "where": "y~630"
+    },
+    {
+     "text": "Owner name 'Local workspace' overlaps the moon theme icon (text collision)",
+     "where": "footer y~875"
+    },
+    {
+     "text": "Sidebar takes 214px of 768 squeezing chat",
+     "where": "layout"
+    },
+    {
+     "text": "Right panel icons only; Work panel not accessible",
+     "where": "header"
+    }
+   ]
+  },
+  ".taste-skill/before/routines-1440.png": {
+   "purpose": "Before: Routines modal, old styling with blurred backdrop (1440x900)",
+   "visible_text": [
+    "Routines",
+    "Saved instructions that run on this machine. Docker and the computer must stay running and awake.",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "active",
+    "interval · UTC · Scout",
+    "Next scheduled: 10/20/2026, 9:13:53 AM",
+    "Latest run: Needs attention",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Delete routine",
+    "Archived routines",
+    "(blurred background chat: 'find out where andhra bhawan is located, and help me book a cab from my house D-3, in delhi...')"
+   ],
+   "components": [
+    "blurred backdrop",
+    "modal",
+    "New routine primary + Refresh",
+    "routine card with outlined buttons",
+    "Delete routine text link",
+    "Archived routines disclosure"
+   ],
+   "state": "Routines modal open",
+   "viewport": "1440x900",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Action buttons (Edit, History, Run now, Pause) crammed directly under 'Latest run: Needs attention' with no spacing",
+     "where": "card y~530"
+    },
+    {
+     "text": "Mixed font sizes: 'interval · UTC · Scout' and 'Latest run' large, 'Next scheduled' small grey",
+     "where": "card meta"
+    },
+    {
+     "text": "Delete routine in larger red-orange text unlike button style",
+     "where": "right of Pause"
+    },
+    {
+     "text": "Status 'active' lacks visual indicator, plain text",
+     "where": "card top-right"
+    },
+    {
+     "text": "Refresh button crowds the card top border (touching)",
+     "where": "y~405"
+    },
+    {
+     "text": "Large text 'Archived routines' disproportionate",
+     "where": "below card"
+    }
+   ]
+  },
+  ".taste-skill/before/routines-390.png": {
+   "purpose": "Before: Routines modal mobile with blurred backdrop",
+   "visible_text": [
+    "Routines",
+    "Saved instructions that run on this machine. Docker and the computer must stay running and awake.",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "active",
+    "interval · UTC · Scout",
+    "Next scheduled: 10/20/2026, 9:13:53 AM",
+    "Latest run: Needs attention",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Delete routine",
+    "Archived routines",
+    "(blurred) Connections, File library"
+   ],
+   "components": [
+    "modal",
+    "buttons",
+    "routine card",
+    "action buttons wrapped on two rows",
+    "Archived routines"
+   ],
+   "state": "Routines modal open",
+   "viewport": "390x900",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Action buttons wrap to two rows (Edit/History/Run now then Pause/Delete routine); uneven",
+     "where": "card y 525-620"
+    },
+    {
+     "text": "Action row touches 'Latest run' line with no spacing",
+     "where": "y~515"
+    },
+    {
+     "text": "Mixed font sizes and low-contrast description",
+     "where": "description/meta"
+    },
+    {
+     "text": "Refresh button touches card top border",
+     "where": "y~380"
+    },
+    {
+     "text": "Blurred drawer content bleeds around modal",
+     "where": "backdrop"
+    }
+   ]
+  },
+  ".taste-skill/before/routines-768.png": {
+   "purpose": "Before: Routines modal at tablet over blurred chat",
+   "visible_text": [
+    "Routines",
+    "Saved instructions that run on this machine. Docker and the computer must stay running and awake.",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "active",
+    "interval · UTC · Scout",
+    "Next scheduled: 10/20/2026, 9:13:53 AM",
+    "Latest run: Needs attention",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Delete routine",
+    "Archived routines",
+    "(blurred) Read-only review complete: no Slack changes made. Recipient: the strongest match found is Slack username @dhruv, member ID U093R57QTRT ... attached, uploaded, or sent it.",
+    "Connections",
+    "File library",
+    "Private workspace",
+    "Owner"
+   ],
+   "components": [
+    "blurred sidebar and chat",
+    "modal",
+    "buttons",
+    "routine card",
+    "Archived disclosure"
+   ],
+   "state": "Routines modal open",
+   "viewport": "768x900",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Refresh and New routine buttons touch card top border",
+     "where": "y~405"
+    },
+    {
+     "text": "Action buttons cramped directly below 'Latest run' line with no gap",
+     "where": "y~530"
+    },
+    {
+     "text": "Inconsistent font sizes across meta rows",
+     "where": "card meta"
+    },
+    {
+     "text": "Delete routine in oversized red text, mismatched with outlined buttons",
+     "where": "right of Pause"
+    },
+    {
+     "text": "Background blur renders content unreadable and noisy",
+     "where": "backdrop"
+    }
+   ]
+  },
+  ".taste-skill/before/tablet-fold.jpg": {
+   "purpose": "Login screen at tablet fold (768x1024)",
+   "visible_text": [
+    "hermbot",
+    "Your team, your workspace.",
+    "Enter the owner token from your local .env file to open this private workspace.",
+    "Owner token",
+    "Open workspace",
+    "Runs continue here when you close the browser."
+   ],
+   "components": [
+    "centered rounded white card",
+    "logo",
+    "heading",
+    "helper text",
+    "token input",
+    "green button with arrow",
+    "footnote"
+   ],
+   "state": "Login, empty input",
+   "viewport": "768x1024",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Card small in tall canvas; large empty space above and below",
+     "where": "whole viewport"
+    },
+    {
+     "text": "Footnote tiny low contrast",
+     "where": "card bottom"
+    },
+    {
+     "text": "Helper text grey low contrast",
+     "where": "below heading"
+    }
+   ]
+  },
+  ".taste-skill/before/tablet-page-01.jpg": {
+   "purpose": "Tablet login full-page capture with right-side gray artifact (1536x683)",
+   "visible_text": [
+    "hermbot",
+    "Your team, your workspace.",
+    "Enter the owner token from your local .env file to open this private workspace.",
+    "Owner token",
+    "Open workspace",
+    "Runs continue here when you close the browser."
+   ],
+   "components": [
+    "login card left 512px region",
+    "gray fill right"
+   ],
+   "state": "Login; capture artifact",
+   "viewport": "1536x683",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Right two-thirds of image (x 512-1536) is solid gray, capture artifact",
+     "where": "right"
+    },
+    {
+     "text": "Card off-center and text very small due to downscale",
+     "where": "left"
+    },
+    {
+     "text": "Footnote illegible at this scale",
+     "where": "card bottom"
+    }
+   ]
+  },
+  ".taste-skill/before/workspace-1440.png": {
+   "purpose": "Before: desktop workspace, original sidebar and right panel (1440x900)",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "YOUR TEAM 3",
+    "Quill / Writing",
+    "Scout / Research",
+    "Sage / Review",
+    "PAST TEAMMATES 15",
+    "GROUPS 6",
+    "The dawn of ai / 3 teammates",
+    "Kaggle competitions / 3 teammates",
+    "Routines",
+    "Connections",
+    "File library",
+    "Private workspace",
+    "Owner / Local workspace",
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "You 08:38 AM",
+    "[POC:research] Research the supplied material and ask Quill to produce the report.",
+    "Scout 08:38 AM",
+    "[Protocol fixture] Assignments accepted; yielding to the worker.",
+    "You 08:43 AM",
+    "[POC:research] Ask Quill to write.",
+    "Quill 08:43 AM",
+    "[Protocol fixture] Artifact bd1ed456-b459-5fbf-bd3f-dc216d9bdd3d is ready.",
+    "Scout 08:43 AM",
+    "[Protocol fixture] Completed and combined the supplied task updates. Your delegated work has updates. Inspect failures, reconcile before reassigning, and combine results when done. [{\"id\": \"47fcab99-3314-4610-9aa6-62226e7b77ef\", \"bot_id\": \"writer\", \"status\": \"completed\", \"output\": \"[Protocol fixture] Artifact bd1ed456-b459-5fbf-bd3f-dc216d9bdd3d is ready.\", \"error\":",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "In this conversation",
+    "Work 19",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Removed work (1)",
+    "Each teammate has its own private workspace.",
+    "send · new line"
+   ],
+   "components": [
+    "sidebar",
+    "chat",
+    "composer",
+    "right panel"
+   ],
+   "state": "Scout selected",
+   "viewport": "1440x900",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "'Request history · revision 1' in oversized grey font vs sibling row",
+     "where": "right panel work card"
+    },
+    {
+     "text": "Mixed fonts: Arial-like in right panel and message meta vs brand font",
+     "where": "right panel / timestamps"
+    },
+    {
+     "text": "Groups list cut off with only two groups before Routines (Kaggle row tight against Routines)",
+     "where": "sidebar y~600-670"
+    },
+    {
+     "text": "Connections/File library button blocks heavy; Private workspace badge small",
+     "where": "sidebar bottom"
+    },
+    {
+     "text": "Message clipped by composer mid-line (raw JSON)",
+     "where": "y~690"
+    },
+    {
+     "text": "Timestamps and Reply labels tiny, low contrast",
+     "where": "messages"
+    }
+   ]
+  },
+  ".taste-skill/before/workspace-390.png": {
+   "purpose": "Before: mobile chat with hamburger header (390x900)",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, and data an...",
+    "Scout 09:06 AM",
+    "I tried to test native single-session spawning. Preparation rejected hermes_agent_subagent_spawn as unavailable, and hermes --help returned command not found. No subagent was spawned; this session exposes authorized Hermbot delegation but not a generic spawn tool.",
+    "Reply",
+    "You 09:14 AM",
+    "do a lot of internet research on elon musk",
+    "You 09:16 AM",
+    "do a lot of internet research on elon musk's starlink and the current controversy about him trying to start starlink business in India. I want opinions of all the sides what happened, how popular people have reacted everything. then create a word file and then send it to Dhruv via slack",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "header with hamburger, avatar, title, subtitle, four icons (team, book, monitor, layers)",
+    "Scout message with inline monospace code",
+    "user bubbles",
+    "composer"
+   ],
+   "state": "Chat view",
+   "viewport": "390x900",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Header shows four crammed icons beside truncated subtitle 'data an...'",
+     "where": "header"
+    },
+    {
+     "text": "Last user bubble clipped behind composer",
+     "where": "y~700"
+    },
+    {
+     "text": "Timestamps and Reply tiny grey",
+     "where": "messages"
+    },
+    {
+     "text": "Footer helper text tiny",
+     "where": "bottom"
+    },
+    {
+     "text": "Mixed monospace/body font inline code at differing size",
+     "where": "Scout message"
+    }
+   ]
+  },
+  ".taste-skill/before/workspace-768.png": {
+   "purpose": "Before: tablet 768 with persistent sidebar and chat",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "YOUR TEAM 3",
+    "Quill / Writing",
+    "Scout / Research",
+    "Sage / Review",
+    "PAST TEAMMATES 15",
+    "GROUPS 6 +",
+    "The dawn of ai / 3 teammates",
+    "Kaggle competi... (clipped)",
+    "Routines",
+    "Connections",
+    "File library",
+    "Private workspace",
+    "Owner / Local workspace",
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "Scout 09:04 AM",
+    "Yes—I run on Hermes Agent, from Nous Research. But the tools exposed to me depend on this session's configuration. Here, I can collaborate through authorized Hermbot teammates; I don't currently have a generic subagent-spawn tool.",
+    "You 09:05 AM",
+    "hermes agent can run subagents inside a single session. try it",
+    "Scout 09:06 AM",
+    "I tried to test native single-session spawning. Preparation rejected hermes_agent_subagent_spawn as unavailable, and hermes --help returned command not found. No subagent was spawned; this session exposes authorized Hermbot delegation but not a generic spawn tool.",
+    "You 09:14 AM",
+    "do a lot of internet research on elon musk",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention"
+   ],
+   "components": [
+    "sidebar 214px",
+    "header",
+    "chat",
+    "composer"
+   ],
+   "state": "Chat view",
+   "viewport": "768x900",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Header logo/icons collide: team and + icons stack at the wordmark's right edge, wrapping",
+     "where": "sidebar top"
+    },
+    {
+     "text": "'Kaggle competi...' clipped at Routines",
+     "where": "y~630"
+    },
+    {
+     "text": "'Local workspace' text overlaps the moon icon in owner footer",
+     "where": "y~875"
+    },
+    {
+     "text": "Persistent sidebar steals width",
+     "where": "layout"
+    }
+   ]
+  },
+  ".taste-skill/refined/knowledge-1440.png": {
+   "purpose": "Refined: Memory & skills modal with new sidebar and brand font (1440x900)",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "Your teammates 3",
+    "Quill / Writing",
+    "Scout / Research",
+    "Sage / Review",
+    "Past teammates 15",
+    "Groups 6",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Project chat temp2",
+    "Manik's task",
+    "Routines",
+    "Owner / Local workspace",
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Tools & application access",
+    "Curated memory",
+    "Skills",
+    "Your teammate automatically consults relevant enabled skills for each assignment. Enabling a skill does not change its tool or application access.",
+    "Find a skill",
+    "Create skill",
+    "Import SKILL.md",
+    "Save a completed workflow",
+    "Completed task",
+    "Choose completed work",
+    "Review workflow draft",
+    "In this conversation",
+    "Work 19",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Removed work (1)",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "sidebar",
+    "header",
+    "modal with disclosure, empty Curated memory, Skills search, buttons, workflow select",
+    "right panel",
+    "composer"
+   ],
+   "state": "Modal open; curated memory and skill list empty",
+   "viewport": "1440x900",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Curated memory section empty with no cards under heading",
+     "where": "modal y~315"
+    },
+    {
+     "text": "No skills listed under Skills",
+     "where": "Skills section"
+    },
+    {
+     "text": "Create skill and Import SKILL.md mismatched sizes/fonts",
+     "where": "buttons row"
+    },
+    {
+     "text": "Manik's task group row cut off just above Routines",
+     "where": "sidebar y~755"
+    },
+    {
+     "text": "Overlay dim light; modal bottom clearance close to composer",
+     "where": "bottom"
+    },
+    {
+     "text": "Disabled Review workflow draft barely visible",
+     "where": "modal bottom-left"
+    },
+    {
+     "text": "Tiny x close",
+     "where": "top-right"
+    }
+   ]
+  },
+  ".taste-skill/refined/knowledge-320.png": {
+   "purpose": "Refined: Memory & skills modal at 320x568 (appears identical to after/knowledge-320)",
+   "visible_text": [
+    "Scout",
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Tools & application access",
+    "Curated memory",
+    "Personal notes",
+    "No saved entries",
+    "User profile",
+    "No saved entries",
+    "Skills",
+    "Your teammate automatically consults relevant enabled skills for",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "modal two-line title",
+    "disclosure",
+    "memory cards"
+   ],
+   "state": "Modal open top",
+   "viewport": "320x568",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Title wraps to two lines",
+     "where": "modal title"
+    },
+    {
+     "text": "Skills description cut off mid-sentence at bottom; modal overlaps footer helper text",
+     "where": "bottom"
+    },
+    {
+     "text": "Header behind cropped",
+     "where": "top"
+    }
+   ]
+  },
+  ".taste-skill/refined/knowledge-390.png": {
+   "purpose": "Refined: Memory & skills modal mobile (matches after/knowledge-390)",
+   "visible_text": [
+    "Scout",
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Tools & application access",
+    "Curated memory",
+    "Personal notes",
+    "No saved entries",
+    "User profile",
+    "No saved entries",
+    "Skills",
+    "Your teammate automatically consults relevant enabled skills for each assignment. Enabling a skill does not change its tool or application access.",
+    "Find a skill",
+    "Create skill",
+    "Import SKILL.md",
+    "claude-code",
+    "Delegate coding to Claude Code CLI (features, PRs).",
+    "Enable",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "modal",
+    "disclosure",
+    "memory cards",
+    "search",
+    "buttons",
+    "skill row"
+   ],
+   "state": "Modal open top",
+   "viewport": "390x844",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Skill card clipped at modal bottom",
+     "where": "bottom"
+    },
+    {
+     "text": "Create skill / Import SKILL.md heights mismatch",
+     "where": "buttons row"
+    },
+    {
+     "text": "Find a skill input lacks placeholder",
+     "where": "input"
+    }
+   ]
+  },
+  ".taste-skill/refined/knowledge-768.png": {
+   "purpose": "Refined: Memory & skills modal tablet (matches after/knowledge-768)",
+   "visible_text": [
+    "Scout",
+    "Ready",
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Tools & application access",
+    "Curated memory",
+    "Personal notes",
+    "No saved entries",
+    "User profile",
+    "No saved entries",
+    "Skills",
+    "Your teammate automatically consults relevant enabled skills for each assignment. Enabling a skill does not change its tool or application access.",
+    "Find a skill",
+    "Create skill",
+    "Import SKILL.md",
+    "claude-code",
+    "Delegate coding to Claude Code CLI (features, PRs).",
+    "codex",
+    "Delegate coding to OpenAI Codex CLI (features, PRs).",
+    "computer-use",
+    "Enable",
+    "its",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "header icons",
+    "modal",
+    "skill rows"
+   ],
+   "state": "Modal open, list clipped",
+   "viewport": "768x900",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "computer-use row clipped at bottom",
+     "where": "bottom"
+    },
+    {
+     "text": "Create skill / Import SKILL.md mismatched heights",
+     "where": "buttons row"
+    },
+    {
+     "text": "Header subtitle missing",
+     "where": "header"
+    }
+   ]
+  },
+  ".taste-skill/refined/knowledge-844.png": {
+   "purpose": "Refined: Memory & skills modal landscape (matches after/knowledge-844)",
+   "visible_text": [
+    "Ready",
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Tools & application access",
+    "Curated memory",
+    "Personal notes",
+    "No saved entries",
+    "User profile",
+    "Message...",
+    "Your team w..."
+   ],
+   "components": [
+    "modal",
+    "disclosure",
+    "memory cards"
+   ],
+   "state": "Modal open landscape",
+   "viewport": "844x390",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Modal fills almost full height; only title, disclosure and memory cards visible, rest requires scroll",
+     "where": "whole modal"
+    },
+    {
+     "text": "User profile card cut at bottom edge",
+     "where": "bottom"
+    },
+    {
+     "text": "Header title hidden",
+     "where": "top"
+    }
+   ]
+  },
+  ".taste-skill/refined/navigation-1440.png": {
+   "purpose": "Refined: desktop workspace with new sidebar and raw task context (1440x900)",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "Your teammates 3",
+    "Quill / Writing",
+    "Scout / Research",
+    "Sage / Review",
+    "Past teammates 15",
+    "Groups 6",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Project chat temp2",
+    "Manik's task",
+    "Routines",
+    "Owner / Local workspace",
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "Scout 08:38 AM",
+    "[Protocol fixture] Assignments accepted; yielding to the worker.",
+    "You 08:43 AM",
+    "[POC:research] Ask Quill to write.",
+    "Quill 08:43 AM",
+    "[Protocol fixture] Artifact bd1ed456-b459-5fbf-bd3f-dc216d9bdd3d is ready.",
+    "Scout 08:43 AM",
+    "[Protocol fixture] Completed and combined the supplied task updates. ... \"name\": \"fixture-report.md\"}]}]",
+    "Authenticated Hermbot task context (authority comes only from this context): {\"task_id\": \"530e5403-ea23-4a80-880d-c951e8fa7762\", \"context\": \"chat\", \"bot_id\": \"researcher\", \"management_targets\": null, \"deadline\":",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "In this conversation",
+    "Work 19",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Removed work (1)",
+    "Each teammate has its own private workspace.",
+    "send · new line"
+   ],
+   "components": [
+    "sidebar with sentence-case section headers",
+    "chat",
+    "composer",
+    "right panel"
+   ],
+   "state": "Scout selected",
+   "viewport": "1440x900",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Manik's task group row clipped at bottom of scroll area above Routines",
+     "where": "sidebar y~750-775"
+    },
+    {
+     "text": "Raw JSON/auth context in chat message",
+     "where": "Scout message"
+    },
+    {
+     "text": "Last message clipped by composer mid-line",
+     "where": "y~690"
+    },
+    {
+     "text": "Right panel mostly empty; tiny low-contrast link text",
+     "where": "right panel"
+    },
+    {
+     "text": "Chat bg slightly tinted vs sidebar; message bubble borders low contrast",
+     "where": "chat"
+    }
+   ]
+  },
+  ".taste-skill/refined/navigation-320.png": {
+   "purpose": "Refined: mobile drawer at 320x568 with Your teammates section",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "Your teammates 3",
+    "Quill / Writing",
+    "Scout / Research",
+    "Sage / Review",
+    "Past teammates 15",
+    "Routines",
+    "Owner",
+    "Local workspace",
+    "ction",
+    "ol."
+   ],
+   "components": [
+    "drawer 282px",
+    "logo",
+    "search",
+    "teammates section with status dots",
+    "Past teammates collapsed",
+    "Routines",
+    "owner footer"
+   ],
+   "state": "Drawer open (Groups section not visible)",
+   "viewport": "320x568",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Groups section is absent/hidden: only teammates and Past teammates shown; no scroll cue indicates more content",
+     "where": "between Past teammates and Routines"
+    },
+    {
+     "text": "Stray text fragments of dimmed chat ('ction','ol.') at right",
+     "where": "right strip"
+    },
+    {
+     "text": "Large empty gap between Past teammates and Routines",
+     "where": "y 410-460"
+    }
+   ]
+  },
+  ".taste-skill/refined/navigation-390.png": {
+   "purpose": "Refined: mobile drawer 390 with groups list",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "Your teammates 3",
+    "Quill / Writing",
+    "Scout / Research",
+    "Sage / Review",
+    "Past teammates 15",
+    "Groups 6 +",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Project chat temp2",
+    "3 teammates (x4)",
+    "Routines",
+    "Owner",
+    "Local workspace"
+   ],
+   "components": [
+    "drawer",
+    "teammate rows with dots",
+    "groups list",
+    "Routines",
+    "owner"
+   ],
+   "state": "Drawer open",
+   "viewport": "390x844",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Project chat temp2 row crowded right against Routines (no gap, further groups hidden with no fade)",
+     "where": "y~690-750"
+    },
+    {
+     "text": "Stray fragments of dimmed chat text at right",
+     "where": "right strip"
+    },
+    {
+     "text": "No close affordance",
+     "where": "drawer"
+    }
+   ]
+  },
+  ".taste-skill/refined/navigation-768.png": {
+   "purpose": "Refined: tablet drawer open (768x900)",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "Your teammates 3",
+    "Quill / Writing",
+    "Scout / Research",
+    "Sage / Review",
+    "Past teammates 15",
+    "Groups 6 +",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Project chat temp2",
+    "Manik's task",
+    "Routines",
+    "Owner",
+    "Local workspace",
+    "...alysis",
+    "Ready",
+    "...olished as a Markdown artifact and its full Google Docs copy is ... Google Doc link to @dhruv with a successful provider receipt; ... pendently find it, so no duplicate was attempted. The .docx ... but could not be shared as a binary artifact; the owner- ... s available at ... /d/1QdNxQZTp0bx8lc51wpxjpJGXmO2MQkkpLrxLbtOs9zl/edit?",
+    "utube",
+    "and send the names of the top 10 videos after every hour"
+   ],
+   "components": [
+    "drawer",
+    "teammates",
+    "groups",
+    "dimmed chat"
+   ],
+   "state": "Drawer open",
+   "viewport": "768x900",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Manik's task row cut off at bottom of list above Routines, subtitle clipped",
+     "where": "y~755-775"
+    },
+    {
+     "text": "Drawer used at tablet width instead of persistent sidebar",
+     "where": "layout"
+    },
+    {
+     "text": "Fragmented chat text visible beside drawer",
+     "where": "right"
+    }
+   ]
+  },
+  ".taste-skill/refined/navigation-844.png": {
+   "purpose": "Refined: landscape drawer 844x390",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "Your teammates 3",
+    "Quill / Writing",
+    "Scout / Research",
+    "Sage (clipped)",
+    "Routines",
+    "Owner",
+    "Local workspace",
+    "alysis",
+    "Ready",
+    "that intercepted request.",
+    "ntrol."
+   ],
+   "components": [
+    "drawer",
+    "teammates",
+    "Routines",
+    "owner"
+   ],
+   "state": "Drawer open landscape",
+   "viewport": "844x390",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Sage row cut off under Routines; Groups unreachable without scrolling and no scroll hint",
+     "where": "y~290-310"
+    },
+    {
+     "text": "Logo, search, section header and owner footer leave only ~2 rows visible",
+     "where": "drawer"
+    },
+    {
+     "text": "Header 'Scout' hidden by dim; partial 'alysis'",
+     "where": "top"
+    }
+   ]
+  },
+  ".taste-skill/refined/routines-1440.png": {
+   "purpose": "Refined: Routines modal over desktop workspace (1440x900)",
+   "visible_text": [
+    "Routines",
+    "Saved instructions that run on this machine. Docker and the computer must stay running and awake.",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "Active",
+    "Every 60 minutes · UTC · Scout",
+    "Next run 10/20/2026, 9:13:53 AM on this device",
+    "Last run: Needs attention",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Delete",
+    "Archived routines",
+    "hermbot",
+    "Find a teammate...",
+    "Your teammates 3",
+    "Quill / Writing",
+    "Scout / Research",
+    "Sage / Review",
+    "Past teammates 15",
+    "Groups 6",
+    "group list",
+    "Routines",
+    "Owner",
+    "You 09:18 AM",
+    "not do uber just share me the directions on googl emaps",
+    "Scout 09:18 AM",
+    "Google ... Prades ... api=1&... 8&dest... 0001&",
+    "In this ... permissions; external changes like sending email or modifying events require the applicable approval or standing",
+    "In this conversation",
+    "Work 19",
+    "Outputs 11",
+    "Finished work (18)",
+    "Removed work (1)"
+   ],
+   "components": [
+    "modal with x",
+    "New routine primary + Refresh",
+    "routine card with Active dot",
+    "meta lines",
+    "action row Edit/History/Run now/Pause/Delete",
+    "Archived routines disclosure",
+    "sidebar",
+    "chat",
+    "right panel"
+   ],
+   "state": "Routines modal open",
+   "viewport": "1440x900",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Last run 'Needs attention' is no longer colored in red/attention color (plain black bold), losing status emphasis compared to after-stage",
+     "where": "Last run line"
+    },
+    {
+     "text": "Underlying chat text fragments visible around modal edges",
+     "where": "modal left/right"
+    },
+    {
+     "text": "Manik's task row clipped above Routines in sidebar",
+     "where": "y~755"
+    },
+    {
+     "text": "Edit/History/Pause remain low-affordance text links",
+     "where": "action row"
+    },
+    {
+     "text": "Tiny x close",
+     "where": "top-right"
+    }
+   ]
+  },
+  ".taste-skill/refined/routines-320.png": {
+   "purpose": "Refined: Routines modal at 320x568",
+   "visible_text": [
+    "Scout",
+    "Routines",
+    "Saved instructions that run on this machine. Docker and the computer must stay running and awake.",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "Active",
+    "Every 60 minutes · UTC · Scout",
+    "Next run 10/20/2026, 9:13:53 AM on this device",
+    "Last run: Needs attention",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Delete",
+    "Archived routines",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "modal with x",
+    "New routine primary + Refresh",
+    "routine card with Active dot",
+    "meta lines",
+    "action row Edit/History/Run now/Pause/Delete",
+    "Archived routines disclosure"
+   ],
+   "state": "Routines modal open",
+   "viewport": "320x568",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Delete wraps alone to second row",
+     "where": "below Pause"
+    },
+    {
+     "text": "Archived routines row sits tight at the modal bottom overlapping page footer text",
+     "where": "bottom"
+    },
+    {
+     "text": "Title wraps to two lines next to Active",
+     "where": "card header"
+    },
+    {
+     "text": "'Last run: Needs attention' not highlighted",
+     "where": "meta"
+    }
+   ]
+  },
+  ".taste-skill/refined/routines-390.png": {
+   "purpose": "Refined: Routines modal mobile",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, and data analys...",
+    "You 09:27 AM",
+    "find out why did that happpen",
+    "Reply",
+    "Routines",
+    "Saved instructions that run on this machine. Docker and the computer must stay running and awake.",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "Active",
+    "Every 60 minutes · UTC · Scout",
+    "Next run 10/20/2026, 9:13:53 AM on this device",
+    "Last run: Needs attention",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Delete",
+    "Archived routines",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "modal with x",
+    "New routine primary + Refresh",
+    "routine card with Active dot",
+    "meta lines",
+    "action row Edit/History/Run now/Pause/Delete",
+    "Archived routines disclosure",
+    "composer behind"
+   ],
+   "state": "Routines modal open",
+   "viewport": "390x844",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Header subtitle truncated",
+     "where": "header"
+    },
+    {
+     "text": "Modal bottom abuts composer",
+     "where": "y~655"
+    },
+    {
+     "text": "Needs attention not color-emphasized",
+     "where": "Last run"
+    },
+    {
+     "text": "Close x tiny",
+     "where": "top-right"
+    }
+   ]
+  },
+  ".taste-skill/refined/routines-768.png": {
+   "purpose": "Refined: Routines modal tablet",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "Thanks for saving it. I'd only seen it as an inactive draft before, so I haven't independently verified its current status.",
+    "system 08:20 AM",
+    "Hourly YouTube trending video names · 2026-10-20T08:20:22.788689+00:00 · saved revision 2",
+    "Routines",
+    "Saved instructions that run on this machine. Docker and the computer must stay running and awake.",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "Active",
+    "Every 60 minutes · UTC · Scout",
+    "Next run 10/20/2026, 9:13:53 AM on this device",
+    "Last run: Needs attention",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Delete",
+    "Archived routines",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention"
+   ],
+   "components": [
+    "modal with x",
+    "New routine primary + Refresh",
+    "routine card with Active dot",
+    "meta lines",
+    "action row Edit/History/Run now/Pause/Delete",
+    "Archived routines disclosure",
+    "header",
+    "composer behind"
+   ],
+   "state": "Routines modal open",
+   "viewport": "768x900",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Modal overlaps system message line leaving partial clutter above",
+     "where": "y~230"
+    },
+    {
+     "text": "Raw ISO timestamp in system message",
+     "where": "chat behind"
+    },
+    {
+     "text": "Needs attention uncolored",
+     "where": "Last run"
+    }
+   ]
+  },
+  ".taste-skill/refined/routines-844.png": {
+   "purpose": "Refined: Routines modal landscape; action row cut off",
+   "visible_text": [
+    "Ready",
+    "Routines",
+    "Saved instructions that run on this machine. Docker and the computer must stay running and awake.",
+    "New routine",
+    "Refresh",
+    "Hourly YouTube trending video names",
+    "Active",
+    "Every 60 minutes · UTC · Scout",
+    "Next run 10/20/2026, 9:13:53 AM on this device",
+    "Last run: Needs attention",
+    "Edit",
+    "History",
+    "Run now",
+    "Pause",
+    "Message",
+    "Your team w..."
+   ],
+   "components": [
+    "modal with x",
+    "New routine primary + Refresh",
+    "routine card with Active dot",
+    "meta lines",
+    "action row Edit/History/Run now/Pause/Delete"
+   ],
+   "state": "Modal open, action row at bottom edge; Archived routines not visible",
+   "viewport": "844x390",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Action row (Edit/History/Run now/Pause/Delete) cut by the modal bottom edge; Archived routines off-screen without scroll cue",
+     "where": "y~340-370"
+    },
+    {
+     "text": "Modal fills entire viewport height",
+     "where": "whole modal"
+    },
+    {
+     "text": "Header title hidden",
+     "where": "top"
+    }
+   ]
+  },
+  ".taste-skill/refined/workspace-1440.png": {
+   "purpose": "Refined: desktop workspace with Your teammates (1440x900)",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate...",
+    "Your teammates 3",
+    "Quill / Writing",
+    "Scout / Research",
+    "Sage / Review",
+    "Past teammates 15",
+    "Groups 6",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Project chat temp2",
+    "Manik's task",
+    "Routines",
+    "Owner / Local workspace",
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "You 08:38 AM",
+    "[POC:research] Research the supplied material and ask Quill to produce the report.",
+    "Scout 08:38 AM",
+    "[Protocol fixture] Assignments accepted; yielding to the worker.",
+    "You 08:43 AM",
+    "[POC:research] Ask Quill to write.",
+    "Quill 08:43 AM",
+    "[Protocol fixture] Artifact bd1ed456-b459-5fbf-bd3f-dc216d9bdd3d is ready.",
+    "Scout 08:43 AM",
+    "[Protocol fixture] Completed and combined the supplied task updates. Your delegated work has updates. Inspect failures, reconcile before reassigning, and combine results when done. [{\"id\": \"47fcab99-3314-4610-9aa6-62226e7b77ef\", \"bot_id\": \"writer\", \"status\": \"completed\", \"output\": \"[Protocol fixture] Artifact bd1ed456-",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "In this conversation",
+    "Work 19",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Removed work (1)",
+    "Each teammate has its own private workspace.",
+    "send · new line"
+   ],
+   "components": [
+    "sidebar",
+    "chat",
+    "composer",
+    "right panel"
+   ],
+   "state": "Scout selected",
+   "viewport": "1440x900",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Manik's task row cut off above Routines, no fade",
+     "where": "sidebar y~750-775"
+    },
+    {
+     "text": "Last message clipped by composer mid-line (JSON)",
+     "where": "y~690"
+    },
+    {
+     "text": "Raw protocol JSON in message",
+     "where": "Scout 08:43"
+    },
+    {
+     "text": "Right panel mostly empty",
+     "where": "right"
+    },
+    {
+     "text": "Tiny low-contrast helper/footer text",
+     "where": "bottom"
+    }
+   ]
+  },
+  ".taste-skill/refined/workspace-320.png": {
+   "purpose": "Refined: mobile chat 320x568 (identical to after/workspace-320)",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, a...",
+    "You 09:27 AM",
+    "find out why did that happpen",
+    "Reply",
+    "Scout 09:28 AM",
+    "The task record shows the deliverables failed because \"Execution cancelled: Execution time budget exhausted.\" That is the clearest underlying cause available. The browser's \"explicit stop requested\" message was the cancellation...",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "header",
+    "bubble",
+    "message",
+    "composer"
+   ],
+   "state": "Chat view",
+   "viewport": "320x568",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Composer + footer take ~190px of 568px",
+     "where": "bottom"
+    },
+    {
+     "text": "Header subtitle truncated",
+     "where": "header"
+    },
+    {
+     "text": "Scout message cut mid-line behind composer",
+     "where": "y~365"
+    }
+   ]
+  },
+  ".taste-skill/refined/workspace-390.png": {
+   "purpose": "Refined: mobile chat 390 (identical to after/workspace-390)",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, and data analys...",
+    "You 09:27 AM",
+    "find out why did that happpen",
+    "Scout 09:28 AM",
+    "The task record shows the deliverables failed because \"Execution cancelled: Execution time budget exhausted.\" ... I should not have assumed you had intentionally stopped it.",
+    "You 09:29 PM",
+    "continue",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "header",
+    "bubbles",
+    "composer"
+   ],
+   "state": "Chat view",
+   "viewport": "390x844",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Header subtitle truncated",
+     "where": "header"
+    },
+    {
+     "text": "'continue' bubble clipped by composer",
+     "where": "y~640"
+    },
+    {
+     "text": "Send button low contrast",
+     "where": "composer"
+    }
+   ]
+  },
+  ".taste-skill/refined/workspace-768.png": {
+   "purpose": "Refined: tablet chat with long Quill Slack recipient review (768x900)",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "connection, and it instructs me not to start or delegate work in this turn. The Word file is ready; the Slack send remains pending. When the task resumes for work, I can check whether an authorized teammate with Slack access can handle it.",
+    "Reply",
+    "Quill 09:39 PM",
+    "Read-only review complete; no Slack changes made.",
+    "Recipient: the strongest match found is Slack username @dhruv, member ID U093R57QTRT. A search for \"Dhruv Starlink\" returned one result from that user, in DM D0945D5DS2O. Search results also surfaced D09CWFMEU4Q, D09GPNJQDFZ, and D094GN5MJ0G as DMs involving that same Dhruv and other members. These are conversations between people, not a bot-to-Dhruv destination; do not use them as the recipient channel. The post schema permits passing the intended member ID (U093R57QTRT) to start a bot-to-person DM. Although @dhruv is the likely match, the handoff gives no full name or other identifier to confirm it is the intended Dhruv, so identity is not fully verified. Please confirm if needed.",
+    "Attachment capability: slack.post accepts required channel and text, with optional thread_ts only. Its schema has no file, upload, or attachment field, and the available actions include no Slack file-upload action. It can send text only.",
+    "Draft message: \"Hi Dhruv — here's the Starlink India report, covering the regulatory approval path, claims from Musk and the government/telecom operators, public reaction, and where the available evidence remains inconclusive.\"",
+    "Missing information: the alternate destination the owner said they will specify; confirmation that @dhruv (U093R57QTRT) is the intended person if Slack is later chosen; and access to the actual Word document or a permitted way to deliver it. The Word file was not provided in this handoff, so I have not reviewed, attached, uploaded, or sent it.",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "header",
+    "long Quill message with several paragraphs",
+    "composer"
+   ],
+   "state": "Chat view tablet",
+   "viewport": "768x900",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Very long dense paragraphs with raw IDs, hard to scan",
+     "where": "Quill message"
+    },
+    {
+     "text": "Last paragraph runs to the composer edge with no bottom padding",
+     "where": "y~690"
+    },
+    {
+     "text": "No sidebar/right panel at tablet width",
+     "where": "layout"
+    },
+    {
+     "text": "Footer text tiny low contrast",
+     "where": "bottom"
+    }
+   ]
+  },
+  ".taste-skill/refined/workspace-844.png": {
+   "purpose": "Refined: landscape chat (identical to after/workspace-844)",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "Scout 08:42 AM",
+    "No model task was created from that intercepted request.",
+    "Reply",
+    "Message Scout...",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "header",
+    "one message",
+    "composer",
+    "footer"
+   ],
+   "state": "Chat landscape",
+   "viewport": "844x390",
+   "theme": "light",
+   "stage": "refined",
+   "defects": [
+    {
+     "text": "Header, composer and footer consume ~80% of height leaving ~65px for messages",
+     "where": "whole viewport"
+    },
+    {
+     "text": "Scout message header row clipped under app header",
+     "where": "y~72"
+    },
+    {
+     "text": "Send button low contrast",
+     "where": "composer right"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/finished-1440.png": {
+   "purpose": "Right Work panel (302px wide crop) with two Needs attention cards and expanded Finished work (18)",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Completed",
+    "Test single-session subagent capability",
+    "1 of 1 required results ready",
+    "Save as skill",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "panel header",
+    "Work 20 / Outputs 11 tabs",
+    "two work cards with status dots, title, owner, two disclosures, link actions",
+    "Finished work disclosure expanded",
+    "Completed card with Inspect work and Save as skill",
+    "footer note with shield icon"
+   ],
+   "state": "Finished work expanded; duplicate Needs attention cards",
+   "viewport": "302x900",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Two identical 'Hourly YouTube trending video names' Needs attention cards (duplicate)",
+     "where": "top two cards"
+    },
+    {
+     "text": "Card titles wrap to two lines in narrow panel while card has extra empty bottom padding (first card taller)",
+     "where": "cards"
+    },
+    {
+     "text": "Footer note overlaps/abuts Completed card bottom, card clipped without fade",
+     "where": "y~850"
+    },
+    {
+     "text": "Action links (Inspect work / Remove from work list) light grey, tiny, low contrast; Save as skill similar",
+     "where": "card actions"
+    },
+    {
+     "text": "Work tab count 20 while list shows 2+18; counts unclear",
+     "where": "tabs"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/finished-320.png": {
+   "purpose": "Work panel at 320 viewport (288x568) with close button, scrolled",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "Needs attention (clipped)",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Completed",
+    "Test single-session subagent capability",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "header with close X",
+    "tabs",
+    "card scrolled partway",
+    "Inspect work (green) and Remove from work list stacked vertically",
+    "Finished work expanded",
+    "footer note wrapping to two lines"
+   ],
+   "state": "Panel scrolled, Finished work expanded",
+   "viewport": "288x568",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Card status line 'Needs attention' clipped under the sticky tabs header",
+     "where": "y~105"
+    },
+    {
+     "text": "Footer note wraps to two lines and covers part of Completed card; card title cut off ('capability')",
+     "where": "bottom y~500-568"
+    },
+    {
+     "text": "Inspect work and Remove from work list stacked in two rows with large gap, inconsistent colors (green vs grey)",
+     "where": "card actions"
+    },
+    {
+     "text": "Close X small in header",
+     "where": "top-right"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/finished-390.png": {
+   "purpose": "Work panel at 390 viewport (320x844 capture) scrolled to Finished work",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Completed",
+    "Test single-session subagent capability",
+    "1 of 1 required results ready",
+    "Save as skill",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "header with close X",
+    "tabs",
+    "two Needs attention cards",
+    "expanded Finished work",
+    "Completed card",
+    "sticky footer note"
+   ],
+   "state": "Panel with Finished work expanded",
+   "viewport": "320x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Duplicate identical Needs attention cards",
+     "where": "top two cards"
+    },
+    {
+     "text": "Completed card's Remove from work list action is hidden behind footer note",
+     "where": "bottom y~800"
+    },
+    {
+     "text": "Card actions low contrast grey",
+     "where": "actions"
+    },
+    {
+     "text": "Card has extra bottom padding on top card, uneven spacing",
+     "where": "cards"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/finished-card-1440.png": {
+   "purpose": "Crop of a Completed work card at desktop",
+   "visible_text": [
+    "Completed",
+    "Test single-session subagent capability",
+    "Scout owns this work",
+    "1 of 1 required results ready",
+    "Inspect work",
+    "Save as skill",
+    "Remove from work list"
+   ],
+   "components": [
+    "status dot and label",
+    "title",
+    "owner line",
+    "disclosure",
+    "action links in two rows"
+   ],
+   "state": "Card, default",
+   "viewport": "265x244",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Remove from work list wraps to its own row leaving uneven action layout",
+     "where": "bottom row"
+    },
+    {
+     "text": "Action links in light grey/green small text without button affordance",
+     "where": "actions"
+    },
+    {
+     "text": "Title wraps to two lines in narrow card",
+     "where": "title"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/finished-card-320.png": {
+   "purpose": "Crop of Completed work card with Save as skill highlighted (hover/focus)",
+   "visible_text": [
+    "Completed",
+    "Test single-session subagent capability",
+    "Scout owns this work",
+    "1 of 1 required results ready",
+    "Inspect work",
+    "Save as skill",
+    "Remove from work list"
+   ],
+   "components": [
+    "status",
+    "title",
+    "owner",
+    "disclosure",
+    "actions with pale green focus/hover fill on Save as skill"
+   ],
+   "state": "Save as skill hover/focus state",
+   "viewport": "251x261",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Remove from work list wraps to second row left aligned",
+     "where": "bottom"
+    },
+    {
+     "text": "Hover/focus fill on Save as skill is faint low-contrast",
+     "where": "Save as skill"
+    },
+    {
+     "text": "Actions low-affordance",
+     "where": "actions"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/finished-card-390.png": {
+   "purpose": "Crop of Completed work card at 390 (title on one line)",
+   "visible_text": [
+    "Completed",
+    "Test single-session subagent capability",
+    "Scout owns this work",
+    "1 of 1 required results ready",
+    "Inspect work",
+    "Save as skill",
+    "Remove from work list"
+   ],
+   "components": [
+    "status",
+    "title",
+    "owner",
+    "disclosure",
+    "actions two rows"
+   ],
+   "state": "Card, default",
+   "viewport": "283x242",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Remove from work list sits alone on second row with wide gap above, uneven spacing",
+     "where": "bottom row"
+    },
+    {
+     "text": "Action links small grey with no button borders",
+     "where": "actions"
+    },
+    {
+     "text": "Gap between 'Save as skill' row and 'Remove' row larger than other row gaps",
+     "where": "actions"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/inspect-1440.png": {
+   "purpose": "Inspect the work dialog/panel showing event timeline (650x810 crop)",
+   "visible_text": [
+    "Inspect the work",
+    "Assignments, execution progress and decisions for this operation.",
+    "Check YouTube's trending page and send the names of the top 10 videos.",
+    "Scout",
+    "Completed · Check YouTube's trending page and send the names of the top 10 videos.",
+    "Last tool activity: hermbot_finish · completed · 14 min ago",
+    "Last progress: 14 min ago",
+    "Last runtime contact: 14 min ago",
+    "I couldn't provide a top-10 list: YouTube's general Trending page has been retired. I opened https://www.youtube.com/feed/trending, and it redirected to YouTube Home rather than a ranked trending list. Search results from The Business Standard (July 12, 2025) and Mint (July 11, 2025) report that the page was shut down July 21, 2025; YouTube's replacement is category-specific charts and recommendations, not a single general top-10. The browser's YouTube region was India (IN). I'm not substituting",
+    "Active work: 1 of 60 minutes",
+    "Execution 1: Completed",
+    "task completed · Completed",
+    "9:16:38 AM",
+    "run completed · Completed",
+    "9:16:37 AM",
+    "reasoning available · available",
+    "9:16:37 AM",
+    "hermbot_finish · Completed",
+    "9:16:27 AM",
+    "hermbot_finish · started",
+    "9:16:27 AM",
+    "tool receipt · receipt",
+    "9:16:27 AM",
+    "hermbot_finish · admitted",
+    "9:16:27 AM"
+   ],
+   "components": [
+    "dialog with tiny x",
+    "title",
+    "subtitle",
+    "task statement",
+    "agent name Scout",
+    "status line",
+    "three meta lines",
+    "result paragraph",
+    "Active work and Execution lines",
+    "event log list with timestamps"
+   ],
+   "state": "Inspect dialog open, scrolled top, log continues",
+   "viewport": "650x810",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Result paragraph ends mid-sentence 'I'm not substituting' (truncated text)",
+     "where": "Scout result paragraph"
+    },
+    {
+     "text": "Meta lines 'Last tool activity/progress/runtime contact' very small and light grey",
+     "where": "below Scout"
+    },
+    {
+     "text": "Event log has no visual timeline structure: flat list of text with tiny timestamps, no separators or alignment",
+     "where": "log list"
+    },
+    {
+     "text": "Log is clipped at bottom with no scroll cue",
+     "where": "bottom"
+    },
+    {
+     "text": "Tiny x close",
+     "where": "top-right"
+    },
+    {
+     "text": "Dense text with inconsistent font sizes (large result vs small meta)",
+     "where": "body"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/inspect-320.png": {
+   "purpose": "Inspect the work dialog at 320 (288x512 crop)",
+   "visible_text": [
+    "Inspect the work",
+    "Assignments, execution progress and decisions for this operation.",
+    "Check YouTube's trending page and send the names of the top 10 videos.",
+    "Scout",
+    "Completed · Check YouTube's trending page and send the names of the top 10 videos.",
+    "Last tool activity: hermbot_finish · completed · 14 min ago",
+    "Last progress: 14 min ago",
+    "Last runtime contact: 14 min ago",
+    "I couldn't provide a top-10 list: YouTube's general Trending page has been retired. I opened https://www.youtube.com/feed/trending, and it redirected to YouTube Home rather than a ranked trending list. Search results from The Business Standard (July 12, 2025) and Mint (July 11, 2025) report that the page was shut down July"
+   ],
+   "components": [
+    "dialog with x",
+    "heading",
+    "description",
+    "task text",
+    "Scout block",
+    "meta lines",
+    "result paragraph"
+   ],
+   "state": "Inspect open top, clipped",
+   "viewport": "288x512",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Content clipped at bottom mid-sentence ('shut down July') with no scroll cue or visible bottom padding",
+     "where": "bottom"
+    },
+    {
+     "text": "Dialog has no margin from viewport edges; rounded corners cut at crop edges",
+     "where": "edges"
+    },
+    {
+     "text": "Meta lines tiny, grey",
+     "where": "y~265-325"
+    },
+    {
+     "text": "Tiny x close",
+     "where": "top-right"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/inspect-390.png": {
+   "purpose": "Inspect the work dialog at 390 (358x760 crop)",
+   "visible_text": [
+    "Inspect the work",
+    "Assignments, execution progress and decisions for this operation.",
+    "Check YouTube's trending page and send the names of the top 10 videos.",
+    "Scout",
+    "Completed · Check YouTube's trending page and send the names of the top 10 videos.",
+    "Last tool activity: hermbot_finish · completed · 14 min ago",
+    "Last progress: 14 min ago",
+    "Last runtime contact: 14 min ago",
+    "I couldn't provide a top-10 list: YouTube's general Trending page has been retired. I opened https://www.youtube.com/feed/trending, and it redirected to YouTube Home rather than a ranked trending list. Search results from The Business Standard (July 12, 2025) and Mint (July 11, 2025) report that the page was shut down July 21, 2025; YouTube's replacement is category-specific charts and recommendations, not a single general top-10. The browser's YouTube region was India (IN). I'm not substituting",
+    "Active work: 1 of 60 minutes",
+    "Execution 1: Completed",
+    "task completed · Completed",
+    "9:16:38 AM",
+    "run completed · Completed",
+    "9:16:37 AM",
+    "reasoning available · available"
+   ],
+   "components": [
+    "dialog with x",
+    "heading",
+    "description",
+    "task text",
+    "Scout block",
+    "meta lines",
+    "result paragraph",
+    "Active work",
+    "Execution 1",
+    "event log (partial)"
+   ],
+   "state": "Inspect open top, clipped",
+   "viewport": "358x760",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Result paragraph ends mid-sentence 'I'm not substituting'",
+     "where": "result paragraph"
+    },
+    {
+     "text": "Log entry 'reasoning available' timestamp clipped at bottom edge",
+     "where": "y~740"
+    },
+    {
+     "text": "Event log flat list with tiny timestamps; no structure",
+     "where": "log"
+    },
+    {
+     "text": "Meta lines tiny grey",
+     "where": "below Scout"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/outputs-1440.png": {
+   "purpose": "Outputs tab list of file cards in the right panel (302x900 crop)",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "research report",
+    "Scout · 23.8 KB",
+    "starlink-india-slack-handoff.md",
+    "Scout · 2.6 KB",
+    "phase3-inflight-1791359994.txt",
+    "Scout · 20 B",
+    "phase3-result-1791318046522.md",
+    "Scout · 22 B",
+    "phase3-result-1791318046522.md",
+    "Scout · 22 B",
+    "phase3-result-1791318035813.md",
+    "Scout · 22 B",
+    "phase3-result-1791318035813.md",
+    "Scout · 22 B",
+    "fixture-report.md",
+    "Quill · 109 B",
+    "fixture-report.md",
+    "Quill · 109 B",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "panel header",
+    "tabs (Outputs underlined? Work/Outputs without clear active state)",
+    "file cards with doc icon, wrapped filename, owner and size, open-external arrow"
+   ],
+   "state": "Outputs tab, scrolled; first card clipped under tabs",
+   "viewport": "302x900",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "First card 'research report' title clipped under the sticky tab row",
+     "where": "y~105-120"
+    },
+    {
+     "text": "Duplicate files with identical names/sizes (phase3-result ×2 each, fixture-report ×2)",
+     "where": "list"
+    },
+    {
+     "text": "Filenames wrap awkwardly mid-token ('phase3-result-/1791318046522.md') in narrow panel",
+     "where": "cards"
+    },
+    {
+     "text": "Active tab indicator not visible: neither Work nor Outputs underlined",
+     "where": "tabs"
+    },
+    {
+     "text": "Open-external arrow tiny, low-contrast",
+     "where": "card right"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/outputs-320.png": {
+   "purpose": "Outputs tab at 320 (288x568) with close X",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "Scout · 22 B",
+    "phase3-result-1791318035813.md",
+    "Scout · 22 B",
+    "fixture-report.md",
+    "Quill · 109 B",
+    "fixture-report.md",
+    "Quill · 109 B",
+    "fixture-report.md",
+    "Quill · 109 B",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "header with close X",
+    "tabs with Outputs underlined",
+    "file cards with open arrow",
+    "footer note wrapping to two lines"
+   ],
+   "state": "Outputs tab scrolled to bottom area",
+   "viewport": "288x568",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Top card cut by tab bar; last card clipped by footer",
+     "where": "top and bottom"
+    },
+    {
+     "text": "Triplicate identical fixture-report.md cards",
+     "where": "list"
+    },
+    {
+     "text": "Footer note wraps to two lines consuming space",
+     "where": "bottom"
+    },
+    {
+     "text": "Open arrow tiny low contrast",
+     "where": "cards"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/outputs-390.png": {
+   "purpose": "Outputs tab at 390 (320x844) with close X",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "starlink-india-slack-handoff.md",
+    "Scout · 2.6 KB",
+    "phase3-inflight-1791359994.txt",
+    "Scout · 20 B",
+    "phase3-result-1791318046522.md",
+    "Scout · 22 B",
+    "phase3-result-1791318046522.md",
+    "Scout · 22 B",
+    "phase3-result-1791318035813.md",
+    "Scout · 22 B",
+    "phase3-result-1791318035813.md",
+    "Scout · 22 B",
+    "fixture-report.md",
+    "Quill · 109 B",
+    "fixture-report.md",
+    "Quill · 109 B",
+    "fixture-report.md",
+    "Quill · 109 B",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "header with close X",
+    "tabs",
+    "file cards",
+    "footer"
+   ],
+   "state": "Outputs tab scrolled",
+   "viewport": "320x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Top card partially cut under tab bar",
+     "where": "y~105"
+    },
+    {
+     "text": "Duplicate files repeated",
+     "where": "list"
+    },
+    {
+     "text": "Last card clipped by footer",
+     "where": "y~795"
+    },
+    {
+     "text": "Filename sizes vary; short filename cards (fixture-report) have shorter widths than long ones leaving uneven card heights",
+     "where": "cards"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/removed-1440.png": {
+   "purpose": "Work tab with Removed work (1) expanded (302x900)",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Removed work (1)",
+    "Research Starlink India controversy and send Word report to Dhruv",
+    "Needs attention · Scout",
+    "Restore to work list",
+    "Inspect active work",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "panel header",
+    "tabs",
+    "two duplicate work cards",
+    "Finished work collapsed",
+    "Removed work expanded with one row",
+    "Restore to work list (green) and Inspect active work actions"
+   ],
+   "state": "Removed work expanded",
+   "viewport": "302x900",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Duplicate Needs attention cards",
+     "where": "top cards"
+    },
+    {
+     "text": "Removed item row lacks card container, inconsistent with other cards",
+     "where": "Removed work row"
+    },
+    {
+     "text": "Removed row bottom is cropped by divider/footer",
+     "where": "y~845"
+    },
+    {
+     "text": "Actions low-contrast small text",
+     "where": "row actions"
+    },
+    {
+     "text": "Large empty/gap between cards and Finished work",
+     "where": "y~355-620"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/removed-320.png": {
+   "purpose": "Removed work expanded at 320 (288x568) scrolled",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Removed work (1)",
+    "Research Starlink India controversy and",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "header with close X",
+    "tabs",
+    "card scrolled",
+    "Finished work",
+    "Removed work expanded",
+    "footer"
+   ],
+   "state": "Removed work expanded, scrolled",
+   "viewport": "288x568",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Card top status clipped under tab bar",
+     "where": "y~105"
+    },
+    {
+     "text": "Removed item title cut off by footer note ('Research Starlink India controversy and')",
+     "where": "bottom"
+    },
+    {
+     "text": "Inspect work and Remove stack vertically with extra gap; colors inconsistent",
+     "where": "card actions"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/removed-390.png": {
+   "purpose": "Removed work expanded at 390 (320x844)",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Removed work (1)",
+    "Research Starlink India controversy and send Word report to Dhruv",
+    "Needs attention · Scout",
+    "Restore to work list",
+    "Inspect active work",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "header with close X",
+    "tabs",
+    "two duplicate cards",
+    "Finished work collapsed",
+    "Removed work expanded",
+    "footer"
+   ],
+   "state": "Removed work expanded",
+   "viewport": "320x844",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Removed row actions (Restore to work list / Inspect active work) cut off by footer note at bottom",
+     "where": "y~780-800"
+    },
+    {
+     "text": "Duplicate Needs attention cards",
+     "where": "top"
+    },
+    {
+     "text": "Removed item has no card container unlike others",
+     "where": "Removed work row"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/removed-row-1440.png": {
+   "purpose": "Crop of removed work row, desktop",
+   "visible_text": [
+    "Research Starlink India controversy and send Word report to Dhruv",
+    "Needs attention · Scout",
+    "Restore to work list",
+    "Inspect active work"
+   ],
+   "components": [
+    "title",
+    "status line",
+    "two inline text actions"
+   ],
+   "state": "Row default",
+   "viewport": "283x91",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Row has no container/border; actions are plain text with low affordance and grey Inspect active work",
+     "where": "actions"
+    },
+    {
+     "text": "Title wraps to two lines; content flush to left edge of crop with no padding",
+     "where": "title"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/removed-row-320.png": {
+   "purpose": "Crop of removed work row at 320 with Inspect active work focused",
+   "visible_text": [
+    "Research Starlink India controversy and send Word report to Dhruv",
+    "Needs attention · Scout",
+    "Restore to work list",
+    "Inspect active work"
+   ],
+   "components": [
+    "title",
+    "status",
+    "stacked actions",
+    "pale green focus/hover pill on Inspect active work"
+   ],
+   "state": "Row with focus/hover on Inspect active work",
+   "viewport": "251x190",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Actions stack on separate rows; Restore text left offset by padding while title flush left (misaligned)",
+     "where": "actions"
+    },
+    {
+     "text": "Focus fill on Inspect active work faint and low contrast",
+     "where": "bottom action"
+    },
+    {
+     "text": "Title flush to edge no padding",
+     "where": "title"
+    }
+   ]
+  },
+  ".taste-skill/work-details/after/removed-row-390.png": {
+   "purpose": "Crop of removed work row at 390",
+   "visible_text": [
+    "Research Starlink India controversy and send Word report to Dhruv",
+    "Needs attention · Scout",
+    "Restore to work list",
+    "Inspect active work"
+   ],
+   "components": [
+    "title",
+    "status",
+    "inline actions",
+    "bottom divider"
+   ],
+   "state": "Row default",
+   "viewport": "283x145",
+   "theme": "light",
+   "stage": "after",
+   "defects": [
+    {
+     "text": "Restore action indented 8px relative to title (misaligned left edge)",
+     "where": "actions"
+    },
+    {
+     "text": "Actions low affordance text",
+     "where": "actions"
+    }
+   ]
+  },
+  ".taste-skill/work-details/before/finished-1440.png": {
+   "purpose": "Before: Work panel with Finished work expanded (302x900)",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Completed",
+    "Test single-session subagent capability",
+    "1 of 1 required results ready",
+    "Save as skill",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "header",
+    "tabs Work underlined",
+    "two Needs attention cards with underlined link actions",
+    "Finished work lighter-weight disclosure",
+    "Completed card with links wrapping",
+    "footer"
+   ],
+   "state": "Finished work expanded",
+   "viewport": "302x900",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Duplicate Needs attention cards",
+     "where": "top cards"
+    },
+    {
+     "text": "Action links underlined tiny green text, look like raw hyperlinks",
+     "where": "card actions"
+    },
+    {
+     "text": "Remove from work list wraps to a new row in Completed card alone",
+     "where": "y~838"
+    },
+    {
+     "text": "Completed card cropped by footer; 'Finished work (18)' lighter weight than header style",
+     "where": "y~615/850"
+    },
+    {
+     "text": "Card bottom padding oversized below actions",
+     "where": "cards"
+    }
+   ]
+  },
+  ".taste-skill/work-details/before/finished-320.png": {
+   "purpose": "Before: Work panel at 320 (288x568) scrolled",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Completed",
+    "Test single-session subagent capability (clipped)",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "header with close X",
+    "tabs",
+    "card",
+    "Finished work",
+    "Completed card clipped"
+   ],
+   "state": "Scrolled, Finished expanded",
+   "viewport": "288x568",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Card top clipped under tabs",
+     "where": "y~105"
+    },
+    {
+     "text": "Completed card title clipped by footer note which wraps to two lines",
+     "where": "bottom"
+    },
+    {
+     "text": "Underlined tiny green action links",
+     "where": "card actions"
+    },
+    {
+     "text": "Gap between card sections inconsistent",
+     "where": "cards"
+    }
+   ]
+  },
+  ".taste-skill/work-details/before/finished-390.png": {
+   "purpose": "Before: Work panel at 390 (320x844)",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Completed",
+    "Test single-session subagent capability",
+    "1 of 1 required results ready",
+    "Save as skill",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "header with close X",
+    "tabs",
+    "two cards",
+    "Finished work expanded",
+    "Completed card",
+    "footer"
+   ],
+   "state": "Finished work expanded",
+   "viewport": "320x844",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Duplicate cards",
+     "where": "top"
+    },
+    {
+     "text": "Remove from work list in Completed card is crowding footer",
+     "where": "y~782"
+    },
+    {
+     "text": "Underlined links tiny and low-affordance",
+     "where": "actions"
+    },
+    {
+     "text": "Finished work header lighter weight and inconsistent",
+     "where": "y~580"
+    }
+   ]
+  },
+  ".taste-skill/work-details/before/inspect-1440.png": {
+   "purpose": "Before: Inspect the work dialog (650x810) with '7 min ago' timings",
+   "visible_text": [
+    "Inspect the work",
+    "Assignments, execution progress and decisions for this operation.",
+    "Check YouTube's trending page and send the names of the top 10 videos.",
+    "Scout",
+    "Completed · Check YouTube's trending page and send the names of the top 10 videos.",
+    "Last tool activity: hermbot_finish · completed · 7 min ago",
+    "Last progress: 7 min ago",
+    "Last runtime contact: 7 min ago",
+    "I couldn't provide a top-10 list: YouTube's general Trending page has been retired. I opened https://www.youtube.com/feed/trending, and it redirected to YouTube Home rather than a ranked trending list. Search results from The Business Standard (July 12, 2025) and Mint (July 11, 2025) report that the page was shut down July 21, 2025; YouTube's replacement is category-specific charts and recommendations, not a single general top-10. The browser's YouTube region was India (IN). I'm not substituting",
+    "Active work: 1 of 60 minutes",
+    "Execution 1: Completed",
+    "task completed · Completed",
+    "9:16:38 AM",
+    "run completed · Completed",
+    "9:16:37 AM",
+    "reasoning available · available",
+    "9:16:37 AM",
+    "hermbot_finish · Completed",
+    "9:16:27 AM",
+    "hermbot_finish · started",
+    "9:16:27 AM",
+    "tool receipt · receipt",
+    "9:16:27 AM",
+    "hermbot_finish · admitted",
+    "9:16:27 AM"
+   ],
+   "components": [
+    "dialog with x",
+    "title",
+    "description",
+    "Scout block",
+    "result paragraph",
+    "event list"
+   ],
+   "state": "Inspect open, log clipped",
+   "viewport": "650x810",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Result paragraph ends mid-sentence 'I'm not substituting'",
+     "where": "result"
+    },
+    {
+     "text": "Meta lines tiny light grey",
+     "where": "below Scout"
+    },
+    {
+     "text": "Flat unstructured event log with tiny timestamps",
+     "where": "log"
+    },
+    {
+     "text": "Log clipped at bottom, no scroll cue",
+     "where": "bottom"
+    },
+    {
+     "text": "Tiny close x",
+     "where": "top-right"
+    }
+   ]
+  },
+  ".taste-skill/work-details/before/inspect-320.png": {
+   "purpose": "Before: Inspect the work dialog at 320 (288x512)",
+   "visible_text": [
+    "Inspect the work",
+    "Assignments, execution progress and decisions for this operation.",
+    "Check YouTube's trending page and send the names of the top 10 videos.",
+    "Scout",
+    "Completed · Check YouTube's trending page and send the names of the top 10 videos.",
+    "Last tool activity: hermbot_finish · completed · 7 min ago",
+    "Last progress: 7 min ago",
+    "Last runtime contact: 7 min ago",
+    "I couldn't provide a top-10 list: YouTube's general Trending page has been retired. I opened https://www.youtube.com/feed/trending, and it redirected to YouTube Home rather than a ranked trending list. Search results from The Business Standard (July 12, 2025) and Mint (July 11, 2025) report that the page was shut down July"
+   ],
+   "components": [
+    "dialog with x",
+    "heading",
+    "description",
+    "task text",
+    "Scout block",
+    "meta lines",
+    "result paragraph"
+   ],
+   "state": "Inspect open top, clipped",
+   "viewport": "288x512",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Content clipped mid-sentence at bottom, no scroll cue",
+     "where": "bottom"
+    },
+    {
+     "text": "Meta lines tiny light grey",
+     "where": "y~265-325"
+    },
+    {
+     "text": "Tiny x close",
+     "where": "top-right"
+    }
+   ]
+  },
+  ".taste-skill/work-details/before/inspect-390.png": {
+   "purpose": "Before: Inspect the work dialog at 390 (358x760)",
+   "visible_text": [
+    "Inspect the work",
+    "Assignments, execution progress and decisions for this operation.",
+    "Check YouTube's trending page and send the names of the top 10 videos.",
+    "Scout",
+    "Completed · Check YouTube's trending page and send the names of the top 10 videos.",
+    "Last tool activity: hermbot_finish · completed · 7 min ago",
+    "Last progress: 7 min ago",
+    "Last runtime contact: 7 min ago",
+    "I couldn't provide a top-10 list: ... The browser's YouTube region was India (IN). I'm not substituting",
+    "Active work: 1 of 60 minutes",
+    "Execution 1: Completed",
+    "task completed · Completed",
+    "9:16:38 AM",
+    "run completed · Completed",
+    "9:16:37 AM",
+    "reasoning available · available",
+    "9:16:37 AM"
+   ],
+   "components": [
+    "dialog",
+    "result paragraph",
+    "event log partial"
+   ],
+   "state": "Inspect open top",
+   "viewport": "358x760",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Result paragraph ends mid-sentence",
+     "where": "result"
+    },
+    {
+     "text": "Flat event log, tiny timestamps, last entry clipped at bottom",
+     "where": "log"
+    },
+    {
+     "text": "Meta lines tiny grey",
+     "where": "below Scout"
+    }
+   ]
+  },
+  ".taste-skill/work-details/before/outputs-1440.png": {
+   "purpose": "Before: Outputs tab list (302x900) with Outputs underlined",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "Starlink India controversy research report",
+    "Scout · 23.8 KB",
+    "starlink-india-slack-handoff.md",
+    "Scout · 2.6 KB",
+    "phase3-inflight-1791359994.txt",
+    "Scout · 0.0 KB",
+    "phase3-result-1791318046522.md",
+    "Scout · 0.0 KB",
+    "phase3-result-1791318046522.md",
+    "Scout · 0.0 KB",
+    "phase3-result-1791318035813.md",
+    "Scout · 0.0 KB",
+    "phase3-result-1791318035813.md",
+    "Scout · 0.0 KB",
+    "fixture-report.md",
+    "Quill · 0.1 KB",
+    "fixture-report.md",
+    "Quill · 0.1 KB",
+    "fixture-report.md",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "header",
+    "tabs with Outputs active",
+    "file cards with doc icon and open arrow",
+    "footer"
+   ],
+   "state": "Outputs tab top",
+   "viewport": "302x900",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Tiny files shown as '0.0 KB' (imprecise size units)",
+     "where": "card meta"
+    },
+    {
+     "text": "Duplicate files (phase3-result x2, fixture-report x3)",
+     "where": "list"
+    },
+    {
+     "text": "Last card clipped by footer",
+     "where": "y~835"
+    },
+    {
+     "text": "Open arrow tiny",
+     "where": "card right"
+    }
+   ]
+  },
+  ".taste-skill/work-details/before/outputs-320.png": {
+   "purpose": "Before: Outputs tab at 320 (288x568)",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "phase3-inflight-1791359994.txt",
+    "Scout · 0.0 KB",
+    "phase3-result-1791318046522.md",
+    "Scout · 0.0 KB",
+    "phase3-result-1791318046522.md",
+    "phase3-result-1791318035813.md",
+    "phase3-result-1791318035813.md",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "header with close X",
+    "tabs",
+    "file cards with filenames wrapping onto two lines",
+    "footer wrapping"
+   ],
+   "state": "Outputs scrolled",
+   "viewport": "288x568",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Filenames wrap mid-token onto two lines in narrow cards",
+     "where": "cards"
+    },
+    {
+     "text": "Top card clipped under tabs; last card clipped by two-line footer",
+     "where": "top/bottom"
+    },
+    {
+     "text": "0.0 KB sizes, duplicates",
+     "where": "meta/list"
+    }
+   ]
+  },
+  ".taste-skill/work-details/before/outputs-390.png": {
+   "purpose": "Before: Outputs tab at 390 (320x844)",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "Starlink India controversy research report",
+    "Scout · 23.8 KB",
+    "starlink-india-slack-handoff.md",
+    "Scout · 2.6 KB",
+    "phase3-inflight-1791359994.txt",
+    "phase3-result-1791318046522.md",
+    "phase3-result-1791318035813.md",
+    "fixture-report.md",
+    "Quill · 0.1 KB",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "header with close X",
+    "tabs",
+    "file cards",
+    "footer"
+   ],
+   "state": "Outputs top",
+   "viewport": "320x844",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "0.0 KB sizes",
+     "where": "meta"
+    },
+    {
+     "text": "Duplicate files",
+     "where": "list"
+    },
+    {
+     "text": "Last card clipped by footer",
+     "where": "y~795"
+    }
+   ]
+  },
+  ".taste-skill/work-details/before/removed-1440.png": {
+   "purpose": "Before: Removed work expanded with broken narrow title wrapping (302x900)",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Removed work (1)",
+    "Resea",
+    "rch",
+    "Starlin",
+    "k India",
+    "contro",
+    "versy",
+    "(cut off)",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "panel",
+    "two cards",
+    "Finished work",
+    "Removed work expanded",
+    "title broken into narrow column"
+   ],
+   "state": "Removed work expanded, layout bug",
+   "viewport": "302x900",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Removed item title squeezed into ~60px column breaking mid-word ('Resea/rch/Starlin/k India/contro/versy')",
+     "where": "Removed work row y 700-850"
+    },
+    {
+     "text": "Remaining row content (status, actions) pushed out/cut by footer",
+     "where": "bottom"
+    },
+    {
+     "text": "Duplicate cards, underlined tiny links",
+     "where": "top"
+    }
+   ]
+  },
+  ".taste-skill/work-details/before/removed-320.png": {
+   "purpose": "Before: Removed work at 320 (288x568) with title cut",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Removed work (1)",
+    "Res",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "header X",
+    "card",
+    "Finished and Removed disclosures",
+    "footer"
+   ],
+   "state": "Removed expanded, scrolled",
+   "viewport": "288x568",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Removed item title shows as 'Res' squeezed and cut behind footer",
+     "where": "y~498"
+    },
+    {
+     "text": "Underlined tiny action links",
+     "where": "card"
+    },
+    {
+     "text": "Footer wraps two lines"
+    }
+   ]
+  },
+  ".taste-skill/work-details/before/removed-390.png": {
+   "purpose": "Before: Removed work at 390 (320x844) with broken wrapping",
+   "visible_text": [
+    "In this conversation",
+    "Work 20",
+    "Outputs 11",
+    "Needs attention",
+    "Hourly YouTube trending video names",
+    "Scout owns this work",
+    "Request history · revision 1",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Finished work (18)",
+    "Removed work (1)",
+    "Researc",
+    "h",
+    "Starlink",
+    "India",
+    "controve",
+    "rsy and",
+    "(faint) Restore, inspect active ... send Word report to Dhruv",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "header X",
+    "two cards",
+    "disclosures",
+    "removed row with narrow title column and adjacent faint small text"
+   ],
+   "state": "Removed expanded, layout bug",
+   "viewport": "320x844",
+   "theme": "light",
+   "stage": "before",
+   "defects": [
+    {
+     "text": "Removed title wraps in ~65px column with words broken ('Researc/h', 'controve/rsy and')",
+     "where": "y 660-800"
+    },
+    {
+     "text": "Adjacent text column (status/actions) tiny and overlapped by footer",
+     "where": "x~95-300,y~797"
+    },
+    {
+     "text": "Duplicate cards",
+     "where": "top"
+    }
+   ]
+  },
+  "plan/archive/grokbot-design-reference.png": {
+   "purpose": "Reference: dark-theme marketing/blog page 'Designing Grok Bot for a world of persistent agents' (long scroll capture)",
+   "visible_text": [
+    "Products",
+    "Solutions",
+    "Developer",
+    "Company",
+    "Pricing",
+    "News",
+    "Contact Sales",
+    "Try for free",
+    "Back to news",
+    "Sep 3, 2026",
+    "Designing Grok Bot for a world of persistent agents",
+    "How we designed Grok Bot for agents that persist beyond a single session — from a chat history to a Bot roster, presence, a computer of the Bot's own, and work that starts without a prompt.",
+    "When we started designing Grok Bot, one of the central questions was how the interface should shape the relationship between user and agent. Most AI interfaces are organized around a chat session the user operates. Each session begins with setup, unfolds as the user looks on, and ends when the conversation stops.",
+    "We wanted to design for an agent that persists beyond any one session and can carry responsibility on its own. That meant reconsidering some of the basic objects and signals of the interface, including what belongs in the sidebar, how an agent shows progress, and when its work should become visible.",
+    "Rethinking the primitives",
+    "AI products have accumulated a large vocabulary in a short time. Chats, sessions, models, context windows, memories, system prompts, projects, skills, connectors, agents, tools, sandboxes, permissions, and automations all describe real parts of these systems.",
+    "But exposing each one as a separate product concept asks users to understand more than they need to. We started by asking which concepts a person actually needs in order to work with an agent.",
+    "We kept coming back to five:",
+    "1. Bots are persistent agents with their own identity, memory, runtime, and tools.",
+    "2. Chats are the conversational interface for working with a Bot.",
+    "3. Prompts give a Bot context or instructions. They can be used once, saved as Skills, or triggered automatically as Routines.",
+    "4. Tools let Bots access information and take action through software, APIs, connectors, the shell, or computer use.",
+    "5. Artifacts are the documents, designs, code, data, and other durable outputs that Bots create or modify.",
+    "Everything else could remain beneath the interface until the user had a reason to care about it. The next question was which of these five objects should organize the product.",
+    "From chat history to a Bot roster",
+    "Chats are disposable. We start a conversation to solve a problem. It gets pushed down the sidebar. A week later, we start another one. You rarely go back beyond the most recent five.",
+    "That behavior is perfectly reasonable when the unit of interaction is a question. It becomes strange when the thing on the other side of the interaction is supposed to know you, remember previous work, and take responsibility over time.",
+    "So the main objects in Grok Bot are Bots, not conversations. A Bot has a name. It has an avatar and a title. It remembers its conversations with you. It has its own computer and tools. When you come back tomorrow, you are coming back to the same Bot.",
+    "Project Acme",
+    "Draft a follow-up to Acme after Fri...",
+    "Rewrite the pricing one-pager",
+    "What should I ask in the security r...",
+    "Build a champion map from my ca...",
+    "Practice the demo with hard obje...",
+    "Compare these three competitor ...",
+    "Show more",
+    "Kenny 7:34 PM Need your yes on the Friday all...",
+    "Justin 8 intros drafted — sitting in the...",
+    "John Yesterday Repro'd the checkout crash. W...",
+    "Keith Acme's wobbling. Drafted a Th...",
+    "Presence as interface",
+    "Once a Bot was something you maintain over time rather than a session ... appear in the product had to answer three questions at once:",
+    "1. Who is this?",
+    "Essential cookies keep the site working and on. Optional cookies help with performance and advertising — accept, reject, or manage them. Learn more in our Cookie Policy, Privacy Policy, and Terms of Service.",
+    "Cookie Settings",
+    "Reject All",
+    "Accept All Cookies",
+    "Hero app screenshot (tiny): sidebar list Kenny, Justin, Luke, Website launch, John, Keith, Tyler, Manuel, Jenny, Chang, Plugins, Pang Zhang; chat with 'Hey, what were the main takeaways from today's design sync?'; right pane 'Kenny's screen' with Routines: Morning briefing, Inbox cleanup, Weekly team update"
+   ],
+   "components": [
+    "top nav with X logo, dropdown menus, Contact Sales and Try for free split button",
+    "back link and date",
+    "centered H1 and subtitle",
+    "body copy column with divider",
+    "hero screenshot in dark rounded card showing three-pane app (roster, chat, agent screen with routines)",
+    "h2 section headings",
+    "numbered lists",
+    "roster/folder diagram card (Project Acme chat list vs Bot list with colored avatars)",
+    "cookie consent banner bottom-right overlay"
+   ],
+   "state": "Full article page scrolled to top ~2000px of 3000px capture",
+   "viewport": "1440x3000",
+   "theme": "dark",
+   "stage": "reference",
+   "defects": [
+    {
+     "text": "Cookie consent banner overlays the body text of the 'Presence as interface' section, covering the right side of the paragraph",
+     "where": "bottom-right y~1900-1990 (display) "
+    },
+    {
+     "text": "Hero app screenshot is tiny with unreadable text inside a large dark card",
+     "where": "y~550-850 display"
+    },
+    {
+     "text": "Page capture is cut off mid-section ('1. Who is this?')",
+     "where": "bottom"
+    },
+    {
+     "text": "Roster diagram text truncated with ellipses; low contrast grey on dark",
+     "where": "diagram card y~1590-1850"
+    },
+    {
+     "text": "Body text is small light grey on near-black with narrow line spacing; top nav also small",
+     "where": "body/nav"
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,3221 @@
+{
+ "agent": "lead",
+ "files_read": [
+  "plan/PHASE6-TEACHING.md",
+  "backend/auth.py",
+  "backend/secrets.py",
+  "backend/supervisor.py",
+  "backend/settings.py",
+  "backend/db.py",
+  "plan/README.md",
+  "plan/CHECKLIST.md",
+  "plan/PHASE-DETAILS.md",
+  "plan/CONTEXT.md",
+  "plan/CONNECTED-WORK-COORDINATION.md",
+  "web/src/style.css",
+  "web/public/fonts/OFL-DM-Sans.txt",
+  "web/dist/index.html",
+  "web/dist/assets/index-DD8nAxhw.js",
+  "web/dist/assets/index-uKmIl9uG.css",
+  "web/package-lock.json",
+  "tests/browser/package-lock.json",
+  "requirements.lock",
+  "web/src/assets/dm-sans-latin.woff2",
+  "plan/archive/tool-results.txt",
+  "plan/archive/conversation.txt",
+  "plan/archive/original-thread.jsonl.gz",
+  "plan/archive/grokbot-design-reference.png",
+  ".taste-skill/before/report.json",
+  "backend/migrations/018_teaching.sql",
+  "test-results/phase62-escape-diagnosis.json"
+ ],
+ "module_notes": {
+  "plan/PHASE6-TEACHING.md": {
+   "purpose": "Phase 6.2 'demonstration teaching' plan (recorded 2026-10-27): owner demonstrates a procedure on a bot's computer, reviews captured steps/keyframes, generates an editable SKILL.md, tests the exact candidate and publishes it. Implemented locally on Oct 27 (see PHASE6-TEACHING-REVIEW.md); real owner acceptance pending.",
+   "layer": "doc",
+   "responsibilities": [
+    {
+     "text": "Scope: action timeline + selected keyframes from the selected bot desktop only; no continuous video, no macro replay, no model training; output is one self-contained native SKILL.md.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:9-11"
+     ]
+    },
+    {
+     "text": "Inventory of existing code to reuse: computer.py takeover/WebSocket relay, runtime_api.py RFB forwarding and skill routes, knowledge.py versions/CAS, plugin middleware, artifact storage.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:17-28"
+     ]
+    },
+    {
+     "text": "Capture lifecycle preparing -> recording <-> paused -> finalizing -> ready (+ interrupted, discarded, failed), fenced by viewer/desktop epoch and recording generation; nothing ever replays a captured action.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:73-86"
+     ]
+    },
+    {
+     "text": "Observer sits around the private adapter's admitted RFB stream, leaving the native RfbClientFilter as the security gate.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:88-98"
+     ]
+    },
+    {
+     "text": "Protected input requires a server-acknowledged privacy pause; secrets never enter durable capture; recordings stay owner-private and encrypted in object storage.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:100-117"
+     ]
+    },
+    {
+     "text": "Candidate testing via a task-scoped candidate skill view through existing tool-execution middleware; publication reuses knowledge_versions and native compare-and-swap.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:146-170"
+     ]
+    },
+    {
+     "text": "Four record families (teaching session, evidence manifest/chunks, draft revisions/jobs, teaching tests) and a /api/v1/bots/{bot_id}/teaching route family; implemented as five tables (publications separate) and 14 owner routes plus an internal consult route.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:172-187"
+     ]
+    },
+    {
+     "text": "Slices 6.2.0-6.2.6 and an acceptance matrix; Phase 6.1 voice is on hold; mobile teaching deferred to 6A.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:217-248"
+     ]
+    }
+   ],
+   "notes": [
+    {
+     "text": "Added to the repository during this mapping run (after the docs agent finished); read in full by the lead.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:3"
+     ]
+    },
+    {
+     "text": "The teaching tables (migration 018: teaching_sessions, teaching_chunks, teaching_revisions, teaching_tests, teaching_publications) and the /api/v1/bots/{bot_id}/teaching routes now exist.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:183",
+      "backend/schema.sql:1"
+     ]
+    }
+   ]
+  },
+  "web/src/style.css": {
+   "purpose": "Hand-written application stylesheet; the lead read the six long minified rule lines (65-67, 153, 166, 168, 176) in full: base tokens and light theme (L65), dark theme tokens (L66), responsive breakpoints 1600/1180/950/650px (L67), work-history, capability-summary, input-card/work-outcome/connector-preview and routine styles.",
+   "layer": "ui",
+   "notes": [
+    {
+     "text": "Hand-written application stylesheet; the lead read the six long minified rule lines (65-67, 153, 166, 168, 176) in full: base tokens and light theme (L65), dark theme tokens (L66), responsive breakpoints 1600/1180/950/650px (L67), work-history, capability-summary, input-card/work-outcome/connector-preview and routine styles.",
+     "evidence": [
+      "web/src/style.css:65",
+      "web/src/style.css:66",
+      "web/src/style.css:67",
+      "web/src/style.css:153",
+      "web/src/style.css:166",
+      "web/src/style.css:168",
+      "web/src/style.css:176"
+     ]
+    }
+   ]
+  },
+  "web/public/fonts/OFL-DM-Sans.txt": {
+   "purpose": "SIL Open Font License 1.1 text for the bundled DM Sans font (Copyright 2014 The DM Sans Project Authors); read in full: preamble, definitions, five conditions, termination and disclaimer.",
+   "layer": "ui",
+   "notes": [
+    {
+     "text": "SIL Open Font License 1.1 text for the bundled DM Sans font (Copyright 2014 The DM Sans Project Authors); read in full: preamble, definitions, five conditions, termination and disclaimer.",
+     "evidence": [
+      "web/public/fonts/OFL-DM-Sans.txt:1",
+      "web/public/fonts/OFL-DM-Sans.txt:93"
+     ]
+    }
+   ]
+  },
+  "web/dist/index.html": {
+   "purpose": "Stale Oct 6 production build entry (title 'Hermbot — Your private team', theme-color #f5f4ef) loading index-DD8nAxhw.js and index-uKmIl9uG.css; not served by the current image (the Dockerfile builds web-dist fresh).",
+   "layer": "ui",
+   "notes": [
+    {
+     "text": "Stale Oct 6 production build entry (title 'Hermbot — Your private team', theme-color #f5f4ef) loading index-DD8nAxhw.js and index-uKmIl9uG.css; not served by the current image (the Dockerfile builds web-dist fresh).",
+     "evidence": [
+      "web/dist/index.html:1"
+     ]
+    }
+   ]
+  },
+  "web/dist/assets/index-DD8nAxhw.js": {
+   "purpose": "Stale minified Phase 1-era bundle (409,945 bytes, React + app). Scanned completely by the lead for API strings: it calls only 11 route prefixes (/api/v1/approvals, artifacts, conversations, events, grants, groups, routines, session, state, tasks) versus 108 calls in current web/src.",
+   "layer": "ui",
+   "notes": [
+    {
+     "text": "Stale minified Phase 1-era bundle (409,945 bytes, React + app). Scanned completely by the lead for API strings: it calls only 11 route prefixes (/api/v1/approvals, artifacts, conversations, events, grants, groups, routines, session, state, tasks) versus 108 calls in current web/src.",
+     "evidence": [
+      "web/dist/assets/index-DD8nAxhw.js:1"
+     ]
+    }
+   ]
+  },
+  "web/dist/assets/index-uKmIl9uG.css": {
+   "purpose": "Stale compiled CSS (20,627 bytes) from the Oct 6 build; scanned completely: Inter as the primary face and Tailwind default font stacks, predating the DM Sans switch.",
+   "layer": "ui",
+   "notes": [
+    {
+     "text": "Stale compiled CSS (20,627 bytes) from the Oct 6 build; scanned completely: Inter as the primary face and Tailwind default font stacks, predating the DM Sans switch.",
+     "evidence": [
+      "web/dist/assets/index-uKmIl9uG.css:1"
+     ]
+    }
+   ]
+  },
+  "web/package-lock.json": {
+   "purpose": "npm lockfile v3 pinning 274 packages; every package with version, dev/optional flag and licence is parsed into this node's facts.",
+   "layer": "config",
+   "notes": [
+    {
+     "text": "npm lockfile v3 pinning 274 packages; every package with version, dev/optional flag and licence is parsed into this node's facts.",
+     "evidence": [
+      "web/package-lock.json:1"
+     ]
+    }
+   ]
+  },
+  "tests/browser/package-lock.json": {
+   "purpose": "npm lockfile for the Playwright browser suite: playwright 1.56.1, playwright-core and optional fsevents; fully parsed into facts.",
+   "layer": "config",
+   "notes": [
+    {
+     "text": "npm lockfile for the Playwright browser suite: playwright 1.56.1, playwright-core and optional fsevents; fully parsed into facts.",
+     "evidence": [
+      "tests/browser/package-lock.json:1"
+     ]
+    }
+   ]
+  },
+  "requirements.lock": {
+   "purpose": "uv-compiled, hash-pinned universal Python 3.12 lock of 54 packages (direct + transitive with 'via' provenance); every package is parsed into this node's facts.",
+   "layer": "config",
+   "notes": [
+    {
+     "text": "uv-compiled, hash-pinned universal Python 3.12 lock of 54 packages (direct + transitive with 'via' provenance); every package is parsed into this node's facts.",
+     "evidence": [
+      "requirements.lock:1",
+      "requirements.lock:2"
+     ]
+    }
+   ]
+  },
+  "web/src/assets/dm-sans-latin.woff2": {
+   "purpose": "Binary WOFF2 subset of DM Sans (latin) loaded by style.css @font-face; parsed by build_model.py (format, table count). Binary glyph data has no architectural content.",
+   "layer": "ui",
+   "notes": [
+    {
+     "text": "Binary WOFF2 subset of DM Sans (latin) loaded by style.css @font-face; parsed by build_model.py (format, table count). Binary glyph data has no architectural content.",
+     "evidence": [
+      "web/src/style.css:288"
+     ]
+    }
+   ]
+  },
+  "plan/archive/tool-results.txt": {
+   "purpose": "Archived raw tool/web research from the original planning thread (12,394 lines).",
+   "layer": "doc",
+   "notes": [
+    {
+     "text": "Read end to end by two passes (lines 1-6200 and 6201-12394). The 622 over-long lines are scraped page link indexes; every source in them was extracted mechanically: 303 distinct URLs across 59 hosts (top: hermes-agent.nousresearch.com (120), www.reddit.com (41), learn.chatgpt.com (19), github.com (16), developers.openai.com (15), docs.x.ai (14)).",
+     "evidence": [
+      "plan/archive/tool-results.txt:1",
+      "plan/archive/tool-results.txt:12394"
+     ]
+    }
+   ],
+   "sources_consulted": [
+    {
+     "url": "https://learn.chatgpt.com/docs/developer-commands",
+     "first_line": 164
+    },
+    {
+     "url": "https://learn.chatgpt.com/use-cases/follow-goals",
+     "first_line": 290
+    },
+    {
+     "url": "https://learn.chatgpt.com/docs/changelog",
+     "first_line": 332
+    },
+    {
+     "url": "https://learn.chatgpt.com/docs/reference/slash-commands",
+     "first_line": 361
+    },
+    {
+     "url": "https://learn.chatgpt.com/docs/prompting",
+     "first_line": 379
+    },
+    {
+     "url": "https://developers.openai.com/cookbook/examples/codex/using_goals_in_codex",
+     "first_line": 398
+    },
+    {
+     "url": "https://learn.chatgpt.com/docs/web-search?surface=app&translationFallback=zh-Hant",
+     "first_line": 401
+    },
+    {
+     "url": "https://developers.openai.com/api/docs/guides/tools-local-shell",
+     "first_line": 404
+    },
+    {
+     "url": "https://learn.chatgpt.com/docs/reference/commands",
+     "first_line": 407
+    },
+    {
+     "url": "https://learn.chatgpt.com/docs/codex/cli",
+     "first_line": 410
+    },
+    {
+     "url": "https://learn.chatgpt.com/docs/security/cli/reference",
+     "first_line": 413
+    },
+    {
+     "url": "https://learn.chatgpt.com/docs/non-interactive-mode",
+     "first_line": 416
+    },
+    {
+     "url": "https://learn.chatgpt.com/docs/web-search",
+     "first_line": 421
+    },
+    {
+     "url": "https://example.com/v1",
+     "first_line": 1065
+    },
+    {
+     "url": "https://github.com/smarzban/grokbot-tui",
+     "first_line": 1088
+    },
+    {
+     "url": "https://github.com/smarzban/grokbot-tui.git",
+     "first_line": 1114
+    },
+    {
+     "url": "http://127.0.0.1:1340",
+     "first_line": 1144
+    },
+    {
+     "url": "https://www.grokbot.click/features/",
+     "first_line": 1217
+    },
+    {
+     "url": "https://github.com/Franzferdinan51/GrokBot",
+     "first_line": 1252
+    },
+    {
+     "url": "https://x.ai/cli/install.sh",
+     "first_line": 1253
+    },
+    {
+     "url": "https://github.com/Franzferdinan51/Grok-Build-Desktop-App.git",
+     "first_line": 1286
+    },
+    {
+     "url": "https://x.ai/news/designing-grok-bot",
+     "first_line": 1337
+    },
+    {
+     "url": "https://www.reddit.com/r/GrokBot/comments/1wv9ksm/windows_app_broken/",
+     "first_line": 1373
+    },
+    {
+     "url": "https://www.reddit.com/r/GrokBot/comments/1wuw51m/beta_grokbot_meter_weekly_grok_bot_usage_in_the/",
+     "first_line": 1391
+    },
+    {
+     "url": "https://github.com/nuno/grokbot-meter/releases/latest",
+     "first_line": 1392
+    },
+    {
+     "url": "https://grokbot.run/tools/grokbot-tui/",
+     "first_line": 1421
+    },
+    {
+     "url": "https://github.com/codeaashu/grokbot-shim",
+     "first_line": 1448
+    },
+    {
+     "url": "http://127.0.0.1:6080/vnc.html",
+     "first_line": 1454
+    },
+    {
+     "url": "https://github.com/andreanjos/grokbot-headless",
+     "first_line": 1477
+    },
+    {
+     "url": "https://github.com/andreanjos/grokbot-headless.git",
+     "first_line": 1513
+    },
+    {
+     "url": "https://best.xiaohu.ai/en/article/how-we-built-grokbot-in-a-month/",
+     "first_line": 1552
+    },
+    {
+     "url": "https://grokbot.help/guides/getting-started-with-grok-bot",
+     "first_line": 1561
+    },
+    {
+     "url": "https://github.com/Franzferdinan51/GrokBot/blob/main/docs/tools/plugin.md",
+     "first_line": 1564
+    },
+    {
+     "url": "https://huggingface.co/spaces/euychrue/grokbot-ai-companion/blob/main/index.html",
+     "first_line": 1567
+    },
+    {
+     "url": "https://www.reddit.com/r/AppBuilding/comments/1wsviof/building_a_grokbot_alternative/",
+     "first_line": 1570
+    },
+    {
+     "url": "https://www.reddit.com/r/GrokBot/comments/1wwksz7/feature_idea_spaces_per_agent_a_home_for_each/",
+     "first_line": 1573
+    },
+    {
+     "url": "https://www.youtube.com/watch?v=Nfv1ZUFp_AU",
+     "first_line": 1576
+    },
+    {
+     "url": "https://www.reddit.com/r/indie_startups/comments/1wuepxl/building_a_grokbot_alternative/",
+     "first_line": 1579
+    },
+    {
+     "url": "https://www.reddit.com/r/GrokBot/comments/1wsmy84/how_to_use_2_grokbot_accounts_on_the_same_computer/",
+     "first_line": 1582
+    },
+    {
+     "url": "https://www.reddit.com/r/GrokBot/comments/1wh63th/where_is_the_best_place_route_to_buy_grokbot/",
+     "first_line": 1585
+    },
+    {
+     "url": "https://www.reddit.com/r/GrokBot/comments/1wlv7dg/what_do_you_use_grokbot_for_that_codex_claude/",
+     "first_line": 1588
+    },
+    {
+     "url": "https://www.reddit.com/r/GrokBot/comments/1wffu0h/grokbot_is_a_scam/",
+     "first_line": 1591
+    },
+    {
+     "url": "https://www.youtube.com/watch?v=5Mtpavk1iDQ",
+     "first_line": 1594
+    },
+    {
+     "url": "https://www.reddit.com/r/GrokBot/comments/1wjqgxw/tips_for_using_grokbot_and_cursor/",
+     "first_line": 1597
+    },
+    {
+     "url": "https://www.reddit.com/r/GrokBot/comments/1wlnct8/grokbot_obsidian_is_unbelievable/",
+     "first_line": 1600
+    },
+    {
+     "url": "https://www.reddit.com/r/AI_Agents/comments/1wcic5i/has_anyone_here_been_using_grok_bot_regularly/",
+     "first_line": 1603
+    },
+    {
+     "url": "https://x.ai/bot",
+     "first_line": 1608
+    },
+    {
+     "url": "https://docs.x.ai/grok-bot/get-started",
+     "first_line": 1608
+    },
+    {
+     "url": "https://x.ai/bot/guides",
+     "first_line": 2379
+    },
+    {
+     "url": "https://x.ai/changelog/bot",
+     "first_line": 2438
+    },
+    {
+     "url": "https://x.ai/_next/static/media/wallpaper-gray.13vta0mrxymev.png?dpl=ac30ecae3f204dd783f540b86ca620f14eab7fc4",
+     "first_line": 2634
+    },
+    {
+     "url": "https://x.ai/news/introducing-grok-bot",
+     "first_line": 2636
+    },
+    {
+     "url": "https://docs.x.ai/grok-bot/bots",
+     "first_line": 2649
+    },
+    {
+     "url": "https://docs.x.ai/grok-bot/chat-and-collaboration",
+     "first_line": 2765
+    },
+    {
+     "url": "https://docs.x.ai/grok-bot/files-and-results",
+     "first_line": 2916
+    },
+    {
+     "url": "https://docs.x.ai/grok-bot/computer-and-apps",
+     "first_line": 3022
+    },
+    {
+     "url": "https://docs.x.ai/grok-bot/skills-routines-and-automations",
+     "first_line": 3080
+    },
+    {
+     "url": "https://docs.x.ai/grok-bot/mobile",
+     "first_line": 3336
+    },
+    {
+     "url": "https://docs.x.ai/grok-bot/settings-and-notifications",
+     "first_line": 3415
+    },
+    {
+     "url": "https://docs.x.ai/grok-bot/approvals-security-and-privacy",
+     "first_line": 3418
+    },
+    {
+     "url": "https://docs.x.ai/grok-bot/troubleshooting",
+     "first_line": 3421
+    },
+    {
+     "url": "https://docs.x.ai/grok-bot/faq",
+     "first_line": 3424
+    },
+    {
+     "url": "https://docs.x.ai/grok-bot/team-bots",
+     "first_line": 3999
+    },
+    {
+     "url": "https://docs.x.ai/grok-bot/use-cases",
+     "first_line": 4202
+    },
+    {
+     "url": "https://x.ai/bot/guides/grok-bot-for-work",
+     "first_line": 4205
+    },
+    {
+     "url": "https://x.ai/bot/guides/grok-bot-for-pms",
+     "first_line": 4208
+    },
+    {
+     "url": "https://x.ai/bot/marketplace",
+     "first_line": 4211
+    },
+    {
+     "url": "https://media.x.ai/cdn-cgi/image/fit%3Dscale-down%2Conerror%3Dredirect%2Cwidth%3D703%2Cheight%3D421%2Cf%3Dauto/v1/website/grok-bot-guides-grok-bot-for-pms-03-research-7b0a461c.jpg:",
+     "first_line": 4588
+    },
+    {
+     "url": "https://media.x.ai/cdn-cgi/image/fit%3Dscale-down%2Conerror%3Dredirect%2Cf%3Dauto/v1/website/grok_bot_for_work-ffe6e5cd.png:",
+     "first_line": 4592
+    },
+    {
+     "url": "https://cursor.com/pricing",
+     "first_line": 4696
+    },
+    {
+     "url": "https://www.reddit.com/r/cursor/comments/1vxjipg/grok_bot_review/",
+     "first_line": 4949
+    },
+    {
+     "url": "https://www.reddit.com/r/GrokBot/comments/1wth2pp/grok_usage_limits_make_me_want_to_cancel_the/",
+     "first_line": 4952
+    },
+    {
+     "url": "https://www.reddit.com/r/GrokBot/comments/1wa57uk/thoughts_on_grokbot_after_real_usecase/",
+     "first_line": 4955
+    },
+    {
+     "url": "https://agent-finder.co/reviews/grok-bot",
+     "first_line": 4958
+    },
+    {
+     "url": "https://www.reddit.com/r/GrokBot/comments/1wr2cfm/i_havent_tried_grok_bot_yet_how_is_the_long_term/",
+     "first_line": 4961
+    },
+    {
+     "url": "https://www.bighatgroup.com/blog/grok-bot-review-ai-coworker-small-business/",
+     "first_line": 4964
+    },
+    {
+     "url": "https://digitalbydefault.ai/blog/grok-bot-whats-new-september-2026",
+     "first_line": 4967
+    },
+    {
+     "url": "https://www.reddit.com/r/GrokBot/comments/1wpeg6a/grokbot_found_an_answer_to_a_problem_i_had_then/",
+     "first_line": 4970
+    },
+    {
+     "url": "https://www.tryagentsonic.com/articles/grok-bot-review",
+     "first_line": 4979
+    },
+    {
+     "url": "https://grokbot.help/guides/common-problems-and-fixes",
+     "first_line": 4982
+    },
+    {
+     "url": "https://archive.vn/2026.10.01-161339/https%3A/www.reddit.com/r/GrokBot/comments/1wmquja/how_i_use_grok_bots_alongside_claude_and_codex/",
+     "first_line": 4985
+    },
+    {
+     "url": "https://www.reddit.com/r/GrokBot/comments/1w0y6nf/limits_for_grokbot_setups/",
+     "first_line": 4988
+    },
+    {
+     "url": "https://continuumcode.ai/guides/grok-bot-review/",
+     "first_line": 4991
+    },
+    {
+     "url": "https://theaileaderboard.org/posts/grok-bot-review",
+     "first_line": 4994
+    },
+    {
+     "url": "https://www.thatsoftwaredude.com/content/15330/xai-grok-bot-review",
+     "first_line": 4997
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Grok_%28chatbot%29",
+     "first_line": 5000
+    },
+    {
+     "url": "https://safetyforum.ai/wp-content/uploads/2026/04/AISF-General-Conversational-Agents-Report-April-2026.pdf",
+     "first_line": 5003
+    },
+    {
+     "url": "https://dlib.si/stream/URN%3ANBN%3ASI%3ADOC-Z8VF6B9X/a28be28c-18b0-4a9f-9fd1-a4e693a436f7/PDF",
+     "first_line": 5006
+    },
+    {
+     "url": "https://ciir-publications.cs.umass.edu/getpdf.php?id=1557",
+     "first_line": 5009
+    },
+    {
+     "url": "https://cdn1.tenchat.ru/static/vbc-gostinder/2026-03-13/18908fcf-f5c9-40c3-a955-07e69d51b22b.pdf",
+     "first_line": 5012
+    },
+    {
+     "url": "https://www.docdroid.net/file/view/p8UnaNi/jotspot-reddit-comments-pdf.pdf?e=1778342254&s=8d30cae5720da8e4fb6cc4d893cf5b74",
+     "first_line": 5015
+    },
+    {
+     "url": "https://media.x.ai/v1/website/grok-bot-guides-grok-bot-for-pms-03-research-7b0a461c.jpg",
+     "first_line": 5022
+    },
+    {
+     "url": "https://media.x.ai/v1/website/grok_bot_for_work-ffe6e5cd.png",
+     "first_line": 5022
+    },
+    {
+     "url": "https://www.reddit.com/r/ai_agents/wiki",
+     "first_line": 5739
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/overview/",
+     "first_line": 6131
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/tools/",
+     "first_line": 6155
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/",
+     "first_line": 6191
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/install.sh",
+     "first_line": 6192
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/install.ps1",
+     "first_line": 6226
+    },
+    {
+     "url": "https://github.com/hermes-agent-org/hermes",
+     "first_line": 6268
+    },
+    {
+     "url": "https://github.com/nousresearch/hermes-agent/blob/main/website/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-hermes-agent.md",
+     "first_line": 6271
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/llms.txt",
+     "first_line": 6272
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/web-search",
+     "first_line": 6274
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/skills?trk=article-ssr-frontend-pulse_little-text-block",
+     "first_line": 6277
+    },
+    {
+     "url": "https://hermes-agent.noasresearch.com/docs/getting-started/quickstart",
+     "first_line": 6280
+    },
+    {
+     "url": "https://hermes-agent.io/",
+     "first_line": 6283
+    },
+    {
+     "url": "https://hermes-agent.ai/",
+     "first_line": 6286
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/",
+     "first_line": 6289
+    },
+    {
+     "url": "https://github.com/nousresearch/hermes-agent?via=topaitools",
+     "first_line": 6292
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1u5c9ag/important_verify_your_hermes_desktop_download/",
+     "first_line": 6295
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/desktop",
+     "first_line": 6296
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1wu100k/future_of_hermes_in_todays_age/",
+     "first_line": 6298
+    },
+    {
+     "url": "https://github.com/google-research/rrsi",
+     "first_line": 6299
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1wxm8ay/why_are_there_at_least_5_different_hermes/",
+     "first_line": 6301
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com\\-",
+     "first_line": 6302
+    },
+    {
+     "url": "https://github.com/NousResearch/hermes-agent",
+     "first_line": 6302
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1wy3dxj/anyway_to_plug_cursor_subscription_grok_4647_to/",
+     "first_line": 6304
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/guides/xai-grok-oauth",
+     "first_line": 6305
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1ucmvi8/multiagent_profiles_megathread_hermes_agent_june/",
+     "first_line": 6307
+    },
+    {
+     "url": "https://arxiv.org/abs/2508.18255",
+     "first_line": 6310
+    },
+    {
+     "url": "https://huggingface.co/collections/NousResearch/hermes-4-collection-68a731bfd452e20816725728",
+     "first_line": 6311
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1uh4coe/fake_hermes_website/",
+     "first_line": 6313
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1w7bks8/how_to_turn_hermes_to_grokbot/",
+     "first_line": 6316
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1wp8qy5/hermes_bot_screen/",
+     "first_line": 6319
+    },
+    {
+     "url": "https://github.com/NousResearch/hermes-agent/releases",
+     "first_line": 6320
+    },
+    {
+     "url": "https://assets-finance.hermes.com/s3fs-public/node/pdf_file/2021-04/1619702282/hermes-urd2020-en.pdf",
+     "first_line": 6322
+    },
+    {
+     "url": "https://doccompiler.ai/api/v1/jobs/shared/job_1776317887811_629d541e/download/NousResearch__hermes-agent__AdminGuide.pdf",
+     "first_line": 6325
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1wmkv1s/grokbot_vs_hermes_this_comparison_should_not_even/",
+     "first_line": 6328
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1upvfe7/hermes_agents_selfimprovement_does_it_actually/",
+     "first_line": 6331
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1whvani/noob_clarifying_questions/",
+     "first_line": 6334
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/integrations/nous-portal",
+     "first_line": 6335
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1t9gz2f/the_cron_job_every_serious_hermes_agent_user/",
+     "first_line": 6337
+    },
+    {
+     "url": "https://arxiv.org/abs/2408.11857",
+     "first_line": 6340
+    },
+    {
+     "url": "https://labs.cloudsecurityalliance.org/wp-content/uploads/2026/05/CSA_research_note_hermes_agent_CVEs_20260504-csa-styled.pdf",
+     "first_line": 6343
+    },
+    {
+     "url": "https://hermmes.eu/wp-content/uploads/2025/02/THE-HERMMES-CURRICULUM-FULL.pdf",
+     "first_line": 6346
+    },
+    {
+     "url": "https://arxiv.org/abs/2608.14055",
+     "first_line": 6349
+    },
+    {
+     "url": "https://www.techradar.com/pro/how-to-automate-workflows-using-open-source-ai-agents",
+     "first_line": 6352
+    },
+    {
+     "url": "https://arxiv.org/abs/2601.14724",
+     "first_line": 6403
+    },
+    {
+     "url": "https://smart-labs.ai/solution/dapi/material/2510.09093v1.pdf",
+     "first_line": 6406
+    },
+    {
+     "url": "https://assets.skool.com/f/b51c57150c70495899bf4bc8aaee8166/8f33a321202140608f0732444a0bd36adc46a12e9d9447c19e966d1ed218db51",
+     "first_line": 6409
+    },
+    {
+     "url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh",
+     "first_line": 6589
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/getting-started/installation",
+     "first_line": 6593
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/getting-started/quickstart",
+     "first_line": 6594
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/getting-started/learning-path",
+     "first_line": 6595
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/getting-started/updating",
+     "first_line": 6596
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/getting-started/nix-setup",
+     "first_line": 6597
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/getting-started/platform-support",
+     "first_line": 6598
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/getting-started/termux",
+     "first_line": 6599
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/cli",
+     "first_line": 6601
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/tui",
+     "first_line": 6602
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/configuration",
+     "first_line": 6603
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/configuring-models",
+     "first_line": 6604
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/sessions",
+     "first_line": 6605
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/profiles",
+     "first_line": 6606
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/git-worktrees",
+     "first_line": 6607
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/docker",
+     "first_line": 6608
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/security",
+     "first_line": 6609
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/checkpoints-and-rollback",
+     "first_line": 6610
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/bot-mode",
+     "first_line": 6611
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/desktop",
+     "first_line": 6612
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/egress",
+     "first_line": 6613
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/egress/iron-proxy",
+     "first_line": 6614
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/egress/network-isolation",
+     "first_line": 6615
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/import-from-other-agents",
+     "first_line": 6616
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/local-models",
+     "first_line": 6617
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/managed-scope",
+     "first_line": 6618
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/multi-connection-desktop",
+     "first_line": 6619
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/multi-profile-gateways",
+     "first_line": 6620
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/profile-distributions",
+     "first_line": 6621
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/secrets",
+     "first_line": 6622
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/secrets/bitwarden",
+     "first_line": 6623
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/secrets/command",
+     "first_line": 6624
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/secrets/onepassword",
+     "first_line": 6625
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/session-storage-recovery",
+     "first_line": 6626
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/skills/google-workspace",
+     "first_line": 6627
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/switching-to-source",
+     "first_line": 6628
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/which-file-does-what",
+     "first_line": 6629
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/windows-native",
+     "first_line": 6630
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/windows-wsl-quickstart",
+     "first_line": 6631
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/overview",
+     "first_line": 6633
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/tools",
+     "first_line": 6634
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/skills",
+     "first_line": 6635
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/curator",
+     "first_line": 6636
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/memory",
+     "first_line": 6637
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/memory-providers",
+     "first_line": 6638
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/context-files",
+     "first_line": 6639
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/context-references",
+     "first_line": 6640
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/personality",
+     "first_line": 6641
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins",
+     "first_line": 6642
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/built-in-plugins",
+     "first_line": 6643
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/bot-screen",
+     "first_line": 6644
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/codex-app-server-runtime",
+     "first_line": 6645
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/computer-use",
+     "first_line": 6646
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/credential-vault",
+     "first_line": 6647
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/deliverable-mode",
+     "first_line": 6648
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/document-extraction",
+     "first_line": 6649
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/extending-the-dashboard",
+     "first_line": 6650
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/heartbeat",
+     "first_line": 6651
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/kanban-multi-gateway",
+     "first_line": 6652
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/kanban-worker-lanes",
+     "first_line": 6653
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/language-packs",
+     "first_line": 6654
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/loops",
+     "first_line": 6655
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/lsp",
+     "first_line": 6656
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/mixture-of-agents",
+     "first_line": 6657
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/pets",
+     "first_line": 6658
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/plugin-catalog",
+     "first_line": 6659
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/skins",
+     "first_line": 6660
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/spotify",
+     "first_line": 6661
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/subscription-proxy",
+     "first_line": 6662
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/tool-gateway",
+     "first_line": 6663
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/tool-search",
+     "first_line": 6664
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/wake-word",
+     "first_line": 6665
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/web-dashboard",
+     "first_line": 6666
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/x-search",
+     "first_line": 6668
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/cron",
+     "first_line": 6845
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/browser",
+     "first_line": 7181
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/plugins/hud-teach",
+     "first_line": 7189
+    },
+    {
+     "url": "https://portal.nousresearch.com/cloud",
+     "first_line": 7353
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/cli/",
+     "first_line": 7469
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/guides/run-hermes-with-nous-portal",
+     "first_line": 7508
+    },
+    {
+     "url": "https://portal.nousresearch.com/?trk=article-ssr-frontend-pulse_little-text-block",
+     "first_line": 7550
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/zh-Hans/user-guide/desktop",
+     "first_line": 7553
+    },
+    {
+     "url": "https://technologychecker.ai/sites/hermes-agent.nousresearch.com",
+     "first_line": 7556
+    },
+    {
+     "url": "https://www.usehermesagent.com/install/",
+     "first_line": 7559
+    },
+    {
+     "url": "https://www.gethermesagentai.com/hosting/",
+     "first_line": 7562
+    },
+    {
+     "url": "https://www.gethermesagentai.com/cost/",
+     "first_line": 7565
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1wreal2/couldnt_install_hermes_on_my_cloud_server/",
+     "first_line": 7568
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/install.sh`",
+     "first_line": 7569
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1vnysrw/removed/",
+     "first_line": 7571
+    },
+    {
+     "url": "https://hermesos.cloud/roadmap/HermesOS_Roadmap_2026.pdf",
+     "first_line": 7574
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1u6yakj/local_pc_hosting_question/",
+     "first_line": 7577
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1ucke01/vps_deployment_megathread_hermes_agent_june_2026/",
+     "first_line": 7580
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1wv5p0f/164_hermes_agent_prs_merged_in_the_last_24_hours/",
+     "first_line": 7583
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com",
+     "first_line": 7590
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1sk4jhh/hermes_control_interface_a_selfhosted_web/",
+     "first_line": 7592
+    },
+    {
+     "url": "https://github.com/NousResearch/hermes-agent/pull/5100",
+     "first_line": 7593
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1uqwjuv/how_to_set_up_hermes_agent_from_scratch_2026/",
+     "first_line": 7595
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1swy6ir/deployment_docker_vps_efficiency_masterthread/",
+     "first_line": 7598
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1wnms80/hermes_at_work/",
+     "first_line": 7601
+    },
+    {
+     "url": "https://www.reddit.com/r/hermesagent/comments/1vgkv8w/news_hermes_agent_docs_update_adds_security/",
+     "first_line": 7604
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/guides/secure-hermes-on-a-work-machine",
+     "first_line": 7605
+    },
+    {
+     "url": "https://assets-finance.hermes.com/s3fs-public/node/pdf_file/2025-05/1746455904/250328_hermes_urd2024_en.pdf",
+     "first_line": 7610
+    },
+    {
+     "url": "https://hermes.fr.digital-report.net/en/download/pdf/2491",
+     "first_line": 7613
+    },
+    {
+     "url": "https://files.eric.ed.gov/fulltext/ED011878.pdf",
+     "first_line": 7616
+    },
+    {
+     "url": "https://www1.hkexnews.hk/app/sehk/2026/108526/a132765/sehk26051000250.pdf",
+     "first_line": 7619
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server",
+     "first_line": 7997
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/hooks",
+     "first_line": 8118
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging",
+     "first_line": 8119
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/webhooks",
+     "first_line": 8120
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/msgraph-webhook",
+     "first_line": 8121
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/open-webui",
+     "first_line": 8122
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/teams-meetings",
+     "first_line": 8123
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/guides/automation-blueprints",
+     "first_line": 8125
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/guides/webhook-github-pr-review",
+     "first_line": 8126
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/developer-guide/desktop-plugin-sdk",
+     "first_line": 8127
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/developer-guide/programmatic-integration",
+     "first_line": 8128
+    },
+    {
+     "url": "http://localhost:8642/api/sessions/$ID/fork",
+     "first_line": 8208
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/developer-guide/programmatic-integration\\",
+     "first_line": 8357
+    },
+    {
+     "url": "http://127.0.0.1:8642/api/model/options\\",
+     "first_line": 8357
+    },
+    {
+     "url": "http://127.0.0.1:8642/api/model/options?refresh=1\\",
+     "first_line": 8357
+    },
+    {
+     "url": "http://localhost:8642/api/sessions/$ID/chat/stream",
+     "first_line": 8357
+    },
+    {
+     "url": "http://localhost:8642/v1/skills",
+     "first_line": 8357
+    },
+    {
+     "url": "http://localhost:8642/v1/toolsets",
+     "first_line": 8357
+    },
+    {
+     "url": "http://spark.lan:8377",
+     "first_line": 9185
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/sessions/",
+     "first_line": 9933
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/reference/toolsets-reference",
+     "first_line": 10000
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/",
+     "first_line": 10003
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/reference/cli-commands",
+     "first_line": 10015
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/reference/environment-variables",
+     "first_line": 10021
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord/",
+     "first_line": 10024
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/developer-guide/adding-tools/",
+     "first_line": 10049
+    },
+    {
+     "url": "https://weatherapi.com/",
+     "first_line": 10224
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/developer-guide/plugins",
+     "first_line": 10306
+    },
+    {
+     "url": "https://other.com/keys",
+     "first_line": 10365
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server/",
+     "first_line": 10469
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/developer-guide/plugin-llm-access",
+     "first_line": 10527
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/reference/slash-commands",
+     "first_line": 10703
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/developer-guide/web-search-provider-plugin",
+     "first_line": 10706
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins/",
+     "first_line": 10709
+    },
+    {
+     "url": "https://hermes-agent.nousresearch.com/docs/plugins/local_knowledge",
+     "first_line": 10712
+    },
+    {
+     "url": "https://docs.x.ai/grok-bot/skills-routines-and-automations:",
+     "first_line": 10893
+    },
+    {
+     "url": "https://developers.openai.com/blog/run-long-horizon-tasks-with-codex?trk=article-ssr-frontend-pulse_little-text-block",
+     "first_line": 11330
+    },
+    {
+     "url": "https://developers.openai.com/blog/mastering-codex-remote-for-engineering",
+     "first_line": 11378
+    },
+    {
+     "url": "https://developers.openai.com/community",
+     "first_line": 11440
+    },
+    {
+     "url": "https://developers.openai.com/cookbook/examples/codex/code_modernization",
+     "first_line": 11493
+    },
+    {
+     "url": "https://developers.openai.com/cookbook/articles/codex_exec_plans?trk=article-ssr-frontend-pulse_little-text-block",
+     "first_line": 11511
+    },
+    {
+     "url": "http://localhost:8080/health",
+     "first_line": 11512
+    },
+    {
+     "url": "https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide?trk=article-ssr-frontend-pulse_little-text-block",
+     "first_line": 11532
+    },
+    {
+     "url": "https://developers.openai.com/siwc/token-sharing-open-source/codex-app-server",
+     "first_line": 11535
+    },
+    {
+     "url": "https://developers.openai.com/training",
+     "first_line": 11541
+    },
+    {
+     "url": "https://developers.openai.com/learn/developers-codex-plugin",
+     "first_line": 11544
+    },
+    {
+     "url": "https://developers.openai.com/plugins/build/plugins",
+     "first_line": 11547
+    },
+    {
+     "url": "https://developers.openai.com/learn/docs-mcp",
+     "first_line": 11550
+    },
+    {
+     "url": "https://developers.openai.com/codex/cli/slash-commands",
+     "first_line": 11555
+    },
+    {
+     "url": "https://developers.openai.com/codex/app/commands",
+     "first_line": 11555
+    },
+    {
+     "url": "https://learn.chatgpt.com/docs/developer-commands?surface=cli",
+     "first_line": 11564
+    },
+    {
+     "url": "https://learn.chatgpt.com/docs/features/codex-micro",
+     "first_line": 11978
+    },
+    {
+     "url": "https://learn.chatgpt.com/docs/config-file/config-reference?translationFallback=fr-FR",
+     "first_line": 12104
+    },
+    {
+     "url": "https://learn.chatgpt.com/community",
+     "first_line": 12192
+    },
+    {
+     "url": "https://learn.chatgpt.com/docs/config-file/config-sample",
+     "first_line": 12198
+    },
+    {
+     "url": "https://learn.chatgpt.com/guides/best-practices?translationFallback=ja-JP",
+     "first_line": 12201
+    },
+    {
+     "url": "https://learn.chatgpt.com/docs/app-server?translationFallback=zh-Hant",
+     "first_line": 12207
+    },
+    {
+     "url": "https://learn.chatgpt.com/es-419/docs/config-file/config-sample",
+     "first_line": 12210
+    }
+   ]
+  },
+  "plan/archive/original-thread.jsonl.gz": {
+   "purpose": "Gzipped original planning thread (546 JSONL records, 3.3 MB uncompressed); opened and counted by build_model.py. Its text content is the source of the plain-text conversation.txt and tool-results.txt archives, which were read in full.",
+   "layer": "doc",
+   "notes": [
+    {
+     "text": "Opened mechanically; content duplicated in readable form by plan/archive/conversation.txt and tool-results.txt.",
+     "evidence": [
+      "plan/archive/manifest.json:1"
+     ]
+    },
+    {
+     "text": "sha256 of the decompressed thread equals manifest source_sha256 (verified by the lead), and the 546-record count matches source_records.",
+     "evidence": [
+      "plan/archive/manifest.json:4-5"
+     ]
+    }
+   ]
+  },
+  ".taste-skill/before/report.json": {
+   "purpose": "Design-audit metrics captured 2026-10-20 at http://localhost:8780 before the UI refinement (login screen: Inter hero 'Your team, your workspace.', 3 viewports, no overflow). The complete report is embedded below.",
+   "layer": "doc",
+   "full_report": {
+    "url": "http://localhost:8780",
+    "at": "2026-10-20T08:25:23.543Z",
+    "allow": [],
+    "viewports": [
+     {
+      "width": 1440,
+      "height": 900,
+      "load": "load",
+      "screens": 1,
+      "filled": [
+       1
+      ],
+      "motion": {
+       "elements": 0,
+       "css": 0,
+       "transitions": 0,
+       "scripted": 0,
+       "videos": 0,
+       "playingVideos": 0
+      },
+      "metrics": {
+       "viewport": {
+        "w": 1440,
+        "h": 900
+       },
+       "page": {
+        "height": 900,
+        "screens": 1,
+        "words": 31,
+        "img": 0,
+        "video": 0,
+        "canvas": 0,
+        "svg": 1,
+        "sections": 0,
+        "horizontalOverflow": 0,
+        "overflowCulprits": [],
+        "uiFragments": 0,
+        "uiAbuse": false,
+        "realPictures": 0,
+        "videoCount": 0,
+        "uiPictures": 0,
+        "pictureSamples": [],
+        "blendText": 0,
+        "sideScrollers": 0,
+        "brokenImages": [],
+        "emoji": [
+         "✳"
+        ],
+        "videosNoPoster": 0
+       },
+       "hero": {
+        "text": "Your team, your workspace.",
+        "words": 4,
+        "chars": 26,
+        "lines": 1,
+        "size": 25,
+        "vw": 1.7,
+        "font": "Inter",
+        "weight": 500,
+        "tracking": -0.02,
+        "leading": 1.5,
+        "top": 347,
+        "tag": "h1",
+        "kind": "heading",
+        "align": "left",
+        "position": "left"
+       },
+       "h1": {
+        "text": "Your team, your workspace.",
+        "words": 4,
+        "lines": 1,
+        "size": 25,
+        "font": "Inter"
+       },
+       "headings": [
+        {
+         "text": "hermbot✳",
+         "words": 1,
+         "chars": 8,
+         "lines": 1,
+         "size": 30,
+         "vw": 2.1,
+         "font": "Inter",
+         "weight": 700,
+         "tracking": -0.037,
+         "leading": 1.5,
+         "upper": false,
+         "italic": false,
+         "mono": false,
+         "align": "left",
+         "position": "center",
+         "widthRatio": 0.08,
+         "top": 275,
+         "tag": "span",
+         "kind": "heading"
+        }
+       ],
+       "headingSummary": {
+        "count": 1,
+        "maxLines": 1,
+        "over2Lines": 0,
+        "statements": 0,
+        "centered": 0,
+        "medianWords": null,
+        "mixedFontHeadings": 0
+       },
+       "type": {
+        "families": [
+         {
+          "family": "Inter",
+          "share": 0.98,
+          "mono": false
+         },
+         {
+          "family": "ui-monospace",
+          "share": 0.02,
+          "mono": false
+         }
+        ],
+        "familyCount": 2,
+        "sizes": [
+         10,
+         11,
+         12,
+         25,
+         30
+        ],
+        "sizeCount": 5,
+        "notLoaded": [],
+        "body": {
+         "font": "Inter",
+         "size": 12,
+         "leading": 1.9,
+         "weight": 400,
+         "tracking": 0,
+         "contrast": 3.7
+        },
+        "measureChars": 57,
+        "max": {
+         "size": 30,
+         "vw": 2.1,
+         "font": "Inter",
+         "text": "✳"
+        },
+        "monoShare": 0.02,
+        "monoProseShare": 0,
+        "monoFamilies": [
+         "ui-monospace"
+        ],
+        "monoSamples": [],
+        "microLabels": 0,
+        "microLabelShare": 0,
+        "microSamples": [],
+        "upperShare": 0,
+        "centerShare": 0.33,
+        "smallText": 3
+       },
+       "eyebrows": [],
+       "numbered": [],
+       "color": {
+        "bodyBg": "#fafbf8",
+        "bodyBgHsl": {
+         "h": 80,
+         "s": 0.27,
+         "l": 0.98
+        },
+        "dark": false,
+        "sectionBgs": [
+         {
+          "color": "#f2f4ee",
+          "top": 0,
+          "hsl": {
+           "h": 80,
+           "s": 0.21,
+           "l": 0.95
+          }
+         }
+        ],
+        "textColors": [
+         {
+          "color": "#81887a",
+          "share": 0.68
+         },
+         {
+          "color": "#30382f",
+          "share": 0.24
+         },
+         {
+          "color": "#ffffff",
+          "share": 0.08
+         },
+         {
+          "color": "#809563",
+          "share": 0.01
+         }
+        ],
+        "button": {
+         "bg": "#617b50",
+         "hsl": {
+          "h": 96,
+          "s": 0.21,
+          "l": 0.4
+         },
+         "fg": "#ffffff"
+        },
+        "lowContrast": [
+         {
+          "text": "Enter the owner token from your local fi",
+          "ratio": 3.7,
+          "need": 4.5,
+          "size": 12,
+          "fg": "#81887a",
+          "bg": "#ffffff"
+         },
+         {
+          "text": ".env",
+          "ratio": 3.7,
+          "need": 4.5,
+          "size": 12,
+          "fg": "#81887a",
+          "bg": "#ffffff"
+         },
+         {
+          "text": "Runs continue here when you close the br",
+          "ratio": 3.7,
+          "need": 4.5,
+          "size": 10,
+          "fg": "#81887a",
+          "bg": "#ffffff"
+         }
+        ]
+       },
+       "buttons": {
+        "count": 1,
+        "inHero": 1,
+        "radius": 8,
+        "height": 40,
+        "withShadow": 0,
+        "withGradient": 0,
+        "mono": 0,
+        "upper": 0,
+        "heroLabels": [
+         "Open workspace"
+        ]
+       },
+       "surfaces": {
+        "shadowStatic": 0,
+        "shadowOverlay": 0,
+        "shadowSamples": [],
+        "gradients": 0,
+        "scrims": 0,
+        "gradientSamples": [],
+        "gradientText": 0,
+        "hairlines": 0,
+        "hairlineSamples": [],
+        "outlinedBoxes": 1,
+        "dashed": 0,
+        "blurred": 0,
+        "roundedBoxes": 1,
+        "boxRadius": 20,
+        "squareMedia": 0,
+        "roundedMedia": 0,
+        "mediaRadius": 0,
+        "textShadow": 0,
+        "cardRows": []
+       },
+       "heroMedia": [],
+       "nav": null,
+       "fontsLoaded": []
+      },
+      "layout": {
+       "viewport": {
+        "w": 1440,
+        "h": 900
+       },
+       "pageH": 900,
+       "margins": {
+        "left": 549,
+        "right": 549
+       },
+       "sections": [],
+       "gaps": [],
+       "h1s": [
+        {
+         "text": "Your team, your workspace.",
+         "size": 25,
+         "top": 347,
+         "firstScreen": true
+        }
+       ],
+       "edgeText": [],
+       "edges": [
+        {
+         "x": 549,
+         "n": 1
+        }
+       ],
+       "leftBlocks": 1,
+       "bodySize": 10,
+       "stage": false,
+       "explains": false,
+       "slivers": [],
+       "voidShare": 0.33,
+       "voidBox": {
+        "x": 0,
+        "y": 120,
+        "w": 540,
+        "h": 780
+       }
+      },
+      "app": {
+       "viewport": {
+        "w": 1440,
+        "h": 900
+       },
+       "dark": false,
+       "ground": "#fafbf8",
+       "sidebar": null,
+       "topbar": null,
+       "canvas": {
+        "left": 549,
+        "right": 549
+       },
+       "hero": {
+        "text": "Your team, your workspace.",
+        "words": 4,
+        "chars": 26,
+        "lines": 1,
+        "size": 25,
+        "vw": 1.7,
+        "font": "Inter",
+        "weight": 500,
+        "tracking": -0.02,
+        "leading": 1.5,
+        "top": 347,
+        "tag": "h1",
+        "kind": "heading",
+        "align": "left",
+        "position": "left"
+       },
+       "charts": 0,
+       "layout": {
+        "panels": 1,
+        "firstScreen": 1,
+        "ragged": [],
+        "voids": []
+       },
+       "tiles": 0,
+       "panels": {
+        "count": 1,
+        "radii": [
+         [
+          20,
+          1
+         ]
+        ],
+        "heavyBorders": 0,
+        "borderSamples": [],
+        "heavyShadows": 0,
+        "softShadows": 0,
+        "shadowSamples": [],
+        "glass": 0
+       },
+       "chips": {
+        "count": 0,
+        "hues": 0,
+        "samples": []
+       },
+       "numbers": {
+        "cells": 0,
+        "leftAligned": 0,
+        "figures": 0,
+        "tabularShare": null,
+        "kpiMax": null
+       },
+       "rows": null,
+       "chartHues": 0,
+       "placeholders": [],
+       "type": {
+        "under13": 0.82,
+        "tiny": 1,
+        "tinySamples": [
+         "Runs continue here when  10px"
+        ],
+        "sizes": [
+         10,
+         11,
+         12,
+         25
+        ]
+       },
+       "title": {
+        "text": "Your team, your workspace.",
+        "size": 25,
+        "top": 347
+       },
+       "colourShare": 0
+      },
+      "consoleErrors": []
+     },
+     {
+      "width": 768,
+      "height": 1024,
+      "load": "load",
+      "screens": 1,
+      "filled": [
+       1
+      ],
+      "motion": {
+       "elements": 0,
+       "css": 0,
+       "transitions": 0,
+       "scripted": 0,
+       "videos": 0,
+       "playingVideos": 0
+      },
+      "metrics": {
+       "viewport": {
+        "w": 768,
+        "h": 1024
+       },
+       "page": {
+        "height": 1024,
+        "screens": 1,
+        "words": 31,
+        "img": 0,
+        "video": 0,
+        "canvas": 0,
+        "svg": 1,
+        "sections": 0,
+        "horizontalOverflow": 0,
+        "overflowCulprits": [],
+        "uiFragments": 0,
+        "uiAbuse": false,
+        "realPictures": 0,
+        "videoCount": 0,
+        "uiPictures": 0,
+        "pictureSamples": [],
+        "blendText": 0,
+        "sideScrollers": 0,
+        "brokenImages": [],
+        "emoji": [
+         "✳"
+        ],
+        "videosNoPoster": 0
+       },
+       "hero": {
+        "text": "Your team, your workspace.",
+        "words": 4,
+        "chars": 26,
+        "lines": 1,
+        "size": 25,
+        "vw": 3.3,
+        "font": "Inter",
+        "weight": 500,
+        "tracking": -0.02,
+        "leading": 1.5,
+        "top": 409,
+        "tag": "h1",
+        "kind": "heading",
+        "align": "left",
+        "position": "left"
+       },
+       "h1": {
+        "text": "Your team, your workspace.",
+        "words": 4,
+        "lines": 1,
+        "size": 25,
+        "font": "Inter"
+       },
+       "headings": [
+        {
+         "text": "hermbot✳",
+         "words": 1,
+         "chars": 8,
+         "lines": 1,
+         "size": 30,
+         "vw": 3.9,
+         "font": "Inter",
+         "weight": 700,
+         "tracking": -0.037,
+         "leading": 1.5,
+         "upper": false,
+         "italic": false,
+         "mono": false,
+         "align": "left",
+         "position": "left",
+         "widthRatio": 0.15,
+         "top": 337,
+         "tag": "span",
+         "kind": "heading"
+        }
+       ],
+       "headingSummary": {
+        "count": 1,
+        "maxLines": 1,
+        "over2Lines": 0,
+        "statements": 0,
+        "centered": 0,
+        "medianWords": null,
+        "mixedFontHeadings": 0
+       },
+       "type": {
+        "families": [
+         {
+          "family": "Inter",
+          "share": 0.98,
+          "mono": false
+         },
+         {
+          "family": "ui-monospace",
+          "share": 0.02,
+          "mono": false
+         }
+        ],
+        "familyCount": 2,
+        "sizes": [
+         10,
+         11,
+         12,
+         25,
+         30
+        ],
+        "sizeCount": 5,
+        "notLoaded": [],
+        "body": {
+         "font": "Inter",
+         "size": 12,
+         "leading": 1.9,
+         "weight": 400,
+         "tracking": 0,
+         "contrast": 3.7
+        },
+        "measureChars": 57,
+        "max": {
+         "size": 30,
+         "vw": 3.9,
+         "font": "Inter",
+         "text": "✳"
+        },
+        "monoShare": 0.02,
+        "monoProseShare": 0,
+        "monoFamilies": [
+         "ui-monospace"
+        ],
+        "monoSamples": [],
+        "microLabels": 0,
+        "microLabelShare": 0,
+        "microSamples": [],
+        "upperShare": 0,
+        "centerShare": 0.33,
+        "smallText": 3
+       },
+       "eyebrows": [],
+       "numbered": [],
+       "color": {
+        "bodyBg": "#fafbf8",
+        "bodyBgHsl": {
+         "h": 80,
+         "s": 0.27,
+         "l": 0.98
+        },
+        "dark": false,
+        "sectionBgs": [
+         {
+          "color": "#f2f4ee",
+          "top": 0,
+          "hsl": {
+           "h": 80,
+           "s": 0.21,
+           "l": 0.95
+          }
+         }
+        ],
+        "textColors": [
+         {
+          "color": "#81887a",
+          "share": 0.68
+         },
+         {
+          "color": "#30382f",
+          "share": 0.24
+         },
+         {
+          "color": "#ffffff",
+          "share": 0.08
+         },
+         {
+          "color": "#809563",
+          "share": 0.01
+         }
+        ],
+        "button": {
+         "bg": "#617b50",
+         "hsl": {
+          "h": 96,
+          "s": 0.21,
+          "l": 0.4
+         },
+         "fg": "#ffffff"
+        },
+        "lowContrast": [
+         {
+          "text": "Enter the owner token from your local fi",
+          "ratio": 3.7,
+          "need": 4.5,
+          "size": 12,
+          "fg": "#81887a",
+          "bg": "#ffffff"
+         },
+         {
+          "text": ".env",
+          "ratio": 3.7,
+          "need": 4.5,
+          "size": 12,
+          "fg": "#81887a",
+          "bg": "#ffffff"
+         },
+         {
+          "text": "Runs continue here when you close the br",
+          "ratio": 3.7,
+          "need": 4.5,
+          "size": 10,
+          "fg": "#81887a",
+          "bg": "#ffffff"
+         }
+        ]
+       },
+       "buttons": {
+        "count": 1,
+        "inHero": 1,
+        "radius": 8,
+        "height": 40,
+        "withShadow": 0,
+        "withGradient": 0,
+        "mono": 0,
+        "upper": 0,
+        "heroLabels": [
+         "Open workspace"
+        ]
+       },
+       "surfaces": {
+        "shadowStatic": 0,
+        "shadowOverlay": 0,
+        "shadowSamples": [],
+        "gradients": 0,
+        "scrims": 0,
+        "gradientSamples": [],
+        "gradientText": 0,
+        "hairlines": 0,
+        "hairlineSamples": [],
+        "outlinedBoxes": 1,
+        "dashed": 0,
+        "blurred": 0,
+        "roundedBoxes": 1,
+        "boxRadius": 20,
+        "squareMedia": 0,
+        "roundedMedia": 0,
+        "mediaRadius": 0,
+        "textShadow": 0,
+        "cardRows": []
+       },
+       "heroMedia": [],
+       "nav": null,
+       "fontsLoaded": []
+      },
+      "layout": {
+       "viewport": {
+        "w": 768,
+        "h": 1024
+       },
+       "pageH": 1024,
+       "margins": {
+        "left": 213,
+        "right": 213
+       },
+       "sections": [],
+       "gaps": [],
+       "h1s": [
+        {
+         "text": "Your team, your workspace.",
+         "size": 25,
+         "top": 409,
+         "firstScreen": true
+        }
+       ],
+       "edgeText": [],
+       "edges": [
+        {
+         "x": 213,
+         "n": 1
+        }
+       ],
+       "leftBlocks": 1,
+       "bodySize": 10,
+       "stage": false,
+       "explains": false,
+       "slivers": [],
+       "voidShare": 0,
+       "voidBox": null
+      },
+      "app": {
+       "viewport": {
+        "w": 768,
+        "h": 1024
+       },
+       "dark": false,
+       "ground": "#fafbf8",
+       "sidebar": null,
+       "topbar": null,
+       "canvas": {
+        "left": 213,
+        "right": 213
+       },
+       "hero": {
+        "text": "Your team, your workspace.",
+        "words": 4,
+        "chars": 26,
+        "lines": 1,
+        "size": 25,
+        "vw": 3.3,
+        "font": "Inter",
+        "weight": 500,
+        "tracking": -0.02,
+        "leading": 1.5,
+        "top": 409,
+        "tag": "h1",
+        "kind": "heading",
+        "align": "left",
+        "position": "left"
+       },
+       "charts": 0,
+       "layout": {
+        "panels": 1,
+        "firstScreen": 1,
+        "ragged": [],
+        "voids": []
+       },
+       "tiles": 0,
+       "panels": {
+        "count": 1,
+        "radii": [
+         [
+          20,
+          1
+         ]
+        ],
+        "heavyBorders": 0,
+        "borderSamples": [],
+        "heavyShadows": 0,
+        "softShadows": 0,
+        "shadowSamples": [],
+        "glass": 0
+       },
+       "chips": {
+        "count": 0,
+        "hues": 0,
+        "samples": []
+       },
+       "numbers": {
+        "cells": 0,
+        "leftAligned": 0,
+        "figures": 0,
+        "tabularShare": null,
+        "kpiMax": null
+       },
+       "rows": null,
+       "chartHues": 0,
+       "placeholders": [],
+       "type": {
+        "under13": 0.82,
+        "tiny": 1,
+        "tinySamples": [
+         "Runs continue here when  10px"
+        ],
+        "sizes": [
+         10,
+         11,
+         12,
+         25
+        ]
+       },
+       "title": {
+        "text": "Your team, your workspace.",
+        "size": 25,
+        "top": 409
+       },
+       "colourShare": 0
+      },
+      "consoleErrors": []
+     },
+     {
+      "width": 390,
+      "height": 844,
+      "load": "load",
+      "screens": 1,
+      "filled": [
+       1
+      ],
+      "motion": {
+       "elements": 0,
+       "css": 0,
+       "transitions": 0,
+       "scripted": 0,
+       "videos": 0,
+       "playingVideos": 0
+      },
+      "metrics": {
+       "viewport": {
+        "w": 390,
+        "h": 844
+       },
+       "page": {
+        "height": 844,
+        "screens": 1,
+        "words": 31,
+        "img": 0,
+        "video": 0,
+        "canvas": 0,
+        "svg": 1,
+        "sections": 0,
+        "horizontalOverflow": 0,
+        "overflowCulprits": [],
+        "uiFragments": 0,
+        "uiAbuse": false,
+        "realPictures": 0,
+        "videoCount": 0,
+        "uiPictures": 0,
+        "pictureSamples": [],
+        "blendText": 0,
+        "sideScrollers": 0,
+        "brokenImages": [],
+        "emoji": [
+         "✳"
+        ],
+        "videosNoPoster": 0
+       },
+       "hero": {
+        "text": "Your team, your workspace.",
+        "words": 4,
+        "chars": 26,
+        "lines": 2,
+        "size": 25,
+        "vw": 6.4,
+        "font": "Inter",
+        "weight": 500,
+        "tracking": -0.02,
+        "leading": 1.5,
+        "top": 300,
+        "tag": "h1",
+        "kind": "heading",
+        "align": "left",
+        "position": "left"
+       },
+       "h1": {
+        "text": "Your team, your workspace.",
+        "words": 4,
+        "lines": 2,
+        "size": 25,
+        "font": "Inter"
+       },
+       "headings": [
+        {
+         "text": "hermbot✳",
+         "words": 1,
+         "chars": 8,
+         "lines": 1,
+         "size": 30,
+         "vw": 7.7,
+         "font": "Inter",
+         "weight": 700,
+         "tracking": -0.037,
+         "leading": 1.5,
+         "upper": false,
+         "italic": false,
+         "mono": false,
+         "align": "left",
+         "position": "left",
+         "widthRatio": 0.3,
+         "top": 228,
+         "tag": "span",
+         "kind": "heading"
+        },
+        {
+         "text": "Your team, your workspace.",
+         "words": 4,
+         "chars": 26,
+         "lines": 2,
+         "size": 25,
+         "vw": 6.4,
+         "font": "Inter",
+         "weight": 500,
+         "tracking": -0.024,
+         "leading": 1.5,
+         "upper": false,
+         "italic": false,
+         "mono": false,
+         "align": "left",
+         "position": "center",
+         "widthRatio": 0.72,
+         "top": 300,
+         "tag": "h1",
+         "kind": "heading"
+        }
+       ],
+       "headingSummary": {
+        "count": 2,
+        "maxLines": 2,
+        "over2Lines": 0,
+        "statements": 0,
+        "centered": 0,
+        "medianWords": 4,
+        "mixedFontHeadings": 0
+       },
+       "type": {
+        "families": [
+         {
+          "family": "Inter",
+          "share": 0.98,
+          "mono": false
+         },
+         {
+          "family": "ui-monospace",
+          "share": 0.02,
+          "mono": false
+         }
+        ],
+        "familyCount": 2,
+        "sizes": [
+         10,
+         11,
+         12,
+         25,
+         30
+        ],
+        "sizeCount": 5,
+        "notLoaded": [],
+        "body": {
+         "font": "Inter",
+         "size": 12,
+         "leading": 1.9,
+         "weight": 400,
+         "tracking": 0,
+         "contrast": 3.7
+        },
+        "measureChars": 47,
+        "max": {
+         "size": 30,
+         "vw": 7.7,
+         "font": "Inter",
+         "text": "✳"
+        },
+        "monoShare": 0.02,
+        "monoProseShare": 0,
+        "monoFamilies": [
+         "ui-monospace"
+        ],
+        "monoSamples": [],
+        "microLabels": 0,
+        "microLabelShare": 0,
+        "microSamples": [],
+        "upperShare": 0,
+        "centerShare": 0.33,
+        "smallText": 3
+       },
+       "eyebrows": [],
+       "numbered": [],
+       "color": {
+        "bodyBg": "#fafbf8",
+        "bodyBgHsl": {
+         "h": 80,
+         "s": 0.27,
+         "l": 0.98
+        },
+        "dark": false,
+        "sectionBgs": [
+         {
+          "color": "#f2f4ee",
+          "top": 0,
+          "hsl": {
+           "h": 80,
+           "s": 0.21,
+           "l": 0.95
+          }
+         },
+         {
+          "color": "#ffffff",
+          "top": 191,
+          "hsl": {
+           "h": 0,
+           "s": 0,
+           "l": 1
+          }
+         }
+        ],
+        "textColors": [
+         {
+          "color": "#81887a",
+          "share": 0.68
+         },
+         {
+          "color": "#30382f",
+          "share": 0.24
+         },
+         {
+          "color": "#ffffff",
+          "share": 0.08
+         },
+         {
+          "color": "#809563",
+          "share": 0.01
+         }
+        ],
+        "button": {
+         "bg": "#617b50",
+         "hsl": {
+          "h": 96,
+          "s": 0.21,
+          "l": 0.4
+         },
+         "fg": "#ffffff"
+        },
+        "lowContrast": [
+         {
+          "text": "Enter the owner token from your local fi",
+          "ratio": 3.7,
+          "need": 4.5,
+          "size": 12,
+          "fg": "#81887a",
+          "bg": "#ffffff"
+         },
+         {
+          "text": ".env",
+          "ratio": 3.7,
+          "need": 4.5,
+          "size": 12,
+          "fg": "#81887a",
+          "bg": "#ffffff"
+         },
+         {
+          "text": "Runs continue here when you close the br",
+          "ratio": 3.7,
+          "need": 4.5,
+          "size": 10,
+          "fg": "#81887a",
+          "bg": "#ffffff"
+         }
+        ]
+       },
+       "buttons": {
+        "count": 1,
+        "inHero": 1,
+        "radius": 8,
+        "height": 40,
+        "withShadow": 0,
+        "withGradient": 0,
+        "mono": 0,
+        "upper": 0,
+        "heroLabels": [
+         "Open workspace"
+        ]
+       },
+       "surfaces": {
+        "shadowStatic": 0,
+        "shadowOverlay": 0,
+        "shadowSamples": [],
+        "gradients": 0,
+        "scrims": 0,
+        "gradientSamples": [],
+        "gradientText": 0,
+        "hairlines": 0,
+        "hairlineSamples": [],
+        "outlinedBoxes": 1,
+        "dashed": 0,
+        "blurred": 0,
+        "roundedBoxes": 1,
+        "boxRadius": 20,
+        "squareMedia": 0,
+        "roundedMedia": 0,
+        "mediaRadius": 0,
+        "textShadow": 0,
+        "cardRows": []
+       },
+       "heroMedia": [],
+       "nav": null,
+       "fontsLoaded": []
+      },
+      "layout": {
+       "viewport": {
+        "w": 390,
+        "h": 844
+       },
+       "pageH": 844,
+       "margins": {
+        "left": 54,
+        "right": 54
+       },
+       "sections": [],
+       "gaps": [],
+       "h1s": [
+        {
+         "text": "Your team, your workspace.",
+         "size": 25,
+         "top": 300,
+         "firstScreen": true
+        }
+       ],
+       "edgeText": [],
+       "edges": [
+        {
+         "x": 54,
+         "n": 1
+        }
+       ],
+       "leftBlocks": 1,
+       "bodySize": 10,
+       "stage": false,
+       "explains": false,
+       "slivers": [],
+       "voidShare": 0,
+       "voidBox": null
+      },
+      "app": {
+       "viewport": {
+        "w": 390,
+        "h": 844
+       },
+       "dark": false,
+       "ground": "#fafbf8",
+       "sidebar": null,
+       "topbar": null,
+       "canvas": {
+        "left": 54,
+        "right": 54
+       },
+       "hero": {
+        "text": "Your team, your workspace.",
+        "words": 4,
+        "chars": 26,
+        "lines": 2,
+        "size": 25,
+        "vw": 6.4,
+        "font": "Inter",
+        "weight": 500,
+        "tracking": -0.02,
+        "leading": 1.5,
+        "top": 300,
+        "tag": "h1",
+        "kind": "heading",
+        "align": "left",
+        "position": "left"
+       },
+       "charts": 0,
+       "layout": {
+        "panels": 1,
+        "firstScreen": 1,
+        "ragged": [],
+        "voids": []
+       },
+       "tiles": 0,
+       "panels": {
+        "count": 1,
+        "radii": [
+         [
+          20,
+          1
+         ]
+        ],
+        "heavyBorders": 0,
+        "borderSamples": [],
+        "heavyShadows": 0,
+        "softShadows": 0,
+        "shadowSamples": [],
+        "glass": 0
+       },
+       "chips": {
+        "count": 0,
+        "hues": 0,
+        "samples": []
+       },
+       "numbers": {
+        "cells": 0,
+        "leftAligned": 0,
+        "figures": 0,
+        "tabularShare": null,
+        "kpiMax": null
+       },
+       "rows": null,
+       "chartHues": 0,
+       "placeholders": [],
+       "type": {
+        "under13": 0.82,
+        "tiny": 1,
+        "tinySamples": [
+         "Runs continue here when  10px"
+        ],
+        "sizes": [
+         10,
+         11,
+         12,
+         25
+        ]
+       },
+       "title": {
+        "text": "Your team, your workspace.",
+        "size": 25,
+        "top": 300
+       },
+       "colourShare": 0
+      },
+      "consoleErrors": []
+     }
+    ],
+    "findings": [
+     {
+      "level": "FAIL",
+      "id": "emoji",
+      "width": 1440,
+      "message": "Emoji in the page: ✳",
+      "fix": "Remove. Use words or real imagery.",
+      "alsoAt": [
+       768,
+       390
+      ]
+     },
+     {
+      "level": "WARN",
+      "id": "contrast",
+      "width": 1440,
+      "message": "Low-contrast text: \"Enter the owner token from your local fi\" 3.7:1 needs 4.5:1; \".env\" 3.7:1 needs 4.5:1; \"Runs continue here when you close the br\" 3.7:1 needs 4.5:1",
+      "fix": "Darken or lighten the text colour.",
+      "alsoAt": [
+       768,
+       390
+      ]
+     },
+     {
+      "level": "WARN",
+      "id": "hero-void",
+      "width": 1440,
+      "message": "33% of the first screen is one empty block (540×780px at 0,120).",
+      "fix": "Place the void on purpose or fill it: move the picture, the film or one fact into it, grow the headline to meet it, or shrink the screen to its content. A void reads as placed only when something closes it on the far side and it is the screen's one rest."
+     },
+     {
+      "level": "WARN",
+      "id": "tiny-text",
+      "width": 1440,
+      "message": "82% of the text is under 13px.",
+      "fix": "Data and labels read at 13–14px; keep 11–12px for sublines and axis ticks.",
+      "alsoAt": [
+       768,
+       390
+      ]
+     }
+    ],
+    "images": [
+     {
+      "viewport": "desktop",
+      "width": 1440,
+      "fold": ".taste-skill/before/desktop-fold.jpg",
+      "pages": [
+       ".taste-skill/before/desktop-page-01.jpg"
+      ],
+      "film": []
+     },
+     {
+      "viewport": "tablet",
+      "width": 768,
+      "fold": ".taste-skill/before/tablet-fold.jpg",
+      "pages": [
+       ".taste-skill/before/tablet-page-01.jpg"
+      ],
+      "film": []
+     },
+     {
+      "viewport": "mobile",
+      "width": 390,
+      "fold": ".taste-skill/before/mobile-fold.jpg",
+      "pages": [
+       ".taste-skill/before/mobile-page-01.jpg"
+      ],
+      "film": []
+     }
+    ]
+   },
+   "notes": [
+    {
+     "text": "Embedded verbatim by the lead so every per-viewport metric is represented.",
+     "evidence": [
+      ".taste-skill/before/report.json:1"
+     ]
+    }
+   ]
+  },
+  "test-results/phase62-escape-diagnosis.json": {
+   "purpose": "UI-fixture diagnosis of pressing Escape during a teaching recording: the dialog closes, the private-input barrier POST returns 503, no recording indicator remains and no script errors occur.",
+   "summary": "Keys: ui_fixture_only=true, live_desktop_input=false, requests=[POST /api/v1/bots/researcher/teaching-private-input -> 503], dialog_closed=true, recording_indicator_remaining=0, owner_feedback_outside_dialog=[], reopened_recording_selection='', script_errors=[]",
+   "feature": "feature:teaching",
+   "notes": [
+    {
+     "text": "Fixture-only evidence (no live desktop input); the 503 comes from the private-input barrier route, and no owner feedback is shown outside the closed dialog.",
+     "evidence": [
+      "test-results/phase62-escape-diagnosis.json:1",
+      "backend/teaching.py:364"
+     ]
+    }
+   ]
+  }
+ },
+ "edges": [
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "feature:computer",
+   "kind": "documents",
+   "label": "teaching capture on bot computer (implemented locally)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:19-23"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "feature:knowledge",
+   "kind": "documents",
+   "label": "skill generation/publication (implemented locally)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:162-170"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "feature:tools",
+   "kind": "documents",
+   "label": "candidate skill view via middleware",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:150-152"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:backend/computer.py",
+   "kind": "documents",
+   "label": "reuse",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:19"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:docker/runtime_api.py",
+   "kind": "documents",
+   "label": "reuse",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:20"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:backend/knowledge.py",
+   "kind": "documents",
+   "label": "reuse",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:24"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:web/src/Computer.tsx",
+   "kind": "documents",
+   "label": "reuse",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:23"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:plugins/hermbot/__init__.py",
+   "kind": "documents",
+   "label": "reuse",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:26"
+   ]
+  },
+  {
+   "source": "concept:test-heatmap",
+   "target": "feature:testing",
+   "kind": "implements",
+   "label": "coverage summary",
+   "evidence": [
+    "pyproject.toml:24"
+   ]
+  },
+  {
+   "source": "file:plan/CHECKLIST.md",
+   "target": "file:plan/PHASE6-TEACHING.md",
+   "kind": "documents",
+   "label": "links 6.2 plan",
+   "evidence": [
+    "plan/CHECKLIST.md:242"
+   ]
+  },
+  {
+   "source": "file:tests/attention_acceptance.py",
+   "target": "tool:hermbot_ask",
+   "kind": "tests",
+   "label": "exercises tool",
+   "evidence": [
+    "tests/attention_acceptance.py:66"
+   ]
+  },
+  {
+   "source": "file:tests/recurring_management_acceptance.py",
+   "target": "tool:hermbot_ask",
+   "kind": "tests",
+   "label": "exercises tool",
+   "evidence": [
+    "tests/recurring_management_acceptance.py:78"
+   ]
+  },
+  {
+   "source": "file:tests/test_work_outcomes.py",
+   "target": "tool:hermbot_ask",
+   "kind": "tests",
+   "label": "exercises tool",
+   "evidence": [
+    "tests/test_work_outcomes.py:371"
+   ]
+  },
+  {
+   "source": "file:tests/test_work_controller.py",
+   "target": "tool:hermbot_work_status",
+   "kind": "tests",
+   "label": "exercises tool",
+   "evidence": [
+    "tests/test_work_controller.py:246"
+   ]
+  },
+  {
+   "source": "file:tests/test_work_controller.py",
+   "target": "tool:hermbot_publish_file",
+   "kind": "tests",
+   "label": "exercises tool",
+   "evidence": [
+    "tests/test_work_controller.py:260"
+   ]
+  },
+  {
+   "source": "file:tests/work_controller_native_acceptance.py",
+   "target": "tool:hermbot_publish_file",
+   "kind": "tests",
+   "label": "exercises tool",
+   "evidence": [
+    "tests/work_controller_native_acceptance.py:64"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-escape-diagnosis.json",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching-private-input",
+   "kind": "evidences",
+   "label": "Escape diagnosis hits private-input barrier (503)",
+   "evidence": [
+    "test-results/phase62-escape-diagnosis.json:1"
+   ]
+  }
+ ],
+ "extra_nodes": [
+  {
+   "id": "concept:test-heatmap",
+   "kind": "concept",
+   "label": "Test coverage heatmap",
+   "purpose": "Counts of test files by kind touching each module and feature, derived by the tests agent from reading every test file.",
+   "evidence": [
+    "pyproject.toml:23-24",
+    "tests/conftest.py:1"
+   ]
+  },
+  {
+   "id": "concept:timeline",
+   "kind": "concept",
+   "label": "Project timeline",
+   "facts": {
+    "updates_2026_10_27": [
+     {
+      "text": "Owner held Phase 6.1 voice and selected Phase 6.2 demonstration teaching next; plan saved and implemented locally; real owner acceptance pending.",
+      "evidence": [
+       "plan/CHECKLIST.md:231-242",
+       "plan/PHASE-DETAILS.md:219-233"
+      ]
+     },
+     {
+      "text": "Connected-service work coordination deferred again by the owner with no new start date.",
+      "evidence": [
+       "plan/CHECKLIST.md:10",
+       "plan/CONNECTED-WORK-COORDINATION.md:3"
+      ]
+     },
+     {
+      "text": "plan/README.md summary now records Phase 5.4 and the Phase 5 exit as passed on Oct 26 (638 backend tests); the 5.4 section further down still says implementation has not started.",
+      "evidence": [
+       "plan/README.md:26",
+       "plan/README.md:349"
+      ]
+     },
+     {
+      "text": "Four plan docs (README, CHECKLIST, PHASE-DETAILS, CONTEXT) were edited at 06:15 on Oct 27, after the docs pass read them; the lead re-read every cited line and the doc/code discrepancies citing them still hold.",
+      "evidence": [
+       "plan/PHASE-DETAILS.md:15",
+       "plan/PHASE-DETAILS.md:205"
+      ]
+     }
+    ]
+   },
+   "evidence": [
+    "plan/README.md:30"
+   ]
+  }
+ ],
+ "feature_fragments": [
+  {
+   "id": "feature:computer",
+   "limits": [
+    {
+     "text": "Demonstration teaching (record a procedure on the bot computer and turn it into a skill) was implemented locally as Phase 6.2 (backend/teaching.py, docker/teaching_capture.py, web/src/Teaching.tsx); real owner acceptance is pending.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:3"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:knowledge",
+   "limits": [
+    {
+     "text": "Skills can be drafted from completed work today; teaching-generated, candidate-tested skills are implemented locally (backend/teaching.py, task-scoped candidate in backend/capabilities.py:57-61); real owner acceptance is pending.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:27",
+      "plan/PHASE6-TEACHING.md:162-170"
+     ]
+    }
+   ]
+  }
+ ],
+ "discrepancies": [
+  {
+   "text": "Lead-verified: no UPDATE moves a task or attempt out of status 'uncertain' (only writes INTO uncertain exist), although error texts tell the owner to reconcile; uncertain work keeps blocking its bot and a max_active slot.",
+   "severity": "high",
+   "nodes": [
+    "file:backend/worker.py",
+    "sm:task",
+    "table:tasks",
+    "table:attempts"
+   ],
+   "evidence": [
+    "backend/worker.py:392-393",
+    "backend/worker.py:523-532",
+    "backend/app.py:571-574"
+   ]
+  },
+  {
+   "text": "Lead-verified: the internal() dependency checking INTERNAL_TOKEN is defined but never attached to any route (no Depends(internal) anywhere); /internal/* routes authenticate bots by per-bot token instead, so INTERNAL_TOKEN only gates startup length checks.",
+   "severity": "medium",
+   "nodes": [
+    "env:INTERNAL_TOKEN",
+    "file:backend/app.py"
+   ],
+   "evidence": [
+    "backend/app.py:79-81",
+    "backend/app.py:43",
+    "backend/app.py:69-76"
+   ]
+  },
+  {
+   "text": "web/dist holds a stale Oct 6 build (Inter font, 11 API prefixes) that is ignored by Docker/git and never served; it no longer reflects web/src.",
+   "severity": "low",
+   "nodes": [
+    "file:web/dist/index.html",
+    "file:web/dist/assets/index-DD8nAxhw.js"
+   ],
+   "evidence": [
+    "web/dist/index.html:1",
+    "backend/Dockerfile:1"
+   ]
+  }
+ ],
+ "system_design": {
+  "verified": [
+   {
+    "text": "Owner auth: bearer OWNER_TOKEN compared with hmac.compare_digest, or an opaque hermbot_session cookie whose sha256 must match an unrevoked, unexpired owner_sessions row.",
+    "tag": "documented",
+    "evidence": [
+     "backend/auth.py:14-24"
+    ]
+   },
+   {
+    "text": "Session cookie is HttpOnly, SameSite=strict, 1-day expiry, Secure only when PUBLIC_URL is https; logout revokes the row and disables the device's push subscription.",
+    "tag": "documented",
+    "evidence": [
+     "backend/auth.py:27-42"
+    ]
+   },
+   {
+    "text": "Bot identity: /internal routes take a per-bot bearer token whose sha256 must match bots.bot_token_hash for a bot not deleted/archived.",
+    "tag": "documented",
+    "evidence": [
+     "backend/app.py:69-76"
+    ]
+   },
+   {
+    "text": "Supervisor API requires SUPERVISOR_TOKEN (hmac compare) and is the only process talking to Docker, via the /var/run/docker.sock unix socket mounted only into svc:supervisor.",
+    "tag": "documented",
+    "evidence": [
+     "backend/containers.py:56-59",
+     "backend/containers.py:70",
+     "compose.yaml:171"
+    ]
+   },
+   {
+    "text": "Dynamic bots are created as hermbot-bot-<id> with read-only rootfs, no-new-privileges, CapDrop ALL (+5 caps for bootstrap), tmpfs mounts and binds for data/workspace/browser volumes.",
+    "tag": "documented",
+    "evidence": [
+     "backend/containers.py:20-30",
+     "backend/containers.py:247-252"
+    ]
+   },
+   {
+    "text": "Secrets at rest: provider keys, bot tokens and runtime keys are Fernet-encrypted with CONFIG_ENCRYPTION_KEY; only hashes are used for comparison.",
+    "tag": "documented",
+    "evidence": [
+     "backend/secrets.py:9-24",
+     "backend/registry.py:70-73"
+    ]
+   },
+   {
+    "text": "Schema bootstrap runs under pg_advisory_xact_lock(887832101): schema.sql, then every migrations/*.sql in order, then seed bots and registry.bootstrap.",
+    "tag": "documented",
+    "evidence": [
+     "backend/db.py:23-43"
+    ]
+   },
+   {
+    "text": "Flow a verified: intake claims with FOR UPDATE SKIP LOCKED-style FIFO and a 60 s lease; dispatch claim_new is serialised by pg_advisory_xact_lock(887832103) and bounded by workspace max_active.",
+    "tag": "documented",
+    "evidence": [
+     "backend/work_intake.py:373-378",
+     "backend/worker.py:124-131"
+    ]
+   },
+   {
+    "text": "Flow f verified: lifecycle.propose writes approvals + lifecycle_proposals and parks the task in waiting_approval; registry.enqueue writes the bot_operations outbox row; the supervisor replays receipts per operation_id under a per-bot lock.",
+    "tag": "documented",
+    "evidence": [
+     "backend/lifecycle.py:59-66",
+     "backend/registry.py:149-159",
+     "backend/containers.py:282-292"
+    ]
+   },
+   {
+    "text": "Only published host port is 127.0.0.1:8780 -> api:8000; postgres and storage sit on the control network only.",
+    "tag": "documented",
+    "evidence": [
+     "compose.yaml:95",
+     "compose.yaml:73",
+     "compose.yaml:87"
+    ]
+   },
+   {
+    "text": "Repo-wide check (all directories incl. node_modules and caches): the only files changed outside architecture/ during the run are six plan docs edited by another actor (04:34 and 06:15 on Oct 27); every Write/Edit/sed -i by this run's agents targeted architecture/_work.",
+    "tag": "documented",
+    "evidence": [
+     "plan/PHASE6-TEACHING.md:3",
+     "plan/CONNECTED-WORK-COORDINATION.md:3"
+    ]
+   },
+   {
+    "text": "Owner confirmed (2026-10-27, in this session) that the six plan-doc changes made during the run (PHASE6-TEACHING added; PHASE-DETAILS, CONTEXT, README, CHECKLIST, CONNECTED-WORK-COORDINATION edited) were their own or another of their sessions; this run left them untouched.",
+    "tag": "documented",
+    "evidence": [
+     "plan/PHASE6-TEACHING.md:3",
+     "plan/CHECKLIST.md:233"
+    ]
+   },
+   {
+    "text": "Teaching (phase 6.2) keeps the Docker/owner boundary: all 19 owner-facing teaching routes sit on an APIRouter with Depends(owner) and are mounted on the main app; the only bot-facing endpoint is /internal/teaching/consult, authenticated by bot_identity.",
+    "tag": "inferred",
+    "evidence": [
+     "backend/teaching.py:319",
+     "backend/app.py:580",
+     "backend/app.py:425-436"
+    ]
+   },
+   {
+    "text": "Screen capture runs inside the bot's own runtime container (an in-memory Capture object in runtime_api), reachable only through the runtime API key; the backend worker PULLS frames with GET /teaching/batch?ack=N rather than the runtime pushing them, so the runtime never needs credentials for postgres or MinIO.",
+    "tag": "inferred",
+    "evidence": [
+     "docker/runtime_api.py:37",
+     "docker/runtime_api.py:447-470",
+     "backend/teaching.py:120",
+     "backend/teaching.py:1011",
+     "backend/worker.py:664"
+    ]
+   },
+   {
+    "text": "Captured chunks are Fernet-encrypted before they reach MinIO (bucket ArtifactStore.bucket) and decrypted on read; session info, evidence, drafts, test candidates, checks and reports are stored only in *_encrypted columns.",
+    "tag": "inferred",
+    "evidence": [
+     "backend/teaching.py:148-151",
+     "backend/teaching.py:92-95",
+     "backend/migrations/018_teaching.sql:5-6",
+     "backend/migrations/018_teaching.sql:27-29"
+    ]
+   },
+   {
+    "text": "At most one active teaching session per bot is enforced by the database itself: a partial unique index over states preparing/recording/paused/finalizing.",
+    "tag": "inferred",
+    "evidence": [
+     "backend/migrations/018_teaching.sql:12"
+    ]
+   },
+   {
+    "text": "Recording is tied to computer control: handing the computer back or a new owner takeover pauses capture, and start/pause/resume require the viewer to own input at the current lease epoch.",
+    "tag": "inferred",
+    "evidence": [
+     "docker/runtime_api.py:390",
+     "docker/runtime_api.py:399",
+     "docker/runtime_api.py:450-452"
+    ]
+   },
+   {
+    "text": "A skill candidate is task-scoped, not installed: capabilities.manifest injects the candidate as a skill only for its test task; the plugin's skill_view routes it to /internal/teaching/consult, which rejects any sha256 mismatch (409) or a task without skill_view (403) and records consulted_at.",
+    "tag": "inferred",
+    "evidence": [
+     "backend/capabilities.py:57-61",
+     "plugins/hermbot/__init__.py:96-101",
+     "backend/app.py:428-436"
+    ]
+   },
+   {
+    "text": "Private capture data expires (expires_at defaults to now()+7 days unless pinned); maintenance deletes chunks and revisions and blanks the encrypted evidence/draft, but only after a runtime call succeeds: if the bot runtime is down, native.request raises, a bare except swallows it and the MinIO objects stay (session remains deleting), while teaching_publications has no ON DELETE CASCADE, so published-skill provenance is kept.",
+    "tag": "inferred",
+    "evidence": [
+     "backend/migrations/018_teaching.sql:9",
+     "backend/migrations/018_teaching.sql:32-37",
+     "backend/teaching.py:1008-1044"
+    ]
+   },
+   {
+    "text": "Migration 018 is applied by the same glob-ordered runner as all other migrations at startup (db.initialize), and records schema version 18.",
+    "tag": "inferred",
+    "evidence": [
+     "backend/db.py:28",
+     "backend/migrations/018_teaching.sql:38"
+    ]
+   }
+  ]
+ }
+}

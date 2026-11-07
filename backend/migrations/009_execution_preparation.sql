@@ -1,0 +1,3 @@
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS execution_plan jsonb NOT NULL DEFAULT '{}';
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS handoff_context jsonb NOT NULL DEFAULT '{}';
+INSERT INTO schema_versions(version) VALUES(9) ON CONFLICT DO NOTHING;

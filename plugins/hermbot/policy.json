@@ -1,0 +1,3 @@
+{
+  "native_instruction": "Connected applications do not disable native tools. Use Hermbot connectors for scoped account access. Connector changes follow the workspace policy and recorded owner request, standing permission, or exact review. Connector credentials remain in the backend. Independently authenticated browser sessions and terminal actions are outside connector authorization coverage. Never automatically repeat an external effect whose outcome is uncertain."
+}

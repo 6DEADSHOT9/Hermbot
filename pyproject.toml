@@ -1,0 +1,32 @@
+[project]
+name = "hermbot"
+version = "0.1.0"
+description = "Private collaboration between isolated Hermes teammates"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi==0.115.12",
+  "uvicorn==0.34.3",
+  "psycopg[binary,pool]==3.2.9",
+  "httpx==0.28.1",
+  "boto3==1.38.46",
+  "pydantic==2.11.7",
+  "cryptography==46.0.5",
+  "websockets==15.0.1",
+  "jsonschema==4.25.1",
+  "pywebpush==2.3.0",
+  "PyJWT==2.15.1",
+]
+
+[project.optional-dependencies]
+broker = ["keyring>=25.7,<26; sys_platform == 'darwin'"]
+
+[dependency-groups]
+dev = ["pytest==8.4.1", "ruff==0.12.3"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["integration: requires the local PostgreSQL service", "hermes: exercises pinned Hermes runtimes", "live: requires configured paid model access"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"

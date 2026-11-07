@@ -1,0 +1,19 @@
+# Explicit opt-in for protocol acceptance; uses real Hermes with a synthetic model.
+services:
+  model-fixture:
+    image: hermbot-app:phase1
+    command: uvicorn tests.model_fixture:app --host 0.0.0.0 --port 8010
+    networks: [researcher-net, writer-net, reviewer-net]
+  api:
+    environment: &fixture
+      MODEL_NAME: hermbot-protocol-fixture
+      MODEL_BASE_URL: http://model-fixture:8010/v1
+      MODEL_API_KEY: protocol-fixture-only
+  worker:
+    environment: *fixture
+  hermes-researcher:
+    environment: *fixture
+  hermes-writer:
+    environment: *fixture
+  hermes-reviewer:
+    environment: *fixture

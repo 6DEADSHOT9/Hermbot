@@ -1,0 +1,55 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import {writeFile,access,unlink} from 'node:fs/promises';
+
+const browser=await chromium.launch({headless:true});
+const context=await browser.newContext({viewport:{width:1440,height:1000}});
+const page=await context.newPage(),errors=[];
+page.on('pageerror',e=>errors.push(e.message));
+await page.goto(process.env.HERMBOT_TEST_URL||'http://api:8000');
+await page.getByLabel('Owner token').fill(process.env.OWNER_TOKEN);
+await page.getByRole('button',{name:'Open workspace'}).click();
+await page.getByRole('navigation',{name:'Team conversations'}).waitFor();
+async function state(){return page.evaluate(async()=>{const r=await fetch('/api/v1/state');if(!r.ok)throw Error('State unavailable');return r.json();});}
+async function until(test,timeout=180000){const end=Date.now()+timeout;while(Date.now()<end){const value=test(await state());if(value)return value;await page.waitForTimeout(500);}throw Error('Work control condition timed out');}
+async function signal(action){const done=`/output/phase2-${action}-done`;await unlink(done).catch(()=>{});await writeFile('/output/phase2-work-signal.json',JSON.stringify({action}));const end=Date.now()+120000;while(Date.now()<end){try{await access(done);return;}catch{}await page.waitForTimeout(500);}throw Error('Worker action not acknowledged');}
+await page.getByRole('navigation',{name:'Team conversations'}).getByRole('button',{name:/Phase 2 UI manager/}).click();
+await until(s=>s.bots.some(b=>b.name==='Phase 2 UI manager'&&b.status==='active'&&b.applied_revision===b.revision&&b.readiness.compatible));
+await signal('pause-worker');
+const marker=`UI_CONTROL_PROOF_${Date.now()}`;
+await page.getByLabel('Message your teammate').fill(`${marker}: original instructions. Publish a short text artifact and finish. Do not delegate.`);
+await page.getByRole('button',{name:'Send message',exact:true}).click();
+const original=await until(s=>s.tasks.find(t=>t.input.startsWith(marker)));
+assert.equal(original.status,'queued');
+let card=page.locator('.task-card').filter({hasText:marker});
+await card.getByRole('button',{name:'Edit instructions',exact:true}).click();
+await page.getByRole('textbox',{name:'Queued instructions',exact:true}).fill(`${marker}: edited instructions. Publish a text artifact containing ${marker} and EDITED_BEFORE_EXECUTION, then finish. Do not delegate.`);
+await page.getByRole('button',{name:'Save instructions',exact:true}).click();
+await until(s=>s.tasks.find(t=>t.id===original.id&&t.input.includes('edited instructions')));
+await card.getByRole('button',{name:'Redirect',exact:true}).click();
+await page.getByLabel('What should change?').fill('QUEUED_DIRECTION_PROOF: keep the result concise.');
+await page.getByRole('button',{name:'Send direction',exact:true}).click();
+await until(s=>s.controls.some(c=>c.task_id===original.id&&c.status==='pending'));
+await card.getByRole('button',{name:'Inspect work',exact:true}).click();
+assert.ok(await page.getByRole('dialog').getByText('Direction: pending',{exact:true}).count());
+await page.getByRole('dialog').getByRole('button',{name:'Close',exact:true}).click();
+await card.getByRole('button',{name:'Stop task',exact:true}).click();
+await until(s=>s.tasks.find(t=>t.id===original.id&&t.status==='cancelled'));
+await card.getByRole('button',{name:'Retry task',exact:true}).click();
+const retry=await until(s=>s.tasks.find(t=>t.id!==original.id&&t.input.startsWith(marker)));
+assert.equal(retry.status,'queued');
+assert.equal(retry.attempts,0);
+await signal('resume-worker');
+await until(s=>{const t=s.tasks.find(t=>t.id===retry.id);if(['failed','uncertain','cancelled','interrupted'].includes(t?.status))throw Error(`Retry ended ${t.status}`);return t?.status==='completed'&&t;},300000);
+const snapshot=await state();
+assert.ok(snapshot.artifacts.some(a=>a.task_id===retry.id));
+const message=page.locator('.message.from-user').filter({hasText:`${marker}: edited instructions`}).first();
+await message.getByRole('button',{name:/React to message/}).click();
+await message.locator('.reaction-chip').waitFor();
+await message.getByRole('button',{name:'Reply',exact:true}).click();
+await page.getByRole('button',{name:'Close thread',exact:true}).waitFor();
+await page.getByRole('button',{name:'Close thread',exact:true}).click();
+assert.deepEqual(errors,[]);
+await writeFile('/output/phase2-work-controls.json',JSON.stringify({check:'visible queued edit, pending redirect, inspector, stop, safe new retry, native result, reaction and thread controls',original_task_id:original.id,retry_task_id:retry.id,original_attempts:0,script_errors:errors},null,2));
+console.log('Queued edit, redirect, inspection, stop, retry, reaction and thread controls passed.');
+await browser.close();

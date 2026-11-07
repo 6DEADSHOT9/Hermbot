@@ -1,0 +1,2103 @@
+{
+ "agent": "code_refresh",
+ "files_read": [
+  "backend/app.py",
+  "backend/worker.py",
+  "backend/capabilities.py",
+  "docker/runtime_api.py",
+  "plugins/hermbot/__init__.py",
+  "docker/hermes.Dockerfile",
+  ".dockerignore",
+  "tests/conftest.py",
+  "web/src/Computer.tsx",
+  "web/src/Knowledge.tsx",
+  "web/src/style.css",
+  "web/tsconfig.tsbuildinfo",
+  "backend/teaching.py (candidate, run, private_barrier only, for evidence)",
+  "docker/teaching_capture.py (signatures only)",
+  "backend/migrations/018_teaching.sql (FK lines only)",
+  "architecture/_work/remap/diffs/backend__app.py.diff",
+  "architecture/_work/remap/diffs/backend__worker.py.diff",
+  "architecture/_work/remap/diffs/backend__capabilities.py.diff",
+  "architecture/_work/remap/diffs/docker__runtime_api.py.diff",
+  "architecture/_work/remap/diffs/plugins__hermbot____init__.py.diff",
+  "architecture/_work/remap/diffs/docker__hermes.Dockerfile.diff",
+  "architecture/_work/remap/diffs/tests__conftest.py.diff",
+  "architecture/_work/remap/diffs/web__src__Computer.tsx.diff",
+  "architecture/_work/remap/diffs/web__src__Knowledge.tsx.diff"
+ ],
+ "files_not_fully_read": [],
+ "module_notes": {
+  "backend/app.py": {
+   "purpose": "FastAPI application: owner REST API core routes, SSE event stream, bot-facing /internal/* plugin endpoints (now including the teaching skill-candidate consult), router assembly (now including the teaching router) and SPA static mount.",
+   "layer": "api",
+   "responsibilities": [
+    "Startup: validate service credentials length, run db.initialize (schema+migrations+bootstrap), init MinIO ArtifactStore",
+    "Auth dependencies: owner (cookie/bearer via auth.verify), bot_identity (bot bearer token hash lookup), internal (unused)",
+    "Origin check middleware for non-GET requests and no-store/nosniff headers",
+    "Owner state snapshot (/api/v1/state), conversation transcripts, task inspection, stop/steer/approval decisions/review edits",
+    "Owner message submission entry point that delegates to service.create_task with idempotency key",
+    "SSE /api/v1/events polling the events table every 0.5s",
+    "Bot-facing /internal/context, /internal/tools, /internal/inbox-delivered, /internal/tool-visibility, /internal/computer-paused, /internal/turn-ended, /internal/routine-wake/{bot_id}/{generation} and /internal/teaching/consult",
+    "POST /internal/teaching/consult (TeachingConsult body session_id + sha256, bot bearer): resolves the bot's active task, requires teaching.candidate(task) to exist with the same sha256 (409 otherwise), requires skill_view in capabilities.manifest allowed_tools (403 otherwise), then returns the candidate via teaching.candidate(consulted=True)",
+    "Phase-1 one-shot native routine creation (/api/v1/routines with RoutineRequest) plus delegation to routines.save for RoutineDefinition",
+    "Includes routers from teaching (first, teaching.routes(owner)), product, library, computer, knowledge, connections, routines, trigger_api (owner + ingress), work_items, capabilities, notification_api, inputs, outcomes; the SPA static mount follows them"
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "Imports teaching module (and StrictModel/Field) at the top of the file; `teaching` is now part of the `from . import ...` list.",
+     "evidence": [
+      "backend/app.py:1",
+      "backend/app.py:2",
+      "backend/app.py:21"
+     ]
+    },
+    {
+     "text": "New TeachingConsult request model (session_id 1-200 chars, sha256 64 lowercase hex).",
+     "evidence": [
+      "backend/app.py:420-422"
+     ]
+    },
+    {
+     "text": "New bot-authenticated POST /internal/teaching/consult: active_task -> teaching.candidate match on sha256 (409) -> capabilities.manifest must allow skill_view (403) -> teaching.candidate(consulted=True).",
+     "evidence": [
+      "backend/app.py:425-435"
+     ]
+    },
+    {
+     "text": "teaching.routes(owner) is included before all other routers (19 teaching owner routes).",
+     "evidence": [
+      "backend/app.py:580"
+     ]
+    }
+   ],
+   "functions": [
+    {
+     "name": "lifespan",
+     "line": 41,
+     "desc": "Startup/shutdown: reject <32-char OWNER/INTERNAL/SUPERVISOR tokens, db.initialize, ArtifactStore.initialize; close pool on exit"
+    },
+    {
+     "name": "invalid_request",
+     "line": 56,
+     "desc": "422 handler that strips submitted input values (may contain tokens) from validation errors"
+    },
+    {
+     "name": "bearer",
+     "line": 61,
+     "desc": "Extract token from 'Bearer ' Authorization header"
+    },
+    {
+     "name": "owner",
+     "line": 65,
+     "desc": "Owner auth dependency: auth.verify(Authorization header, hermbot_session cookie)"
+    },
+    {
+     "name": "bot_identity",
+     "line": 69,
+     "desc": "Bot auth dependency: hash bearer token, match bots.bot_token_hash for non-deleted/archived bots"
+    },
+    {
+     "name": "internal",
+     "line": 79,
+     "desc": "Internal-token dependency (compare_digest with INTERNAL_TOKEN); defined but not referenced by any route"
+    },
+    {
+     "name": "request_boundary",
+     "line": 85,
+     "desc": "HTTP middleware: reject cross-origin non-GET requests (403), set Cache-Control no-store and nosniff"
+    },
+    {
+     "name": "health",
+     "line": 99,
+     "desc": "GET /health: SELECT 1, returns {status ok, phase 4}"
+    },
+    {
+     "name": "login",
+     "line": 106,
+     "desc": "POST /api/v1/session: owner bearer verified then auth.login sets session cookie"
+    },
+    {
+     "name": "logout",
+     "line": 112,
+     "desc": "DELETE /api/v1/session: auth.logout revokes session/device cookies"
+    },
+    {
+     "name": "state",
+     "line": 118,
+     "desc": "GET /api/v1/state: aggregate snapshot (bots, conversations, tasks incl. active + last 300, work items, valid reviews, pending questions, artifacts, grants, routines, workspace, proposals, operations, controls, event cursor)"
+    },
+    {
+     "name": "conversation",
+     "line": 157,
+     "desc": "GET conversation transcript page (100 msgs, before/thread filters) with reactions, artifacts and attachments"
+    },
+    {
+     "name": "runtime_history",
+     "line": 171,
+     "desc": "Proxy native Hermes session transcript GET /api/sessions/{id}/messages for a conversation/bot session"
+    },
+    {
+     "name": "create_group",
+     "line": 189,
+     "desc": "Create group conversation with >=2 distinct registered bots and participants; event group.created"
+    },
+    {
+     "name": "submit_message",
+     "line": 204,
+     "desc": "POST /api/v1/messages: MessageRequest (intent default auto) delegated to submit()"
+    },
+    {
+     "name": "retry_interpretation",
+     "line": 209,
+     "desc": "Reset a failed auto-intake task (intake_status failed, still queued) to pending; event message.interpretation_requested"
+    },
+    {
+     "name": "submit",
+     "line": 220,
+     "desc": "POST /api/v1/tasks (and messages): validate Idempotency-Key, call service.create_task; auto intent sets orchestration_version=2 and coordination_version=1"
+    },
+    {
+     "name": "get_task",
+     "line": 238,
+     "desc": "Task inspection: attempts, children, connector state, management scope, budget, activity, assessments, last 40 non-delta events"
+    },
+    {
+     "name": "stop_task",
+     "line": 259,
+     "desc": "Owner Stop: service.cancel on locked task tree"
+    },
+    {
+     "name": "steer_task",
+     "line": 267,
+     "desc": "Owner Redirect: idempotent via registry.mutation; service.steer; legacy tasks also post a 'Direction:' user message"
+    },
+    {
+     "name": "steer_task.work",
+     "line": 269,
+     "desc": "Inner mutation body for steer"
+    },
+    {
+     "name": "revoke_grant",
+     "line": 279,
+     "desc": "Revoke management grant: lock work items then roots (dispatch lock order), set revoked_at, cancel each root"
+    },
+    {
+     "name": "decide",
+     "line": 298,
+     "desc": "Owner decision on approval (once/deny/cancel) with payload-hash check, idempotent repeat, expiry/stop checks, secure-input computer check, kind-specific dispatch, task requeue"
+    },
+    {
+     "name": "edit_review",
+     "line": 343,
+     "desc": "Owner edits a pending non-runtime/non-lifecycle review: supersede old approval and related drafts, create new review via service.request_review"
+    },
+    {
+     "name": "edit_review.work",
+     "line": 345,
+     "desc": "Inner mutation body for review edit"
+    },
+    {
+     "name": "get_artifact",
+     "line": 370,
+     "desc": "Serve artifact bytes via library.file_response"
+    },
+    {
+     "name": "events",
+     "line": 380,
+     "desc": "GET /api/v1/events SSE: cursor from ?after or Last-Event-ID, polls events id>cursor (100/batch) every 0.5s, keepalive every 10 polls"
+    },
+    {
+     "name": "events.stream",
+     "line": 385,
+     "desc": "Async generator producing SSE frames until client disconnect"
+    },
+    {
+     "name": "tools",
+     "line": 402,
+     "desc": "POST /internal/tools: validate operation arguments with ARGUMENT_MODELS, require expected_work_revision for v2 work, service.tool_action"
+    },
+    {
+     "name": "routine_wake",
+     "line": 416,
+     "desc": "POST /internal/routine-wake/{bot_id}/{generation}: delegate to routines.wake with bearer"
+    },
+    {
+     "name": "context",
+     "line": 439,
+     "desc": "POST /internal/context: routine admission (ticket), active task resolution, human-control pause, authenticated context (connector policy, message routing, capabilities, grant, inbox), tool.admitted event"
+    },
+    {
+     "name": "inbox_delivered",
+     "line": 482,
+     "desc": "POST /internal/inbox-delivered: coordination.delivered for message ids included in this execution context"
+    },
+    {
+     "name": "tool_visibility",
+     "line": 491,
+     "desc": "POST /internal/tool-visibility: record capabilities.visible event (deduped by attempt+tool-set digest)"
+    },
+    {
+     "name": "computer_paused",
+     "line": 503,
+     "desc": "POST /internal/computer-paused: mark active attempt response computer_paused and event computer.task_paused"
+    },
+    {
+     "name": "turn_ended",
+     "line": 512,
+     "desc": "POST /internal/turn-ended: for scheduled (one-shot routine) external attempts record external_terminal and routine status"
+    },
+    {
+     "name": "create_routine",
+     "line": 526,
+     "desc": "POST /api/v1/routines: RoutineDefinition -> routines.save via mutation; RoutineRequest -> Phase 1 one-shot native Hermes job (reserved attempt, POST /api/jobs)"
+    },
+    {
+     "name": "TeachingConsult",
+     "desc": "Pydantic StrictModel for /internal/teaching/consult: session_id, sha256 (^[0-9a-f]{64}$)",
+     "line": 420
+    },
+    {
+     "name": "teaching_consult",
+     "desc": "POST /internal/teaching/consult: bot-identity route serving the task-scoped teaching candidate SKILL.md to the plugin skill_view path; 409 on candidate/hash mismatch, 403 if skill_view not allowed; marks consulted",
+     "line": 426
+    }
+   ],
+   "env": [
+    "OWNER_TOKEN",
+    "INTERNAL_TOKEN",
+    "SUPERVISOR_TOKEN"
+   ],
+   "notes": [
+    {
+     "text": "Routers (teaching first) are included before the SPA static mount so unknown API paths never fall through to UI code.",
+     "evidence": [
+      "backend/app.py:580-597"
+     ]
+    },
+    {
+     "text": "/internal/* bot routes authenticate with per-bot tokens (bot_identity) not INTERNAL_TOKEN; the internal() dependency is dead code. The new /internal/teaching/consult follows the same pattern.",
+     "evidence": [
+      "backend/app.py:69-81",
+      "backend/app.py:401-402",
+      "backend/app.py:425-426"
+     ]
+    },
+    {
+     "text": "/api/v1/messages and /api/v1/tasks share submit(); only MessageRequest with intent 'auto' enables orchestration v2 and coordination v1.",
+     "evidence": [
+      "backend/app.py:203-234"
+     ]
+    },
+    {
+     "text": "decide() resolves the task lock before re-reading the approval FOR UPDATE (root/work lock order).",
+     "evidence": [
+      "backend/app.py:303-304"
+     ]
+    },
+    {
+     "text": "SSE is DB polling (0.5s) over the events table with id cursor; events are invalidation hints, not a durable queue.",
+     "evidence": [
+      "backend/app.py:379-398"
+     ]
+    },
+    {
+     "text": "The consult route re-runs capabilities.manifest, so a changed teaching-test configuration (teaching.candidate raises 409) also blocks consultation.",
+     "evidence": [
+      "backend/app.py:429",
+      "backend/app.py:432"
+     ]
+    }
+   ]
+  },
+  "backend/worker.py": {
+   "purpose": "Execution worker process: claims queued tasks into attempts, drives native Hermes runs over HTTP, ingests runtime events, settles results, advances waiters, and hosts intake/monitor/routine/teaching background loops.",
+   "layer": "workers",
+   "responsibilities": [
+    "Main 1-second loop: provisioning outbox, readiness probe, work controller reconcile, waiter advancement, knowledge proposals, connector dispatch, claim/drive attempts",
+    "claim_new: global advisory lock, capacity, per-bot exclusivity, SKIP LOCKED lock order, preflight checks, session mapping, prompt assembly, attempt insertion",
+    "claim_existing: lease takeover of active attempts after 12s lease expiry (crash recovery)",
+    "drive: start run with Idempotency-Key, poll status, stream events, budget accounting, deliver decisions/steering, queue monitor assessments",
+    "settle: map runtime terminal status into task state machine, bounded automatic recovery, outcome settlement, result message",
+    "advance_waiters: request expiry closure, coordination wakeups, waiting_input/computer resume, dependency release, child result resumption, deadline/grant expiry stops",
+    "System policy prompts (POLICY / MANAGED_POLICY / COORDINATION_POLICY)",
+    "Background loops started from main(): execution_monitor.run, work_intake.run, routines.run and teaching.run (teaching maintenance + candidate-generation loops); all four are cancelled and gathered in the finally block"
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "Imports the teaching module.",
+     "evidence": [
+      "backend/worker.py:13"
+     ]
+    },
+    {
+     "text": "main() starts teaching.run(STOP) as a fourth background asyncio task (teaching_sync) next to monitor, intake and routine_sync.",
+     "evidence": [
+      "backend/worker.py:661-664"
+     ]
+    },
+    {
+     "text": "Shutdown cancels teaching_sync and includes it in the gather(return_exceptions=True) with the other loops.",
+     "evidence": [
+      "backend/worker.py:684-688"
+     ]
+    }
+   ],
+   "functions": [
+    {
+     "name": "POLICY",
+     "line": 24,
+     "desc": "Legacy (orchestration v0) bot instruction text incl. routing/prepare/outcome guidance"
+    },
+    {
+     "name": "MANAGED_POLICY",
+     "line": 76,
+     "desc": "Instruction text for intake-managed (orchestration v2) executions"
+    },
+    {
+     "name": "COORDINATION_POLICY",
+     "line": 103,
+     "desc": "Appended instruction text for coordination v1 (message/delegate/wait/finish semantics)"
+    },
+    {
+     "name": "claim_new",
+     "line": 124,
+     "desc": "Admit queued tasks into new 'dispatching' attempts under global lock with per-bot exclusivity and SKIP LOCKED lock order"
+    },
+    {
+     "name": "claim_existing",
+     "line": 239,
+     "desc": "Re-lease active (non-uncertain) attempts whose lease expired or belong to this worker"
+    },
+    {
+     "name": "settle",
+     "line": 249,
+     "desc": "Settle an attempt from a runtime terminal status into the task state machine; recovery, outcomes, messages, events"
+    },
+    {
+     "name": "mark_uncertain",
+     "line": 389,
+     "desc": "Mark attempt and task 'uncertain' with reason; event task.uncertain"
+    },
+    {
+     "name": "advance_waiters",
+     "line": 397,
+     "desc": "Periodic transitions for waiting/blocked tasks and expiry/grant enforcement"
+    },
+    {
+     "name": "collect_events",
+     "line": 459,
+     "desc": "Stream runtime SSE events for an attempt (marks event_stream_started/gap coverage) and record each"
+    },
+    {
+     "name": "record_event",
+     "line": 473,
+     "desc": "Persist runtime event idempotently (source_id runtime:{attempt}:{seq}); mark stream complete; create runtime approvals"
+    },
+    {
+     "name": "drive",
+     "line": 494,
+     "desc": "Advance one attempt: scheduled routine handling, start run, account budget, stop, stream, poll status, settle or deliver decisions/monitor"
+    },
+    {
+     "name": "deliver_decisions",
+     "line": 588,
+     "desc": "Send decided runtime approvals and one pending control (steer) to the native run with uncertainty handling"
+    },
+    {
+     "name": "probe",
+     "line": 639,
+     "desc": "Every 20 loops: supervisor network reconcile + HermesClient.capabilities readiness into bots.readiness"
+    },
+    {
+     "name": "main",
+     "line": 655,
+     "desc": "Worker entry: db.initialize, signal handlers, starts monitor/intake/routine_sync/teaching_sync background tasks, then the 1-second loop (provisioning, probe every 20 iterations, work_controller.advance, advance_waiters, knowledge.drive_proposals, connections.drive_one, claim_existing, claim_new, drive gather); cancels all four loops on exit"
+    }
+   ],
+   "env": [
+    "MAX_RECOVERIES"
+   ],
+   "notes": [
+    {
+     "text": "WORKER_ID is a fresh UUID per process; leases are 12 seconds; claim_existing takes over expired leases with FOR UPDATE SKIP LOCKED.",
+     "evidence": [
+      "backend/worker.py:20",
+      "backend/worker.py:239-246"
+     ]
+    },
+    {
+     "text": "claim_new serializes admission with pg_advisory_xact_lock(887832103) and bounds concurrency by workspace max_active minus active/reserved attempts.",
+     "evidence": [
+      "backend/worker.py:127-129"
+     ]
+    },
+    {
+     "text": "A DB unique partial index allows one active attempt per bot (including uncertain).",
+     "evidence": [
+      "backend/schema.sql:49-50"
+     ]
+    },
+    {
+     "text": "Native dispatch idempotency: Idempotency-Key 'hermbot:{attempt_id}' re-sent on retry; after 23h the attempt is marked uncertain instead of replaying.",
+     "evidence": [
+      "backend/worker.py:227",
+      "backend/worker.py:531-536"
+     ]
+    },
+    {
+     "text": "Automatic recovery only for definite retryable failures before any tool started with complete event coverage, bounded by MAX_RECOVERIES.",
+     "evidence": [
+      "backend/worker.py:274-291"
+     ]
+    },
+    {
+     "text": "teaching.run is async: it gathers two thread-offloaded 1-second loops, maintain and generate_one, swallowing their exceptions.",
+     "evidence": [
+      "backend/worker.py:664",
+      "backend/teaching.py:1049-1062"
+     ]
+    }
+   ]
+  },
+  "backend/capabilities.py": {
+   "purpose": "Effective execution capability manifest per bot/task (now including a task-scoped teaching candidate skill); preparation (hermbot_prepare) with skill consultation and typed blockers; owner inspection route.",
+   "layer": "domain",
+   "responsibilities": [
+    "manifest(): combine workspace permissions, bot config/revision, probed inventory, enabled skills, task intent, grant, human control, connections into available/allowed/blocked tools and a fingerprint",
+    "manifest(): for a non-peer manifest with a task, call teaching.candidate(conn, task); when the task is a teaching test, replace any same-named skill with a synthetic enabled entry {description 'Task-scoped teaching candidate...', required_tools [], teaching_test_id, sha256} and expose the candidate as facts['teaching_candidate'] (which therefore enters the fingerprint)",
+    "requirements(): typed blockers for runtime, skills, tools and connectors",
+    "prepare(): register outcomes, validate, consult raw skill bodies, persist tasks.execution_plan and event; the skill body comes from teaching.candidate(consulted=True) when the selected name is the task's teaching candidate (treated as exists=True), otherwise from the runtime adapter GET /skills/{name}",
+    "routes(): GET /api/v1/bots/{bot_id}/capabilities"
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "manifest() imports teaching.candidate and computes a preview candidate for non-peer task manifests.",
+     "evidence": [
+      "backend/capabilities.py:57-58"
+     ]
+    },
+    {
+     "text": "The candidate replaces any installed/enabled skill with the same name in the skills list, as an always-enabled synthetic entry carrying teaching_test_id and sha256.",
+     "evidence": [
+      "backend/capabilities.py:59-61"
+     ]
+    },
+    {
+     "text": "facts gains the 'teaching_candidate' key (so it is part of the capability fingerprint and of the manifest returned to the plugin).",
+     "evidence": [
+      "backend/capabilities.py:93-96"
+     ]
+    },
+    {
+     "text": "prepare() imports teaching.candidate and, for the candidate skill name, reads the body from the database instead of the runtime adapter; a skill with teaching_test_id is forced to exists=True.",
+     "evidence": [
+      "backend/capabilities.py:159",
+      "backend/capabilities.py:173-175"
+     ]
+    }
+   ],
+   "functions": [
+    {
+     "name": "VERSION",
+     "line": 9,
+     "desc": "Inventory version 1"
+    },
+    {
+     "name": "INSTRUCTION",
+     "line": 14,
+     "desc": "Model guidance for preparation"
+    },
+    {
+     "name": "blocker",
+     "line": 25,
+     "desc": "Typed blocker dict"
+    },
+    {
+     "name": "manifest",
+     "line": 29,
+     "desc": "Builds the effective capability view; now also adds the task's teaching candidate to skills and facts['teaching_candidate']"
+    },
+    {
+     "name": "requirements",
+     "line": 124,
+     "desc": "Blocker computation"
+    },
+    {
+     "name": "prepare",
+     "line": 158,
+     "desc": "hermbot_prepare backend: registers outcomes, validates requirements, consults skill bodies (teaching candidate from DB, other skills from adapter GET /skills/{name}), persists execution_plan"
+    },
+    {
+     "name": "routes",
+     "line": 193,
+     "desc": "Router factory"
+    },
+    {
+     "name": "routes.inspect",
+     "line": 197,
+     "desc": "GET capabilities (optional task_id)"
+    }
+   ],
+   "env": [],
+   "notes": [
+    {
+     "text": "Admitted set narrows by intent: 'auto' -> only hermbot_route_message; unprepared legacy work -> read/inspection/review/ask; human control or not running -> none; waiting_input/results -> small sets.",
+     "evidence": [
+      "backend/capabilities.py:105-115"
+     ]
+    },
+    {
+     "text": "Discovery never grants authority; documented.",
+     "evidence": [
+      "backend/capabilities.py:1",
+      "plan/SKILLS-TOOLS.md:30"
+     ]
+    },
+    {
+     "text": "teaching.candidate raises HTTP 409 when the stored teaching test's config_hash no longer matches the bot; because manifest() calls it for every non-peer task manifest, such a task's manifest (and /internal/context, GET capabilities?task_id=) fails with 409 until a fresh test is prepared (worker.settle catches HTTPException around manifest).",
+     "evidence": [
+      "backend/capabilities.py:57-58",
+      "backend/teaching.py:256-267",
+      "backend/worker.py:339-341"
+     ]
+    },
+    {
+     "text": "Peer manifests (peer=True) never consider teaching candidates.",
+     "evidence": [
+      "backend/capabilities.py:58"
+     ]
+    }
+   ]
+  },
+  "docker/runtime_api.py": {
+   "purpose": "Private per-bot FastAPI adapter (port 8643) exposing native Hermes knowledge, workspace export, Bot Desktop control/stream, teaching demonstration capture and routine-scheduler management to the Hermbot backend only.",
+   "layer": "runtime",
+   "responsibilities": [
+    "Bearer auth against HERMBOT_ADAPTER_KEY with hmac.compare_digest",
+    "Safe knowledge file IO under HERMES_HOME via dir fds, O_NOFOLLOW, regular-file and UTF-8 checks, 100 000-char limit",
+    "Compare-and-swap writes keyed by sha256 with cross-process flock and atomic fsynced replace; same-content replay",
+    "Native memory (MEMORY.md/USER.md) read/write with Hermes limits and safety scan; skill catalog/read/write (hermbot- prefix editable)",
+    "Workspace file export for hermbot_publish_file (regular, single-link, no hidden parts, <=10 MB, stable during read)",
+    "Desktop status/start/stop/thumbnail/browser and takeover/handback using native bot_desktop lease + Hermbot gate drain + ready marker",
+    "RFB WebSocket relay to the native unix socket with RfbClientFilter gating input to the ready viewer (allowed() records the lease epoch admitted for that viewer); accepted client bytes are also parsed by AcceptedRFB and fed to the teaching Capture under capture.lock; capture.disconnect(viewer) runs when the socket closes",
+    "Teaching capture endpoints: POST /teaching/control (start|pause|private|resume|finish|discard, requires input-ready viewer and matching lease epoch except finish/discard) and GET /teaching/batch?ack=N (acknowledged event/frame batches) over a process-global teaching_capture.Capture; teaching_frame() takes a 1440x1000 thumbnail after 0.2 s",
+    "Pauses the teaching capture on takeover and on handback of the computer lease (capture.pause)",
+    "Manage the fixed no-agent 'Hermbot wake <generation>' cron job through Hermes CLI/API"
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "sys.path now also includes the adapter's own directory, and the module imports AcceptedRFB and Capture from teaching_capture; a process-global `capture = Capture()` is created.",
+     "evidence": [
+      "docker/runtime_api.py:25",
+      "docker/runtime_api.py:30",
+      "docker/runtime_api.py:37"
+     ]
+    },
+    {
+     "text": "/computer/control pauses the capture ('computer handed back' on handback, 'computer ownership changed' before takeover).",
+     "evidence": [
+      "docker/runtime_api.py:390",
+      "docker/runtime_api.py:399"
+     ]
+    },
+    {
+     "text": "New TeachingControl model and POST /teaching/control: 409 unless the viewer is input-ready and the lease epoch matches (not required for finish/discard); finish on a recording session takes a last frame first; start/resume take a frame after control succeeds; ValueError becomes 409.",
+     "evidence": [
+      "docker/runtime_api.py:439-462"
+     ]
+    },
+    {
+     "text": "New GET /teaching/batch returning capture.batch(ack).",
+     "evidence": [
+      "docker/runtime_api.py:465-467"
+     ]
+    },
+    {
+     "text": "New async teaching_frame(): after 0.2 s reads desktop geometry, renders a 1440x1000 thumbnail in a thread, stores it with capture.frame, records geometry while still recording; any failure pauses capture ('Screen capture unavailable; retained prefix only').",
+     "evidence": [
+      "docker/runtime_api.py:470-482"
+     ]
+    },
+    {
+     "text": "/computer/ws: the input gate is now allowed(), a closure that records the lease epoch of the admitted viewer; receive() runs gate.feed and AcceptedRFB.feed/capture.observe inside capture.lock, pauses capture on unsupported protocol input, forwards bytes to the VNC socket, and schedules a teaching_frame for an observed generation; capture.disconnect(viewer) runs in the finally block.",
+     "evidence": [
+      "docker/runtime_api.py:509-516",
+      "docker/runtime_api.py:526-542",
+      "docker/runtime_api.py:559"
+     ]
+    }
+   ],
+   "functions": [
+    {
+     "name": "authorize",
+     "line": 40,
+     "desc": "Bearer HERMBOT_ADAPTER_KEY check; 401 if unset or mismatch"
+    },
+    {
+     "name": "sha",
+     "line": 47,
+     "desc": "sha256 hex of UTF-8 text"
+    },
+    {
+     "name": "directory",
+     "line": 52,
+     "desc": "Context manager walking/creating dirs under HOME with O_NOFOLLOW; 409 on OSError"
+    },
+    {
+     "name": "read_file",
+     "line": 70,
+     "desc": "Safe UTF-8 regular-file read, '' if missing, 413 >100k"
+    },
+    {
+     "name": "_write_file",
+     "line": 90,
+     "desc": "CAS write: replay if same content, 409 if expected hash stale, temp+fsync+replace"
+    },
+    {
+     "name": "write_file",
+     "line": 116,
+     "desc": "flock hermbot-knowledge.lock around _write_file; empty SKILL.md deletes file"
+    },
+    {
+     "name": "Strict",
+     "line": 134,
+     "desc": "Pydantic extra=forbid base"
+    },
+    {
+     "name": "KnowledgeWrite",
+     "line": 138,
+     "desc": "content<=100000, expected_hash 64 hex"
+    },
+    {
+     "name": "WorkspaceExport",
+     "line": 143,
+     "desc": "path 1..2000"
+    },
+    {
+     "name": "workspace_bytes",
+     "line": 147,
+     "desc": "Validated /workspace path walk and bounded stable read"
+    },
+    {
+     "name": "export_workspace",
+     "line": 179,
+     "desc": "POST /workspace/export handler returning name,size,sha256,base64"
+    },
+    {
+     "name": "Control",
+     "line": 185,
+     "desc": "action takeover|handback, viewer_id 32..128, force"
+    },
+    {
+     "name": "skill_name",
+     "line": 191,
+     "desc": "Validate [a-z][a-z0-9-]{0,79}"
+    },
+    {
+     "name": "health",
+     "line": 198,
+     "desc": "GET /health -> adapter 4, execution_capabilities 1 (unauthenticated)"
+    },
+    {
+     "name": "memory",
+     "line": 203,
+     "desc": "GET /memory -> memory/user targets with content, sha256, native limits"
+    },
+    {
+     "name": "update_memory",
+     "line": 224,
+     "desc": "PUT /memory/{target} with limit + _scan_memory_content safety check, CAS write"
+    },
+    {
+     "name": "catalog",
+     "line": 241,
+     "desc": "GET /skills -> installed skills; enabled ones parsed for metadata.hermbot.required_tools"
+    },
+    {
+     "name": "skill",
+     "line": 267,
+     "desc": "GET /skills/{name} -> content/sha/exists/editable; bundled skills read raw from /opt/hermes/skills"
+    },
+    {
+     "name": "update_skill",
+     "line": 300,
+     "desc": "PUT /skills/{name} only hermbot- prefix; frontmatter name/description validation; CAS write to skills/hermbot/<name>/SKILL.md"
+    },
+    {
+     "name": "ready_for_input",
+     "line": 327,
+     "desc": "True only if native lease holder human, same viewer and ready marker epoch/viewer match"
+    },
+    {
+     "name": "computer",
+     "line": 344,
+     "desc": "GET /computer -> desktop status, lease public view, input_ready"
+    },
+    {
+     "name": "start",
+     "line": 356,
+     "desc": "POST /computer/start -> runtime.start(); 409 on failure"
+    },
+    {
+     "name": "stop",
+     "line": 369,
+     "desc": "POST /computer/stop; 409 while human holds"
+    },
+    {
+     "name": "thumbnail",
+     "line": 379,
+     "desc": "GET /computer/thumbnail data URL"
+    },
+    {
+     "name": "control",
+     "line": 386,
+     "desc": "POST /computer/control: takeover/handback; now pauses teaching capture first"
+    },
+    {
+     "name": "control.owns_control",
+     "line": 401,
+     "desc": "Nested: lease still human, same viewer and epoch"
+    },
+    {
+     "name": "open_browser",
+     "line": 418,
+     "desc": "POST /computer/browser: only for ready viewer; launches dock browser about:blank"
+    },
+    {
+     "name": "screen",
+     "line": 486,
+     "desc": "WS /computer/ws: auth header + 64-hex x-hermbot-viewer; bridge to native RFB unix socket with input filter plus teaching observation (AcceptedRFB/Capture)"
+    },
+    {
+     "name": "screen.receive",
+     "line": 518,
+     "desc": "Nested: client->RFB bytes through RfbClientFilter (<=1 MB frames) under capture.lock, observed for teaching, then written to the socket"
+    },
+    {
+     "name": "screen.send",
+     "line": 544,
+     "desc": "Nested: RFB->client bytes; touch_activity"
+    },
+    {
+     "name": "RoutineScheduler",
+     "line": 569,
+     "desc": "generation uuid, token 32..100, enabled"
+    },
+    {
+     "name": "routine_scheduler",
+     "line": 576,
+     "desc": "PUT /routine-scheduler: install wake script+config, create/pause/resume the fixed 1-minute no-agent job"
+    },
+    {
+     "name": "routine_scheduler.jobs",
+     "line": 579,
+     "desc": "Nested: list Hermes jobs via 127.0.0.1:8642/api/jobs with API_SERVER_KEY"
+    },
+    {
+     "name": "TeachingControl",
+     "desc": "Strict model: session uuid, action start|pause|private|resume|finish|discard, viewer 64-hex, epoch>=0, revision>=1",
+     "line": 439
+    },
+    {
+     "name": "teaching_control",
+     "desc": "POST /teaching/control: gate on input-ready viewer + lease epoch (except finish/discard), drive Capture.control, capture frames on start/resume/finish; ValueError -> 409",
+     "line": 448
+    },
+    {
+     "name": "teaching_batch",
+     "desc": "GET /teaching/batch?ack=: returns Capture.batch(ack)",
+     "line": 466
+    },
+    {
+     "name": "teaching_frame",
+     "desc": "Async: sleep 0.2s, read geometry, thumbnail 1440x1000, Capture.frame; on failure Capture.pause",
+     "line": 470
+    },
+    {
+     "name": "screen.allowed",
+     "desc": "Nested in screen(): records admitted lease epoch (or None) for the viewer and gates RfbClientFilter",
+     "line": 511
+    }
+   ],
+   "env": [
+    "HERMES_HOME",
+    "HERMBOT_ADAPTER_KEY",
+    "HERMES_ENABLED_SKILLS",
+    "API_SERVER_KEY",
+    "HERMBOT_API_URL",
+    "BOT_ID"
+   ],
+   "notes": [
+    {
+     "text": "Documented: only the product backend holds this adapter credential; no host ports or Docker socket; disconnect never releases a lease.",
+     "evidence": [
+      "docker/runtime_api.py:1-5",
+      "docker/runtime_api.py:562"
+     ]
+    },
+    {
+     "text": "Imports Hermes internals at call time: tools.memory_tool, tools.skills_tool, tools.bot_desktop (lease, runtime, browser, thumbnail, rfb_filter).",
+     "evidence": [
+      "docker/runtime_api.py:24",
+      "docker/runtime_api.py:204",
+      "docker/runtime_api.py:242",
+      "docker/runtime_api.py:328",
+      "docker/runtime_api.py:497"
+     ]
+    },
+    {
+     "text": "Takeover ordering: acquire native lease first (closes admission via lease.human_holds used by the plugin gate), then exclusive drain, then publish ready marker for this epoch/viewer.",
+     "evidence": [
+      "docker/runtime_api.py:397-407",
+      "plugins/hermbot/__init__.py:56-59"
+     ]
+    },
+    {
+     "text": "The Capture object is process-global and shared by every websocket and control call in the adapter; its state machine lives in docker/teaching_capture.py.",
+     "evidence": [
+      "docker/runtime_api.py:37",
+      "docker/teaching_capture.py:68"
+     ]
+    }
+   ]
+  },
+  "plugins/hermbot/__init__.py": {
+   "purpose": "Hermes plugin 'hermbot': registers 22 hermbot_* tools, pre_llm_call/on_session_end hooks and tool_execution/llm_request middleware that route all collaboration through the authenticated backend /internal API (including consultation of a teaching candidate skill).",
+   "layer": "plugin",
+   "responsibilities": [
+    "post(): JSON POST to HERMBOT_API_URL with Bearer HERMBOT_BOT_TOKEN; map HTTP errors to {error,status_code}; unavailability to a stop-and-report error",
+    "execute(): forward a tool op to /internal/tools with stable session id (task_id), tool_call_id as receipt_id and expected_work_revision",
+    "execution_boundary(): wrap every native and Hermbot tool call in runtime-gate admit(); on takeover report /internal/computer-paused and refuse",
+    "admitted_execution(): call /internal/context; enforce work revision, routing-first, conversation-only intents, allowed_tools, preparation and enabled-skill checks; for skill_view, serve the task's teaching candidate through POST /internal/teaching/consult (SKILL.md only; a file_path argument returns candidate_has_no_files), otherwise run the upstream skill_view raw (preprocess=False)",
+    "before_turn(): inject authenticated task context (and routine ticket parsing) as system context",
+    "after_turn(): report turn completion to /internal/turn-ended",
+    "llm_request(): project tool schemas via capability_filter, inject teammate inbox, acknowledge delivered inbox, record tool visibility",
+    "register(): register tools, hooks and middleware"
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "skill_view branch checks capabilities['teaching_candidate']; when the requested name equals the candidate name it returns an error for file_path requests, otherwise posts {session_id, sha256} to /internal/teaching/consult and returns that JSON; the upstream skill_view fallback is unchanged.",
+     "evidence": [
+      "plugins/hermbot/__init__.py:96-106"
+     ]
+    }
+   ],
+   "functions": [
+    {
+     "name": "post",
+     "line": 18,
+     "desc": "Authenticated JSON POST, 60 s timeout, 2 MB response cap"
+    },
+    {
+     "name": "session_identity",
+     "line": 34,
+     "desc": "Prefer framework task_id over rotating session_id"
+    },
+    {
+     "name": "execute",
+     "line": 39,
+     "desc": "Tool handler body -> /internal/tools"
+    },
+    {
+     "name": "execution_boundary",
+     "line": 51,
+     "desc": "tool_execution middleware: admission gate"
+    },
+    {
+     "name": "admitted_execution",
+     "line": 69,
+     "desc": "Policy checks + admitted callback in one admission lifetime; skill_view of the task teaching candidate is answered by /internal/teaching/consult"
+    },
+    {
+     "name": "before_turn",
+     "line": 112,
+     "desc": "pre_llm_call hook -> /internal/context"
+    },
+    {
+     "name": "after_turn",
+     "line": 123,
+     "desc": "on_session_end hook -> /internal/turn-ended"
+    },
+    {
+     "name": "llm_request",
+     "line": 128,
+     "desc": "llm_request middleware -> schema projection + inbox"
+    },
+    {
+     "name": "TOOLS",
+     "line": 174,
+     "desc": "22 operations: prepare, route_message, connectors, connector, teammates, message, wait, delegate, ask, status, work_status, review, publish, publish_file, read_artifact, reassign, steer, cancel, finish, grants, propose, proposals"
+    },
+    {
+     "name": "register",
+     "line": 211,
+     "desc": "Registers hermbot_<op> tools (toolset hermbot, requires_env HERMBOT_BOT_TOKEN), hooks and middleware"
+    },
+    {
+     "name": "register.handler",
+     "line": 217,
+     "desc": "Per-tool handler closure forwarding to execute()"
+    }
+   ],
+   "env": [
+    "HERMBOT_API_URL",
+    "HERMBOT_BOT_TOKEN",
+    "HERMES_HOME"
+   ],
+   "notes": [
+    {
+     "text": "Correlation ContextVar carries framework tool_call_id/expected revision; model arguments cannot forge it.",
+     "evidence": [
+      "plugins/hermbot/__init__.py:11",
+      "plugins/hermbot/__init__.py:52",
+      "plugins/hermbot/__init__.py:94"
+     ]
+    },
+    {
+     "text": "request_revisions is a process-global dict keyed by stable session; never pruned (inferred minor leak).",
+     "evidence": [
+      "plugins/hermbot/__init__.py:12",
+      "plugins/hermbot/__init__.py:134"
+     ]
+    },
+    {
+     "text": "Imports runtime modules dynamically: hermbot_runtime_gate, tools.bot_desktop.lease, tools.skills_tool.skill_view, capability_filter.",
+     "evidence": [
+      "plugins/hermbot/__init__.py:9",
+      "plugins/hermbot/__init__.py:56",
+      "plugins/hermbot/__init__.py:104",
+      "plugins/hermbot/__init__.py:130"
+     ]
+    },
+    {
+     "text": "The enabled-skill check for skill_view passes for the candidate because capabilities.manifest adds it to skills as enabled.",
+     "evidence": [
+      "plugins/hermbot/__init__.py:92-93",
+      "backend/capabilities.py:59-61"
+     ]
+    },
+    {
+     "text": "post() converts HTTP errors from the consult route (409/403) into an {error,status_code} JSON string returned to the model.",
+     "evidence": [
+      "plugins/hermbot/__init__.py:24-29",
+      "plugins/hermbot/__init__.py:101"
+     ]
+    }
+   ]
+  },
+  "docker/hermes.Dockerfile": {
+   "purpose": "Runtime image hermbot-hermes:phase4: pinned upstream Hermes agent plus desktop stack, Hermbot adapter scripts (including teaching_capture) and the managed plugin.",
+   "layer": "runtime",
+   "responsibilities": [
+    "FROM nousresearch/hermes-agent pinned by digest",
+    "apt install TigerVNC, Xfce pieces, Chromium, xdotool etc. (unpinned apt versions)",
+    "Create /opt/hermbot, /workspace, /browser-state (owned by hermes)",
+    "Copy bootstrap, copy_state, write_attachment, capability_filter, routine_wakeup, teaching_capture, runtime_api, install_cua into /opt/hermbot; run install_cua",
+    "Copy gate and plugin to /opt/hermbot/plugin; set HERMES_HOME=/opt/data, PYTHONPATH=/opt/hermbot, HERMES_CUA_DRIVER_CMD, HERMES_WRITE_SAFE_ROOT",
+    "ENTRYPOINT bootstrap.py as root (USER root)"
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "COPY docker/teaching_capture.py /opt/hermbot/teaching_capture.py added before runtime_api.py so runtime_api can import it.",
+     "evidence": [
+      "docker/hermes.Dockerfile:10",
+      "docker/runtime_api.py:30"
+     ]
+    }
+   ],
+   "functions": [
+    {
+     "name": "FROM nousresearch/hermes-agent@sha256:d4da...",
+     "line": 1,
+     "desc": "pinned base"
+    },
+    {
+     "name": "apt-get install",
+     "line": 3,
+     "desc": "desktop stack"
+    },
+    {
+     "name": "COPY docker/*.py",
+     "line": 5,
+     "desc": "eight adapter scripts incl. teaching_capture.py (lines 5-12 region; install_cua at 12)"
+    },
+    {
+     "name": "RUN install_cua.py",
+     "line": 13,
+     "desc": "install CUA driver"
+    },
+    {
+     "name": "COPY hermbot_runtime_gate.py",
+     "line": 14,
+     "desc": "gate module"
+    },
+    {
+     "name": "COPY plugins/hermbot",
+     "line": 15,
+     "desc": "plugin to /opt/hermbot/plugin"
+    },
+    {
+     "name": "ENV",
+     "line": 17,
+     "desc": "HERMES_HOME, PYTHONPATH etc."
+    },
+    {
+     "name": "ENTRYPOINT",
+     "line": 19,
+     "desc": "bootstrap.py as root"
+    }
+   ],
+   "env": [
+    "HERMES_HOME",
+    "PYTHONPATH",
+    "PYTHONUNBUFFERED",
+    "HERMES_CUA_DRIVER_CMD",
+    "HERMES_WRITE_SAFE_ROOT"
+   ],
+   "notes": [
+    {
+     "text": "Image runs entrypoint as root so bootstrap can prepare the root-owned plugin tmpfs and private dirs before dropping to the hermes user.",
+     "evidence": [
+      "docker/hermes.Dockerfile:2",
+      "docker/hermes_bootstrap.py:16-41"
+     ]
+    },
+    {
+     "text": "apt packages are not version-pinned, unlike the digest-pinned base images.",
+     "evidence": [
+      "docker/hermes.Dockerfile:3"
+     ]
+    }
+   ]
+  },
+  ".dockerignore": {
+   "purpose": "Build-context exclusions for all images (context \".\").",
+   "layer": "config",
+   "responsibilities": [
+    "Exclude .env and .env.* (lines 1-2), .git, .venv, node_modules, web/node_modules, tests/browser/node_modules, web/dist, web/build-diag.log, plan/archive, test-results, __pycache__ (lines 3-12)",
+    "Exclude the architecture/ explorer directory (line 14, after a blank line 13)"
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "Current file has 14 lines: 13 ignore patterns plus one blank line; architecture/ is the newest rule (no earlier snapshot exists to diff, earlier note listed 12 patterns).",
+     "evidence": [
+      ".dockerignore:14",
+      ".dockerignore:13"
+     ]
+    }
+   ],
+   "functions": [
+    {
+     "name": "exclusions",
+     "line": 1,
+     "desc": "13 patterns: .env, .env.*, .git, .venv, node_modules, web/node_modules, tests/browser/node_modules, web/dist, web/build-diag.log, plan/archive, test-results, __pycache__, architecture/"
+    }
+   ],
+   "env": [],
+   "notes": [
+    {
+     "text": "Keeps private .env files out of every image build.",
+     "evidence": [
+      ".dockerignore:1-2"
+     ]
+    },
+    {
+     "text": "web/dist is excluded so the web image rebuilds the UI.",
+     "evidence": [
+      ".dockerignore:8"
+     ]
+    },
+    {
+     "text": "test-results/ (including the new phase62-* evidence files) is excluded from images.",
+     "evidence": [
+      ".dockerignore:11"
+     ]
+    }
+   ]
+  },
+  "tests/conftest.py": {
+   "purpose": "Pytest session/autouse fixtures: refuse to run unless DATABASE_URL ends with /hermbot_test, initialize schema via db.initialize, truncate 40 tables (now starting with teaching_sessions) before every test, reset the 3 seeded bots (researcher/writer/reviewer) and workspace_settings, and monkeypatch worker.settings so a provider looks configured; exposes make_task factory and row() helper.",
+   "layer": "test",
+   "responsibilities": [
+    "session autouse fixture database(): guard DATABASE_URL suffix /hermbot_test (pytest.exit rc=2), db.initialize(), close pool",
+    "autouse clean_database(): TRUNCATE the explicit table list CASCADE (teaching_sessions first, so teaching_chunks/revisions/tests/publications are cleared via CASCADE), re-seed notification_preferences, delete non-seed bots/groups/providers, reset workspace_settings and bots, monkeypatch worker.settings(provider_configured=True, model_name='test')",
+    "make_task factory and row() helper"
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "The TRUNCATE list now begins with teaching_sessions; the other four teaching_* tables reference it and are cleared via CASCADE.",
+     "evidence": [
+      "tests/conftest.py:23",
+      "backend/migrations/018_teaching.sql:13-34"
+     ]
+    }
+   ],
+   "functions": [
+    {
+     "name": "database",
+     "line": 12,
+     "desc": "session autouse: guard DATABASE_URL suffix /hermbot_test (pytest.exit rc=2), db.initialize(), close pool"
+    },
+    {
+     "name": "clean_database",
+     "line": 21,
+     "desc": "autouse per-test: TRUNCATE ... CASCADE, re-seed notification_preferences, delete non-seed bots/groups/providers, reset workspace_settings and bots, monkeypatch worker.settings(provider_configured=True, model_name='test')"
+    },
+    {
+     "name": "make_task",
+     "line": 38,
+     "desc": "factory: service.create_task in the bot's DM, optional manager grant over the other two seed bots"
+    },
+    {
+     "name": "row",
+     "line": 47,
+     "desc": "SELECT * FROM tasks by id"
+    }
+   ],
+   "env": [
+    "DATABASE_URL"
+   ],
+   "notes": [
+    {
+     "text": "Every pytest test is a DB-integration test in practice: the autouse session fixture initializes the real PostgreSQL schema and the autouse clean_database fixture truncates tables, regardless of whether a file declares pytestmark=integration.",
+     "evidence": [
+      "tests/conftest.py:11-17",
+      "tests/conftest.py:20-34"
+     ]
+    },
+    {
+     "text": "Safety guard: the suite exits with return code 2 if DATABASE_URL does not end with /hermbot_test, so it can never truncate the product database.",
+     "evidence": [
+      "tests/conftest.py:13-14"
+     ]
+    },
+    {
+     "text": "Fixture depends on the three seeded bots researcher/writer/reviewer (Scout/Quill/Sage) existing; it deletes any other bots, group conversations and non-environment providers.",
+     "evidence": [
+      "tests/conftest.py:25-32"
+     ]
+    },
+    {
+     "text": "Workspace defaults reset per test: permitted_tools file/terminal/skills, max_bots=10, max_active=3, active_budget_seconds=3600, decision_mode disabled, external_action_mode requested, execution_policy_revision=1.",
+     "evidence": [
+      "tests/conftest.py:30-31"
+     ]
+    },
+    {
+     "text": "The TRUNCATE list omits several later tables (e.g. input_requests, work_outcomes, teammate_messages, routine_runs, trigger_events); they are cleared only through CASCADE from tasks/work_items/routine_definitions etc. (inferred from the explicit list).",
+     "evidence": [
+      "tests/conftest.py:23"
+     ]
+    }
+   ]
+  },
+  "web/src/Computer.tsx": {
+   "purpose": "Teammate private computer panel: status/lease polling, thumbnail preview, noVNC live view over the authenticated WebSocket, takeover/handback, start/stop/open browser, secure keystroke input, and the embedded Teaching recorder.",
+   "layer": "ui",
+   "responsibilities": [
+    "GET /api/v1/bots/{id}/computer every 1.5s; GET /computer/thumbnail every 2s when not expanded",
+    "WebSocket ws(s)://<host>/api/v1/bots/{id}/computer/ws via @novnc/novnc RFB; viewOnly unless this session holds an input-ready human lease",
+    "POST /api/v1/bots/{id}/computer/control {action:takeover|handback, force}",
+    "POST /api/v1/bots/{id}/computer/{start|stop|browser}",
+    "Secure input: before typing, awaits POST /api/v1/bots/{id}/teaching-private-input (no secret in the body; aborts with 'Private input was not sent' on failure), then types each code point via rfb.sendKey (Unicode keysyms 0x01000000|cp) into the same RFB instance and clears the field; Enter/Tab/Escape keys",
+    "Panel open/close cleanup effect: on close or bot change posts keepalive fetch to /teaching-private-input so a running teaching recording is paused",
+    "Renders <Teaching botId mine/> (the owner-private demonstration recorder) between the blocker line and the preview/live view"
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "Imports Teaching from ./Teaching.",
+     "evidence": [
+      "web/src/Computer.tsx:6"
+     ]
+    },
+    {
+     "text": "New effect: its cleanup (panel closes or bot changes) sends a keepalive POST to /api/v1/bots/{id}/teaching-private-input.",
+     "evidence": [
+      "web/src/Computer.tsx:16"
+     ]
+    },
+    {
+     "text": "enterSecret is now async: it clears the field, awaits POST teaching-private-input (error shown and typing aborted on failure), re-checks that the RFB instance and `mine` are unchanged, then focuses and sends the keys.",
+     "evidence": [
+      "web/src/Computer.tsx:21-24"
+     ]
+    },
+    {
+     "text": "Teaching component rendered with botId and mine.",
+     "evidence": [
+      "web/src/Computer.tsx:40"
+     ]
+    }
+   ],
+   "functions": [
+    {
+     "name": "Computer",
+     "line": 10,
+     "desc": "panel component; renders Teaching"
+    },
+    {
+     "name": "Computer.action",
+     "line": 20,
+     "desc": "POST computer/{path} then invalidate computer and state queries"
+    },
+    {
+     "name": "Computer.enterSecret",
+     "line": 21,
+     "desc": "POST teaching-private-input barrier, then send secret as RFB keystrokes; the value itself is never sent to the API"
+    }
+   ],
+   "env": [],
+   "notes": [
+    {
+     "text": "'mine' = state.mine && input_ready && lease.holder==='human'; RFB.viewOnly toggles with it.",
+     "evidence": [
+      "web/src/Computer.tsx:15",
+      "web/src/Computer.tsx:19"
+     ]
+    },
+    {
+     "text": "Closing the pane or disconnecting keeps human control; handback is explicit (force handback if another session holds it).",
+     "evidence": [
+      "web/src/Computer.tsx:37",
+      "web/src/Computer.tsx:44"
+     ]
+    },
+    {
+     "text": "Stop computer is disabled while a human holds the lease.",
+     "evidence": [
+      "web/src/Computer.tsx:35"
+     ]
+    }
+   ]
+  },
+  "web/src/Knowledge.tsx": {
+   "purpose": "Per-teammate Memory & skills panel: review/edit native memory targets, browse/enable/edit/import skills with hash-checked saves, load historical versions, turn completed work into a skill draft, and (new) host the Teaching panel.",
+   "layer": "ui",
+   "responsibilities": [
+    "GET /api/v1/bots/{id}/knowledge (5s) and /bots/{id}/capabilities (5s)",
+    "GET /api/v1/bots/{id}/knowledge/skills/{name}; GET /knowledge/versions/{version_id}; GET /api/v1/tasks/{id}/skill-draft",
+    "mutate PUT /api/v1/bots/{id}/knowledge/{memory|skill}/{name} with expected_hash (+enable, source_task_id); empty content removes",
+    "mutate POST /api/v1/bots/{id}/knowledge/skills/{name}/enabled with expected_revision",
+    "Import SKILL.md (<=100KB) rewriting frontmatter name to hermbot-* prefix; new skill template",
+    "Renders <Teaching botId mine={false}/> under the capability summary whenever the panel is open for a bot (the recorder is view-only from here; recording control needs the Computer panel)"
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "Imports Teaching.",
+     "evidence": [
+      "web/src/Knowledge.tsx:5"
+     ]
+    },
+    {
+     "text": "Renders Teaching with mine=false after CapabilitySummary, before the draft/list switch.",
+     "evidence": [
+      "web/src/Knowledge.tsx:34"
+     ]
+    }
+   ],
+   "functions": [
+    {
+     "name": "emptyHash",
+     "line": 14,
+     "desc": "sha256 of empty content"
+    },
+    {
+     "name": "newSkill",
+     "line": 15,
+     "desc": "skill template"
+    },
+    {
+     "name": "Knowledge",
+     "line": 17,
+     "desc": "panel component; now renders Teaching"
+    },
+    {
+     "name": "Knowledge.change",
+     "line": 25,
+     "desc": "busy/error wrapper that invalidates state/knowledge/skills"
+    },
+    {
+     "name": "Knowledge.selectSkill",
+     "line": 26,
+     "desc": "load skill"
+    },
+    {
+     "name": "Knowledge.save",
+     "line": 27,
+     "desc": "PUT knowledge with expected_hash"
+    },
+    {
+     "name": "Knowledge.loadWorkflow",
+     "line": 28,
+     "desc": "GET task skill-draft"
+    },
+    {
+     "name": "Knowledge.importSkill",
+     "line": 29,
+     "desc": "import SKILL.md"
+    }
+   ],
+   "env": [],
+   "notes": [
+    {
+     "text": "Editing is disabled unless the bot is active and running ('healthy'); bundled skills are read-only (editable=false).",
+     "evidence": [
+      "web/src/Knowledge.tsx:24",
+      "web/src/Knowledge.tsx:40"
+     ]
+    },
+    {
+     "text": "Optimistic concurrency: saves send the sha256 observed when the draft was loaded (expected_hash).",
+     "evidence": [
+      "web/src/Knowledge.tsx:27"
+     ]
+    }
+   ]
+  },
+  "web/src/style.css": {
+   "purpose": "Hand-written application stylesheet (374 lines): Tailwind v4 import with a 7-file @source list, theme tokens (light L65, dark L66), responsive breakpoints (L67 and later blocks), component styles, DM Sans @font-face (L288-295) and, new, the Teaching panel block (L366-374).",
+   "layer": "ui",
+   "responsibilities": [
+    "CSS custom properties --surface/--canvas/--side/--line/--text/--muted/--accent/--soft/--action",
+    "Dark theme via [data-theme=dark] set by App",
+    "prefers-reduced-motion disables transitions",
+    "Teaching panel styles: .teaching container, heading/status rows, form labels, timeline and event rows with frame thumbnails, test/skill/hash blocks and a <=640px column layout (lines 366-374)"
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "Teaching block appended at the end of the file (comment line 366, rules 367-374): .teaching, .teaching-heading, .teaching-recording, .teaching-status, .teaching-timeline, .teaching-event, .teaching-test, .teaching-skill, .teaching-hash, .teaching-retention and a max-width 640px media query. No snapshot of the older file exists, so every earlier citation was re-verified.",
+     "evidence": [
+      "web/src/style.css:366-374"
+     ]
+    }
+   ],
+   "functions": [],
+   "env": [],
+   "notes": [
+    {
+     "text": "Hand-written application stylesheet; the lead read the six long minified rule lines (65-67, 153, 166, 168, 176) in full: base tokens and light theme (L65), dark theme tokens (L66), responsive breakpoints 1600/1180/950/650px (L67), work-history, capability-summary, input-card/work-outcome/connector-preview and routine styles.",
+     "evidence": [
+      "web/src/style.css:65",
+      "web/src/style.css:66",
+      "web/src/style.css:67",
+      "web/src/style.css:153",
+      "web/src/style.css:166",
+      "web/src/style.css:168",
+      "web/src/style.css:176"
+     ]
+    },
+    {
+     "text": "Tailwind @source scans only App, Management, Library, Knowledge, Computer, Connections and WorkItems; other components rely on hand-written classes.",
+     "evidence": [
+      "web/src/style.css:1-8"
+     ]
+    },
+    {
+     "text": "Layered overrides accumulated over time: :root font-family Inter later overridden by DM Sans, --muted redefined, duplicated .management-modal/.computer-expanded rules.",
+     "evidence": [
+      "web/src/style.css:65",
+      "web/src/style.css:179-180",
+      "web/src/style.css:295",
+      "web/src/style.css:10",
+      "web/src/style.css:113"
+     ]
+    },
+    {
+     "text": "Dead selectors not referenced by any component: .library-nav, .private, .revoke, .eyebrow, .schedule-preview.",
+     "evidence": [
+      "web/src/style.css:73",
+      "web/src/style.css:195",
+      "web/src/style.css:219"
+     ]
+    },
+    {
+     "text": "Font: DM Sans variable 400-700 from ./assets/dm-sans-latin.woff2, font-display swap.",
+     "evidence": [
+      "web/src/style.css:288-295"
+     ]
+    },
+    {
+     "text": "Tailwind @source lists only 7 of the 18 TSX files; Teaching.tsx is not scanned and relies on hand-written .teaching-* rules plus shared classes (button-row, check-row, primary, secondary, error-text).",
+     "evidence": [
+      "web/src/style.css:1-8",
+      "web/src/style.css:366-374"
+     ]
+    },
+    {
+     "text": "Teaching.tsx uses className teaching-form but style.css defines no .teaching-form rule.",
+     "evidence": [
+      "web/src/style.css:366-374"
+     ]
+    }
+   ]
+  },
+  "web/tsconfig.tsbuildinfo": {
+   "purpose": "tsc -b incremental build info (single JSON line, TypeScript 5.8.3) whose root lists 23 src files plus vite.config.ts (24 entries); generated artifact, now includes ./src/teaching.tsx.",
+   "layer": "config",
+   "responsibilities": [
+    "Cache of the TypeScript project root file list for tsc -b (18 .tsx, 5 .ts/.d.ts src files, vite.config.ts)"
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "Root list now includes ./src/teaching.tsx (23 src files vs the earlier 22); Teaching.tsx is present on disk too.",
+     "evidence": [
+      "web/tsconfig.tsbuildinfo:1"
+     ]
+    }
+   ],
+   "functions": [],
+   "env": [],
+   "notes": [
+    {
+     "text": "Root entries are lower-case paths: app, attention, capabilities, computer, connections, connectorpreview, eventtriggers, inputcard, knowledge, library, management, notifications, outcomeactions, recurringmanagement, routines, taskactivity, teaching, workitems (.tsx); api, icons, main, novnc.d, usepanelscope (.ts); ../vite.config.ts; version 5.8.3.",
+     "evidence": [
+      "web/tsconfig.tsbuildinfo:1"
+     ]
+    }
+   ]
+  }
+ },
+ "citation_checks": [
+  {
+   "was": "backend/capabilities.py:167",
+   "now": "backend/capabilities.py:173",
+   "correct": "backend/capabilities.py:173",
+   "agent": "runtime",
+   "note": "Edge \"consult skill\" capabilities -> adapter GET /skills/{name}: line 173 now holds a conditional; the adapter call is the else-branch, the teaching candidate is read from the DB instead."
+  },
+  {
+   "was": "docker/runtime_api.py:457",
+   "now": "docker/runtime_api.py:509",
+   "correct": "docker/runtime_api.py:511-516",
+   "agent": "runtime",
+   "note": "Human input only for the ready viewer/epoch: the gate is now the allowed() closure (511-515) passed to RfbClientFilter (516); line 509 is the new AcceptedRFB observer."
+  },
+  {
+   "was": "tests/conftest.py:23",
+   "now": "tests/conftest.py:23",
+   "correct": "tests/conftest.py:23",
+   "agent": "tests",
+   "note": "Edit only added teaching_sessions inside the TRUNCATE on line 23; line numbers and claims unchanged."
+  },
+  {
+   "was": "tests/conftest.py:23-33",
+   "now": "tests/conftest.py:23-33",
+   "correct": "tests/conftest.py:23-33",
+   "agent": "tests",
+   "note": "Edit only added teaching_sessions inside the TRUNCATE on line 23; line numbers and claims unchanged."
+  },
+  {
+   "was": "tests/conftest.py:11-23",
+   "now": "tests/conftest.py:11-23",
+   "correct": "tests/conftest.py:11-23",
+   "agent": "tests",
+   "note": "Edit only added teaching_sessions inside the TRUNCATE on line 23; line numbers and claims unchanged."
+  },
+  {
+   "was": "tests/conftest.py:11-23",
+   "now": "tests/conftest.py:11-23",
+   "correct": "tests/conftest.py:11-23",
+   "agent": "tests",
+   "note": "Edit only added teaching_sessions inside the TRUNCATE on line 23; line numbers and claims unchanged."
+  },
+  {
+   "was": "tests/conftest.py:11-23",
+   "now": "tests/conftest.py:11-23",
+   "correct": "tests/conftest.py:11-23",
+   "agent": "tests",
+   "note": "Edit only added teaching_sessions inside the TRUNCATE on line 23; line numbers and claims unchanged."
+  },
+  {
+   "was": "web/src/Computer.tsx:19",
+   "now": "web/src/Computer.tsx:21",
+   "correct": "web/src/Computer.tsx:21-24",
+   "agent": "web",
+   "note": "enterSecret is lines 21-24; it now awaits POST teaching-private-input before typing (see corrections)."
+  },
+  {
+   "was": "web/src/Computer.tsx:19",
+   "now": "web/src/Computer.tsx:21",
+   "correct": "web/src/Computer.tsx:21-24",
+   "agent": "web",
+   "note": "enterSecret is lines 21-24; it now awaits POST teaching-private-input before typing (see corrections)."
+  },
+  {
+   "was": "backend/worker.py:655-686",
+   "now": "backend/worker.py:655-687",
+   "correct": "backend/worker.py:655-691",
+   "agent": "work",
+   "note": "main() spans 655-691; the four background tasks (monitor, intake, routine_sync, teaching_sync) are started at 661-664."
+  },
+  {
+   "was": ".dockerignore:*",
+   "now": ".dockerignore:* (no snapshot of the cited version; re-verify every citation)",
+   "correct": ".dockerignore:1-14",
+   "agent": "*",
+   "note": "See the per-citation checks for .dockerignore."
+  },
+  {
+   "was": "web/src/style.css:*",
+   "now": "web/src/style.css:* (no snapshot of the cited version; re-verify every citation)",
+   "correct": "web/src/style.css:1-374",
+   "agent": "*",
+   "note": "See the per-citation checks for style.css."
+  },
+  {
+   "was": "web/src/style.css:289-295",
+   "now": "web/src/style.css:289-295",
+   "correct": "web/src/style.css:289-295",
+   "agent": "docs",
+   "note": "@font-face 288-294 and :root font-family DM Sans at 295; 289-295 supports the claim."
+  },
+  {
+   "was": "web/src/style.css:1",
+   "now": "web/src/style.css:1",
+   "correct": "web/src/style.css:1",
+   "agent": "docs",
+   "note": "Line 1 is @import 'tailwindcss' source(none)."
+  },
+  {
+   "was": "web/src/style.css:65",
+   "now": "web/src/style.css:65",
+   "correct": "web/src/style.css:65",
+   "agent": "lead",
+   "note": "Line 65 is the long :root/base-token light-theme line (Inter family, tokens, layout rules)."
+  },
+  {
+   "was": "web/src/style.css:66",
+   "now": "web/src/style.css:66",
+   "correct": "web/src/style.css:66",
+   "agent": "lead",
+   "note": "Line 66 is the dark theme tokens [data-theme=dark]."
+  },
+  {
+   "was": "web/src/style.css:67",
+   "now": "web/src/style.css:67",
+   "correct": "web/src/style.css:67",
+   "agent": "lead",
+   "note": "Line 67 holds the 1600/1180/950/650px media queries."
+  },
+  {
+   "was": "web/src/style.css:153",
+   "now": "web/src/style.css:153",
+   "correct": "web/src/style.css:153",
+   "agent": "lead",
+   "note": "Line 153 is the .work-history/.removed-work block."
+  },
+  {
+   "was": "web/src/style.css:166",
+   "now": "web/src/style.css:166",
+   "correct": "web/src/style.css:166",
+   "agent": "lead",
+   "note": "Line 166 is .capability-summary/.task-preparation."
+  },
+  {
+   "was": "web/src/style.css:168",
+   "now": "web/src/style.css:168",
+   "correct": "web/src/style.css:168",
+   "agent": "lead",
+   "note": "Line 168 is .input-card/.work-outcome/.connector-preview."
+  },
+  {
+   "was": "web/src/style.css:176",
+   "now": "web/src/style.css:176",
+   "correct": "web/src/style.css:176",
+   "agent": "lead",
+   "note": "Line 176 is .routine-preview/.routine-result rules."
+  },
+  {
+   "was": "web/src/style.css:288",
+   "now": "web/src/style.css:288",
+   "correct": "web/src/style.css:288",
+   "agent": "lead",
+   "note": "Line 288 opens @font-face for DM Sans."
+  },
+  {
+   "was": "web/src/style.css:1-8",
+   "now": "web/src/style.css:1-8",
+   "correct": "web/src/style.css:1-8",
+   "agent": "web",
+   "note": "Lines 1-8 are the Tailwind import and 7 @source entries (App, Management, Library, Knowledge, Computer, Connections, WorkItems); Teaching.tsx is not listed."
+  },
+  {
+   "was": "web/src/style.css:65",
+   "now": "web/src/style.css:65",
+   "correct": "web/src/style.css:65",
+   "agent": "web",
+   "note": "Line 65 is the long :root/base-token light-theme line (Inter family, tokens, layout rules)."
+  },
+  {
+   "was": "web/src/style.css:179-180",
+   "now": "web/src/style.css:179-180",
+   "correct": "web/src/style.css:179-180",
+   "agent": "web",
+   "note": ":root --muted (179) and dark --muted (180)."
+  },
+  {
+   "was": "web/src/style.css:295",
+   "now": "web/src/style.css:295",
+   "correct": "web/src/style.css:295",
+   "agent": "web",
+   "note": ":root font-family DM Sans (295)."
+  },
+  {
+   "was": "web/src/style.css:10",
+   "now": "web/src/style.css:10",
+   "correct": "web/src/style.css:10",
+   "agent": "web",
+   "note": ".management-modal at line 10 (duplicate of 113)."
+  },
+  {
+   "was": "web/src/style.css:113",
+   "now": "web/src/style.css:113",
+   "correct": "web/src/style.css:113",
+   "agent": "web",
+   "note": ".modal.management-modal at 113 duplicates line 10."
+  },
+  {
+   "was": "web/src/style.css:73",
+   "now": "web/src/style.css:73",
+   "correct": "web/src/style.css:73",
+   "agent": "web",
+   "note": ".library-nav rule at 73; still no className uses it."
+  },
+  {
+   "was": "web/src/style.css:195",
+   "now": "web/src/style.css:195",
+   "correct": "web/src/style.css:195",
+   "agent": "web",
+   "note": ".private rule at 195; still unused (Teaching.tsx does not use it)."
+  },
+  {
+   "was": "web/src/style.css:219",
+   "now": "web/src/style.css:219",
+   "correct": "web/src/style.css:219",
+   "agent": "web",
+   "note": "Line 219 groups .task-card small ... .revoke (.revoke still unused)."
+  },
+  {
+   "was": "web/src/style.css:288-295",
+   "now": "web/src/style.css:288-295",
+   "correct": "web/src/style.css:288-295",
+   "agent": "web",
+   "note": "@font-face (288-294) and :root DM Sans font-family (295)."
+  },
+  {
+   "was": "web/src/style.css:290",
+   "now": "web/src/style.css:290",
+   "correct": "web/src/style.css:290",
+   "agent": "web",
+   "note": "Line 290 is the @font-face src url(./assets/dm-sans-latin.woff2)."
+  },
+  {
+   "was": ".dockerignore:8",
+   "now": ".dockerignore:8",
+   "correct": ".dockerignore:8",
+   "agent": "web",
+   "note": "Line 8 is web/dist (excluded from build context)."
+  },
+  {
+   "was": "web/src/style.css:102",
+   "now": "web/src/style.css:102",
+   "correct": "web/src/style.css:102",
+   "agent": "web",
+   "note": ".sidebar-bottom .library-nav at 102."
+  },
+  {
+   "was": "web/src/style.css:65-67",
+   "now": "web/src/style.css:65-67",
+   "correct": "web/src/style.css:65-67",
+   "agent": "web",
+   "note": "Lines 65-67 hold the base, dark-theme and responsive rules; the dead selectors .eyebrow and .schedule-preview are defined in line 65 and are still unreferenced."
+  },
+  {
+   "was": ".dockerignore:1-2",
+   "now": ".dockerignore:1-2",
+   "correct": ".dockerignore:1-2",
+   "agent": "runtime",
+   "note": "Lines 1-2 are .env and .env.*."
+  },
+  {
+   "was": ".dockerignore:11",
+   "now": ".dockerignore:11",
+   "correct": ".dockerignore:11",
+   "agent": "tests",
+   "note": "Line 11 is test-results."
+  }
+ ],
+ "corrections": [
+  {
+   "agent": "work",
+   "find": "Execution worker process: claims queued tasks into attempts, drives native Hermes runs over HTTP, ingests runtime events, settles results, advances waiters, and hosts intake/monitor/routine background loops.",
+   "replace": "Execution worker process: claims queued tasks into attempts, drives native Hermes runs over HTTP, ingests runtime events, settles results, advances waiters, and hosts intake/monitor/routine/teaching background loops.",
+   "evidence": [
+    "backend/worker.py:661-664"
+   ]
+  },
+  {
+   "agent": "work",
+   "find": "plus asyncio loops execution_monitor.run, work_intake.run, routines.run.",
+   "replace": "plus asyncio loops execution_monitor.run, work_intake.run, routines.run and teaching.run (maintenance + candidate generation).",
+   "evidence": [
+    "backend/worker.py:661-664",
+    "backend/worker.py:684-688"
+   ]
+  },
+  {
+   "agent": "runtime",
+   "find": "skill_view runs with preprocess=False.",
+   "replace": "skill_view runs with preprocess=False for installed skills; when the requested name is the task teaching_candidate it is instead answered by POST /internal/teaching/consult (SKILL.md only, file_path rejected).",
+   "evidence": [
+    "plugins/hermbot/__init__.py:96-106"
+   ]
+  },
+  {
+   "agent": "runtime",
+   "find": "run skill_view raw (preprocess=False)",
+   "replace": "run skill_view raw (preprocess=False), or serve the task-scoped teaching candidate through /internal/teaching/consult",
+   "evidence": [
+    "plugins/hermbot/__init__.py:96-106"
+   ]
+  },
+  {
+   "agent": "runtime",
+   "find": "Binary RFB relay to native unix socket; input passes RfbClientFilter only while viewer is ready",
+   "replace": "Binary RFB relay to native unix socket; input passes RfbClientFilter (via the allowed() epoch-recording closure) only while viewer is ready, and accepted input is also observed by the teaching Capture (AcceptedRFB) with capture.disconnect(viewer) on close",
+   "evidence": [
+    "docker/runtime_api.py:509-516",
+    "docker/runtime_api.py:526-542",
+    "docker/runtime_api.py:559"
+   ]
+  },
+  {
+   "agent": "runtime",
+   "find": "Nested: client->RFB bytes through RfbClientFilter (<=1 MB frames)",
+   "replace": "Nested: client->RFB bytes through RfbClientFilter (<=1 MB frames) inside capture.lock, observed by AcceptedRFB/Capture for teaching, then written to the VNC socket",
+   "evidence": [
+    "docker/runtime_api.py:518-542"
+   ]
+  },
+  {
+   "agent": "runtime",
+   "find": "12 patterns",
+   "replace": "13 patterns (adds architecture/ at line 14)",
+   "evidence": [
+    ".dockerignore:1-14"
+   ]
+  },
+  {
+   "agent": "web",
+   "find": "Secure input never transits the REST API or chat; it is sent as keystrokes over the authenticated live connection and the local state is cleared.",
+   "replace": "The secret value never transits the REST API or chat; it is sent as keystrokes over the authenticated live connection and the local state is cleared. Before typing, the UI awaits a value-free POST /api/v1/bots/{id}/teaching-private-input so any teaching recording is paused first, and aborts if that call fails.",
+   "evidence": [
+    "web/src/Computer.tsx:21-24"
+   ]
+  },
+  {
+   "agent": "web",
+   "find": "send secret as keystrokes through live RFB; never sent to API",
+   "replace": "POST teaching-private-input barrier, then send secret as keystrokes through live RFB; the secret value is never sent to the API",
+   "evidence": [
+    "web/src/Computer.tsx:21-24"
+   ]
+  },
+  {
+   "agent": "web",
+   "find": "Tailwind @source only lists 7 of 17 TSX files",
+   "replace": "Tailwind @source only lists 7 of 18 TSX files",
+   "evidence": [
+    "web/src/style.css:1-8",
+    "web/tsconfig.tsbuildinfo:1"
+   ]
+  },
+  {
+   "agent": "web",
+   "find": "listing the 22 src files + vite.config.ts",
+   "replace": "listing the 23 src files (now including teaching.tsx) + vite.config.ts",
+   "evidence": [
+    "web/tsconfig.tsbuildinfo:1"
+   ]
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:backend/app.py",
+   "target": "fn:backend/teaching.py::routes",
+   "kind": "calls",
+   "label": "include teaching router",
+   "evidence": [
+    "backend/app.py:580"
+   ]
+  },
+  {
+   "source": "fn:backend/app.py::teaching_consult",
+   "target": "fn:backend/teaching.py::candidate",
+   "kind": "calls",
+   "label": "match candidate sha256; consulted=True",
+   "evidence": [
+    "backend/app.py:429",
+    "backend/app.py:435"
+   ]
+  },
+  {
+   "source": "fn:backend/app.py::teaching_consult",
+   "target": "fn:backend/capabilities.py::manifest",
+   "kind": "calls",
+   "label": "require skill_view allowed",
+   "evidence": [
+    "backend/app.py:432-434"
+   ]
+  },
+  {
+   "source": "fn:backend/app.py::teaching_consult",
+   "target": "table:teaching_tests",
+   "kind": "writes",
+   "label": "consulted_at via candidate(consulted=True)",
+   "evidence": [
+    "backend/app.py:435",
+    "backend/teaching.py:256-267"
+   ]
+  },
+  {
+   "source": "fn:backend/capabilities.py::manifest",
+   "target": "fn:backend/teaching.py::candidate",
+   "kind": "calls",
+   "label": "task-scoped teaching candidate preview",
+   "evidence": [
+    "backend/capabilities.py:57-58"
+   ]
+  },
+  {
+   "source": "fn:backend/capabilities.py::prepare",
+   "target": "fn:backend/teaching.py::candidate",
+   "kind": "calls",
+   "label": "consult candidate body from DB",
+   "evidence": [
+    "backend/capabilities.py:173"
+   ]
+  },
+  {
+   "source": "file:backend/worker.py",
+   "target": "fn:backend/teaching.py::run",
+   "kind": "spawns",
+   "label": "teaching background loop",
+   "evidence": [
+    "backend/worker.py:664"
+   ]
+  },
+  {
+   "source": "fn:backend/worker.py::main",
+   "target": "fn:backend/teaching.py::run",
+   "kind": "spawns",
+   "label": "asyncio.create_task(teaching.run(STOP))",
+   "evidence": [
+    "backend/worker.py:664",
+    "backend/worker.py:687-688"
+   ]
+  },
+  {
+   "source": "file:plugins/hermbot/__init__.py",
+   "target": "route:backend/app.py:POST /internal/teaching/consult",
+   "kind": "http",
+   "label": "skill_view of teaching candidate",
+   "evidence": [
+    "plugins/hermbot/__init__.py:101"
+   ]
+  },
+  {
+   "source": "fn:plugins/hermbot/__init__.py::admitted_execution",
+   "target": "route:backend/app.py:POST /internal/teaching/consult",
+   "kind": "http",
+   "label": "skill_view of teaching candidate",
+   "evidence": [
+    "plugins/hermbot/__init__.py:96-101"
+   ]
+  },
+  {
+   "source": "file:docker/runtime_api.py",
+   "target": "file:docker/teaching_capture.py",
+   "kind": "imports",
+   "label": "AcceptedRFB, Capture (sys.path insert of own dir)",
+   "evidence": [
+    "docker/runtime_api.py:25",
+    "docker/runtime_api.py:30"
+   ]
+  },
+  {
+   "source": "fn:docker/runtime_api.py::teaching_control",
+   "target": "fn:docker/teaching_capture.py::Capture",
+   "kind": "calls",
+   "label": "Capture.control",
+   "evidence": [
+    "docker/runtime_api.py:456"
+   ]
+  },
+  {
+   "source": "fn:docker/runtime_api.py::teaching_batch",
+   "target": "fn:docker/teaching_capture.py::Capture",
+   "kind": "calls",
+   "label": "Capture.batch",
+   "evidence": [
+    "docker/runtime_api.py:467"
+   ]
+  },
+  {
+   "source": "fn:docker/runtime_api.py::screen",
+   "target": "fn:docker/teaching_capture.py::AcceptedRFB",
+   "kind": "calls",
+   "label": "observe accepted RFB input",
+   "evidence": [
+    "docker/runtime_api.py:509",
+    "docker/runtime_api.py:533"
+   ]
+  },
+  {
+   "source": "fn:docker/runtime_api.py::screen",
+   "target": "fn:docker/teaching_capture.py::Capture",
+   "kind": "calls",
+   "label": "observe/disconnect",
+   "evidence": [
+    "docker/runtime_api.py:535",
+    "docker/runtime_api.py:559"
+   ]
+  },
+  {
+   "source": "fn:docker/runtime_api.py::control",
+   "target": "fn:docker/teaching_capture.py::Capture",
+   "kind": "calls",
+   "label": "pause on takeover/handback",
+   "evidence": [
+    "docker/runtime_api.py:390",
+    "docker/runtime_api.py:399"
+   ]
+  },
+  {
+   "source": "fn:docker/runtime_api.py::teaching_frame",
+   "target": "fn:docker/teaching_capture.py::Capture",
+   "kind": "calls",
+   "label": "Capture.frame / pause",
+   "evidence": [
+    "docker/runtime_api.py:477",
+    "docker/runtime_api.py:482"
+   ]
+  },
+  {
+   "source": "file:docker/hermes.Dockerfile",
+   "target": "file:docker/teaching_capture.py",
+   "kind": "imports",
+   "label": "COPY into /opt/hermbot (image build)",
+   "evidence": [
+    "docker/hermes.Dockerfile:10"
+   ]
+  },
+  {
+   "source": "fn:web/src/Computer.tsx::Computer",
+   "target": "file:web/src/Teaching.tsx",
+   "kind": "renders",
+   "label": "Teaching recorder in computer panel",
+   "evidence": [
+    "web/src/Computer.tsx:40"
+   ]
+  },
+  {
+   "source": "fn:web/src/Knowledge.tsx::Knowledge",
+   "target": "file:web/src/Teaching.tsx",
+   "kind": "renders",
+   "label": "Teaching panel (mine=false)",
+   "evidence": [
+    "web/src/Knowledge.tsx:34"
+   ]
+  },
+  {
+   "source": "fn:web/src/Computer.tsx::Computer",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching-private-input",
+   "kind": "http",
+   "label": "private-input barrier before secure typing and on panel close",
+   "evidence": [
+    "web/src/Computer.tsx:16",
+    "web/src/Computer.tsx:22"
+   ]
+  },
+  {
+   "source": "file:tests/conftest.py",
+   "target": "table:teaching_sessions",
+   "kind": "writes",
+   "label": "TRUNCATE ... CASCADE (clears all teaching_* tables)",
+   "evidence": [
+    "tests/conftest.py:23"
+   ]
+  },
+  {
+   "source": "file:web/tsconfig.tsbuildinfo",
+   "target": "file:web/src/Teaching.tsx",
+   "kind": "documents",
+   "label": "lists ./src/teaching.tsx in tsc root",
+   "evidence": [
+    "web/tsconfig.tsbuildinfo:1"
+   ]
+  }
+ ],
+ "discrepancies": [
+  {
+   "text": "capabilities.manifest() now calls teaching.candidate() for every non-peer task manifest, and candidate() raises HTTP 409 when the stored teaching test config_hash no longer matches the bot. The 409 therefore also surfaces from /internal/context (bot admission), POST /internal/teaching/consult and GET /api/v1/bots/{id}/capabilities?task_id= for that task; only worker.settle catches it. Inferred from code; not documented as an intended admission failure.",
+   "severity": "medium",
+   "nodes": [
+    "file:backend/capabilities.py",
+    "file:backend/teaching.py",
+    "file:backend/app.py"
+   ],
+   "evidence": [
+    "backend/capabilities.py:57-58",
+    "backend/teaching.py:256-267",
+    "backend/app.py:432",
+    "backend/app.py:465",
+    "backend/worker.py:339-341"
+   ]
+  },
+  {
+   "text": "Teaching.tsx uses className \"teaching-form\" but web/src/style.css has no .teaching-form rule (Teaching block lines 366-374 defines the other .teaching-* classes).",
+   "severity": "low",
+   "nodes": [
+    "file:web/src/style.css",
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "web/src/style.css:366-374"
+   ]
+  },
+  {
+   "text": "Tailwind @source in style.css still lists only 7 TSX files; Teaching.tsx (and 10 others) are unscanned, so Teaching relies entirely on hand-written .teaching-* rules and shared classes.",
+   "severity": "low",
+   "nodes": [
+    "file:web/src/style.css",
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "web/src/style.css:1-8",
+    "web/src/style.css:366-374"
+   ]
+  },
+  {
+   "text": "Earlier notes cited the Computer secure-input path as never touching the REST API; Computer.tsx now makes a value-free POST /teaching-private-input before typing and on panel close (documented as a correction, not a security regression: the secret value is still only sent as RFB keystrokes).",
+   "severity": "low",
+   "nodes": [
+    "file:web/src/Computer.tsx"
+   ],
+   "evidence": [
+    "web/src/Computer.tsx:16",
+    "web/src/Computer.tsx:21-24"
+   ]
+  },
+  {
+   "text": "backend/app.py now starts with two imports (StrictModel, Field) placed above `import asyncio`, apparently auto-inserted; style only.",
+   "severity": "low",
+   "nodes": [
+    "file:backend/app.py"
+   ],
+   "evidence": [
+    "backend/app.py:1-2"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,16 @@
+ALTER TABLE providers ADD COLUMN IF NOT EXISTS auth_kind text NOT NULL DEFAULT 'api_key' CHECK(auth_kind IN ('api_key','chatgpt_oauth'));
+ALTER TABLE providers ADD COLUMN IF NOT EXISTS transport text NOT NULL DEFAULT 'chat_completions' CHECK(transport IN ('chat_completions','responses'));
+ALTER TABLE providers ADD COLUMN IF NOT EXISTS connection_status text NOT NULL DEFAULT 'disconnected';
+ALTER TABLE providers ADD COLUMN IF NOT EXISTS account_label text NOT NULL DEFAULT '';
+ALTER TABLE providers ADD COLUMN IF NOT EXISTS plan_enabled boolean NOT NULL DEFAULT false;
+ALTER TABLE providers ADD COLUMN IF NOT EXISTS discovered_models jsonb NOT NULL DEFAULT '[]';
+ALTER TABLE providers ADD COLUMN IF NOT EXISTS verified_models jsonb NOT NULL DEFAULT '[]';
+ALTER TABLE providers ADD COLUMN IF NOT EXISTS auth_epoch integer NOT NULL DEFAULT 1;
+ALTER TABLE providers ALTER COLUMN secret_encrypted DROP NOT NULL;
+ALTER TABLE providers DROP CONSTRAINT IF EXISTS provider_credential_kind;
+ALTER TABLE providers ADD CONSTRAINT provider_credential_kind CHECK ((auth_kind='api_key' AND secret_encrypted IS NOT NULL) OR (auth_kind='chatgpt_oauth' AND secret_encrypted IS NULL AND transport='responses' AND base_url='https://api.openai.com/v1') OR (auth_kind='codex_oauth' AND secret_encrypted IS NULL AND transport='responses' AND base_url='https://chatgpt.com/backend-api/codex'));
+ALTER TABLE bots ADD COLUMN IF NOT EXISTS inference_key_encrypted text;
+ALTER TABLE bots ADD COLUMN IF NOT EXISTS inference_key_hash text;
+ALTER TABLE bots ADD COLUMN IF NOT EXISTS inference_revision integer;
+ALTER TABLE workspace_settings DROP CONSTRAINT IF EXISTS workspace_settings_decision_mode_check;
+ALTER TABLE workspace_settings ADD CONSTRAINT workspace_settings_decision_mode_check CHECK(decision_mode IN ('disabled','decisions','chat','responses'));

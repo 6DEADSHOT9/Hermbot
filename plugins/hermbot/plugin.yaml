@@ -1,0 +1,26 @@
+name: hermbot
+version: 0.5.0
+description: Authenticated durable teammate collaboration for Hermbot
+provides_tools:
+  - hermbot_prepare
+  - hermbot_route_message
+  - hermbot_teammates
+  - hermbot_message
+  - hermbot_wait
+  - hermbot_delegate
+  - hermbot_status
+  - hermbot_review
+  - hermbot_publish
+  - hermbot_read_artifact
+  - hermbot_reassign
+  - hermbot_steer
+  - hermbot_cancel
+  - hermbot_finish
+  - hermbot_connectors
+  - hermbot_connector
+  - hermbot_grants
+  - hermbot_propose
+  - hermbot_proposals
+provides_hooks:
+  - pre_llm_call
+  - on_session_end

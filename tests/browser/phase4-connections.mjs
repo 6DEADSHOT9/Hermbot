@@ -1,0 +1,51 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import {writeFile} from 'node:fs/promises';
+const browser=await chromium.launch({headless:true});
+const context=await browser.newContext({baseURL:'http://api:8000',viewport:{width:1440,height:900}});
+const page=await context.newPage(),errors=[],checks=[];
+page.on('pageerror',e=>errors.push(e.message));
+page.setDefaultTimeout(15000);
+const button=name=>page.getByRole('button',{name,exact:true});
+await page.goto('/');await page.getByLabel('Owner token').fill(process.env.OWNER_TOKEN);await button('Open workspace').click();await page.getByLabel('Owner menu').click();await button('Connections').click();
+await page.getByRole('dialog',{name:'Connections'}).waitFor();
+await button('Add connection').click();await page.getByLabel('Connection provider').selectOption('github');
+const name='Phase 4 UI fixture '+Date.now();
+await page.getByLabel('Connection name').fill(name);
+await page.getByLabel('Permit github.repository',{exact:true}).check();
+await page.getByLabel('Permit github.create_issue',{exact:true}).check();
+await page.getByLabel('Resources for github.create_issue').pressSequentially('test/one, test/two');
+assert.equal(await page.getByLabel('Resources for github.create_issue').inputValue(),'test/one, test/two');
+await button('Save connection access').click();
+const card=page.locator('.grant-card').filter({hasText:name});await card.waitFor();
+let connection=await page.evaluate(async name=>{const r=await fetch('/api/v1/connections');return (await r.json()).connections.find(c=>c.name===name);},name);
+assert.deepEqual(connection.resources['github.create_issue'],['test/one','test/two']);assert.deepEqual(connection.bot_ids,[]);
+checks.push('Connection creation persists exact action and multiple resource restrictions without assigning bots.');
+await card.getByRole('button',{name:'Edit access'}).click();assert.equal(await page.getByLabel('Resources for github.create_issue').inputValue(),'test/one, test/two');
+await page.getByLabel('Connection name').fill(name+' edited');await button('Save connection access').click();
+const edited=page.locator('.grant-card').filter({hasText:name+' edited'});await edited.waitFor();
+await edited.getByRole('button',{name:'Use access token'}).click();
+await page.getByLabel('Connection access token').fill('UI_FIXTURE_ONLY_NOT_A_PROVIDER_CREDENTIAL');
+await button('Close').click();await page.getByLabel('Owner menu').click();await button('Connections').click();assert.equal(await page.getByLabel('Connection access token').count(),0);
+await button('OAuth setup').click();await page.getByLabel('OAuth client secret').fill('UI_PRIVATE_FORM_CANARY');
+await button('Close').click();await page.getByLabel('Owner menu').click();await button('Connections').click();await button('OAuth setup').click();assert.equal(await page.getByLabel('OAuth client secret').inputValue(),'');
+checks.push('Closing a panel clears unsaved private tokens and OAuth client secrets.');
+for(const size of [{width:1440,height:900},{width:390,height:844},{width:320,height:568},{width:844,height:390}]){
+  await page.setViewportSize(size);
+  for(const tab of ['Connections','OAuth setup','Permissions','Activity']){
+    await page.getByRole('dialog').getByRole('button',{name:tab,exact:true}).click();
+    const m=await page.evaluate(()=>{const e=document.querySelector('.modal');return {w:e.clientWidth,s:e.scrollWidth,doc:document.documentElement.scrollWidth,viewport:innerWidth};});
+    assert.ok(m.s<=m.w+1&&m.doc<=m.viewport+1,`Overflow ${tab} ${size.width}: ${JSON.stringify(m)}`);
+  }
+  await button('OAuth setup').click();await page.screenshot({path:`/output/phase4-connections-${size.width}.png`,fullPage:true});
+}
+checks.push('All four connection tabs stay within the viewport at desktop, phone, small phone and landscape sizes.');
+await button('Connections').last().click();
+const finalCard=page.locator('.grant-card').filter({hasText:name+' edited'});await finalCard.getByRole('button',{name:'Revoke connection'}).click();
+await finalCard.getByText(/revoked ·/).waitFor();
+connection=await page.evaluate(async name=>{const r=await fetch('/api/v1/connections');return (await r.json()).connections.find(c=>c.name===name);},name+' edited');
+assert.equal(connection.status,'revoked');assert.equal(connection.bot_ids.length,0);
+assert.deepEqual(errors,[]);
+await writeFile('/output/phase4-connections.json',JSON.stringify({checks,fixture_connection_id:connection.id,fixture_revoked:true,real_provider_acceptance:false,script_errors:errors},null,2));
+console.log('Phase 4 connection form checks passed. No external credentials or effects used.');
+await browser.close();

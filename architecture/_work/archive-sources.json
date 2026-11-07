@@ -1,0 +1,1455 @@
+{
+ "urls": [
+  {
+   "url": "https://learn.chatgpt.com/docs/developer-commands",
+   "first_line": 164
+  },
+  {
+   "url": "https://learn.chatgpt.com/use-cases/follow-goals",
+   "first_line": 290
+  },
+  {
+   "url": "https://learn.chatgpt.com/docs/changelog",
+   "first_line": 332
+  },
+  {
+   "url": "https://learn.chatgpt.com/docs/reference/slash-commands",
+   "first_line": 361
+  },
+  {
+   "url": "https://learn.chatgpt.com/docs/prompting",
+   "first_line": 379
+  },
+  {
+   "url": "https://developers.openai.com/cookbook/examples/codex/using_goals_in_codex",
+   "first_line": 398
+  },
+  {
+   "url": "https://learn.chatgpt.com/docs/web-search?surface=app&translationFallback=zh-Hant",
+   "first_line": 401
+  },
+  {
+   "url": "https://developers.openai.com/api/docs/guides/tools-local-shell",
+   "first_line": 404
+  },
+  {
+   "url": "https://learn.chatgpt.com/docs/reference/commands",
+   "first_line": 407
+  },
+  {
+   "url": "https://learn.chatgpt.com/docs/codex/cli",
+   "first_line": 410
+  },
+  {
+   "url": "https://learn.chatgpt.com/docs/security/cli/reference",
+   "first_line": 413
+  },
+  {
+   "url": "https://learn.chatgpt.com/docs/non-interactive-mode",
+   "first_line": 416
+  },
+  {
+   "url": "https://learn.chatgpt.com/docs/web-search",
+   "first_line": 421
+  },
+  {
+   "url": "https://example.com/v1",
+   "first_line": 1065
+  },
+  {
+   "url": "https://github.com/smarzban/grokbot-tui",
+   "first_line": 1088
+  },
+  {
+   "url": "https://github.com/smarzban/grokbot-tui.git",
+   "first_line": 1114
+  },
+  {
+   "url": "http://127.0.0.1:1340",
+   "first_line": 1144
+  },
+  {
+   "url": "https://www.grokbot.click/features/",
+   "first_line": 1217
+  },
+  {
+   "url": "https://github.com/Franzferdinan51/GrokBot",
+   "first_line": 1252
+  },
+  {
+   "url": "https://x.ai/cli/install.sh",
+   "first_line": 1253
+  },
+  {
+   "url": "https://github.com/Franzferdinan51/Grok-Build-Desktop-App.git",
+   "first_line": 1286
+  },
+  {
+   "url": "https://x.ai/news/designing-grok-bot",
+   "first_line": 1337
+  },
+  {
+   "url": "https://www.reddit.com/r/GrokBot/comments/1wv9ksm/windows_app_broken/",
+   "first_line": 1373
+  },
+  {
+   "url": "https://www.reddit.com/r/GrokBot/comments/1wuw51m/beta_grokbot_meter_weekly_grok_bot_usage_in_the/",
+   "first_line": 1391
+  },
+  {
+   "url": "https://github.com/nuno/grokbot-meter/releases/latest",
+   "first_line": 1392
+  },
+  {
+   "url": "https://grokbot.run/tools/grokbot-tui/",
+   "first_line": 1421
+  },
+  {
+   "url": "https://github.com/codeaashu/grokbot-shim",
+   "first_line": 1448
+  },
+  {
+   "url": "http://127.0.0.1:6080/vnc.html",
+   "first_line": 1454
+  },
+  {
+   "url": "https://github.com/andreanjos/grokbot-headless",
+   "first_line": 1477
+  },
+  {
+   "url": "https://github.com/andreanjos/grokbot-headless.git",
+   "first_line": 1513
+  },
+  {
+   "url": "https://best.xiaohu.ai/en/article/how-we-built-grokbot-in-a-month/",
+   "first_line": 1552
+  },
+  {
+   "url": "https://grokbot.help/guides/getting-started-with-grok-bot",
+   "first_line": 1561
+  },
+  {
+   "url": "https://github.com/Franzferdinan51/GrokBot/blob/main/docs/tools/plugin.md",
+   "first_line": 1564
+  },
+  {
+   "url": "https://huggingface.co/spaces/euychrue/grokbot-ai-companion/blob/main/index.html",
+   "first_line": 1567
+  },
+  {
+   "url": "https://www.reddit.com/r/AppBuilding/comments/1wsviof/building_a_grokbot_alternative/",
+   "first_line": 1570
+  },
+  {
+   "url": "https://www.reddit.com/r/GrokBot/comments/1wwksz7/feature_idea_spaces_per_agent_a_home_for_each/",
+   "first_line": 1573
+  },
+  {
+   "url": "https://www.youtube.com/watch?v=Nfv1ZUFp_AU",
+   "first_line": 1576
+  },
+  {
+   "url": "https://www.reddit.com/r/indie_startups/comments/1wuepxl/building_a_grokbot_alternative/",
+   "first_line": 1579
+  },
+  {
+   "url": "https://www.reddit.com/r/GrokBot/comments/1wsmy84/how_to_use_2_grokbot_accounts_on_the_same_computer/",
+   "first_line": 1582
+  },
+  {
+   "url": "https://www.reddit.com/r/GrokBot/comments/1wh63th/where_is_the_best_place_route_to_buy_grokbot/",
+   "first_line": 1585
+  },
+  {
+   "url": "https://www.reddit.com/r/GrokBot/comments/1wlv7dg/what_do_you_use_grokbot_for_that_codex_claude/",
+   "first_line": 1588
+  },
+  {
+   "url": "https://www.reddit.com/r/GrokBot/comments/1wffu0h/grokbot_is_a_scam/",
+   "first_line": 1591
+  },
+  {
+   "url": "https://www.youtube.com/watch?v=5Mtpavk1iDQ",
+   "first_line": 1594
+  },
+  {
+   "url": "https://www.reddit.com/r/GrokBot/comments/1wjqgxw/tips_for_using_grokbot_and_cursor/",
+   "first_line": 1597
+  },
+  {
+   "url": "https://www.reddit.com/r/GrokBot/comments/1wlnct8/grokbot_obsidian_is_unbelievable/",
+   "first_line": 1600
+  },
+  {
+   "url": "https://www.reddit.com/r/AI_Agents/comments/1wcic5i/has_anyone_here_been_using_grok_bot_regularly/",
+   "first_line": 1603
+  },
+  {
+   "url": "https://x.ai/bot",
+   "first_line": 1608
+  },
+  {
+   "url": "https://docs.x.ai/grok-bot/get-started",
+   "first_line": 1608
+  },
+  {
+   "url": "https://x.ai/bot/guides",
+   "first_line": 2379
+  },
+  {
+   "url": "https://x.ai/changelog/bot",
+   "first_line": 2438
+  },
+  {
+   "url": "https://x.ai/_next/static/media/wallpaper-gray.13vta0mrxymev.png?dpl=ac30ecae3f204dd783f540b86ca620f14eab7fc4",
+   "first_line": 2634
+  },
+  {
+   "url": "https://x.ai/news/introducing-grok-bot",
+   "first_line": 2636
+  },
+  {
+   "url": "https://docs.x.ai/grok-bot/bots",
+   "first_line": 2649
+  },
+  {
+   "url": "https://docs.x.ai/grok-bot/chat-and-collaboration",
+   "first_line": 2765
+  },
+  {
+   "url": "https://docs.x.ai/grok-bot/files-and-results",
+   "first_line": 2916
+  },
+  {
+   "url": "https://docs.x.ai/grok-bot/computer-and-apps",
+   "first_line": 3022
+  },
+  {
+   "url": "https://docs.x.ai/grok-bot/skills-routines-and-automations",
+   "first_line": 3080
+  },
+  {
+   "url": "https://docs.x.ai/grok-bot/mobile",
+   "first_line": 3336
+  },
+  {
+   "url": "https://docs.x.ai/grok-bot/settings-and-notifications",
+   "first_line": 3415
+  },
+  {
+   "url": "https://docs.x.ai/grok-bot/approvals-security-and-privacy",
+   "first_line": 3418
+  },
+  {
+   "url": "https://docs.x.ai/grok-bot/troubleshooting",
+   "first_line": 3421
+  },
+  {
+   "url": "https://docs.x.ai/grok-bot/faq",
+   "first_line": 3424
+  },
+  {
+   "url": "https://docs.x.ai/grok-bot/team-bots",
+   "first_line": 3999
+  },
+  {
+   "url": "https://docs.x.ai/grok-bot/use-cases",
+   "first_line": 4202
+  },
+  {
+   "url": "https://x.ai/bot/guides/grok-bot-for-work",
+   "first_line": 4205
+  },
+  {
+   "url": "https://x.ai/bot/guides/grok-bot-for-pms",
+   "first_line": 4208
+  },
+  {
+   "url": "https://x.ai/bot/marketplace",
+   "first_line": 4211
+  },
+  {
+   "url": "https://media.x.ai/cdn-cgi/image/fit%3Dscale-down%2Conerror%3Dredirect%2Cwidth%3D703%2Cheight%3D421%2Cf%3Dauto/v1/website/grok-bot-guides-grok-bot-for-pms-03-research-7b0a461c.jpg:",
+   "first_line": 4588
+  },
+  {
+   "url": "https://media.x.ai/cdn-cgi/image/fit%3Dscale-down%2Conerror%3Dredirect%2Cf%3Dauto/v1/website/grok_bot_for_work-ffe6e5cd.png:",
+   "first_line": 4592
+  },
+  {
+   "url": "https://cursor.com/pricing",
+   "first_line": 4696
+  },
+  {
+   "url": "https://www.reddit.com/r/cursor/comments/1vxjipg/grok_bot_review/",
+   "first_line": 4949
+  },
+  {
+   "url": "https://www.reddit.com/r/GrokBot/comments/1wth2pp/grok_usage_limits_make_me_want_to_cancel_the/",
+   "first_line": 4952
+  },
+  {
+   "url": "https://www.reddit.com/r/GrokBot/comments/1wa57uk/thoughts_on_grokbot_after_real_usecase/",
+   "first_line": 4955
+  },
+  {
+   "url": "https://agent-finder.co/reviews/grok-bot",
+   "first_line": 4958
+  },
+  {
+   "url": "https://www.reddit.com/r/GrokBot/comments/1wr2cfm/i_havent_tried_grok_bot_yet_how_is_the_long_term/",
+   "first_line": 4961
+  },
+  {
+   "url": "https://www.bighatgroup.com/blog/grok-bot-review-ai-coworker-small-business/",
+   "first_line": 4964
+  },
+  {
+   "url": "https://digitalbydefault.ai/blog/grok-bot-whats-new-september-2026",
+   "first_line": 4967
+  },
+  {
+   "url": "https://www.reddit.com/r/GrokBot/comments/1wpeg6a/grokbot_found_an_answer_to_a_problem_i_had_then/",
+   "first_line": 4970
+  },
+  {
+   "url": "https://www.tryagentsonic.com/articles/grok-bot-review",
+   "first_line": 4979
+  },
+  {
+   "url": "https://grokbot.help/guides/common-problems-and-fixes",
+   "first_line": 4982
+  },
+  {
+   "url": "https://archive.vn/2026.10.01-161339/https%3A/www.reddit.com/r/GrokBot/comments/1wmquja/how_i_use_grok_bots_alongside_claude_and_codex/",
+   "first_line": 4985
+  },
+  {
+   "url": "https://www.reddit.com/r/GrokBot/comments/1w0y6nf/limits_for_grokbot_setups/",
+   "first_line": 4988
+  },
+  {
+   "url": "https://continuumcode.ai/guides/grok-bot-review/",
+   "first_line": 4991
+  },
+  {
+   "url": "https://theaileaderboard.org/posts/grok-bot-review",
+   "first_line": 4994
+  },
+  {
+   "url": "https://www.thatsoftwaredude.com/content/15330/xai-grok-bot-review",
+   "first_line": 4997
+  },
+  {
+   "url": "https://en.wikipedia.org/wiki/Grok_%28chatbot%29",
+   "first_line": 5000
+  },
+  {
+   "url": "https://safetyforum.ai/wp-content/uploads/2026/04/AISF-General-Conversational-Agents-Report-April-2026.pdf",
+   "first_line": 5003
+  },
+  {
+   "url": "https://dlib.si/stream/URN%3ANBN%3ASI%3ADOC-Z8VF6B9X/a28be28c-18b0-4a9f-9fd1-a4e693a436f7/PDF",
+   "first_line": 5006
+  },
+  {
+   "url": "https://ciir-publications.cs.umass.edu/getpdf.php?id=1557",
+   "first_line": 5009
+  },
+  {
+   "url": "https://cdn1.tenchat.ru/static/vbc-gostinder/2026-03-13/18908fcf-f5c9-40c3-a955-07e69d51b22b.pdf",
+   "first_line": 5012
+  },
+  {
+   "url": "https://www.docdroid.net/file/view/p8UnaNi/jotspot-reddit-comments-pdf.pdf?e=1778342254&s=8d30cae5720da8e4fb6cc4d893cf5b74",
+   "first_line": 5015
+  },
+  {
+   "url": "https://media.x.ai/v1/website/grok-bot-guides-grok-bot-for-pms-03-research-7b0a461c.jpg",
+   "first_line": 5022
+  },
+  {
+   "url": "https://media.x.ai/v1/website/grok_bot_for_work-ffe6e5cd.png",
+   "first_line": 5022
+  },
+  {
+   "url": "https://www.reddit.com/r/ai_agents/wiki\ue201",
+   "first_line": 5739
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/overview/",
+   "first_line": 6131
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/tools/",
+   "first_line": 6155
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/",
+   "first_line": 6191
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/install.sh",
+   "first_line": 6192
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/install.ps1",
+   "first_line": 6226
+  },
+  {
+   "url": "https://github.com/hermes-agent-org/hermes",
+   "first_line": 6268
+  },
+  {
+   "url": "https://github.com/nousresearch/hermes-agent/blob/main/website/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-hermes-agent.md",
+   "first_line": 6271
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/llms.txt",
+   "first_line": 6272
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/web-search",
+   "first_line": 6274
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/skills?trk=article-ssr-frontend-pulse_little-text-block",
+   "first_line": 6277
+  },
+  {
+   "url": "https://hermes-agent.noasresearch.com/docs/getting-started/quickstart",
+   "first_line": 6280
+  },
+  {
+   "url": "https://hermes-agent.io/",
+   "first_line": 6283
+  },
+  {
+   "url": "https://hermes-agent.ai/",
+   "first_line": 6286
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/",
+   "first_line": 6289
+  },
+  {
+   "url": "https://github.com/nousresearch/hermes-agent?via=topaitools",
+   "first_line": 6292
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1u5c9ag/important_verify_your_hermes_desktop_download/",
+   "first_line": 6295
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/desktop",
+   "first_line": 6296
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1wu100k/future_of_hermes_in_todays_age/",
+   "first_line": 6298
+  },
+  {
+   "url": "https://github.com/google-research/rrsi",
+   "first_line": 6299
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1wxm8ay/why_are_there_at_least_5_different_hermes/",
+   "first_line": 6301
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com\\-",
+   "first_line": 6302
+  },
+  {
+   "url": "https://github.com/NousResearch/hermes-agent",
+   "first_line": 6302
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1wy3dxj/anyway_to_plug_cursor_subscription_grok_4647_to/",
+   "first_line": 6304
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/guides/xai-grok-oauth",
+   "first_line": 6305
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1ucmvi8/multiagent_profiles_megathread_hermes_agent_june/",
+   "first_line": 6307
+  },
+  {
+   "url": "https://arxiv.org/abs/2508.18255",
+   "first_line": 6310
+  },
+  {
+   "url": "https://huggingface.co/collections/NousResearch/hermes-4-collection-68a731bfd452e20816725728",
+   "first_line": 6311
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1uh4coe/fake_hermes_website/",
+   "first_line": 6313
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1w7bks8/how_to_turn_hermes_to_grokbot/",
+   "first_line": 6316
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1wp8qy5/hermes_bot_screen/",
+   "first_line": 6319
+  },
+  {
+   "url": "https://github.com/NousResearch/hermes-agent/releases",
+   "first_line": 6320
+  },
+  {
+   "url": "https://assets-finance.hermes.com/s3fs-public/node/pdf_file/2021-04/1619702282/hermes-urd2020-en.pdf",
+   "first_line": 6322
+  },
+  {
+   "url": "https://doccompiler.ai/api/v1/jobs/shared/job_1776317887811_629d541e/download/NousResearch__hermes-agent__AdminGuide.pdf",
+   "first_line": 6325
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1wmkv1s/grokbot_vs_hermes_this_comparison_should_not_even/",
+   "first_line": 6328
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1upvfe7/hermes_agents_selfimprovement_does_it_actually/",
+   "first_line": 6331
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1whvani/noob_clarifying_questions/",
+   "first_line": 6334
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/integrations/nous-portal",
+   "first_line": 6335
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1t9gz2f/the_cron_job_every_serious_hermes_agent_user/",
+   "first_line": 6337
+  },
+  {
+   "url": "https://arxiv.org/abs/2408.11857",
+   "first_line": 6340
+  },
+  {
+   "url": "https://labs.cloudsecurityalliance.org/wp-content/uploads/2026/05/CSA_research_note_hermes_agent_CVEs_20260504-csa-styled.pdf",
+   "first_line": 6343
+  },
+  {
+   "url": "https://hermmes.eu/wp-content/uploads/2025/02/THE-HERMMES-CURRICULUM-FULL.pdf",
+   "first_line": 6346
+  },
+  {
+   "url": "https://arxiv.org/abs/2608.14055",
+   "first_line": 6349
+  },
+  {
+   "url": "https://www.techradar.com/pro/how-to-automate-workflows-using-open-source-ai-agents",
+   "first_line": 6352
+  },
+  {
+   "url": "https://arxiv.org/abs/2601.14724",
+   "first_line": 6403
+  },
+  {
+   "url": "https://smart-labs.ai/solution/dapi/material/2510.09093v1.pdf",
+   "first_line": 6406
+  },
+  {
+   "url": "https://assets.skool.com/f/b51c57150c70495899bf4bc8aaee8166/8f33a321202140608f0732444a0bd36adc46a12e9d9447c19e966d1ed218db51",
+   "first_line": 6409
+  },
+  {
+   "url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh",
+   "first_line": 6589
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/getting-started/installation",
+   "first_line": 6593
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/getting-started/quickstart",
+   "first_line": 6594
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/getting-started/learning-path",
+   "first_line": 6595
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/getting-started/updating",
+   "first_line": 6596
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/getting-started/nix-setup",
+   "first_line": 6597
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/getting-started/platform-support",
+   "first_line": 6598
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/getting-started/termux",
+   "first_line": 6599
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/cli",
+   "first_line": 6601
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/tui",
+   "first_line": 6602
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/configuration",
+   "first_line": 6603
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/configuring-models",
+   "first_line": 6604
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/sessions",
+   "first_line": 6605
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/profiles",
+   "first_line": 6606
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/git-worktrees",
+   "first_line": 6607
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/docker",
+   "first_line": 6608
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/security",
+   "first_line": 6609
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/checkpoints-and-rollback",
+   "first_line": 6610
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/bot-mode",
+   "first_line": 6611
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/desktop",
+   "first_line": 6612
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/egress",
+   "first_line": 6613
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/egress/iron-proxy",
+   "first_line": 6614
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/egress/network-isolation",
+   "first_line": 6615
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/import-from-other-agents",
+   "first_line": 6616
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/local-models",
+   "first_line": 6617
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/managed-scope",
+   "first_line": 6618
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/multi-connection-desktop",
+   "first_line": 6619
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/multi-profile-gateways",
+   "first_line": 6620
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/profile-distributions",
+   "first_line": 6621
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/secrets",
+   "first_line": 6622
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/secrets/bitwarden",
+   "first_line": 6623
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/secrets/command",
+   "first_line": 6624
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/secrets/onepassword",
+   "first_line": 6625
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/session-storage-recovery",
+   "first_line": 6626
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/skills/google-workspace",
+   "first_line": 6627
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/switching-to-source",
+   "first_line": 6628
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/which-file-does-what",
+   "first_line": 6629
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/windows-native",
+   "first_line": 6630
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/windows-wsl-quickstart",
+   "first_line": 6631
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/overview",
+   "first_line": 6633
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/tools",
+   "first_line": 6634
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/skills",
+   "first_line": 6635
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/curator",
+   "first_line": 6636
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/memory",
+   "first_line": 6637
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/memory-providers",
+   "first_line": 6638
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/context-files",
+   "first_line": 6639
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/context-references",
+   "first_line": 6640
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/personality",
+   "first_line": 6641
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins",
+   "first_line": 6642
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/built-in-plugins",
+   "first_line": 6643
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/bot-screen",
+   "first_line": 6644
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/codex-app-server-runtime",
+   "first_line": 6645
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/computer-use",
+   "first_line": 6646
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/credential-vault",
+   "first_line": 6647
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/deliverable-mode",
+   "first_line": 6648
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/document-extraction",
+   "first_line": 6649
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/extending-the-dashboard",
+   "first_line": 6650
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/heartbeat",
+   "first_line": 6651
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/kanban-multi-gateway",
+   "first_line": 6652
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/kanban-worker-lanes",
+   "first_line": 6653
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/language-packs",
+   "first_line": 6654
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/loops",
+   "first_line": 6655
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/lsp",
+   "first_line": 6656
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/mixture-of-agents",
+   "first_line": 6657
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/pets",
+   "first_line": 6658
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/plugin-catalog",
+   "first_line": 6659
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/skins",
+   "first_line": 6660
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/spotify",
+   "first_line": 6661
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/subscription-proxy",
+   "first_line": 6662
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/tool-gateway",
+   "first_line": 6663
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/tool-search",
+   "first_line": 6664
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/wake-word",
+   "first_line": 6665
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/web-dashboard",
+   "first_line": 6666
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/x-search",
+   "first_line": 6668
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/cron",
+   "first_line": 6845
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/browser",
+   "first_line": 7181
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/plugins/hud-teach",
+   "first_line": 7189
+  },
+  {
+   "url": "https://portal.nousresearch.com/cloud",
+   "first_line": 7353
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/cli/",
+   "first_line": 7469
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/guides/run-hermes-with-nous-portal",
+   "first_line": 7508
+  },
+  {
+   "url": "https://portal.nousresearch.com/?trk=article-ssr-frontend-pulse_little-text-block",
+   "first_line": 7550
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/zh-Hans/user-guide/desktop",
+   "first_line": 7553
+  },
+  {
+   "url": "https://technologychecker.ai/sites/hermes-agent.nousresearch.com",
+   "first_line": 7556
+  },
+  {
+   "url": "https://www.usehermesagent.com/install/",
+   "first_line": 7559
+  },
+  {
+   "url": "https://www.gethermesagentai.com/hosting/",
+   "first_line": 7562
+  },
+  {
+   "url": "https://www.gethermesagentai.com/cost/",
+   "first_line": 7565
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1wreal2/couldnt_install_hermes_on_my_cloud_server/",
+   "first_line": 7568
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/install.sh`",
+   "first_line": 7569
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1vnysrw/removed/",
+   "first_line": 7571
+  },
+  {
+   "url": "https://hermesos.cloud/roadmap/HermesOS_Roadmap_2026.pdf",
+   "first_line": 7574
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1u6yakj/local_pc_hosting_question/",
+   "first_line": 7577
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1ucke01/vps_deployment_megathread_hermes_agent_june_2026/",
+   "first_line": 7580
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1wv5p0f/164_hermes_agent_prs_merged_in_the_last_24_hours/",
+   "first_line": 7583
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com",
+   "first_line": 7590
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1sk4jhh/hermes_control_interface_a_selfhosted_web/",
+   "first_line": 7592
+  },
+  {
+   "url": "https://github.com/NousResearch/hermes-agent/pull/5100",
+   "first_line": 7593
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1uqwjuv/how_to_set_up_hermes_agent_from_scratch_2026/",
+   "first_line": 7595
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1swy6ir/deployment_docker_vps_efficiency_masterthread/",
+   "first_line": 7598
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1wnms80/hermes_at_work/",
+   "first_line": 7601
+  },
+  {
+   "url": "https://www.reddit.com/r/hermesagent/comments/1vgkv8w/news_hermes_agent_docs_update_adds_security/",
+   "first_line": 7604
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/guides/secure-hermes-on-a-work-machine",
+   "first_line": 7605
+  },
+  {
+   "url": "https://assets-finance.hermes.com/s3fs-public/node/pdf_file/2025-05/1746455904/250328_hermes_urd2024_en.pdf",
+   "first_line": 7610
+  },
+  {
+   "url": "https://hermes.fr.digital-report.net/en/download/pdf/2491",
+   "first_line": 7613
+  },
+  {
+   "url": "https://files.eric.ed.gov/fulltext/ED011878.pdf",
+   "first_line": 7616
+  },
+  {
+   "url": "https://www1.hkexnews.hk/app/sehk/2026/108526/a132765/sehk26051000250.pdf",
+   "first_line": 7619
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server",
+   "first_line": 7997
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/hooks",
+   "first_line": 8118
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging",
+   "first_line": 8119
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/webhooks",
+   "first_line": 8120
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/msgraph-webhook",
+   "first_line": 8121
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/open-webui",
+   "first_line": 8122
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/teams-meetings",
+   "first_line": 8123
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/guides/automation-blueprints",
+   "first_line": 8125
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/guides/webhook-github-pr-review",
+   "first_line": 8126
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/developer-guide/desktop-plugin-sdk",
+   "first_line": 8127
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/developer-guide/programmatic-integration",
+   "first_line": 8128
+  },
+  {
+   "url": "http://localhost:8642/api/sessions/$ID/fork",
+   "first_line": 8208
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/developer-guide/programmatic-integration\\",
+   "first_line": 8357
+  },
+  {
+   "url": "http://127.0.0.1:8642/api/model/options\\",
+   "first_line": 8357
+  },
+  {
+   "url": "http://127.0.0.1:8642/api/model/options?refresh=1\\",
+   "first_line": 8357
+  },
+  {
+   "url": "http://localhost:8642/api/sessions/$ID/chat/stream",
+   "first_line": 8357
+  },
+  {
+   "url": "http://localhost:8642/v1/skills",
+   "first_line": 8357
+  },
+  {
+   "url": "http://localhost:8642/v1/toolsets",
+   "first_line": 8357
+  },
+  {
+   "url": "http://spark.lan:8377",
+   "first_line": 9185
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/sessions/",
+   "first_line": 9933
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/reference/toolsets-reference",
+   "first_line": 10000
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/",
+   "first_line": 10003
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/reference/cli-commands",
+   "first_line": 10015
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/reference/environment-variables",
+   "first_line": 10021
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord/",
+   "first_line": 10024
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/developer-guide/adding-tools/",
+   "first_line": 10049
+  },
+  {
+   "url": "https://weatherapi.com/",
+   "first_line": 10224
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/developer-guide/plugins",
+   "first_line": 10306
+  },
+  {
+   "url": "https://other.com/keys",
+   "first_line": 10365
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server/",
+   "first_line": 10469
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/developer-guide/plugin-llm-access",
+   "first_line": 10527
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/reference/slash-commands",
+   "first_line": 10703
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/developer-guide/web-search-provider-plugin",
+   "first_line": 10706
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins/",
+   "first_line": 10709
+  },
+  {
+   "url": "https://hermes-agent.nousresearch.com/docs/plugins/local_knowledge",
+   "first_line": 10712
+  },
+  {
+   "url": "https://docs.x.ai/grok-bot/skills-routines-and-automations:",
+   "first_line": 10893
+  },
+  {
+   "url": "https://developers.openai.com/blog/run-long-horizon-tasks-with-codex?trk=article-ssr-frontend-pulse_little-text-block",
+   "first_line": 11330
+  },
+  {
+   "url": "https://developers.openai.com/blog/mastering-codex-remote-for-engineering",
+   "first_line": 11378
+  },
+  {
+   "url": "https://developers.openai.com/community",
+   "first_line": 11440
+  },
+  {
+   "url": "https://developers.openai.com/cookbook/examples/codex/code_modernization",
+   "first_line": 11493
+  },
+  {
+   "url": "https://developers.openai.com/cookbook/articles/codex_exec_plans?trk=article-ssr-frontend-pulse_little-text-block",
+   "first_line": 11511
+  },
+  {
+   "url": "http://localhost:8080/health",
+   "first_line": 11512
+  },
+  {
+   "url": "https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide?trk=article-ssr-frontend-pulse_little-text-block",
+   "first_line": 11532
+  },
+  {
+   "url": "https://developers.openai.com/siwc/token-sharing-open-source/codex-app-server",
+   "first_line": 11535
+  },
+  {
+   "url": "https://developers.openai.com/training",
+   "first_line": 11541
+  },
+  {
+   "url": "https://developers.openai.com/learn/developers-codex-plugin",
+   "first_line": 11544
+  },
+  {
+   "url": "https://developers.openai.com/plugins/build/plugins",
+   "first_line": 11547
+  },
+  {
+   "url": "https://developers.openai.com/learn/docs-mcp",
+   "first_line": 11550
+  },
+  {
+   "url": "https://developers.openai.com/codex/cli/slash-commands",
+   "first_line": 11555
+  },
+  {
+   "url": "https://developers.openai.com/codex/app/commands",
+   "first_line": 11555
+  },
+  {
+   "url": "https://learn.chatgpt.com/docs/developer-commands?surface=cli",
+   "first_line": 11564
+  },
+  {
+   "url": "https://learn.chatgpt.com/docs/features/codex-micro",
+   "first_line": 11978
+  },
+  {
+   "url": "https://learn.chatgpt.com/docs/config-file/config-reference?translationFallback=fr-FR",
+   "first_line": 12104
+  },
+  {
+   "url": "https://learn.chatgpt.com/community",
+   "first_line": 12192
+  },
+  {
+   "url": "https://learn.chatgpt.com/docs/config-file/config-sample",
+   "first_line": 12198
+  },
+  {
+   "url": "https://learn.chatgpt.com/guides/best-practices?translationFallback=ja-JP",
+   "first_line": 12201
+  },
+  {
+   "url": "https://learn.chatgpt.com/docs/app-server?translationFallback=zh-Hant",
+   "first_line": 12207
+  },
+  {
+   "url": "https://learn.chatgpt.com/es-419/docs/config-file/config-sample",
+   "first_line": 12210
+  }
+ ],
+ "hosts": [
+  [
+   "hermes-agent.nousresearch.com",
+   120
+  ],
+  [
+   "www.reddit.com",
+   41
+  ],
+  [
+   "learn.chatgpt.com",
+   19
+  ],
+  [
+   "github.com",
+   16
+  ],
+  [
+   "developers.openai.com",
+   15
+  ],
+  [
+   "docs.x.ai",
+   14
+  ],
+  [
+   "x.ai",
+   10
+  ],
+  [
+   "media.x.ai",
+   4
+  ],
+  [
+   "arxiv.org",
+   4
+  ],
+  [
+   "localhost:8642",
+   4
+  ],
+  [
+   "grokbot.help",
+   2
+  ],
+  [
+   "huggingface.co",
+   2
+  ],
+  [
+   "www.youtube.com",
+   2
+  ],
+  [
+   "assets-finance.hermes.com",
+   2
+  ],
+  [
+   "portal.nousresearch.com",
+   2
+  ],
+  [
+   "www.gethermesagentai.com",
+   2
+  ],
+  [
+   "127.0.0.1:8642",
+   2
+  ],
+  [
+   "example.com",
+   1
+  ],
+  [
+   "127.0.0.1:1340",
+   1
+  ],
+  [
+   "www.grokbot.click",
+   1
+  ],
+  [
+   "grokbot.run",
+   1
+  ],
+  [
+   "127.0.0.1:6080",
+   1
+  ],
+  [
+   "best.xiaohu.ai",
+   1
+  ],
+  [
+   "cursor.com",
+   1
+  ],
+  [
+   "agent-finder.co",
+   1
+  ],
+  [
+   "www.bighatgroup.com",
+   1
+  ],
+  [
+   "digitalbydefault.ai",
+   1
+  ],
+  [
+   "www.tryagentsonic.com",
+   1
+  ],
+  [
+   "archive.vn",
+   1
+  ],
+  [
+   "continuumcode.ai",
+   1
+  ],
+  [
+   "theaileaderboard.org",
+   1
+  ],
+  [
+   "www.thatsoftwaredude.com",
+   1
+  ],
+  [
+   "en.wikipedia.org",
+   1
+  ],
+  [
+   "safetyforum.ai",
+   1
+  ],
+  [
+   "dlib.si",
+   1
+  ],
+  [
+   "ciir-publications.cs.umass.edu",
+   1
+  ],
+  [
+   "cdn1.tenchat.ru",
+   1
+  ],
+  [
+   "www.docdroid.net",
+   1
+  ],
+  [
+   "hermes-agent.noasresearch.com",
+   1
+  ],
+  [
+   "hermes-agent.io",
+   1
+  ],
+  [
+   "hermes-agent.ai",
+   1
+  ],
+  [
+   "hermes-agent.nousresearch.com\\-",
+   1
+  ],
+  [
+   "doccompiler.ai",
+   1
+  ],
+  [
+   "labs.cloudsecurityalliance.org",
+   1
+  ],
+  [
+   "hermmes.eu",
+   1
+  ],
+  [
+   "www.techradar.com",
+   1
+  ],
+  [
+   "smart-labs.ai",
+   1
+  ],
+  [
+   "assets.skool.com",
+   1
+  ],
+  [
+   "raw.githubusercontent.com",
+   1
+  ],
+  [
+   "technologychecker.ai",
+   1
+  ],
+  [
+   "www.usehermesagent.com",
+   1
+  ],
+  [
+   "hermesos.cloud",
+   1
+  ],
+  [
+   "hermes.fr.digital-report.net",
+   1
+  ],
+  [
+   "files.eric.ed.gov",
+   1
+  ],
+  [
+   "www1.hkexnews.hk",
+   1
+  ],
+  [
+   "spark.lan:8377",
+   1
+  ],
+  [
+   "weatherapi.com",
+   1
+  ],
+  [
+   "other.com",
+   1
+  ],
+  [
+   "localhost:8080",
+   1
+  ]
+ ],
+ "long_lines": 589
+}

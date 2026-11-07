@@ -1,0 +1,469 @@
+{
+ "agent": "images1",
+ "files_read": [
+  "test-results/coordination-1440.png",
+  "test-results/coordination-390.png",
+  "test-results/desktop.png",
+  "test-results/execution-budget-1440.png",
+  "test-results/execution-budget-320.png",
+  "test-results/execution-budget-390.png",
+  "test-results/mobile.png",
+  "test-results/native-tools-1440.png",
+  "test-results/native-tools-390.png",
+  "test-results/phase2-approval.png",
+  "test-results/phase2-desktop.png",
+  "test-results/phase2-mobile.png",
+  "test-results/phase2-retired-history.png",
+  "test-results/phase3-computer-desktop.png",
+  "test-results/phase3-computer-mobile.png",
+  "test-results/phase3-knowledge-desktop.png",
+  "test-results/phase3-knowledge-mobile.png",
+  "test-results/phase3-library-desktop.png",
+  "test-results/phase3-library-mobile.png",
+  "test-results/phase3-pdf-preview.png",
+  "test-results/phase3-review.png",
+  "test-results/phase4-connections-1440.png",
+  "test-results/phase4-connections-320.png",
+  "test-results/phase4-connections-390.png",
+  "test-results/phase4-connections-844.png",
+  "test-results/phase4-mcp-recovery-closed.png",
+  "test-results/phase4-mcp-recovery.png",
+  "test-results/phase4-mcp-review.png",
+  "test-results/phase5-routines-1440.png",
+  "test-results/phase5-routines-320.png",
+  "test-results/phase5-routines-390.png",
+  "test-results/phase52-before-1440.png",
+  "test-results/phase52-before-390.png",
+  "test-results/phase52-before-768.png",
+  "test-results/phase52-empty-history-1440.png",
+  "test-results/phase52-empty-history-320.png",
+  "test-results/phase52-empty-history-390.png",
+  "test-results/phase52-empty-history-768.png",
+  "test-results/phase52-history-final-1440.png",
+  "test-results/phase52-history-final-320.png",
+  "test-results/phase52-history-final-390.png",
+  "test-results/phase52-history-final-768.png",
+  "test-results/phase52-live-history-1440.png",
+  "test-results/phase52-live-history-320.png",
+  "test-results/phase52-live-history-390.png",
+  "test-results/phase52-live-history-768.png",
+  "test-results/phase52-live-history-dark-390.png",
+  "test-results/phase52-source-form-1440.png",
+  "test-results/phase52-source-form-320.png",
+  "test-results/phase52-source-form-390.png",
+  "test-results/phase52-source-form-768.png",
+  "test-results/phase52-sources-1440.png",
+  "test-results/phase52-sources-320.png",
+  "test-results/phase52-sources-390.png",
+  "test-results/phase52-sources-768.png",
+  "test-results/phase52-trigger-form-1440.png",
+  "test-results/phase52-trigger-form-320.png",
+  "test-results/phase52-trigger-form-390.png",
+  "test-results/phase52-trigger-form-768.png",
+  "test-results/phase52-triggers-1440.png",
+  "test-results/phase52-triggers-320.png",
+  "test-results/phase52-triggers-390.png",
+  "test-results/phase52-triggers-768.png",
+  "test-results/phase53-browser-failure.png",
+  "test-results/phase53-management-1440.png",
+  "test-results/phase53-management-320.png"
+ ],
+ "module_notes": {
+  "test-results/coordination-1440.png": {
+   "purpose": "Inspect the work modal over Sage chat showing coordination assignments (Sage waiting for required results, queued follow-up, read_file completed); desktop 1440, light",
+   "layer": "test",
+   "screen": "Inspect the work modal",
+   "feature": "feature:coordination"
+  },
+  "test-results/coordination-390.png": {
+   "purpose": "Inspect the work modal for combined-report coordination, mobile 390, light; text wraps cleanly, background cropped",
+   "layer": "test",
+   "screen": "Inspect the work modal",
+   "feature": "feature:coordination"
+  },
+  "test-results/desktop.png": {
+   "purpose": "Live proof group chat 'manager and dependent assignments' with Quill/Scout/Sage replies and Work/Outputs panel showing completed team task; desktop, light",
+   "layer": "test",
+   "screen": "Group conversation",
+   "feature": "feature:conversations"
+  },
+  "test-results/execution-budget-1440.png": {
+   "purpose": "Quill chat with right rail showing 'Budget reached' paused work card with Continue and Stop task, plus Finished/Removed work groups; desktop 1440, light",
+   "layer": "test",
+   "screen": "Work panel budget reached",
+   "feature": "feature:execution"
+  },
+  "test-results/execution-budget-320.png": {
+   "purpose": "Work drawer at 320px showing Budget reached card with Continue button and Finished/Removed work; narrow mobile, light, layout fits",
+   "layer": "test",
+   "screen": "Work drawer budget reached",
+   "feature": "feature:execution"
+  },
+  "test-results/execution-budget-390.png": {
+   "purpose": "Work drawer open at 390px showing Budget reached card, Continue, Stop task; mobile light",
+   "layer": "test",
+   "screen": "Work drawer budget reached",
+   "feature": "feature:execution"
+  },
+  "test-results/mobile.png": {
+   "purpose": "Live proof group chat on mobile 390, dark theme, with header, long owner message and composer with Coordinate team checkbox",
+   "layer": "test",
+   "screen": "Group conversation",
+   "feature": "feature:conversations"
+  },
+  "test-results/native-tools-1440.png": {
+   "purpose": "Scout Memory & skills modal: Tools & application access table (read/edit files, commands, browser, desktop, skills, memory all Available), googles 13 actions, curated memory; desktop",
+   "layer": "test",
+   "screen": "Memory and skills modal",
+   "feature": "feature:tools"
+  },
+  "test-results/native-tools-390.png": {
+   "purpose": "Scout Memory & skills modal on mobile 390 showing native tools availability table and curated memory; light",
+   "layer": "test",
+   "screen": "Memory and skills modal",
+   "feature": "feature:tools"
+  },
+  "test-results/phase2-approval.png": {
+   "purpose": "Phase 2 UI manager chat with 'Review teammate changes' approval card (create proposal JSON, Allow once/Deny/Edit proposal) and Work panel Needs your review; desktop, light",
+   "layer": "test",
+   "screen": "Lifecycle proposal approval",
+   "feature": "feature:lifecycle"
+  },
+  "test-results/phase2-desktop.png": {
+   "purpose": "Phase 2 UI manager completed: specialist reply, manager summary, Outputs tab with three artifacts; desktop, light. Notes an unpublished final artifact and an empty artifact from mistaken publish",
+   "layer": "test",
+   "screen": "Manager conversation outputs",
+   "feature": "feature:lifecycle"
+  },
+  "test-results/phase2-mobile.png": {
+   "purpose": "Work drawer on mobile 390 showing completed team task with nested Phase 2 UI specialist; light",
+   "layer": "test",
+   "screen": "Work drawer completed",
+   "feature": "feature:coordination"
+  },
+  "test-results/phase2-retired-history.png": {
+   "purpose": "Deleted teammate 'Phase 2 clone proof' read-only saved conversation with output artifact, composer disabled-style note 'teammate was deleted'; Past teammates list; desktop, light",
+   "layer": "test",
+   "screen": "Retired teammate history",
+   "feature": "feature:lifecycle"
+  },
+  "test-results/phase3-computer-desktop.png": {
+   "purpose": "Scout computer live-view modal expanded: Chromium desktop showing Local human assistance page, secure input and key buttons; desktop; Chromium 'Restore pages?' bubble visible",
+   "layer": "test",
+   "screen": "Computer live view",
+   "feature": "feature:computer"
+  },
+  "test-results/phase3-computer-mobile.png": {
+   "purpose": "Scout computer modal mobile 390: 'Bot is in control' with Take over, Expand live view, Stop computer, screenshot preview; light",
+   "layer": "test",
+   "screen": "Computer pane",
+   "feature": "feature:computer"
+  },
+  "test-results/phase3-knowledge-desktop.png": {
+   "purpose": "Quill Memory & skills skill editor: skill name, content textarea, Enable after saving, Save reviewed content (disabled), saved versions; desktop; notes provisioning wait message",
+   "layer": "test",
+   "screen": "Skill editor",
+   "feature": "feature:knowledge"
+  },
+  "test-results/phase3-knowledge-mobile.png": {
+   "purpose": "Quill skill editor on mobile 390 with content textarea and Save/Remove/Back buttons; light",
+   "layer": "test",
+   "screen": "Skill editor",
+   "feature": "feature:knowledge"
+  },
+  "test-results/phase3-library-desktop.png": {
+   "purpose": "File library detail for linked-page.txt: version info, SHA-256, original link, text preview, Download/Use in conversation/Add new version, version history, share version; desktop",
+   "layer": "test",
+   "screen": "File library detail",
+   "feature": "feature:artifacts"
+  },
+  "test-results/phase3-library-mobile.png": {
+   "purpose": "File library detail for phase3-input CSV on mobile 390 with table preview, SHA-256, actions; light",
+   "layer": "test",
+   "screen": "File library detail",
+   "feature": "feature:artifacts"
+  },
+  "test-results/phase3-pdf-preview.png": {
+   "purpose": "File library detail for phase3-preview.pdf with embedded PDF viewer preview; desktop, light",
+   "layer": "test",
+   "screen": "File library PDF preview",
+   "feature": "feature:artifacts"
+  },
+  "test-results/phase3-review.png": {
+   "purpose": "Phase 3 review UI group chat with 'Your review is needed' card (draft JSON, Allow once/Deny/Cancel review/Edit draft) and Work panel Needs your review; desktop",
+   "layer": "test",
+   "screen": "Review request card",
+   "feature": "feature:attention"
+  },
+  "test-results/phase4-connections-1440.png": {
+   "purpose": "Connections modal OAuth setup tab (provider google, client ID/secret, callback URL, Save OAuth application); desktop 1440",
+   "layer": "test",
+   "screen": "Connections OAuth setup",
+   "feature": "feature:connectors"
+  },
+  "test-results/phase4-connections-320.png": {
+   "purpose": "Connections modal OAuth setup tab at 320px; tabs wrap to two rows, form cropped by viewport height",
+   "layer": "test",
+   "screen": "Connections OAuth setup",
+   "feature": "feature:connectors"
+  },
+  "test-results/phase4-connections-390.png": {
+   "purpose": "Connections modal OAuth setup tab at 390px; tabs wrap, full form visible",
+   "layer": "test",
+   "screen": "Connections OAuth setup",
+   "feature": "feature:connectors"
+  },
+  "test-results/phase4-connections-844.png": {
+   "purpose": "Connections modal OAuth setup at 844x390 landscape; content cut off by short viewport height (scrollable)",
+   "layer": "test",
+   "screen": "Connections OAuth setup",
+   "feature": "feature:connectors"
+  },
+  "test-results/phase4-mcp-recovery-closed.png": {
+   "purpose": "Connections Activity tab listing mcp.search_cloudflare_documentation operations (uncertain, superseded, denied, unresolved) with Reconcile outcome buttons; desktop",
+   "layer": "test",
+   "screen": "Connections activity",
+   "feature": "feature:outcomes"
+  },
+  "test-results/phase4-mcp-recovery.png": {
+   "purpose": "Connections Activity with unresolved MCP operation expanded: arguments and result JSON (reconciled false, owner evidence), Reconcile outcome; desktop",
+   "layer": "test",
+   "screen": "Connections activity",
+   "feature": "feature:outcomes"
+  },
+  "test-results/phase4-mcp-review.png": {
+   "purpose": "Connections Activity with succeeded MCP search operation expanded showing long result JSON receipt; desktop",
+   "layer": "test",
+   "screen": "Connections activity",
+   "feature": "feature:tools"
+  },
+  "test-results/phase5-routines-1440.png": {
+   "purpose": "Routines modal new routine form (name, results conversation, teammate, instructions, schedule Daily, timezone, time, expected results); desktop, focused textarea",
+   "layer": "test",
+   "screen": "Routine form",
+   "feature": "feature:routines"
+  },
+  "test-results/phase5-routines-320.png": {
+   "purpose": "Routines form at 320px; fields stack, cropped by viewport",
+   "layer": "test",
+   "screen": "Routine form",
+   "feature": "feature:routines"
+  },
+  "test-results/phase5-routines-390.png": {
+   "purpose": "Routines form at 390px with instructions focused and schedule select",
+   "layer": "test",
+   "screen": "Routine form",
+   "feature": "feature:routines"
+  },
+  "test-results/phase52-before-1440.png": {
+   "purpose": "Routines list before Phase 5.2 (schedules only): hourly YouTube routine Active, 'Unavailable teammate', last run skipped; background shows no-model banner and empty team; desktop, different font",
+   "layer": "test",
+   "screen": "Routines list",
+   "feature": "feature:routines"
+  },
+  "test-results/phase52-before-390.png": {
+   "purpose": "Routines list before Phase 5.2 at 390 with Hourly routine, skipped last run, Run now/Pause/Delete",
+   "layer": "test",
+   "screen": "Routines list",
+   "feature": "feature:routines"
+  },
+  "test-results/phase52-before-768.png": {
+   "purpose": "Routines list before Phase 5.2 at 768 tablet with Hourly routine card",
+   "layer": "test",
+   "screen": "Routines list",
+   "feature": "feature:routines"
+  },
+  "test-results/phase52-empty-history-1440.png": {
+   "purpose": "Routines Events tab trigger history detail 'Phase 5.2 browser': empty work occurrences and received events; desktop",
+   "layer": "test",
+   "screen": "Event trigger history",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-empty-history-320.png": {
+   "purpose": "Event trigger history empty state at 320",
+   "layer": "test",
+   "screen": "Event trigger history",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-empty-history-390.png": {
+   "purpose": "Event trigger history empty state at 390",
+   "layer": "test",
+   "screen": "Event trigger history",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-empty-history-768.png": {
+   "purpose": "Event trigger history empty state at 768",
+   "layer": "test",
+   "screen": "Event trigger history",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-history-final-1440.png": {
+   "purpose": "Event trigger history for arithmetic event proof: Completed occurrence (173+268=441), received event phase52.acceptance matched; Open work and results disabled; desktop",
+   "layer": "test",
+   "screen": "Event trigger history",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-history-final-320.png": {
+   "purpose": "Event trigger history final at 320 with disabled Open work and results button",
+   "layer": "test",
+   "screen": "Event trigger history",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-history-final-390.png": {
+   "purpose": "Event trigger history final at 390 with Inspect event context collapsed",
+   "layer": "test",
+   "screen": "Event trigger history",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-history-final-768.png": {
+   "purpose": "Event trigger history final at 768 tablet",
+   "layer": "test",
+   "screen": "Event trigger history",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-live-history-1440.png": {
+   "purpose": "Event trigger history live: occurrence completed, Open work and results enabled, event context JSON expanded; desktop",
+   "layer": "test",
+   "screen": "Event trigger history",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-live-history-320.png": {
+   "purpose": "Event trigger history live at 320, Open work and results enabled",
+   "layer": "test",
+   "screen": "Event trigger history",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-live-history-390.png": {
+   "purpose": "Event trigger history live at 390 with event context expanded",
+   "layer": "test",
+   "screen": "Event trigger history",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-live-history-768.png": {
+   "purpose": "Event trigger history live at 768 with context JSON expanded",
+   "layer": "test",
+   "screen": "Event trigger history",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-live-history-dark-390.png": {
+   "purpose": "Event trigger history live at 390 in dark theme; Open work and results button appears low contrast or disabled-looking",
+   "layer": "test",
+   "screen": "Event trigger history",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-source-form-1440.png": {
+   "purpose": "Add an event source form (name, service General webhook, signing secret, generate secret, signed event format); desktop",
+   "layer": "test",
+   "screen": "Event source form",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-source-form-320.png": {
+   "purpose": "Add an event source form at 320; name input text clipped",
+   "layer": "test",
+   "screen": "Event source form",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-source-form-390.png": {
+   "purpose": "Add an event source form at 390",
+   "layer": "test",
+   "screen": "Event source form",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-source-form-768.png": {
+   "purpose": "Add an event source form at 768 tablet",
+   "layer": "test",
+   "screen": "Event source form",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-sources-1440.png": {
+   "purpose": "Event sources list: Phase 5.2 browser (Checking source) and local signed event (Ready) with Setup/Deliveries/Check/Pause/Archive; desktop",
+   "layer": "test",
+   "screen": "Event sources list",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-sources-320.png": {
+   "purpose": "Event sources list at 320 with action links wrapping",
+   "layer": "test",
+   "screen": "Event sources list",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-sources-390.png": {
+   "purpose": "Event sources list at 390",
+   "layer": "test",
+   "screen": "Event sources list",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-sources-768.png": {
+   "purpose": "Event sources list at 768 tablet",
+   "layer": "test",
+   "screen": "Event sources list",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-trigger-form-1440.png": {
+   "purpose": "New event trigger form (name, source, which events, conditions, teammate, deliver results to); desktop",
+   "layer": "test",
+   "screen": "Event trigger form",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-trigger-form-320.png": {
+   "purpose": "New event trigger form at 320; name and source select text truncated",
+   "layer": "test",
+   "screen": "Event trigger form",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-trigger-form-390.png": {
+   "purpose": "New event trigger form at 390; source select truncated",
+   "layer": "test",
+   "screen": "Event trigger form",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-trigger-form-768.png": {
+   "purpose": "New event trigger form at 768 tablet",
+   "layer": "test",
+   "screen": "Event trigger form",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-triggers-1440.png": {
+   "purpose": "Event triggers list: browser trigger Paused (Resume disabled) and arithmetic trigger Active with latest occurrence Completed; desktop",
+   "layer": "test",
+   "screen": "Event triggers list",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-triggers-320.png": {
+   "purpose": "Event triggers list at 320 with Paused and Active triggers",
+   "layer": "test",
+   "screen": "Event triggers list",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-triggers-390.png": {
+   "purpose": "Event triggers list at 390 with disabled Resume/Pause/Archive",
+   "layer": "test",
+   "screen": "Event triggers list",
+   "feature": "feature:events"
+  },
+  "test-results/phase52-triggers-768.png": {
+   "purpose": "Event triggers list at 768 tablet",
+   "layer": "test",
+   "screen": "Event triggers list",
+   "feature": "feature:events"
+  },
+  "test-results/phase53-browser-failure.png": {
+   "purpose": "Routine form with team coordination: draft 'not saved', Management permission select, collaborators Scout/Quill, management operations; desktop; permission expiry shown 10/26/2026 and Sage Needs answer in sidebar",
+   "layer": "test",
+   "screen": "Routine team coordination form",
+   "feature": "feature:coordination"
+  },
+  "test-results/phase53-management-1440.png": {
+   "purpose": "Routine form scrolled: management operations checkboxes (Assign work locked, Inspect, Redirect, Stop, Reassign) and instructions; desktop",
+   "layer": "test",
+   "screen": "Routine management permissions",
+   "feature": "feature:management"
+  },
+  "test-results/phase53-management-320.png": {
+   "purpose": "Routine management permissions at 320 with operations checklist and shared work budget note",
+   "layer": "test",
+   "screen": "Routine management permissions",
+   "feature": "feature:management"
+  }
+ }
+}

@@ -1,0 +1,538 @@
+{
+ "overview": {
+  "one_liner": "Hermbot is a private, local workspace where persistent AI teammates, each running in its own Docker container, do work that one owner assigns.",
+  "paragraphs": [
+   "The owner opens a web page on their own machine and chats with teammates. A teammate is a long-lived AI agent built on Hermes, an agent runtime. The owner can message one teammate or a group of 2 to 6. Hermbot turns each request into a work item, runs it, and shows progress and results on a card. Execution finishing does not mean the work is done. The owner's required results must be met, with evidence.",
+   "There are a few moving parts. The browser UI is a React page that the `api` service serves itself. The `api` is a FastAPI app. It answers the browser and the teammates. The `worker` starts and tracks runs. The `event-worker` watches outside services for events. The `notification-worker` sends web push alerts. The `supervisor` is the only service that can touch Docker. `postgres` stores all state. MinIO (the `storage` service) stores files. Each teammate gets its own container, named `hermbot-bot-<id>`, with a private network and its own volumes. The `hermbot` plugin runs inside that container and gives the agent its `hermbot_*` tools. Outside services include Gmail, Calendar, Drive, Slack, GitHub, MCP servers, the model provider and browser push services.",
+   "A typical request goes like this. The owner sends a message to `api`. Hermbot first decides what the message means: discussion, a new assignment, an update, an answer, a cancel. Only then can anything run. The `worker` picks up the queued task and starts a run on the teammate's Hermes runtime. The agent calls `hermbot_*` tools, which post back to `api` under `/internal`. The `api` writes events to `postgres` and streams them to the browser over one SSE stream. When the run ends, the backend checks the claimed results against evidence before it marks anything done.",
+   "Safety is built around owner approval. Reading is usually allowed. Changing something outside, such as sending mail or posting to Slack, needs an exact owner review, or a standing grant the owner set earlier. Connector actions come from a fixed catalog. Credentials stay in the backend and never reach teammates. Each teammate runs in a hardened container that cannot reach `postgres`, `storage` or other teammates. The owner can also take over a teammate's desktop, and tool calls pause safely while they do.",
+   "Crash recovery relies on `postgres`. Work is stored as durable rows, so a restarted worker picks up where it left off and reconnects to existing runs. Each step uses stable keys so retries do not repeat effects. If a step that touches the outside world may have happened but no receipt came back, Hermbot marks it uncertain. It never replays it. The owner then reconciles it with evidence."
+  ],
+  "parts": [
+   {
+    "name": "Browser UI",
+    "what": "A React single-page app that the `api` serves from the same address, 127.0.0.1:8780.",
+    "node": "concept:web-spa-hosting"
+   },
+   {
+    "name": "api",
+    "what": "The FastAPI service that handles owner requests, the event stream and teammate calls under `/internal`.",
+    "node": "svc:api"
+   },
+   {
+    "name": "worker",
+    "what": "The loop that admits queued tasks, starts and tracks runs, drives connector actions and recovers after restarts.",
+    "node": "svc:worker"
+   },
+   {
+    "name": "event-worker",
+    "what": "Collects events from outside services (polling, Slack Socket Mode) and turns matching ones into work.",
+    "node": "svc:event-worker"
+   },
+   {
+    "name": "notification-worker",
+    "what": "Builds the owner's attention list and sends Web Push alerts.",
+    "node": "svc:notification-worker"
+   },
+   {
+    "name": "supervisor",
+    "what": "The only service with the Docker socket. It creates, stops and deletes teammate containers on request.",
+    "node": "svc:supervisor"
+   },
+   {
+    "name": "Postgres",
+    "what": "Stores all coordination state, queues, receipts, approvals and leases.",
+    "node": "svc:postgres"
+   },
+   {
+    "name": "MinIO storage",
+    "what": "Holds immutable, checksummed files in the single bucket `hermbot`.",
+    "node": "svc:storage"
+   },
+   {
+    "name": "Teammate container",
+    "what": "One persistent Hermes agent with its own network, volumes, desktop and browser.",
+    "node": "svc:hermbot-bot-*"
+   },
+   {
+    "name": "hermbot plugin",
+    "what": "Runs in each teammate and adds the `hermbot_*` tools and the check that limits which tools a task may use.",
+    "node": "file:plugins/hermbot/__init__.py"
+   },
+   {
+    "name": "Outside services",
+    "what": "Google, Slack, GitHub, MCP servers, the model provider and browser push services.",
+    "node": "actor:model-provider"
+   }
+  ],
+  "reading_order": [
+   {
+    "step": "Look at the context view first.",
+    "view": "context",
+    "why": "It shows the owner, Hermbot and the outside services around it."
+   },
+   {
+    "step": "Then look at the deploy view.",
+    "view": "deploy",
+    "why": "It shows which containers exist and which networks they share."
+   },
+   {
+    "step": "Read the flows.",
+    "view": "flows",
+    "why": "Follow one owner message from intake to a finished result."
+   },
+   {
+    "step": "Open the backend view.",
+    "view": "backend",
+    "why": "See which Python module owns which job."
+   },
+   {
+    "step": "Open the runtime view.",
+    "view": "runtime",
+    "why": "See how a teammate container, its plugin and its adapter fit together."
+   },
+   {
+    "step": "Browse the ER view.",
+    "view": "er",
+    "why": "The tables in `postgres` hold most of the system state."
+   },
+   {
+    "step": "Check the features view.",
+    "view": "features",
+    "why": "Each of the 20 features explains one area in plain words."
+   },
+   {
+    "step": "Finish with the docs and discrepancies views.",
+    "view": "disc",
+    "why": "They show where the code and the written plans disagree."
+   }
+  ]
+ },
+ "glossary": [
+  {
+   "term": "Owner",
+   "plain": "The one human who uses Hermbot. They assign work, approve actions and own all data. The system is single-owner.",
+   "node": "actor:owner"
+  },
+  {
+   "term": "Teammate / bot",
+   "plain": "A persistent AI agent with a name, a model and a set of allowed tools. It runs on Hermes inside its own container.",
+   "node": "table:bots"
+  },
+  {
+   "term": "Hermes",
+   "plain": "The agent runtime inside each teammate container. It runs the agent loop and keeps the teammate's own session history.",
+   "node": "svc:hermbot-bot-*"
+  },
+  {
+   "term": "Conversation",
+   "plain": "A chat thread between the owner and teammates. Each teammate has one direct message (DM) conversation.",
+   "node": "table:conversations"
+  },
+  {
+   "term": "Group",
+   "plain": "A conversation with 2 to 6 teammates.",
+   "node": "table:conversations"
+  },
+  {
+   "term": "Thread",
+   "plain": "A reply chain inside a conversation. Each thread gets its own native Hermes session.",
+   "node": "table:thread_sessions"
+  },
+  {
+   "term": "Work item",
+   "plain": "A card the owner sees for one requested outcome. It can span many messages and many teammates.",
+   "node": "table:work_items"
+  },
+  {
+   "term": "Task",
+   "plain": "One unit of execution for a teammate, tracked in `tasks`. A work item can have several tasks, for example when a teammate delegates.",
+   "node": "table:tasks"
+  },
+  {
+   "term": "Attempt",
+   "plain": "One try at running a task on a teammate's runtime. A bot has at most one active attempt.",
+   "node": "table:attempts"
+  },
+  {
+   "term": "Intake",
+   "plain": "The step that reads each owner message before anything runs. It decides if the message is discussion, a new assignment, an update, an answer, a cancel or a routine draft.",
+   "node": "feature:intake"
+  },
+  {
+   "term": "Requirement / outcome",
+   "plain": "A required result recorded on a work item, such as a report, artifact or connector effect. It has a version.",
+   "node": "table:work_outcomes"
+  },
+  {
+   "term": "Contribution",
+   "plain": "A result a teammate gives to another teammate's work. The accountable teammate reviews it.",
+   "node": "table:result_contributions"
+  },
+  {
+   "term": "Result acceptance",
+   "plain": "The single check that marks a requirement as met. It needs suitable evidence, not just a claim.",
+   "node": "table:result_acceptances"
+  },
+  {
+   "term": "Delegate",
+   "plain": "A tool (`hermbot_delegate`) that creates an asynchronous child assignment for another teammate.",
+   "node": "tool:hermbot_delegate"
+  },
+  {
+   "term": "Wait",
+   "plain": "A tool (`hermbot_wait`) that names the results a task actually needs. It frees execution capacity until they arrive.",
+   "node": "tool:hermbot_wait"
+  },
+  {
+   "term": "Approval",
+   "plain": "An owner decision on one exact action. The owner can allow once, deny or edit it.",
+   "node": "table:approvals"
+  },
+  {
+   "term": "Review",
+   "plain": "The request an owner sees when a teammate wants to do something that needs approval. It is created with `hermbot_review`.",
+   "node": "tool:hermbot_review"
+  },
+  {
+   "term": "Question / input request",
+   "plain": "A typed request for information from the owner. It is separate from an approval, which grants permission.",
+   "node": "table:input_requests"
+  },
+  {
+   "term": "Grant",
+   "plain": "A rule that says what a teammate may do, such as delegate to certain teammates.",
+   "node": "table:grants"
+  },
+  {
+   "term": "Standing grant",
+   "plain": "A grant the owner issues ahead of time, with a scope and an expiry. It lets a routine or trigger manage selected teammates.",
+   "node": "table:grants"
+  },
+  {
+   "term": "Lifecycle proposal",
+   "plain": "A manager teammate's request to create, change or delete teammates. The owner approves the exact snapshot.",
+   "node": "table:lifecycle_proposals"
+  },
+  {
+   "term": "Outbox (`bot_operations`)",
+   "plain": "A table of lifecycle changes saved as snapshots. The worker reads it and drives each change through the supervisor.",
+   "node": "table:bot_operations"
+  },
+  {
+   "term": "Supervisor",
+   "plain": "The service that alone talks to Docker. It builds hardened containers from specs and keeps receipts.",
+   "node": "svc:supervisor"
+  },
+  {
+   "term": "Runtime adapter",
+   "plain": "A private HTTP service on port 8643 inside each teammate container. Hermbot uses it for desktop, knowledge and file export. Hermes' own API is on port 8642.",
+   "node": "svc:hermbot-bot-*"
+  },
+  {
+   "term": "Plugin tool (`hermbot_*`)",
+   "plain": "A tool the `hermbot` plugin gives the agent. Examples are `hermbot_ask`, `hermbot_delegate` and `hermbot_finish`. Each one calls back to the `api`.",
+   "node": "file:plugins/hermbot/__init__.py"
+  },
+  {
+   "term": "Admission gate",
+   "plain": "The check that decides which tools a task may start. During owner takeover it blocks new tool starts and waits for running ones to finish.",
+   "node": "feature:runtime-gate"
+  },
+  {
+   "term": "Artifact",
+   "plain": "An immutable, checksummed file stored in MinIO. Bots and the owner can publish them.",
+   "node": "table:artifacts"
+  },
+  {
+   "term": "Library share",
+   "plain": "The owner's explicit choice to make a library file available in a conversation.",
+   "node": "table:library_shares"
+  },
+  {
+   "term": "Knowledge (memory and skills)",
+   "plain": "A teammate's native memory plus `hermbot-*` skill files. The owner can edit them, and bots can propose changes for the owner to review.",
+   "node": "table:knowledge_versions"
+  },
+  {
+   "term": "Connector",
+   "plain": "A fixed catalog of actions for an outside service, such as Gmail or GitHub. Teammates call it through `hermbot_connector`.",
+   "node": "feature:connectors"
+  },
+  {
+   "term": "Connection",
+   "plain": "The owner's saved setup for one account: provider, allowed teammates, allowed actions and resources.",
+   "node": "table:connections"
+  },
+  {
+   "term": "Routine",
+   "plain": "Saved instructions with a schedule. Each occurrence becomes ordinary work.",
+   "node": "table:routine_definitions"
+  },
+  {
+   "term": "Event trigger",
+   "plain": "A saved rule that starts work when a matching event arrives from an outside service.",
+   "node": "table:event_trigger_definitions"
+  },
+  {
+   "term": "Event source",
+   "plain": "The saved link to a provider that produces events, by polling, Slack Socket Mode or a signed webhook.",
+   "node": "table:event_sources"
+  },
+  {
+   "term": "Attention item",
+   "plain": "One thing that needs the owner: a question, review, result, problem or setup step. Items are stored with a version.",
+   "node": "table:attention_items"
+  },
+  {
+   "term": "Push subscription",
+   "plain": "A browser's registration for Web Push alerts.",
+   "node": "table:push_subscriptions"
+  },
+  {
+   "term": "Idempotency key",
+   "plain": "A key sent with a request so a repeat of the same request does not repeat the effect.",
+   "node": "table:owner_receipts"
+  },
+  {
+   "term": "Uncertain",
+   "plain": "The state of an outside effect that may have happened but has no receipt. Hermbot never replays it. The owner reconciles it.",
+   "node": "sm:connector-operation"
+  },
+  {
+   "term": "Reconciliation",
+   "plain": "The owner records evidence about what really happened to an uncertain effect.",
+   "node": "feature:connectors"
+  },
+  {
+   "term": "Lease",
+   "plain": "A time-limited claim on a job row. If the holder stops, the lease expires and another worker can take over.",
+   "node": "table:bot_operations"
+  },
+  {
+   "term": "Advisory lock",
+   "plain": "A Postgres lock held by name. Hermbot uses these to serialize steps such as connector dispatch.",
+   "node": "concept:connector-dispatch-lock"
+  },
+  {
+   "term": "SSE event stream",
+   "plain": "One long-lived HTTP stream at `/api/v1/events`. It pushes live updates to the browser.",
+   "node": "concept:web-live-updates"
+  },
+  {
+   "term": "Budget",
+   "plain": "The shared limit of active run time for a work item. A run pauses when the budget runs out.",
+   "node": "feature:execution"
+  },
+  {
+   "term": "Native cron wake",
+   "plain": "A Hermes cron job in each teammate runs every minute and calls the `api`. The `api` then checks which routines are due.",
+   "node": "concept:hermes-native-cron"
+  },
+  {
+   "term": "Takeover",
+   "plain": "The owner takes exclusive control of a teammate's desktop and hands it back later.",
+   "node": "table:computer_controls"
+  }
+ ],
+ "system_design": {
+  "plain": "Hermbot treats each teammate as a separate, long-lived machine. Every teammate has its own container, network, identity token and volumes. Teammates cannot reach `postgres`, `storage`, the `supervisor` or each other. Only the `supervisor` holds the Docker socket. The brief calls this a trusted single-owner boundary, not full protection against hostile code.\n\n`postgres` is the control center. It holds queues, receipts, leases, approvals and the views shown to the owner. There is no message broker. Workers poll rows and claim them with leases and locks. Hermes keeps ownership of execution and its own session history. Files are immutable objects in MinIO.\n\nRetries must not repeat effects. Runs start with stable idempotency keys, owner changes carry idempotency keys, and event and push deliveries have unique keys. For connector actions, the worker commits a `dispatching` marker before it calls the provider. If the receipt is lost, the action becomes uncertain. Hermbot never replays it automatically. It makes no claim of exactly-once delivery.\n\nThe owner stays in charge. External writes need an exact review, or a standing grant with a scope and expiry. Approvals are bound to a payload hash, so the owner approves exactly what will run. Text from outside services is labelled untrusted data. Only the saved owner instruction carries authority.\n\nRecovery follows from this design. Every service re-runs schema setup at startup under a lock. A restarted worker reconnects to existing runs. Expired leases let another worker take over. Lifecycle changes sit in the `bot_operations` outbox with supervisor receipts, so they replay safely. The limits are plain too. It runs on one machine for one owner, with a single `postgres` and a single `supervisor`."
+ },
+ "features": {
+  "feature:intake": {
+   "plain": "The owner just sends a chat message. Before any teammate runs, Hermbot reads it and decides if it is discussion, a status question, a new assignment, an update, an answer, a cancel or a routine draft. It uses the receiving bot's model for this. It records the required results and keeps one work card per requested outcome across many messages. A new message waits in a first-in, first-out queue per conversation until it is interpreted.",
+   "analogy": "Like a front desk that reads each note and files it before anyone starts work.",
+   "key_terms": [
+    "Intake",
+    "Work item",
+    "Requirement / outcome",
+    "Conversation"
+   ]
+  },
+  "feature:outcomes": {
+   "plain": "Finishing a run does not finish the work. Each work item lists versioned required results, such as a report or artifact. A teammate claims results with `hermbot_finish`. The backend applies a claim only after the run settles and only with evidence, such as provider receipts or accessible artifacts. The card shows partial progress, and the owner can drop or change requirements.",
+   "analogy": "Like a checklist where each box needs proof before it is ticked.",
+   "key_terms": [
+    "Requirement / outcome",
+    "Result acceptance",
+    "Artifact",
+    "Contribution"
+   ]
+  },
+  "feature:coordination": {
+   "plain": "Teammates work together through backend tools. `hermbot_message` sends a scoped inbox message that does not block. `hermbot_delegate` creates an asynchronous child assignment. `hermbot_wait` names the results a task needs and frees capacity. Failures wake the responsible teammate, and an unsuccessful contribution can be replaced. In the older coordination v0, a delegating parent blocks in `waiting_children` until the child returns.",
+   "analogy": "Like coworkers who leave notes and hand off tasks through a shared tracker, not by talking directly.",
+   "key_terms": [
+    "Delegate",
+    "Wait",
+    "Contribution",
+    "Plugin tool (`hermbot_*`)"
+   ]
+  },
+  "feature:execution": {
+   "plain": "The `worker` admits queued tasks, one active attempt per bot, under a global capacity limit. It starts a native Hermes run with a stable idempotency key and streams events. It counts active time against a shared budget. It also delivers owner decisions and new directions, and it settles results. After a restart it reconnects to existing runs. It does not replay anything whose effect may have happened. That case becomes uncertain.",
+   "analogy": "Like a dispatcher who gives each driver one job at a time and logs every trip.",
+   "key_terms": [
+    "Task",
+    "Attempt",
+    "Budget",
+    "Idempotency key",
+    "Uncertain",
+    "Lease"
+   ]
+  },
+  "feature:attention": {
+   "plain": "The system separates two things. A question asks the owner for information. An approval asks permission for one exact action. The owner answers through authenticated endpoints or in ordinary chat. Stale prompts close without inventing a decision. Everything that needs the owner goes into a versioned attention inbox, which drives badges and optional push.",
+   "analogy": "Like an inbox that keeps questions and sign-off requests in separate trays.",
+   "key_terms": [
+    "Approval",
+    "Question / input request",
+    "Attention item",
+    "Review"
+   ]
+  },
+  "feature:conversations": {
+   "plain": "The owner chats in one DM per teammate or in groups of 2 to 6. Messages can be threaded, and each thread gets its own native session. They can carry attachments, mentions and library files. The UI loads transcripts in pages of 100 messages. Live updates arrive over one SSE stream that checks for new events every 0.5 seconds.",
+   "analogy": "Like a team chat app where each teammate also has a private line.",
+   "key_terms": [
+    "Conversation",
+    "Group",
+    "Thread",
+    "SSE event stream"
+   ]
+  },
+  "feature:connectors": {
+   "plain": "Connectors let selected teammates read from and act on Google, Slack, GitHub and MCP accounts. Actions come from a fixed catalog. Reads run at once. Changes need an exact owner review or a matching standing permission. The worker commits a `dispatching` marker, calls the provider and records a receipt. If the receipt is lost, the action becomes uncertain and the owner reconciles it. Credentials never reach teammates.",
+   "analogy": "Like a bank teller who does exactly what the signed slip says and logs a receipt.",
+   "key_terms": [
+    "Connector",
+    "Connection",
+    "Approval",
+    "Standing grant",
+    "Uncertain",
+    "Reconciliation"
+   ]
+  },
+  "feature:routines": {
+   "plain": "The owner saves instructions, required results, inputs and a schedule. Each occurrence becomes ordinary durable work. Policies bound overlap, missed runs and daily counts. A Hermes cron job in each teammate calls the `api` every minute, and the `api` runs the tick. The owner can run now, pause, resume or archive. Chat can prepare inactive drafts.",
+   "analogy": "Like a calendar reminder that creates a real task each time it fires.",
+   "key_terms": [
+    "Routine",
+    "Native cron wake",
+    "Task",
+    "Idempotency key"
+   ]
+  },
+  "feature:events": {
+   "plain": "Event triggers start teammate work from authenticated provider events. The `event-worker` polls Drive, Calendar, Gmail and GitHub, runs Slack Socket Mode, and accepts signed webhooks. Delivery, event, match and run records are saved. It suppresses events caused by Hermbot's own writes, coalesces repeats and bounds how many runs it admits. Events are stored before the sender gets an acknowledgement.",
+   "analogy": "Like a mail clerk who logs every letter, skips ones you sent yourself and hands the rest to the right person.",
+   "key_terms": [
+    "Event trigger",
+    "Event source",
+    "Lease",
+    "Idempotency key"
+   ]
+  },
+  "feature:management": {
+   "plain": "A routine or trigger can make its teammate a manager of chosen collaborators. This works under a standing grant the owner issues. The scope is frozen for each occurrence and limited by the live grant. If the grant expires or is revoked, the worker pauses the definition. Lifecycle proposals from managers reach the owner as approvals.",
+   "analogy": "Like giving a team lead a signed, time-limited authority letter.",
+   "key_terms": [
+    "Standing grant",
+    "Lifecycle proposal",
+    "Routine",
+    "Event trigger"
+   ]
+  },
+  "feature:notifications": {
+   "plain": "Hermbot brings the owner back with standard Web Push when attention items change. Payloads are generic. The owner sets categories, quiet hours and batching. The `notification-worker` builds deliveries and sends them with leases, so only one worker sends each one. A click opens the current state.",
+   "analogy": "Like a doorbell that rings but does not say who is at the door.",
+   "key_terms": [
+    "Push subscription",
+    "Attention item",
+    "Lease"
+   ]
+  },
+  "feature:lifecycle": {
+   "plain": "The owner, or a manager with approval, creates, edits, clones, archives, restores, starts, stops and deletes teammates. Each change becomes an immutable `bot_operations` snapshot. The worker drives it through the `supervisor`, which recreates a hardened container with a private network and volumes. The UI shows provisioning, error or active status and allows retry.",
+   "analogy": "Like a work order that a facilities team carries out and records.",
+   "key_terms": [
+    "Teammate / bot",
+    "Outbox (`bot_operations`)",
+    "Supervisor",
+    "Lifecycle proposal"
+   ]
+  },
+  "feature:artifacts": {
+   "plain": "Files are immutable and checksummed in MinIO. The owner can upload files or import links into a library with versions and explicit shares to conversations. Bots publish text and files that keep their task source. Attachments are installed into the recipient's private workspace with checks. Reads verify size and checksum.",
+   "analogy": "Like a locked filing cabinet where files are never changed, only added as new versions.",
+   "key_terms": [
+    "Artifact",
+    "Library share",
+    "Conversation"
+   ]
+  },
+  "feature:knowledge": {
+   "plain": "The owner can view and edit a teammate's native memory and its `hermbot-*` skills, and see the history. The owner can turn finished work into a skill draft. Bots can propose learning, and the owner reviews it before it is applied. Edits use a compare-and-swap on a content hash, so stale edits fail.",
+   "analogy": "Like a notebook the owner can read, with new pages added only after approval.",
+   "key_terms": [
+    "Knowledge (memory and skills)",
+    "Review",
+    "Approval"
+   ]
+  },
+  "feature:tools": {
+   "plain": "Hermbot works out which native and `hermbot_*` tools a teammate may see and run for its current task. The plugin filters tool schemas before the model sees them. It checks again at each call through `/internal/context`. `hermbot_prepare` loads enabled skills. The owner has a diagnostic view of availability.",
+   "analogy": "Like a badge that opens only the doors this job needs.",
+   "key_terms": [
+    "Plugin tool (`hermbot_*`)",
+    "Admission gate",
+    "Grant",
+    "Knowledge (memory and skills)"
+   ]
+  },
+  "feature:computer": {
+   "plain": "Each teammate has its own desktop and browser, with a profile that persists. The owner can see a thumbnail or a live noVNC stream. The owner can take exclusive control of input and hand it back. While the owner holds control, dispatch, lifecycle changes and monitoring stay paused for that teammate.",
+   "analogy": "Like a remote-desktop session where the owner can grab the mouse and give it back.",
+   "key_terms": [
+    "Takeover",
+    "Admission gate",
+    "Teammate / bot"
+   ]
+  },
+  "feature:auth": {
+   "plain": "Authentication has one owner. A bootstrap token is exchanged for an opaque cookie session that the owner can revoke. The supervisor, each bot and each runtime have separate credentials. Stored secrets are encrypted with `CONFIG_ENCRYPTION_KEY`. Workspace settings and model providers live here too.",
+   "analogy": "Like one master key for the owner and separate keys for each staff member.",
+   "key_terms": [
+    "Owner",
+    "Supervisor",
+    "Teammate / bot"
+   ]
+  },
+  "feature:runtime-gate": {
+   "plain": "Hermes can start tools at the same time, so owner takeover needs a gate. Every tool callback holds a shared file lock. Takeover closes admission, then waits for running tools to finish with an exclusive lock before it enables owner input. Tools stay paused until the owner hands back.",
+   "analogy": "Like a shop that stops letting customers in, waits for those inside to leave, then lets the owner work.",
+   "key_terms": [
+    "Admission gate",
+    "Takeover",
+    "Plugin tool (`hermbot_*`)"
+   ]
+  },
+  "feature:testing": {
+   "plain": "Tests check Hermbot at four boundaries. A pytest suite runs on an isolated database `hermbot_test` with fakes for Docker, the runtime and providers. A deterministic fixture model drives real Hermes runtimes. Owner-authorized live drivers use the real model and sometimes real accounts, and write evidence JSON to `test-results/`. Playwright covers the UI.",
+   "analogy": "Like testing a car on a bench, on a track with a dummy driver, then on the road.",
+   "key_terms": [
+    "Teammate / bot",
+    "Idempotency key"
+   ]
+  },
+  "feature:ops": {
+   "plain": "Host-side Python scripts run the setup and checks. They create and upgrade the private `.env` without printing secrets, run the test suite in containers, and stop the stack safely. They also make VAPID keys for push and produce and verify acceptance evidence. `stop.py` stops the worker first and keeps volumes.",
+   "analogy": "Like a maintenance toolkit kept next to the machine.",
+   "key_terms": [
+    "Supervisor",
+    "Push subscription",
+    "Idempotency key"
+   ]
+  }
+ }
+}

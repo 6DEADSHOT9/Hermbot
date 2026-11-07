@@ -1,0 +1,15 @@
+.env
+.env.*
+.git
+.venv
+.model-broker-venv
+node_modules
+web/node_modules
+tests/browser/node_modules
+web/dist
+web/build-diag.log
+plan/archive
+test-results
+__pycache__
+
+architecture/

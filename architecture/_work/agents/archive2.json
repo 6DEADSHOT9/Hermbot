@@ -1,0 +1,908 @@
+{
+ "agent": "archive2",
+ "files_read": [
+  "plan/archive/tool-results.txt:6201-12394"
+ ],
+ "module_notes": {
+  "plan/archive/tool-results.txt": {
+   "purpose": "Archived raw tool/web research results from the original planning thread",
+   "layer": "doc",
+   "responsibilities": [
+    {
+     "text": "Web search results listing for Hermes Agent (official docs, GitHub, Reddit, TechRadar comparison with OpenClaw): confirmed Hermes is an MIT-licensed Nous Research agent with self-written skills, 20+ messaging platforms, cron, subagents; established it as the runtime Hermbot would wrap",
+     "evidence": [
+      "plan/archive/tool-results.txt:6201-6410"
+     ]
+    },
+    {
+     "text": "Opened Hermes docs home, Features Overview and llms.txt: learned the feature inventory (tools/toolsets, skills, persistent memory, context files, checkpoints, cron, delegate_task, execute_code, hooks, MCP, API server, provider fallback, credential pools) and the doc index (Bot Mode, Bot Screen, Computer Use, Security, Egress proxy, Secrets, Managed Scope)",
+     "evidence": [
+      "plan/archive/tool-results.txt:6414-6670"
+     ]
+    },
+    {
+     "text": "Bot Mode doc: a Bot is just a Hermes profile (isolated config/memory/skills/credentials) with one permanent forever Bot Chat, /new rerouted to /compact, roster with active-now and unread, sections, per-bot model/SOUL/tool enablement, copied vs non-copied credentials, avatars, per-bot TTS, routines as namespaced cron jobs",
+     "evidence": [
+      "plan/archive/tool-results.txt:6684-6830"
+     ]
+    },
+    {
+     "text": "Bot Mode groups and bot-to-bot messaging: group rooms of 2-6 bots, up to 3 serial rounds and 10 messages per send, @mention routing, @user escalation with needs-you badge, stop/hold words, per-member hidden room sessions with 200 message / 32k char context windows, durable driver lease owning turn scheduling, message_agent fire-and-forget tool with delivery ids and typed failure reasons",
+     "evidence": [
+      "plan/archive/tool-results.txt:6700-6830"
+     ]
+    },
+    {
+     "text": "Bot Screen and Computer Use docs: each bot gets its own screen (Xvnc+Xfce) with take-over/hand-back control lease, human_has_control refusals, screens are work surfaces not security boundaries, placement follows terminal backend, cua-driver background input with approval mapping (standard/bounded/unrestricted), hard-blocked key combos, refusal when nobody can approve in cron",
+     "evidence": [
+      "plan/archive/tool-results.txt:6834-7067"
+     ]
+    },
+    {
+     "text": "Hermes Desktop and Profiles docs: desktop is Electron over a headless hermes serve JSON-RPC backend; profiles give state isolation but explicitly are NOT a sandbox (same filesystem access as the user), terminal.cwd separate from profile, per-profile gateways with token conflict detection",
+     "evidence": [
+      "plan/archive/tool-results.txt:7071-7177"
+     ]
+    },
+    {
+     "text": "Search for teach/recording/draft features led to hud-teach plugin catalog page (screen overlay plugin) and desktop docs; showed how plugins extend the agent with tools and hooks and that plugin catalog pages are reviewed/pinned",
+     "evidence": [
+      "plan/archive/tool-results.txt:7181-7352"
+     ]
+    },
+    {
+     "text": "Hermes Cloud product page: hosted always-on agent per instance, scales to zero, pricing by size and region, isolated container per agent; plus CLI shell mode, Nous Portal OAuth setup and many community hosting threads (VPS/Docker/security advisories)",
+     "evidence": [
+      "plan/archive/tool-results.txt:7353-7620"
+     ]
+    },
+    {
+     "text": "Cron doc deep read: jobs can load skills, run in a --workdir (injects AGENTS.md, isolates per task identity), gateway ticks every 60s with file lock, jobs.json plus execution ledger with scheduled instant, external worker per job, explicit note that this is not exactly-once for side effects",
+     "evidence": [
+      "plan/archive/tool-results.txt:7622-7804"
+     ]
+    },
+    {
+     "text": "Persistent Memory doc: bounded MEMORY.md (2,200 chars) and USER.md (1,375 chars) injected as a frozen snapshot at session start, add/replace/remove only, injection/exfiltration scanning of entries, optional write_approval gate, one agent per Hermes home warning, SQLite FTS5 session_search as unbounded recall, external memory providers",
+     "evidence": [
+      "plan/archive/tool-results.txt:7806-7938"
+     ]
+    },
+    {
+     "text": "Skills doc: skill_manage create/patch/delete/write_file as the agent's procedural memory, advisory linter, create-after-complex-task triggers, skills vs memory split",
+     "evidence": [
+      "plan/archive/tool-results.txt:7941-7971"
+     ]
+    },
+    {
+     "text": "Hermes Desktop feature list (queueing, per-session YOLO toggle, context meter, comment mode annotate, preview rail, model picker scoped to chat) read before planning the web UI",
+     "evidence": [
+      "plan/archive/tool-results.txt:7973-8104"
+     ]
+    },
+    {
+     "text": "First request_user_input scoping question (audience: personal desktop vs hosted multi-user vs small team) and the follow-up web research opening desktop, bot-mode, api-server and bot-screen docs",
+     "evidence": [
+      "plan/archive/tool-results.txt:7990-8004"
+     ]
+    },
+    {
+     "text": "API Server and Programmatic Integration docs: runs API with SSE events (tool.started/completed, subagent.*), idempotency keys, stop/steer/approval endpoints, MCP trust-gate consent surfacing as approval.request, jobs CRUD API, sessions REST API with fork, /v1/skills and /v1/toolsets discovery, per-profile run scoping, detached delegation completions never start unsolicited turns",
+     "evidence": [
+      "plan/archive/tool-results.txt:8109-8340"
+     ]
+    },
+    {
+     "text": "Remaining Desktop doc: Settings->Gateways multi-connection registry (local, remote URL, Hermes Cloud) and desktop launches hermes serve over tui_gateway JSON-RPC; Bot Screen threat model details (RFB socket, DevTools port, single-use display_ticket)",
+     "evidence": [
+      "plan/archive/tool-results.txt:8215-8341"
+     ]
+    },
+    {
+     "text": "SpaceXAI 'Designing Grok Bot' article: Bots (not chats) as primary objects with roster/presence, avatar-as-state (idle/thinking/working/waiting/blocked/done), hover for current action, computer as the bot's workspace with status/preview/takeover levels, inline cards/widgets in a heterogeneous transcript, tools and skills account-level while memory and routines are per-bot, coordinator bots instead of dashboards, routines triggered by schedule or events (GitHub/Linear/Slack/webhook), caps of ~50 bots per account and 6 per group",
+     "evidence": [
+      "plan/archive/tool-results.txt:8360-8815"
+     ]
+    },
+    {
+     "text": "Grok Bot docs 'Use the computer and apps': shared per-account cloud computer with one screen per bot (shared cookies/files/CLI credentials, screens not security boundaries), human takeover for passwords/2FA/CAPTCHA/payment, secure secret request masked from the conversation, connectors installed as account-wide plugins from a Marketplace and preferred over clicking",
+     "evidence": [
+      "plan/archive/tool-results.txt:8817-8900"
+     ]
+    },
+    {
+     "text": "Re-opened Bot Mode and Bot Screen pages (duplicate of earlier reads) plus Docker setup doc: hermes-agent image, s6-overlay per-profile gateway supervision, volume at /opt/data, resource minimums, API_SERVER_PORT per profile, docker as terminal backend vs running Hermes in Docker, Chromium baked in",
+     "evidence": [
+      "plan/archive/tool-results.txt:8902-9265"
+     ]
+    },
+    {
+     "text": "Docker doc find-passes (compose file, 8642 gateway API port, 9119 dashboard, resource limits, audio passthrough, local inference servers) and Bot Screen sandbox image notes",
+     "evidence": [
+      "plan/archive/tool-results.txt:9267-9753"
+     ]
+    },
+    {
+     "text": "Second and third request_user_input rounds: Hermbot scoping decisions captured as user answers (private workspace, web first then desktop later, all functions able to collaborate manually or autonomously like Grok Bot; local POC then server; review external writes; Google/Slack/GitHub connectors)",
+     "evidence": [
+      "plan/archive/tool-results.txt:9767-9771"
+     ]
+    },
+    {
+     "text": "Search for groups/peers/hosted-room-authority and bot-mode docs; Sessions doc: session key formats per platform, group_sessions_per_user isolation default, no daily reset, SQLite state.db with FTS5; toolsets reference (core/composite/platform toolsets, MCP server toolsets, kanban opt-in)",
+     "evidence": [
+      "plan/archive/tool-results.txt:9773-10032"
+     ]
+    },
+    {
+     "text": "Deployment/action-policy question results (local POC then server, review external writes, Google+Slack+GitHub) and developer-guide research on adding tools, plugin system (ctx.register_tool/hook/command, plugin.yaml, capabilities consent), plugin LLM access, toolsets reference",
+     "evidence": [
+      "plan/archive/tool-results.txt:10034-10548"
+     ]
+    },
+    {
+     "text": "API Server Jobs API and sessions API recap plus Slash Commands, Web Search provider plugins, local_knowledge plugin catalog entries read to learn extension points",
+     "evidence": [
+      "plan/archive/tool-results.txt:10549-10723"
+     ]
+    },
+    {
+     "text": "Fourth request_user_input round: workspace visibility (private plus shared; user said private first for POC), UI fidelity (close to Grok Bot UX with Hermbot branding), model access (owner-managed providers)",
+     "evidence": [
+      "plan/archive/tool-results.txt:10725-10730"
+     ]
+    },
+    {
+     "text": "Grok Bot docs 'Message and collaborate': composer features (/ skills, @ mentions of bots/groups/routines/connectors, reply/react, steer in-progress work, editable drafts before email/Slack send), direct message priority and 'Stop now', groups of 2-6 with single-owner handoffs, threads vs reactions, search palette, keyboard shortcuts, async bot-to-bot handoff wakes receiver",
+     "evidence": [
+      "plan/archive/tool-results.txt:10732-10890"
+     ]
+    },
+    {
+     "text": "Grok Bot docs 'Settings and notifications' (attention states: needs attention vs unread vs working; per-bot notification toggle, suppression when focused, auto-review rules where Ask-first wins, local-egress routing) and 'Team Bots' (shared team bot with team memory, private per-person chats, acts as the asking person, plugin credential modes)",
+     "evidence": [
+      "plan/archive/tool-results.txt:10895-11104"
+     ]
+    },
+    {
+     "text": "Hermes Event Hooks doc fetch, environment probe (docker present, node missing, python3 present) and Bot Mode/API Server re-reads for peer DM, hosted room authority transfer (groups.promote/demote with fencing) and sessions REST",
+     "evidence": [
+      "plan/archive/tool-results.txt:11106-11265"
+     ]
+    },
+    {
+     "text": "Fifth request_user_input round: bot management scope when one bot manages others (answer: tasks and lifecycle, configuration changes via user approval)",
+     "evidence": [
+      "plan/archive/tool-results.txt:11266-11270"
+     ]
+    },
+    {
+     "text": "Read local openai-docs skill file and searched OpenAI docs on Codex plan mode/goal/side chats/ExecPlans/PLANS.md/Implement.md/Documentation.md: patterns for long-horizon agent work (plan then goal, side chats, milestone verification, status docs) that shaped the planning process and plan/README structure rather than the product itself",
+     "evidence": [
+      "plan/archive/tool-results.txt:11272-11560"
+     ]
+    },
+    {
+     "text": "Codex slash-commands and desktop keyboard-shortcut references (/plan, /goal, /side, /compact, /fork, attention shortcuts, approve/decline shortcuts); evidence for command-palette and attention-needed UX conventions",
+     "evidence": [
+      "plan/archive/tool-results.txt:11563-11900"
+     ]
+    },
+    {
+     "text": "Final searches on how to turn off Codex plan mode (slash commands, changelog, config reference), ending in the last request_user_input asking whether to save the approved plan to plan/README.md and start Phase 1",
+     "evidence": [
+      "plan/archive/tool-results.txt:11905-12394"
+     ]
+    }
+   ]
+  }
+ },
+ "feature_fragments": [
+  {
+   "id": "feature:lifecycle",
+   "decisions": [
+    {
+     "decision": "A bot is a thin layer over a runtime profile (own config, memory, skills, credentials, chat history) rather than a new primitive",
+     "why": "Hermes Bot Mode explicitly models a Bot as a profile so everything is also visible from the CLI and nothing new needs to be learned",
+     "alternatives": "Dedicated bot object with its own store",
+     "tradeoffs": "Ties bot identity to the runtime's profile layout",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:6701-6702",
+      "plan/archive/tool-results.txt:8935-8936"
+     ]
+    },
+    {
+     "decision": "Per-bot model/provider pin, SOUL, per-skill/toolset/MCP enablement and copy-of-credentials at creation; single-use OAuth logins are not copied",
+     "why": "Specialists should get only the capabilities they need and credentials must not be shared across OAuth single-use grants",
+     "alternatives": "Inherit everything from a default profile",
+     "tradeoffs": "More setup per bot",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:6736-6741",
+      "plan/archive/tool-results.txt:8970-8975"
+     ]
+    },
+    {
+     "decision": "Cap roughly 50 bots per account and 6 per group; limit concurrently warm local bot backends",
+     "why": "Grok Bot removed controls and set practical limits; Hermes keeps at most N warm bot backends and waits 30s for a slot",
+     "alternatives": "Unbounded bots",
+     "tradeoffs": "Requires slot handling and queue timeouts",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8783",
+      "plan/archive/tool-results.txt:9238-9239"
+     ]
+    },
+    {
+     "decision": "Bot management by another bot limited to tasks and lifecycle proposals, with configuration changes requiring user approval",
+     "why": "User answered the scoping question choosing tasks and lifecycle (not full admin, not orchestration only)",
+     "alternatives": "Task orchestration only; full approved administration",
+     "tradeoffs": "Meta-bots cannot silently reconfigure peers",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:11266-11270"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:conversations",
+   "decisions": [
+    {
+     "decision": "One permanent canonical Bot Chat per bot; /new compacts rather than forks; archiving retires and starts a fresh canonical chat",
+     "why": "Bot Mode treats the bot relationship as a forever-chat; Grok article argues disposable chats do not fit an agent that remembers",
+     "alternatives": "Session list per bot",
+     "tradeoffs": "Context growth requires compaction",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:6714-6723",
+      "plan/archive/tool-results.txt:8498-8501"
+     ]
+    },
+    {
+     "decision": "Composer features borrowed from Grok Bot: / for saved skills, @ for bots/groups/routines/connectors, reply/thread/react, steering while work runs, editable drafts before send, Stop now",
+     "why": "User chose close UX fidelity to Grok Bot with Hermbot branding",
+     "alternatives": "Distinct interface with same workflows",
+     "tradeoffs": "Follows a reference product closely",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:10782-10845",
+      "plan/archive/tool-results.txt:10725-10730"
+     ]
+    },
+    {
+     "decision": "Heterogeneous transcript where conversation, system events, interactive cards and visualizations share one timeline",
+     "why": "Grok found prose-only answers forced users to restructure results",
+     "alternatives": "Prose-only transcript",
+     "tradeoffs": "Needs a typed widget/card registry",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8671-8709"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:intake",
+   "decisions": [
+    {
+     "decision": "Direct user messages take priority over background work and can redirect the current turn; queue vs steer is a deliberate choice",
+     "why": "Grok docs state direct messages redirect work; OpenAI notes accidental mid-turn steering costs more than waiting",
+     "alternatives": "Always queue",
+     "tradeoffs": "Steer risks accidental redirection",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:10808-10811",
+      "plan/archive/tool-results.txt:11379-11380"
+     ]
+    },
+    {
+     "decision": "Idempotency-keyed run creation for retry-safe intake over the runtime API",
+     "why": "Hermes runs API reserves keys durably so identical retries return the original run",
+     "alternatives": "Client-side dedupe",
+     "tradeoffs": "Server must persist keys",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:10493",
+      "plan/archive/tool-results.txt:10470"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:outcomes",
+   "decisions": [
+    {
+     "decision": "Treat the form of an answer as part of the answer: inline cards for drafts, routines created, settings changed, bot-to-bot messages",
+     "why": "Grok Bot moved from narrated prose to structured widgets",
+     "alternatives": "Narrated prose",
+     "tradeoffs": "More UI components to build",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8671-8709"
+     ]
+    },
+    {
+     "decision": "Plan then goal: plans answer how, goals answer what must be true before done; durable goals persist across turns",
+     "why": "OpenAI Codex long-horizon guidance on /plan vs /goal",
+     "alternatives": "Single prompt tasks",
+     "tradeoffs": "Extra concepts",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:11402-11419",
+      "plan/archive/tool-results.txt:11934-11946"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:coordination",
+   "decisions": [
+    {
+     "decision": "Group rooms of 2 to 6 bots with bounded serial rounds (3) and message caps (10), @mention scoping, bots may pass, @user escalation raising needs-you",
+     "why": "Hermes Bot Mode caps keep rooms from spinning; Grok caps six per group",
+     "alternatives": "Free-running multi-agent chat",
+     "tradeoffs": "Limits throughput of large collaborations",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:9026-9034",
+      "plan/archive/tool-results.txt:8783"
+     ]
+    },
+    {
+     "decision": "Bot-to-bot handoff via asynchronous message_agent with attribution, delivery ids, typed failure reasons and at-most-one retry for transient errors",
+     "why": "Hermes Bot Mode design; Grok bots wake and reply later",
+     "alternatives": "Synchronous calls between bots",
+     "tradeoffs": "Fire-and-forget needs polling or notification for replies",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:9058-9065",
+      "plan/archive/tool-results.txt:9163-9168",
+      "plan/archive/tool-results.txt:10831-10840"
+     ]
+    },
+    {
+     "decision": "Coordinator bots (chief of staff) handle routine routing instead of dashboards, assignment boards or handoff controls",
+     "why": "Grok found those added coordination work for the user",
+     "alternatives": "Assignment boards",
+     "tradeoffs": "Relies on bot judgment",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8711-8716"
+     ]
+    },
+    {
+     "decision": "Room authority and ordering belong to a single durable driver with lease; failover is an operator procedure that fences the old writer",
+     "why": "Hermes documents divergent histories if two writers accept messages",
+     "alternatives": "Automatic multi-writer merge",
+     "tradeoffs": "Manual recovery",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:9209-9232",
+      "plan/archive/tool-results.txt:11172-11177"
+     ]
+    },
+    {
+     "decision": "Each member keeps a hidden per-room session whose context carries messages since its last turn up to about 200 messages or 32k chars",
+     "why": "Bounds prompt growth; oversized members need compression",
+     "alternatives": "Full transcript each turn",
+     "tradeoffs": "Information loss on truncation",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:9009",
+      "plan/archive/tool-results.txt:9015-9017"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:execution",
+   "decisions": [
+    {
+     "decision": "Background run model: runs with SSE events, stop, steer, approval endpoints; detached completions never start unsolicited model turns",
+     "why": "Hermes runs API semantics the Hermbot runtime adapter was designed against",
+     "alternatives": "Blocking chat completions",
+     "tradeoffs": "Client owns next turn",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8148-8163",
+      "plan/archive/tool-results.txt:10473-10524"
+     ]
+    },
+    {
+     "decision": "Cron-style execution is not an exactly-once side-effect guarantee",
+     "why": "Hermes ledger records scheduled instant and attempts but admits interrupted runs may repeat",
+     "alternatives": "Assume exactly-once",
+     "tradeoffs": "Requires idempotent actions and approvals",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:7803-7804"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:attention",
+   "decisions": [
+    {
+     "decision": "Avatar carries lifecycle state (idle/thinking/working/waiting/blocked/done) with hover for current action instead of step logs",
+     "why": "Users asked for detail mainly for reassurance that the bot was working",
+     "alternatives": "Animated dots or written current step",
+     "tradeoffs": "Needs motion design",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8610-8644"
+     ]
+    },
+    {
+     "decision": "Sidebar distinguishes needs-attention (question/approval/handoff) from unread activity from working",
+     "why": "Grok settings docs define these states; Hermes adds needs-you badge on groups",
+     "alternatives": "Single unread dot",
+     "tradeoffs": "More states to track",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:10993-11000",
+      "plan/archive/tool-results.txt:9030"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:artifacts",
+   "decisions": [
+    {
+     "decision": "Artifacts are durable outputs bots create or modify (documents, designs, code, data) as a first-class concept alongside bots, chats, prompts and tools",
+     "why": "Grok conceptual model of five concepts",
+     "alternatives": "Files hidden in chat",
+     "tradeoffs": "Needs artifact storage and preview",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8495-8496"
+     ]
+    },
+    {
+     "decision": "Right-hand preview rail and in-app browser comment/annotate mode with selectors and computed styles for feedback on artifacts",
+     "why": "Hermes Desktop features",
+     "alternatives": "Text-only feedback",
+     "tradeoffs": "Complex UI",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8058-8060",
+      "plan/archive/tool-results.txt:7349"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:knowledge",
+   "decisions": [
+    {
+     "decision": "Bounded curated memory (MEMORY.md/USER.md) frozen at session start plus unbounded FTS5 session search and optional external providers",
+     "why": "Hermes memory design keeps prompt cost fixed while recall is on demand",
+     "alternatives": "Unbounded memory in prompt",
+     "tradeoffs": "Cannot see mid-session saves until next session",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:7823-7825",
+      "plan/archive/tool-results.txt:7897-7915"
+     ]
+    },
+    {
+     "decision": "Memory entries scanned for injection/exfiltration patterns and optionally gated by write_approval",
+     "why": "Memory is injected into the system prompt so it is an injection vector",
+     "alternatives": "Trust all writes",
+     "tradeoffs": "Review friction",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:7894",
+      "plan/archive/tool-results.txt:7920-7925"
+     ]
+    },
+    {
+     "decision": "Per-bot memory and per-role context, with shared context only via group chats",
+     "why": "Grok: merging legal and finance histories into one memory degrades relevance",
+     "alternatives": "One shared memory",
+     "tradeoffs": "Cross-role knowledge needs handoffs",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8713-8715"
+     ]
+    },
+    {
+     "decision": "Do not point two agent processes at the same Hermes home",
+     "why": "Memory writes race and reload into prompts",
+     "alternatives": "Shared home",
+     "tradeoffs": "One runtime process per bot home",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:7828"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:tools",
+   "decisions": [
+    {
+     "decision": "Tools and skills live at account level while memory and routines belong to the bot",
+     "why": "Grok capability vs context boundary",
+     "alternatives": "Per-bot tool stores",
+     "tradeoffs": "Account-wide exposure of tools",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8714"
+     ]
+    },
+    {
+     "decision": "Custom tools should be plugins (tools, hooks, slash commands, capability-gated overrides), not core patches; skills preferred when instructions plus shell suffice",
+     "why": "Hermes developer guide",
+     "alternatives": "Patch built-in tools",
+     "tradeoffs": "Plugin loading and consent flow",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:10063-10067",
+      "plan/archive/tool-results.txt:10250-10252",
+      "plan/archive/tool-results.txt:10369-10373"
+     ]
+    },
+    {
+     "decision": "Toolsets as named bundles (core, composite, platform, per-MCP-server) with opt-in workflow-gated toolsets",
+     "why": "Hermes toolsets reference",
+     "alternatives": "Flat tool list",
+     "tradeoffs": "More configuration",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:10557-10631"
+     ]
+    },
+    {
+     "decision": "MCP write-capable tools on untrusted servers require approval consent",
+     "why": "Hermes API server surfaces trust-gate as approval.request",
+     "alternatives": "Trust all MCP tools",
+     "tradeoffs": "Interruptions",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8164",
+      "plan/archive/tool-results.txt:11193"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:computer",
+   "decisions": [
+    {
+     "decision": "Each bot has its own screen with status, preview and takeover levels; human takes control for login/2FA/CAPTCHA/payment then hands back",
+     "why": "Grok and Hermes Bot Screen both follow this pattern; the computer is the workspace not a supervision surface",
+     "alternatives": "Always-visible full screen",
+     "tradeoffs": "Complex control lease",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8652-8662",
+      "plan/archive/tool-results.txt:9026",
+      "plan/archive/tool-results.txt:8286-8288"
+     ]
+    },
+    {
+     "decision": "Screens are work surfaces, not security boundaries; bots share the OS user, files and browser",
+     "why": "Documented threat model in both products",
+     "alternatives": "Per-bot OS isolation",
+     "tradeoffs": "Do not store credentials one bot must not use",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:6871-6872",
+      "plan/archive/tool-results.txt:8868-8869"
+     ]
+    },
+    {
+     "decision": "computer_use approval maps to runtime modes (standard, bounded with reviewed manifest, unrestricted); destructive actions refused when no one can answer and hard-blocked combos exist",
+     "why": "Hermes safety design",
+     "alternatives": "Auto-approve",
+     "tradeoffs": "Cron computer use needs a reviewed manifest",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:6993-7029",
+      "plan/archive/tool-results.txt:7062-7066"
+     ]
+    },
+    {
+     "decision": "Browser work goes through the browser toolset not computer_use; browser sessions persist across handoff",
+     "why": "Hermes docs",
+     "alternatives": "Use desktop control for browsers",
+     "tradeoffs": "Shared cookies across bots",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:6999",
+      "plan/archive/tool-results.txt:8290-8291"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:connectors",
+   "decisions": [
+    {
+     "decision": "Prefer a structured connector over clicking a website; connectors are installed account-wide via a marketplace of plugins",
+     "why": "Grok docs",
+     "alternatives": "Browser automation only",
+     "tradeoffs": "Account-wide availability",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8890-8899"
+     ]
+    },
+    {
+     "decision": "Milestone connectors chosen by the user: Gmail, Calendar, Drive, Slack, GitHub plus extensible MCP and browser access",
+     "why": "User answered the connected-apps question",
+     "alternatives": "Microsoft stack; MCP first",
+     "tradeoffs": "Scope of integrations",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:10035-10038"
+     ]
+    },
+    {
+     "decision": "Team bots act as the asking person for OAuth plugins and use the bot's own credential for key-based plugins",
+     "why": "Grok Team Bots credential modes",
+     "alternatives": "Lend one person's login to all",
+     "tradeoffs": "Per-user connect step",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:11058-11099"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:routines",
+   "decisions": [
+    {
+     "decision": "Routines are standing responsibilities attached to a bot, triggered by schedule or events (issues, PRs, webhooks, Slack, Linear), shown in the bot's main interface",
+     "why": "Grok moved routines from secondary config into the main interface",
+     "alternatives": "Cron list apart from chat",
+     "tradeoffs": "Needs event ingestion",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8718-8781"
+     ]
+    },
+    {
+     "decision": "Routines implemented as namespaced cron jobs [bot:<name>] whose runs land in the bot's chat history",
+     "why": "Hermes Bot Mode",
+     "alternatives": "Separate scheduler",
+     "tradeoffs": "Namespace collisions",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8999",
+      "plan/archive/tool-results.txt:7765"
+     ]
+    },
+    {
+     "decision": "Scheduler ticks every 60s with a file lock; jobs may load skills and run in a workdir",
+     "why": "Hermes cron design",
+     "alternatives": "Per-job timers",
+     "tradeoffs": "Tick granularity",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:7760-7785",
+      "plan/archive/tool-results.txt:7715-7752"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:events",
+   "decisions": [
+    {
+     "decision": "Events (webhooks, GitHub PRs/issues, Slack messages, workflow failures) start sessions just like prompts or other bots",
+     "why": "Grok article notes sessions can start from a schedule, event or another bot",
+     "alternatives": "Prompt-only start",
+     "tradeoffs": "Event routing layer",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8781",
+      "plan/archive/tool-results.txt:8733-8760"
+     ]
+    },
+    {
+     "decision": "Room log records turn.started/turn.settled and streams member activity to plugins via on_room_member_activity hook",
+     "why": "Hermes hooks for observability",
+     "alternatives": "Poll",
+     "tradeoffs": "Plugin surface",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:9045"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:management",
+   "decisions": [
+    {
+     "decision": "Roster with avatar, last message, unread, hide, sections and pin; hiding is display-only",
+     "why": "Bot Mode roster behavior",
+     "alternatives": "Flat list",
+     "tradeoffs": "Metadata sync",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:6713-6731"
+     ]
+    },
+    {
+     "decision": "Per-session YOLO toggle, context-usage meter, cache hit rate in status bar",
+     "why": "Hermes Desktop",
+     "alternatives": "None",
+     "tradeoffs": "UI complexity",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:7980-7983"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:notifications",
+   "decisions": [
+    {
+     "decision": "Per-bot notification setting; OS/mobile notifications when a bot finishes or needs input, suppressed while the app is focused; hidden bots never toast but badge a dot",
+     "why": "Grok settings and Hermes hidden-bot behavior",
+     "alternatives": "Always notify",
+     "tradeoffs": "Needs focus tracking",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:11001-11005",
+      "plan/archive/tool-results.txt:6719"
+     ]
+    },
+    {
+     "decision": "Errors appear above the composer as dismissible notices with request ids; clearing does not undo external actions",
+     "why": "Grok settings docs",
+     "alternatives": "Modal errors",
+     "tradeoffs": "Separate error log needed",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:11006-11009"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:auth",
+   "decisions": [
+    {
+     "decision": "Private workspace with accounts and invited teammates, no public signup or billing; owner-managed provider credentials",
+     "why": "User answers: private workspace, owner-managed providers",
+     "alternatives": "Personal only; public SaaS",
+     "tradeoffs": "Not multi-tenant SaaS",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:9771",
+      "plan/archive/tool-results.txt:10729",
+      "plan/archive/tool-results.txt:10038"
+     ]
+    },
+    {
+     "decision": "Private bots/DMs first, with explicit sharing of bots and groups later",
+     "why": "User noted POC is private first",
+     "alternatives": "Everything shared",
+     "tradeoffs": "Sharing deferred",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:10726-10729"
+     ]
+    },
+    {
+     "decision": "Team Bot chats stay private per teammate; owner cannot read teammates' chats",
+     "why": "Grok Team Bots",
+     "alternatives": "Shared transcripts",
+     "tradeoffs": "Team memory is the only shared surface",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:11063"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:runtime-gate",
+   "decisions": [
+    {
+     "decision": "Wrap the Hermes runtime through its API server (runs, sessions, jobs, skills/toolsets discovery) bearer-gated by API_SERVER_KEY with per-profile scoping",
+     "why": "Documented programmatic surface",
+     "alternatives": "Embed the Python agent in-process",
+     "tradeoffs": "Runtime upgrades change surface; capabilities endpoint helps detection",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:8190-8213",
+      "plan/archive/tool-results.txt:10661-10665"
+     ]
+    },
+    {
+     "decision": "Profiles are not a sandbox; real isolation requires container/terminal backends",
+     "why": "Hermes profile docs explicit",
+     "alternatives": "Rely on profiles",
+     "tradeoffs": "Need container per bot",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:7118-7119",
+      "plan/archive/tool-results.txt:7236-7237"
+     ]
+    },
+    {
+     "decision": "Bot Mode protocol injection requires exact title 'Bot Chat' plus a ui_meta hermes-bots marker, so headless installs must write both",
+     "why": "Documented conditions in Bot Mode",
+     "alternatives": "Rely on defaults",
+     "tradeoffs": "Easy to miss",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:9136-9157"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:ops",
+   "decisions": [
+    {
+     "decision": "Run Hermes in Docker (nousresearch/hermes-agent) with data volume, s6 supervision per profile and moderate resource limits (1-4GB, 1-2 CPU); Chromium is the heaviest",
+     "why": "Docker setup docs",
+     "alternatives": "Native install",
+     "tradeoffs": "Memory-hungry browser",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:9267-9480",
+      "plan/archive/tool-results.txt:9605-9614",
+      "plan/archive/tool-results.txt:9388-9400"
+     ]
+    },
+    {
+     "decision": "Local POC first then always-on Linux server; Docker locally",
+     "why": "User deployment answer",
+     "alternatives": "Server from the start",
+     "tradeoffs": "Two deployment phases",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:10035-10038"
+     ]
+    },
+    {
+     "decision": "Hosted cloud variant scales to zero with per-second compute and separate inference billing",
+     "why": "Hermes Cloud pricing page",
+     "alternatives": "Always-on VM",
+     "tradeoffs": "Cost model",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:7378-7429"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "feature:testing",
+   "decisions": [
+    {
+     "decision": "Verification at every milestone with lint, typecheck, tests and build; plan file as source of truth plus status/decisions doc",
+     "why": "OpenAI long-horizon Codex runbook pattern",
+     "alternatives": "Verify at end",
+     "tradeoffs": "Slower milestones",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:11341-11375"
+     ]
+    },
+    {
+     "decision": "Doctor-style triage command for environment checks (computer-use doctor with exit codes)",
+     "why": "Hermes computer-use doctor",
+     "alternatives": "Manual debugging",
+     "tradeoffs": "Needs runtime support",
+     "tag": "documented",
+     "evidence": [
+      "plan/archive/tool-results.txt:7030-7058"
+     ]
+    }
+   ]
+  }
+ ]
+}

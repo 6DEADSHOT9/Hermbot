@@ -1,0 +1,745 @@
+{
+ "flows": {
+  "flow:c": {
+   "plain": "A teammate wants to act on an outside account, such as Gmail, Slack or GitHub. Reads run at once. Anything that changes something outside is frozen and shown to you for review first. After you allow it once, a worker sends the call to the provider and records a receipt. If the receipt is lost, the effect is marked uncertain and you settle it by hand.",
+   "steps_plain": [
+    "The teammate's connector tool calls the server, which checks the arguments.",
+    "The server finds the connection and, for changes, requires a work item.",
+    "The server checks that the teammate may use the action and that the arguments fit the fixed catalog and resource list.",
+    "For a read, the server gets a fresh credential, calls the provider, hides secrets, and flags the connection if login fails.",
+    "For a change, the server rejects a second unfinished change on the task and freezes the exact payload.",
+    "If you already requested or pre-approved this action, the server queues it directly.",
+    "Otherwise the server creates an approval and a pending operation for you to review.",
+    "The change in state flags the task for attention, and you see the review.",
+    "You choose Allow once, deny, or edit, and the operation queues, closes, or gets replaced.",
+    "A task worker marks stale in-flight operations uncertain and picks one queued operation.",
+    "Under several locks, the worker re-checks permission, state, revision and approval, and fails the operation if anything changed.",
+    "The worker records a dispatching marker with a 120-second lease before the provider sees the request.",
+    "The worker calls the provider or MCP tool with identifiers derived from the operation.",
+    "The worker records the result, emits an event, and resumes the teammate with a receipt, except when the result is uncertain.",
+    "A task with unfinished connector operations stays in waiting approval.",
+    "You settle uncertain operations in Connections, Activity, with evidence and without replaying them.",
+    "Later, successful receipts help ignore events caused by the teammate's own writes."
+   ]
+  },
+  "flow:d": {
+   "plain": "You save a routine, which is a task that repeats on a schedule. Each minute, a small cron job in the teammate's container pings the server. The server finds due routines and creates ordinary tasks for them, or skips them with a reason. From there, the work runs like any other task. You can view the history and pause, resume or archive the routine.",
+   "steps_plain": [
+    "You save the routine through the API, and chat can also save an inactive draft.",
+    "The save checks access, records your message and a fixed revision, sets the next run time, and sets up the schedule hook.",
+    "Every 10 seconds the worker works out which teammates need a scheduler and tells their containers.",
+    "The container writes a wake script and settings and creates a one-minute cron job with no agent.",
+    "Each minute the script posts a wake call with a secret token to the server.",
+    "The server checks the generation and token and records the tick time.",
+    "The tick locks up to 50 due routines, pauses after 3 definite failures, and handles downtime gaps.",
+    "Admission removes duplicates and checks overlap, start window, daily cap and access, then records the run as admitted or skipped.",
+    "Admission posts a system message and creates the task, and a failure makes the run skipped.",
+    "The tick sets the next run time, or marks the routine finished.",
+    "When the worker is about to start the task, it re-checks the routine and cancels if it is stale or invalid.",
+    "The task then runs as ordinary work, and routines with invalid grants get paused.",
+    "You see the history and can run, pause, resume or archive the routine."
+   ]
+  },
+  "flow:e": {
+   "plain": "You connect an event source, such as an inbox, a Slack workspace or a webhook, and add a trigger that says what to do. Events arrive by polling, a Slack socket, or a webhook. Hermbot records each one once and matches it to your triggers before it acknowledges. Matching events become ordinary tasks for a teammate.",
+   "steps_plain": [
+    "You create a source, save its secrets, and create a trigger.",
+    "The event worker loop claims poll and socket sources every second, with leases that stop two workers from sharing one.",
+    "For a poll, the worker gets credentials, checks identity at first, and fetches one page outside the database transaction.",
+    "For Drive, the worker checks new Google Docs against receipts of files the teammates created.",
+    "The worker saves the page, items, cursor and next poll time in one step.",
+    "For a socket, the worker connects to Slack, listens, keeps its lease alive, and acknowledges each event after saving it.",
+    "For a webhook, the server reads a limited body, checks the signature, and replies only after saving.",
+    "Receiving an event removes duplicates, applies a daily cap, normalizes it, and stores the body encrypted.",
+    "Ingest checks for repeats and own writes, then matches each active trigger and creates events, delivery records and pending runs.",
+    "Admission checks timing, overlap, queue limits, caps and connector operations, then creates a task as admitted.",
+    "When the worker starts the task, it re-checks and cancels if the trigger changed or went invalid.",
+    "Failures set the source status, back off, and pause triggers when needed, and maintenance cleans up old data."
+   ]
+  },
+  "flow:g": {
+   "plain": "Hermbot can send a browser notification when something needs you. Database triggers flag changes, and a notification worker turns them into attention items. A second loop sends a generic web push to each registered browser. Clicking the notification opens Hermbot at the current state of that item.",
+   "steps_plain": [
+    "Your browser registers a service worker and a push subscription, and the server checks and encrypts it.",
+    "Database triggers on key tables mark attention as needing a refresh.",
+    "The notification worker rebuilds attention items, updates its heartbeat, and cleans up old rows.",
+    "A new item version asks for a notification to be queued.",
+    "The queue step checks settings and freshness, then adds one delivery per matching browser.",
+    "A delivery loop picks due deliveries, folds batches into summaries, and delays bursts.",
+    "The loop re-checks relevance and sends a generic push through the pinned network path.",
+    "The result is saved as accepted, failed, expired or retry, and dead subscriptions are retired.",
+    "The push service wakes your browser, which shows a generic Hermbot notification.",
+    "Clicking it opens Hermbot, which loads the current state of that attention item.",
+    "Saving preferences cancels pending sends, and logging out turns off this browser's push."
+   ]
+  },
+  "flow:f": {
+   "plain": "A manager teammate holding a grant asks to create, change, start or stop a teammate. Hermbot freezes the exact request and shows it to you. If you approve, a worker carries it out through the supervisor, the service that controls the containers. The manager then resumes with the outcome.",
+   "steps_plain": [
+    "You give a manager authority with a standing grant or a grant tied to one task.",
+    "The manager calls the propose tool, and the plugin sends it to the server.",
+    "The server checks authority, targets and budget, validates the full config, rejects busy targets, and freezes the request.",
+    "The server saves the approval and a pending proposal, and the manager ends its turn.",
+    "You may edit the proposal, which replaces the old one and starts a new review.",
+    "You approve with the exact payload hash, and Hermbot re-checks expiry and authority.",
+    "On deny, the manager resumes. On approve, the server re-checks everything and, for a create, registers the new teammate.",
+    "The server queues a lifecycle operation and marks the teammate as provisioning.",
+    "A worker claims the operation, waits for the teammate to be idle, and re-checks the manager and grant.",
+    "The worker decrypts the secrets and sends a runtime spec to the supervisor.",
+    "The supervisor locks the teammate, builds volumes and network, creates a hardened container, starts it, and waits until it is healthy.",
+    "On success, the teammate becomes active and the manager resumes with the result.",
+    "On failure, the teammate shows an error and the manager resumes with the failure text.",
+    "A readiness probe makes the new teammate available for work, and the resumed manager runs again."
+   ]
+  },
+  "flow:i": {
+   "plain": "You log in by pasting the owner token once. The server gives your browser a random session cookie and stores only its hash. Every later request and live connection is checked against that cookie. You can list and revoke sessions, and logout ends the current one.",
+   "steps_plain": [
+    "The stack refuses to start without an owner token, and every service secret must be at least 32 characters.",
+    "The login page sends the token to the session endpoint.",
+    "The server compares the token in constant time.",
+    "Login creates a random session, stores its hash with a one-day expiry, and sets a protected cookie.",
+    "Later requests are checked against the cookie hash, and cross-site writes are rejected.",
+    "The computer stream checks the page origin and re-verifies you every 5 seconds.",
+    "You can list and revoke sessions.",
+    "Logout revokes the session, signs out push, and deletes cookies.",
+    "Teammates log in separately with their own bot token."
+   ]
+  },
+  "flow:j": {
+   "plain": "You create, clone or delete a teammate. Each request becomes a saved lifecycle operation that a worker carries out through the supervisor. A clone copies memory and files with a helper container. A delete removes the container and private data but keeps the history.",
+   "steps_plain": [
+    "Create validates the config, registers the teammate with credentials and a direct chat, and queues a create operation.",
+    "Clone checks the source, registers the target, and queues a clone operation with copy options.",
+    "The worker waits until the target and clone source have no active runs.",
+    "The supervisor stops the source, runs a locked-down helper to copy state, restarts the source, and creates the new container.",
+    "The copy keeps memory, skills, workspace and history, and skips symlinks, credentials and the browser volume.",
+    "When the container starts, it runs its bootstrap and passes health checks.",
+    "Delete needs the exact teammate name, then marks the teammate deleting and rejects its token.",
+    "The supervisor removes the container, helpers, volumes and network.",
+    "The teammate becomes deleted, credentials are cleared, and old chats stay as past teammates."
+   ]
+  },
+  "flow:k": {
+   "plain": "You attach a file to a chat. Hermbot validates it and stores it in object storage with a checksum. Before the teammate's next run, the worker reads it, checks the checksum, and the supervisor installs it into the teammate's workspace. The teammate reads it there, and you can download it later.",
+   "steps_plain": [
+    "The screen uploads the file with a unique key.",
+    "The server checks the name, file type, encoding and size, and computes a checksum.",
+    "The server stores the bytes in object storage and records the file.",
+    "Your message or task lists the attached file ids.",
+    "Before a run starts, the worker begins copying the task's files into the teammate's workspace.",
+    "The worker reads each file, verifies its size and checksum, and sends it to the supervisor.",
+    "The supervisor validates it again and writes it in chunks into the container under a per-teammate lock.",
+    "The install script re-checks, writes safely without following links, and replaces the file atomically.",
+    "The teammate reads the file in its workspace, and you can download it from the API."
+   ]
+  },
+  "flow:l": {
+   "plain": "You start the stack with Docker Compose. The services start in a set order. The API prepares the database and seeds three starter teammates. The worker then asks the supervisor to create each teammate's container. When the containers are healthy, Hermbot can send them work.",
+   "steps_plain": [
+    "A one-time service builds the teammate runtime image and exits.",
+    "The database must be healthy, storage must start, and the supervisor starts on its own.",
+    "The API starts after the database is healthy and storage has started.",
+    "The API checks secret length, sets up the database under a lock, seeds Scout, Quill and Sage, and imports credentials.",
+    "The API creates the storage bucket if it is missing.",
+    "The API health check runs a simple database query.",
+    "The worker waits for the API and the image, and the other workers wait for the API.",
+    "The worker queues an ensure operation for each active teammate whose applied revision is behind, and the supervisor creates the container.",
+    "On start, the container installs its plugin, writes its config, starts the adapter, and runs the Hermes gateway.",
+    "The supervisor waits for health, the worker stores readiness, and compatible teammates can then receive work."
+   ]
+  },
+  "flow:a": {
+   "plain": "You type a message to a teammate in the chat. Hermbot saves it as a queued task and replies at once. A background worker then reads your message with the teammate's AI model and turns it into a work card with required results. The worker starts a run inside the teammate's container, and the teammate uses Hermbot tools while it works. When the run ends, Hermbot checks the claimed results, posts the answer, and updates your screen and your attention list.",
+   "steps_plain": [
+    "The chat box sends your message with a unique key so a retry cannot duplicate it.",
+    "The server rejects cross-site writes and checks that you are the logged-in owner.",
+    "The server validates the key and creates a task for the chat.",
+    "Creating the task takes a lock on the key, replays a duplicate, and checks that the chat, teammate and attachments are valid.",
+    "The server saves the task as queued, stores your message, marks it as waiting to be interpreted, and flags it for attention.",
+    "The server answers right away with the task, and the screen also gets live events.",
+    "The worker process starts the intake loop in the background.",
+    "The loop takes the oldest waiting message in each conversation, sets a 60-second lease, and gathers evidence and the teammate's model settings.",
+    "The worker asks the teammate's model to interpret the message, for up to 4 rounds or 45 seconds, and checks the answer.",
+    "In a fresh transaction, the worker applies the answer, unless it was already applied or stopped, and may create extra tasks.",
+    "For an assignment, the worker creates a work card and links it to the task and your message.",
+    "The worker records the required results, notes any approvals you quoted, logs the change, and tells other active tasks about the revision.",
+    "The worker marks the message as interpreted and may add a clarifying follow-up.",
+    "Each second the worker reconciles commands, checks waiting tasks, and looks for tasks to start.",
+    "The worker takes a global lock, checks capacity and teammate eligibility, locks the oldest ready task, and runs preflight checks.",
+    "The worker finds or creates the teammate's session and builds the prompt with policies, files and pending directions.",
+    "The worker records a dispatching attempt with a short lease and marks the task running.",
+    "The worker copies attachments into the teammate's workspace and sends a run request to the teammate's container.",
+    "Inside the teammate, the Hermbot plugin asks the server for context before each model call.",
+    "Another plugin hook fetches context again to learn the current work revision and to receive any peer inbox messages.",
+    "Each tool call is checked against the current work revision and the teammate's allowed tools before it runs.",
+    "The server validates tool arguments, skips duplicates, runs the action, and stores a receipt.",
+    "At the same time, the worker streams the run's events and saves each one once.",
+    "The worker polls the run, delivers any owner directions, and calls settle when the run ends.",
+    "Settle locks the task and attempt, counts the time, and decides the task's next state.",
+    "The server re-checks the teammate's finish claims and records accepted results.",
+    "For a completed run, the server posts the result as a message and logs completion, or logs failure.",
+    "The server streams updates every half second, and the screen appends text and refreshes its data.",
+    "The screen reloads the work cards and the transcript and shows status and progress.",
+    "The notification worker adds a result item to the attention list once the work is fully settled."
+   ]
+  },
+  "flow:b": {
+   "plain": "A manager teammate wants help from other teammates on one job. It hands pieces to peers, sends them messages, and waits for their results. Hermbot releases the manager's slot while it waits, then wakes it when results arrive. The manager reads what the peers produced and signs off on the shared result. If a peer fails, the manager can replace or reassign that piece.",
+   "steps_plain": [
+    "The manager asks Hermbot which teammates exist and what they can do.",
+    "The delegate tool call reaches the server and finds the target results.",
+    "The server checks the teammate, permission, depth, loops, budget, results and files.",
+    "The server creates the child task with a handoff brief and a pending contribution slot, and the manager keeps running.",
+    "A message tool call saves a pending message in the peer's inbox.",
+    "If the peer is running, its next context fetch shows the message and Hermbot marks it delivered.",
+    "If the peer is idle, Hermbot creates a discussion task for it, and it replies by message.",
+    "The child runs like any task, publishes files, and finishes, so its contribution counts as submitted but not yet accepted.",
+    "The manager calls wait on tasks or messages, goes into a waiting state, and ends its turn.",
+    "While required contributions are not accepted, the manager stays waiting and frees its capacity.",
+    "When the waits resolve or fail, Hermbot requeues the manager with a summary of what came back.",
+    "The manager reads the contributed files and checks work status.",
+    "The manager finishes with its reviewed results, and Hermbot checks every contribution and review before accepting.",
+    "If a required contribution fails, the manager can replace that task or reassign it.",
+    "In the older version, the parent waits for all children and then resumes with all their results."
+   ]
+  },
+  "flow:h": {
+   "plain": "You can stop a task, redirect it, retry it, or let it continue after a budget pause. Hermbot also survives crashes. After a worker or container restart, another worker picks up the same run. When Hermbot cannot tell what happened, it marks the work uncertain and does not replay it.",
+   "steps_plain": [
+    "You press Stop and the server cancels the task.",
+    "Cancel walks the whole task tree, marks stops, and closes pending approvals and questions.",
+    "The worker sees the stopping attempt and tells the container to stop the run.",
+    "Settle marks the task cancelled using the stored reason.",
+    "Redirect creates a revision task for new work or a direction for old tasks.",
+    "The worker sends one direction at a time, and conflicts, errors and stale leases get handled safely.",
+    "Retry makes a replacement task, but only when the old tree is settled and nothing is unknown.",
+    "Continue adds budget and puts paused tasks back in their waiting states.",
+    "Retry interpretation sets a failed message back to pending.",
+    "After a worker restart, a new worker re-leases attempts whose lease expired.",
+    "A re-leased attempt polls the same run, or re-sends the start request with the same key.",
+    "The event stream restarts and records a gap flag, which stops later automatic recovery.",
+    "If the container lost a run, the task becomes uncertain, and an interrupted run can be retried by you.",
+    "Hermbot automatically retries a failed run only when it is safe and under the retry limit.",
+    "Uncertain work blocks its teammate and keeps its slot, and no code moves it out of uncertain.",
+    "Each loop cancels tasks past their deadline or with ended grants."
+   ]
+  }
+ },
+ "state_machines": {
+  "sm:connection": {
+   "plain": "A connection links Hermbot to an outside account. It normally goes from disconnected to connected once you finish login or save a token. A login failure puts it in needs_reconnect. You can revoke it, and a changed MCP endpoint resets it to disconnected.",
+   "states_plain": {
+    "disconnected": "Not linked yet",
+    "connected": "Linked and working",
+    "needs_reconnect": "Login failed; reconnect needed",
+    "revoked": "You cut it off"
+   }
+  },
+  "sm:connector-operation": {
+   "plain": "This is one change a teammate wants to make in an outside account. It normally goes from pending review to queued, then dispatching, then succeeded. A lost receipt makes it uncertain, and you settle it by hand. It can also be denied, cancelled, superseded or fail.",
+   "states_plain": {
+    "pending": "Waiting for your review",
+    "queued": "Approved, waiting to be sent",
+    "dispatching": "Being sent now",
+    "succeeded": "Done",
+    "failed": "Did not happen",
+    "uncertain": "Might have happened; check",
+    "unresolved": "Closed unchecked after a stop",
+    "denied": "You said no",
+    "cancelled": "Dropped before sending",
+    "superseded": "Replaced by an edited review"
+   }
+  },
+  "sm:routine": {
+   "plain": "A routine is a task that repeats on a schedule. It starts as a draft or active, and can pause and resume. It becomes finished when no runs remain. Repeated failures or invalid access pause it, and you can archive it anytime.",
+   "states_plain": {
+    "draft": "Saved, not running",
+    "active": "Running on schedule",
+    "paused": "Stopped for now",
+    "finished": "No more runs due",
+    "archived": "Retired"
+   }
+  },
+  "sm:routine-run": {
+   "plain": "A routine run is one scheduled occurrence of a routine. It is either admitted as a task or skipped with a reason. An admitted run can become skipped if creating its task fails.",
+   "states_plain": {
+    "admitted": "Turned into a task",
+    "skipped": "Not run; reason recorded"
+   }
+  },
+  "sm:legacy-routine": {
+   "plain": "This is the older one-time routine from Phase 1. It goes from creating to scheduled to running to completed or failed. If setup fails, it becomes uncertain. You can cancel it before it is due.",
+   "states_plain": {
+    "creating": "Being set up",
+    "scheduled": "Waiting for its time",
+    "uncertain": "Setup result unknown",
+    "running": "Running now",
+    "completed": "Finished well",
+    "failed": "Finished badly",
+    "cancelled": "Stopped before it ran"
+   }
+  },
+  "sm:event-source": {
+   "plain": "An event source is a place Hermbot listens for events, such as an inbox or webhook. It starts as initializing and becomes ready, or listening for sockets. Problems move it to retrying, needs_access, needs_resync or needs_inspection. You can pause or archive it.",
+   "states_plain": {
+    "initializing": "Being checked",
+    "ready": "Working, idle",
+    "listening": "Connected and waiting",
+    "retrying": "Trying again after a glitch",
+    "reconnecting": "Reconnecting a lost socket",
+    "needs_access": "Login problem; fix access",
+    "needs_resync": "Lost its place; resync",
+    "needs_inspection": "Repeated errors; look at it",
+    "paused": "You paused it",
+    "archived": "Retired",
+    "disconnected (projected)": "Looks offline from old check time"
+   }
+  },
+  "sm:event-trigger": {
+   "plain": "A trigger says what to do when a matching event arrives. It is a draft or active. Source problems, grant problems or capacity limits pause it. You can resume or archive it.",
+   "states_plain": {
+    "draft": "Saved, switched off",
+    "active": "Watching for events",
+    "paused": "Stopped for now",
+    "archived": "Retired"
+   }
+  },
+  "sm:trigger-run": {
+   "plain": "A trigger run is one matched event waiting to become work. It starts pending, then becomes admitted when a task is created. Otherwise it ends ignored, cancelled, expired or failed.",
+   "states_plain": {
+    "pending": "Waiting its turn",
+    "admitted": "Task created",
+    "ignored": "Skipped on recheck",
+    "cancelled": "Dropped before start",
+    "expired": "Waited too long",
+    "failed": "Could not be run"
+   }
+  },
+  "sm:trigger-delivery": {
+   "plain": "A delivery record notes how one incoming event was handled. It ends in one state, such as recorded, ignored or duplicate. A recording_failed delivery can be reprocessed when you retry.",
+   "states_plain": {
+    "recorded": "Saved as an event",
+    "ignored": "No trigger matched",
+    "duplicate": "Seen before",
+    "unsupported": "Not a usable event",
+    "recording_failed": "Could not process it",
+    "reprocessed": "Retried by you"
+   }
+  },
+  "sm:notification-delivery": {
+   "plain": "A push delivery is one notification sent to one browser. It normally goes from pending to dispatching to accepted. It can be delayed, folded into a summary, suppressed, expired or failed.",
+   "states_plain": {
+    "pending": "Waiting to send",
+    "dispatching": "Being sent",
+    "accepted": "Push service took it",
+    "failed": "Gave up",
+    "expired": "Too old to send",
+    "suppressed": "No longer relevant",
+    "covered": "Folded into a summary"
+   }
+  },
+  "sm:push-subscription": {
+   "plain": "A push subscription is one browser's sign-up for notifications. It starts registered and becomes accepted once the push service takes a message. Errors, expiry, replacement, removal or logout end it.",
+   "states_plain": {
+    "registered": "Signed up",
+    "accepted_by_push_service": "Push service works",
+    "server_key_error": "Key rejected by push service",
+    "expired": "Gone or too old",
+    "replaced": "A newer one took over",
+    "revoked": "You deleted it",
+    "signed_out": "You logged out"
+   }
+  },
+  "sm:bot": {
+   "plain": "A bot here is a teammate. It becomes provisioning when created, then active when its container is ready. Deleting leads to deleted. Supervisor failures put it in error, and you can retry.",
+   "states_plain": {
+    "start": "Not created yet",
+    "active": "Ready for work",
+    "provisioning": "Being built or changed",
+    "deleting": "Being removed",
+    "error": "Setup or removal failed",
+    "archived": "Put away",
+    "deleted": "Gone; history kept"
+   }
+  },
+  "sm:bot-operation": {
+   "plain": "This is a saved lifecycle job for a teammate, such as create or delete. It goes from queued to applying to completed. It can fail, and you can retry. It is cancelled if its reason ends.",
+   "states_plain": {
+    "start": "Not created yet",
+    "queued": "Waiting for a worker",
+    "applying": "In progress",
+    "completed": "Done",
+    "failed": "Did not work",
+    "cancelled": "Dropped before it ran",
+    "uncertain": "Result unknown"
+   }
+  },
+  "sm:lifecycle-proposal": {
+   "plain": "A manager's request to create or change a teammate. It starts pending your review. If you approve, it goes queued, applying, then completed. It can also be denied, replaced, cancelled or fail.",
+   "states_plain": {
+    "start": "Not created yet",
+    "pending": "Waiting for your review",
+    "denied": "You said no",
+    "superseded": "Replaced by an edit",
+    "cancelled": "Dropped",
+    "queued": "Approved, waiting",
+    "applying": "Being carried out",
+    "completed": "Done",
+    "failed": "Did not work"
+   }
+  },
+  "sm:grant": {
+   "plain": "A grant gives a manager authority to manage teammates. It is created active. It ends when you revoke it or its time runs out. It has no status column, so Hermbot works out the state.",
+   "states_plain": {
+    "start": "Not created yet",
+    "active": "In force",
+    "revoked": "You withdrew it",
+    "expired": "Time ran out"
+   }
+  },
+  "sm:knowledge-proposal": {
+   "plain": "A teammate proposes something to learn, and you review it. It starts pending, then goes queued, applying and completed. It can be denied, cancelled, replaced or fail.",
+   "states_plain": {
+    "start": "Not created yet",
+    "pending": "Waiting for your review",
+    "queued": "Approved, waiting",
+    "applying": "Being applied",
+    "completed": "Done",
+    "failed": "Did not work",
+    "denied": "You said no",
+    "cancelled": "Dropped",
+    "superseded": "Replaced by an edit"
+   }
+  },
+  "sm:computer-control": {
+   "plain": "This tracks who controls a teammate's computer screen. It starts with the agent in control. You take over, which waits for the agent to finish, then you are ready. Handing back returns control to the agent. A timeout keeps you pending.",
+   "states_plain": {
+    "agent": "The teammate is driving",
+    "human-pending": "You are taking over",
+    "human-ready": "You are in control"
+   }
+  },
+  "sm:owner-session": {
+   "plain": "An owner session is your login. It becomes active when you log in. It ends by logout or revocation, or by expiring.",
+   "states_plain": {
+    "start": "Not logged in",
+    "active": "Logged in",
+    "revoked": "Ended by you",
+    "expired": "Timed out"
+   }
+  },
+  "sm:runtime-container": {
+   "plain": "This is a teammate's Docker container. It is created, starts, and becomes healthy. It can stop. A new operation or a delete removes it.",
+   "states_plain": {
+    "absent": "Does not exist",
+    "created": "Built, not started",
+    "running-starting": "Starting up",
+    "healthy": "Running and checked",
+    "stopped": "Switched off",
+    "removed": "Deleted"
+   }
+  },
+  "sm:task": {
+   "plain": "A task is one unit of work for a teammate. It normally goes from queued to running to completed. It can wait for children, results, approval, input or the computer. Other exits are failed, cancelled, interrupted, uncertain and budget pauses.",
+   "states_plain": {
+    "(initial)": "Not created yet",
+    "queued": "Waiting to start",
+    "blocked": "Waiting on other tasks",
+    "scheduled": "Set for a routine time",
+    "running": "Being worked on",
+    "waiting_children": "Waiting for child tasks (old style)",
+    "waiting_results": "Waiting for peers' results",
+    "waiting_approval": "Waiting for your review",
+    "waiting_input": "Waiting for your answer",
+    "waiting_computer": "Waiting while you hold the computer",
+    "cancelling": "Stopping now",
+    "pausing_budget": "Pausing for budget",
+    "paused_budget": "Paused; budget used up",
+    "completed": "Done",
+    "failed": "Did not succeed",
+    "cancelled": "Stopped",
+    "interrupted": "Cut off by restart",
+    "uncertain": "Outcome unknown"
+   }
+  },
+  "sm:attempt": {
+   "plain": "An attempt is one try at running a task in a teammate's container. It goes from dispatching to running to a final state. It can be stopping or uncertain. Nothing moves an attempt out of uncertain.",
+   "states_plain": {
+    "(initial)": "Not created yet",
+    "reserved": "Held for a routine",
+    "external": "Routine run in progress",
+    "dispatching": "Being sent to the container",
+    "running": "Running now",
+    "waiting_for_approval": "Paused for your review",
+    "stopping": "Being stopped",
+    "uncertain": "Outcome unknown",
+    "completed": "Finished well",
+    "failed": "Finished badly",
+    "cancelled": "Stopped",
+    "interrupted": "Cut off"
+   }
+  },
+  "sm:intake": {
+   "plain": "Intake is the step that reads your message and turns it into work. It goes pending, interpreting, then applied. It retries on errors and fails after 3 tries, and you can retry it.",
+   "states_plain": {
+    "(initial)": "Not started",
+    "legacy": "Old-style message, no intake",
+    "pending": "Waiting to be read",
+    "interpreting": "Being read",
+    "applied": "Changes applied",
+    "failed": "Gave up after errors"
+   }
+  },
+  "sm:work-item": {
+   "plain": "A work item is a card showing the state of a piece of work. Its status is worked out from other rows. It moves among working, waiting and paused states, and ends completed or cancelled. Uncertain connector results show as uncertain.",
+   "states_plain": {
+    "planning": "Being planned",
+    "working": "In progress",
+    "needs_answer": "Needs your answer",
+    "needs_approval": "Needs your review",
+    "uncertain": "Outcome unclear",
+    "needs_attention": "Something needs a look",
+    "pausing_budget": "Pausing for budget",
+    "paused_budget": "Paused; budget used up",
+    "waiting_results": "Waiting for peers",
+    "completed": "Done",
+    "cancelled": "Stopped",
+    "hidden": "Not shown"
+   }
+  },
+  "sm:requirement": {
+   "plain": "A requirement is a result the work must deliver. It starts pending and becomes fulfilled when the result is accepted. It can be blocked, failed, uncertain or cancelled, and a revision sets it back to pending.",
+   "states_plain": {
+    "(initial)": "Not created yet",
+    "pending": "Not delivered yet",
+    "fulfilled": "Delivered and accepted",
+    "blocked": "Cannot proceed",
+    "failed": "Did not succeed",
+    "uncertain": "Outcome unknown",
+    "cancelled": "No longer needed"
+   }
+  },
+  "sm:input-request": {
+   "plain": "An input request is a question a teammate asks you. It starts pending and becomes answered when you reply. It can be cancelled or expire.",
+   "states_plain": {
+    "(initial)": "Not asked yet",
+    "pending": "Waiting for your answer",
+    "answered": "You replied",
+    "cancelled": "No longer needed",
+    "expired": "Timed out"
+   }
+  },
+  "sm:approval": {
+   "plain": "An approval is a review you must decide. It starts pending, then decided, then delivered to the teammate. It can go stale, be replaced, cancelled or expire.",
+   "states_plain": {
+    "(initial)": "Not created yet",
+    "pending": "Waiting for you",
+    "decided": "You chose",
+    "delivered": "Teammate got your decision",
+    "stale": "Out of date",
+    "superseded": "Replaced by an edit",
+    "cancelled": "Dropped",
+    "expired": "Ran out of time"
+   }
+  },
+  "sm:contribution": {
+   "plain": "A contribution is a peer's piece of a shared result. It starts pending, is submitted by the peer, and is accepted by the owner path. It can end blocked, failed, uncertain or superseded.",
+   "states_plain": {
+    "(initial)": "Not created yet",
+    "pending": "Peer has not delivered",
+    "submitted": "Peer delivered; not yet accepted",
+    "accepted": "Accepted",
+    "superseded": "Replaced",
+    "blocked": "Peer could not proceed",
+    "failed": "Peer failed",
+    "uncertain": "Outcome unknown"
+   }
+  },
+  "sm:teammate-message": {
+   "plain": "A teammate message is a note in a peer's inbox. It starts pending and becomes delivered once the peer sees it. It can be cancelled.",
+   "states_plain": {
+    "(initial)": "Not sent yet",
+    "pending": "Waiting in the inbox",
+    "delivered": "Peer received it",
+    "cancelled": "Dropped"
+   }
+  },
+  "sm:control": {
+   "plain": "A control is a direction sent to a running task, such as a redirect. It starts pending and is delivered. It can be included at start, discarded or superseded, or become uncertain after an error.",
+   "states_plain": {
+    "(initial)": "Not created yet",
+    "pending": "Waiting to be sent",
+    "included": "Added to the start prompt",
+    "dispatching": "Being sent",
+    "delivered": "Teammate received it",
+    "uncertain": "Unclear if received",
+    "discarded": "Dropped",
+    "superseded": "Replaced"
+   }
+  },
+  "sm:work-command": {
+   "plain": "A work command tells running tasks about a work revision. It starts pending and ends delivered or included at the next start. It can be recorded or superseded.",
+   "states_plain": {
+    "(initial)": "Not created yet",
+    "pending": "Waiting to be sent",
+    "recorded": "Saved for later",
+    "included": "Added to a start prompt",
+    "delivered": "Teammate received it",
+    "superseded": "Replaced"
+   }
+  },
+  "sm:assessment": {
+   "plain": "An assessment is a check on how an execution is going. It is queued, evaluated, and then observed or applied or discarded. If the check fails, it becomes unavailable.",
+   "states_plain": {
+    "(initial)": "Not created yet",
+    "queued": "Waiting to be checked",
+    "evaluating": "Being checked",
+    "observed": "Noted only",
+    "applied": "Acted on",
+    "discarded": "Thrown away",
+    "unavailable": "Check failed"
+   }
+  },
+  "sm:attention": {
+   "plain": "An attention item is one thing that needs your notice. It starts unread and becomes read, then dismissed. A change in its content makes it unread again. Old items are marked inactive and later pruned.",
+   "states_plain": {
+    "(initial)": "Not created yet",
+    "unread": "New to you",
+    "needs_owner": "Needs you to act",
+    "read": "You saw it",
+    "dismissed": "You hid it",
+    "inactive": "No longer relevant",
+    "pruned": "Deleted by cleanup"
+   }
+  }
+ },
+ "discrepancies": [
+  {
+   "key": "HTTP 401 and any non-rate-limited 403 are classified as auth",
+   "what": "A login-style error on one action marks the whole connection as needing reconnect.",
+   "why_it_matters": "A write-permission problem on one action also blocks reads that still work and pauses event sources.",
+   "fix_hint": "Possible fix: Treat a write-scope rejection as an action error, not a connection auth failure."
+  },
+  {
+   "key": "README says notifications remain later work and 'Phase 5.4 a",
+   "what": "The main README says notifications are unfinished, yet it also describes them and the code ships them.",
+   "why_it_matters": "Newcomers may think notifications are missing when they work.",
+   "fix_hint": "Possible fix: Update the README status lines to match the plan and code."
+  },
+  {
+   "key": "plan/README.md 5.4 section says 'Planning is complete; imple",
+   "what": "The plan README says 5.4 has not started, while its own summary says it passed on Oct 26.",
+   "why_it_matters": "Readers cannot tell whether Phase 5.4 is done.",
+   "fix_hint": "Possible fix: Update the 5.4 section to say it is complete."
+  },
+  {
+   "key": "PHASE-DETAILS.md (header 'Updated: 2026-10-26') still report",
+   "what": "PHASE-DETAILS.md still says 5.4 and the Phase 5 exit are pending, despite its recent date.",
+   "why_it_matters": "The phase record disagrees with the plan and checklist.",
+   "fix_hint": "Possible fix: Refresh PHASE-DETAILS.md to the completed status."
+  },
+  {
+   "key": "README claims the plugin advertises '19 application operatio",
+   "what": "The README says the plugin has 19 operations, but the plugin registers 22 tools and plugin.yaml lists only 19.",
+   "why_it_matters": "A developer may miss three tools, and readiness needs all 22.",
+   "fix_hint": "Possible fix: Add the missing tools to plugin.yaml and fix the README count."
+  },
+  {
+   "key": "ISSUES.md 'Documented review findings: OUT' table has a head",
+   "what": "The issues file has an empty table for 11 review findings, so they are not indexed or counted.",
+   "why_it_matters": "Those findings are easy to lose, and the coverage count is too low.",
+   "fix_hint": "Possible fix: Fill in the table rows and update the coverage count."
+  },
+  {
+   "key": "CHECKLIST line 10 says to resume the roadmap with Phase 6.1 ",
+   "what": "The checklist points to Phase 6.1 as next, but other files say 6.1 is held and 6.2 is selected.",
+   "why_it_matters": "A reader may start the wrong phase.",
+   "fix_hint": "Possible fix: Update the checklist line to select Phase 6.2."
+  },
+  {
+   "key": "Lead-verified: no UPDATE moves a task or attempt out of stat",
+   "what": "No code moves a task or attempt out of uncertain, although error messages tell you to reconcile.",
+   "why_it_matters": "Uncertain work keeps blocking its teammate and a slot, with no way out.",
+   "fix_hint": "Possible fix: Add an owner reconcile action that moves work out of uncertain."
+  },
+  {
+   "key": "Lead-verified: the internal() dependency checking INTERNAL_T",
+   "what": "The internal token check is defined but no route uses it.",
+   "why_it_matters": "The INTERNAL_TOKEN setting looks like a protection but only affects startup checks.",
+   "fix_hint": "Possible fix: Attach the check to the internal routes, or remove the setting."
+  },
+  {
+   "key": "INTERNAL_TOKEN is mandatory in compose and length-checked at",
+   "what": "INTERNAL_TOKEN is required and length-checked at startup, but nothing uses it to check requests.",
+   "why_it_matters": "Owners must set a secret that guards nothing, which gives a false sense of safety.",
+   "fix_hint": "Possible fix: Use the token on internal routes or drop the requirement."
+  },
+  {
+   "key": "Legacy-profile hermes-* services cannot pass current readine",
+   "what": "The old hermes-* services lack keys, a bot id and a browser volume, so they cannot pass readiness.",
+   "why_it_matters": "Starting them would fail, even though they look usable.",
+   "fix_hint": "Possible fix: Remove them or mark them clearly as not runnable."
+  },
+  {
+   "key": "PHASE3.md says the runtime image is hermbot-hermes:phase3; c",
+   "what": "PHASE3.md names the runtime image phase3, but the code uses phase4.",
+   "why_it_matters": "A reader following the old doc would use the wrong image name.",
+   "fix_hint": "Possible fix: Mark PHASE3.md as historical or update the name."
+  },
+  {
+   "key": "pyproject.toml declares markers integration/hermes/live, but",
+   "what": "Test markers hermes and live are never used, and most tests lack the integration marker though all need PostgreSQL.",
+   "why_it_matters": "Developers cannot select test groups reliably.",
+   "fix_hint": "Possible fix: Apply the markers consistently or remove the unused ones."
+  },
+  {
+   "key": "tests/browser/response-layout.mjs and tests/browser/work-com",
+   "what": "Two browser test scripts are empty, but their output images and reports exist.",
+   "why_it_matters": "The checks cannot be re-run, so their results cannot be trusted or reproduced.",
+   "fix_hint": "Possible fix: Restore the scripts from history or recreate them."
+  },
+  {
+   "key": "Several evidence files have no producer anywhere in tests/ o",
+   "what": "Many evidence files have no script in the repo that produces them.",
+   "why_it_matters": "The acceptance evidence cannot be reproduced from the repo.",
+   "fix_hint": "Possible fix: Add the generating scripts, or document how they were made."
+  },
+  {
+   "key": "Acceptance drivers and browser scripts hard-code owner-works",
+   "what": "Acceptance scripts hard-code real workspace ids and titles.",
+   "why_it_matters": "They only work against one past workspace, so they are not repeatable tests.",
+   "fix_hint": "Possible fix: Have the scripts create their own test data."
+  },
+  {
+   "key": "phase5_exit_acceptance verify()/cleanup() require proof keys",
+   "what": "The Phase 5 exit check needs proof keys that no script writes, so someone must edit the file by hand.",
+   "why_it_matters": "The gate cannot pass on its own, and cleanup fails with an error otherwise.",
+   "fix_hint": "Possible fix: Write those proof keys from the live acceptance run."
+  },
+  {
+   "key": "Unit module test_phase4_acceptance_evidence imports live-acc",
+   "what": "A unit test module imports live-test modules that read env vars and open a client on import.",
+   "why_it_matters": "Pure unit tests cannot run without a live stack setup.",
+   "fix_hint": "Possible fix: Move the shared code to a module without side effects at import."
+  },
+  {
+   "key": "event_trigger_acceptance.py browser-cleanup stage deletes ro",
+   "what": "A cleanup stage deletes and updates database rows directly, skipping the API's rules.",
+   "why_it_matters": "It can leave the data in a state the product would never create.",
+   "fix_hint": "Possible fix: Use the API for cleanup where possible."
+  },
+  {
+   "key": "Steer route without Idempotency-Key uses a random key, so cl",
+   "what": "A redirect with no idempotency key gets a random key, so a client retry is not safe.",
+   "why_it_matters": "A retried redirect creates a second task.",
+   "fix_hint": "Possible fix: Require a key or derive one from the request."
+  },
+  {
+   "key": "Intake FIFO only considers pending/interpreting rows, so a f",
+   "what": "A failed interpretation does not block later messages, so a retried earlier message runs after later ones.",
+   "why_it_matters": "Your messages may be applied out of order.",
+   "fix_hint": "Possible fix: Make a failed message hold the queue until it is retried or dropped."
+  }
+ ]
+}

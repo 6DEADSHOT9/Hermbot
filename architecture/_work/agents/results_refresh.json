@@ -1,0 +1,1456 @@
+{
+ "agent": "results_refresh",
+ "files_read": [
+  "tests/test_teaching.py",
+  "test-results/phase62-teaching-1440.png",
+  "test-results/phase62-teaching-768.png",
+  "test-results/phase62-teaching-390.png",
+  "test-results/phase62-teaching-320.png",
+  "test-results/phase62-ui-failure.png",
+  "test-results/phase62-inspection/desktop-fold.jpg",
+  "test-results/phase62-inspection/tablet-fold.jpg",
+  "test-results/phase62-inspection/mobile-fold.jpg",
+  "test-results/phase62-inspection/desktop-page-01.jpg",
+  "test-results/phase62-inspection/tablet-page-01.jpg",
+  "test-results/phase62-inspection/mobile-page-01.jpg",
+  "test-results/phase62-backend.xml",
+  "test-results/phase62-feature-final.xml",
+  "test-results/phase62-before.json",
+  "test-results/phase62-change-manifest.json",
+  "test-results/phase62-desktop-fixture.json",
+  "test-results/phase62-integrity.json",
+  "test-results/phase62-native-fixture.json",
+  "test-results/phase62-runtime-refresh.json",
+  "test-results/phase62-status.json",
+  "test-results/phase62-ui-fixture.json",
+  "test-results/phase62-vision.json",
+  "test-results/phase62-ui-inspect.html",
+  "test-results/phase62-ui-lint.json",
+  "test-results/phase62-inspection/report.json"
+ ],
+ "module_notes": {
+  "test-results/phase62-teaching-1440.png": {
+   "purpose": "Cropped modal (650px wide, 900px tall) of the Scout computer dialog; Computer modal for bot Scout (researcher) with the 'Teach a workflow' (Demonstration teaching) panel expanded in state 'Ready for review'; recording selector shows '27/10/2026, 17:30:00 \u00b7 Ready for review'; timeline of 3 events; reviewed-procedure textarea cut off at bottom. Fixture-only (no live desktop). Identical rendering to the 768 capture.",
+   "layer": "test",
+   "kind": "screenshot",
+   "screen": "Scout computer modal, Teaching panel",
+   "feature": "feature:teaching",
+   "summary": "Cropped modal (650px wide, 900px tall) of the Scout computer dialog; Computer modal for bot Scout (researcher) with the 'Teach a workflow' (Demonstration teaching) panel expanded in state 'Ready for review'; recording selector shows '27/10/2026, 17:30:00 \u00b7 Ready for review'; timeline of 3 events; reviewed-procedure textarea cut off at bottom. Fixture-only (no live desktop). Identical rendering to the 768 capture.",
+   "viewport": "modal crop 650x900 (fixture viewport 1440)",
+   "theme": "light",
+   "stage": "ready for review (fixture)",
+   "visible_text": "Scout computer; Bot is in control; Start computer; Teach a workflow; Recordings; Ready for review; 7 observations; Review captured evidence; #1 Pointer 120, 85; #2 Key down a; #3 private step; Reviewed procedure and parameters",
+   "defects": []
+  },
+  "test-results/phase62-teaching-768.png": {
+   "purpose": "Cropped modal 650x900 at 768 viewport; visually identical to the 1440 capture (modal max-width 650 at both widths per phase62-ui-fixture.json).",
+   "layer": "test",
+   "kind": "screenshot",
+   "screen": "Scout computer modal, Teaching panel",
+   "feature": "feature:teaching",
+   "summary": "Cropped modal 650x900 at 768 viewport; visually identical to the 1440 capture (modal max-width 650 at both widths per phase62-ui-fixture.json).",
+   "viewport": "modal crop 650x900 (fixture viewport 768)",
+   "theme": "light",
+   "stage": "ready for review (fixture)",
+   "visible_text": "Scout computer; Bot is in control; Start computer; Teach a workflow; Recordings; Ready for review; 7 observations; Review captured evidence; #1 Pointer 120, 85; #2 Key down a; #3 private step; Reviewed procedure and parameters",
+   "defects": []
+  },
+  "test-results/phase62-teaching-390.png": {
+   "purpose": "Cropped modal 358px wide; Computer modal for bot Scout (researcher) with the 'Teach a workflow' (Demonstration teaching) panel expanded in state 'Ready for review'; 'Hide teaching' button wraps under the heading; observation count stacks under 'Ready for review'.",
+   "layer": "test",
+   "kind": "screenshot",
+   "screen": "Scout computer modal, Teaching panel",
+   "feature": "feature:teaching",
+   "summary": "Cropped modal 358px wide; Computer modal for bot Scout (researcher) with the 'Teach a workflow' (Demonstration teaching) panel expanded in state 'Ready for review'; 'Hide teaching' button wraps under the heading; observation count stacks under 'Ready for review'.",
+   "viewport": "modal crop 358x900 (fixture viewport 390)",
+   "theme": "light",
+   "stage": "ready for review (fixture)",
+   "visible_text": "Scout computer; Bot is in control; Start computer; Teach a workflow; Recordings; Ready for review; 7 observations; Review captured evidence; #1 Pointer 120, 85; #2 Key down a; #3 private step; Reviewed procedure and parameters",
+   "defects": []
+  },
+  "test-results/phase62-teaching-320.png": {
+   "purpose": "Cropped modal 288px wide; same layout stacked; no horizontal overflow.",
+   "layer": "test",
+   "kind": "screenshot",
+   "screen": "Scout computer modal, Teaching panel",
+   "feature": "feature:teaching",
+   "summary": "Cropped modal 288px wide; same layout stacked; no horizontal overflow.",
+   "viewport": "modal crop 288x900 (fixture viewport 320)",
+   "theme": "light",
+   "stage": "ready for review (fixture)",
+   "visible_text": "Scout computer; Bot is in control; Start computer; Teach a workflow; Recordings; Ready for review; 7 observations; Review captured evidence; #1 Pointer 120, 85; #2 Key down a; #3 private step; Reviewed procedure and parameters",
+   "defects": [
+    "Recordings select truncates its option text ('...Ready for revie') at 288px width (minor clipping)",
+    "Start computer button label is small (~9-10px) at narrow widths"
+   ]
+  },
+  "test-results/phase62-ui-failure.png": {
+   "purpose": "Earlier (22:00) failed/intermediate UI fixture run: modal over the Scout chat header (hamburger, avatar, 'Your team works in the background. You stay in control.' footer), 320x1000 viewport. Teaching panel shows raw state label 'ready' (lowercase, unlocalised) and '0.0 MiB retained', unlike the later passing captures which show 'Ready for review' and '17.6 KB retained'. Stale artifact superseded by phase62-teaching-*.png.",
+   "layer": "test",
+   "kind": "screenshot",
+   "screen": "Scout chat page with computer modal over it",
+   "feature": "feature:teaching",
+   "summary": "Earlier (22:00) failed/intermediate UI fixture run: modal over the Scout chat header (hamburger, avatar, 'Your team works in the background. You stay in control.' footer), 320x1000 viewport. Teaching panel shows raw state label 'ready' (lowercase, unlocalised) and '0.0 MiB retained', unlike the later passing captures which show 'Ready for review' and '17.6 KB retained'. Stale artifact superseded by phase62-teaching-*.png.",
+   "viewport": "320x1000",
+   "theme": "light",
+   "stage": "ready (earlier fixture run, superseded)",
+   "visible_text": "Scout; Research, evidence, a...; Scout computer; Bot is in control; Start computer; Teach a workflow; Hide teaching; Recordings; 27/10/2026, 17:30:00 \u00b7 ready; ready; 7 observations \u00b7 0.0 MiB retained; Review captured evidence; Your team works in the background. You stay in control.",
+   "defects": [
+    "Raw state label 'ready' shown instead of 'Ready for review'",
+    "Size shown as '0.0 MiB retained' for a ~17.6 KB capture (units/rounding bug later fixed)",
+    "Name suggests a failed run; kept as stale evidence"
+   ]
+  },
+  "test-results/phase62-inspection/desktop-fold.jpg": {
+   "purpose": "UI-inspection fold screenshot of the fixture page 1440x900; modal centred 650px wide with soft shadow on off-white background. Recordings select shows 'New demonstration' (not the saved recording) though status shows Ready for review.",
+   "layer": "test",
+   "kind": "screenshot",
+   "screen": "Teaching fixture page (Scout computer modal)",
+   "feature": "feature:teaching",
+   "summary": "UI-inspection fold screenshot of the fixture page 1440x900; modal centred 650px wide with soft shadow on off-white background. Recordings select shows 'New demonstration' (not the saved recording) though status shows Ready for review.",
+   "viewport": "1440x900",
+   "theme": "light",
+   "stage": "ready for review (fixture)",
+   "visible_text": "Scout computer; Bot is in control; Start computer; Teach a workflow; Recordings; Ready for review; 7 observations; Review captured evidence; #1 Pointer 120, 85; #2 Key down a; #3 private step; Reviewed procedure and parameters",
+   "defects": [
+    "Select shows 'New demonstration' while status/evidence shows a ready recording (fixture markup differs from the passing PNGs, which select the saved recording)"
+   ]
+  },
+  "test-results/phase62-inspection/tablet-fold.jpg": {
+   "purpose": "UI-inspection fold screenshot 768x1024 with the modal 650px wide; 'New demonstration' in select.",
+   "layer": "test",
+   "kind": "screenshot",
+   "screen": "Teaching fixture page (Scout computer modal)",
+   "feature": "feature:teaching",
+   "summary": "UI-inspection fold screenshot 768x1024 with the modal 650px wide; 'New demonstration' in select.",
+   "viewport": "768x1024",
+   "theme": "light",
+   "stage": "ready for review (fixture)",
+   "visible_text": "Scout computer; Bot is in control; Start computer; Teach a workflow; Recordings; Ready for review; 7 observations; Review captured evidence; #1 Pointer 120, 85; #2 Key down a; #3 private step; Reviewed procedure and parameters",
+   "defects": [
+    "Select shows 'New demonstration' while status/evidence shows a ready recording (fixture markup differs from the passing PNGs, which select the saved recording)"
+   ]
+  },
+  "test-results/phase62-inspection/mobile-fold.jpg": {
+   "purpose": "UI-inspection fold screenshot 390x844; modal ~358px, content cut at 'Review captured evidence' intro text; 'Hide teaching' under heading.",
+   "layer": "test",
+   "kind": "screenshot",
+   "screen": "Teaching fixture page (Scout computer modal)",
+   "feature": "feature:teaching",
+   "summary": "UI-inspection fold screenshot 390x844; modal ~358px, content cut at 'Review captured evidence' intro text; 'Hide teaching' under heading.",
+   "viewport": "390x844",
+   "theme": "light",
+   "stage": "ready for review (fixture)",
+   "visible_text": "Scout computer; Bot is in control; Start computer; Teach a workflow; Recordings; Ready for review; 7 observations; Review captured evidence; #1 Pointer 120, 85; #2 Key down a; #3 private step; Reviewed procedure and parameters",
+   "defects": [
+    "Select shows 'New demonstration' while status/evidence shows a ready recording (fixture markup differs from the passing PNGs, which select the saved recording)"
+   ]
+  },
+  "test-results/phase62-inspection/desktop-page-01.jpg": {
+   "purpose": "UI-inspection full-page capture is a 1600x500 strip: modal rendered tiny at left and the right half is a flat grey (#888) fill, i.e. capture-canvas padding.",
+   "layer": "test",
+   "kind": "screenshot",
+   "screen": "Teaching fixture page (Scout computer modal)",
+   "feature": "feature:teaching",
+   "summary": "UI-inspection full-page capture is a 1600x500 strip: modal rendered tiny at left and the right half is a flat grey (#888) fill, i.e. capture-canvas padding.",
+   "viewport": "1600x500 strip (page 1 of 1440 viewport)",
+   "theme": "light",
+   "stage": "ready for review (fixture)",
+   "visible_text": "Scout computer; Bot is in control; Start computer; Teach a workflow; Recordings; Ready for review; 7 observations; Review captured evidence; #1 Pointer 120, 85; #2 Key down a; #3 private step; Reviewed procedure and parameters",
+   "defects": [
+    "Large flat grey area (tool padding artifact, not product UI)",
+    "Only the first screen captured; Teaching sections below (edit/test, publish, retention) are never shown"
+   ]
+  },
+  "test-results/phase62-inspection/tablet-page-01.jpg": {
+   "purpose": "UI-inspection full-page capture rendered scaled into a 1536x683 canvas; modal at left, right 2/3 flat grey.",
+   "layer": "test",
+   "kind": "screenshot",
+   "screen": "Teaching fixture page (Scout computer modal)",
+   "feature": "feature:teaching",
+   "summary": "UI-inspection full-page capture rendered scaled into a 1536x683 canvas; modal at left, right 2/3 flat grey.",
+   "viewport": "1536x683 strip (768 viewport)",
+   "theme": "light",
+   "stage": "ready for review (fixture)",
+   "visible_text": "Scout computer; Bot is in control; Start computer; Teach a workflow; Recordings; Ready for review; 7 observations; Review captured evidence; #1 Pointer 120, 85; #2 Key down a; #3 private step; Reviewed procedure and parameters",
+   "defects": [
+    "Large flat grey area (tool padding artifact, not product UI)",
+    "Only the first screen captured; Teaching sections below (edit/test, publish, retention) are never shown"
+   ]
+  },
+  "test-results/phase62-inspection/mobile-page-01.jpg": {
+   "purpose": "UI-inspection full-page capture of the 390 viewport; modal at left, right 3/4 flat grey.",
+   "layer": "test",
+   "kind": "screenshot",
+   "screen": "Teaching fixture page (Scout computer modal)",
+   "feature": "feature:teaching",
+   "summary": "UI-inspection full-page capture of the 390 viewport; modal at left, right 3/4 flat grey.",
+   "viewport": "1560x844 strip (390 viewport)",
+   "theme": "light",
+   "stage": "ready for review (fixture)",
+   "visible_text": "Scout computer; Bot is in control; Start computer; Teach a workflow; Recordings; Ready for review; 7 observations; Review captured evidence; #1 Pointer 120, 85; #2 Key down a; #3 private step; Reviewed procedure and parameters",
+   "defects": [
+    "Large flat grey area (tool padding artifact, not product UI)",
+    "Only the first screen captured; Teaching sections below (edit/test, publish, retention) are never shown"
+   ]
+  },
+  "test-results/phase62-backend.xml": {
+   "purpose": "JUnit XML for the full backend pytest run (654 tests) after the Teaching phase",
+   "layer": "test",
+   "kind": "junit-xml",
+   "summary": "1 testsuite 'pytest': tests=654, failures=0, errors=0, skipped=0, time=91.317s, timestamp 2026-10-27T16:44:01Z, run inside container 5ebb776a5881. 25 test modules; tests.test_teaching contributes 16 passing testcases (matching the 16 test_ functions at tests/test_teaching.py:100-571), each ~0.08-0.12s. Largest modules: test_phase4 89, test_attention 56, test_event_triggers 49. No failures or skips.",
+   "feature": "feature:teaching",
+   "responsibilities": [
+    "1 testsuite 'pytest': tests=654, failures=0, errors=0, skipped=0, time=91.317s, timestamp 2026-10-27T16:44:01Z, run inside container 5ebb776a5881. 25 test modules; tests.test_teaching contributes 16 passing testcases (matching the 16 test_ functions at tests/test_teaching.py:100-571), each ~0.08-0.12s. Largest modules: test_phase4 89, test_attention 56, test_event_triggers 49. No failures or skips."
+   ],
+   "counts": {
+    "tests": 654,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "teaching": 16
+   },
+   "notable_tests": [
+    "tests.test_teaching::test_exact_candidate_publication_versions_and_stale_evidence",
+    "tests.test_teaching::test_encrypted_persistence_duplicate_poll_and_review",
+    "tests.test_teaching::test_start_control_and_private_barrier"
+   ]
+  },
+  "test-results/phase62-feature-final.xml": {
+   "purpose": "JUnit XML of the focused Teaching + native-phase run",
+   "layer": "test",
+   "kind": "junit-xml",
+   "summary": "1 testsuite: tests=29, failures=0, errors=0, skipped=0, 3.288s, 2026-10-27T16:41:55Z (host 4fa4d813a078), 3 minutes before the full run. Contains the 16 tests.test_teaching cases plus 13 tests.test_phase3_native cases (computer fence, secure-input review metadata-only and handback, websocket origin denial, reviewed learning/native refresh). No failures.",
+   "feature": "feature:teaching",
+   "responsibilities": [
+    "1 testsuite: tests=29, failures=0, errors=0, skipped=0, 3.288s, 2026-10-27T16:41:55Z (host 4fa4d813a078), 3 minutes before the full run. Contains the 16 tests.test_teaching cases plus 13 tests.test_phase3_native cases (computer fence, secure-input review metadata-only and handback, websocket origin denial, reviewed learning/native refresh). No failures."
+   ],
+   "counts": {
+    "tests": 29,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "teaching": 16,
+    "phase3_native": 13
+   },
+   "notable_tests": [
+    "tests.test_phase3_native::test_secure_input_review_records_metadata_only_and_requires_handback",
+    "tests.test_phase3_native::test_database_computer_fence_blocks_native_admission_even_if_adapter_is_unreachable"
+   ]
+  },
+  "test-results/phase62-before.json": {
+   "purpose": "Pre-change snapshot of the live workspace (taken 21:48 before deployment) used to prove nothing else was disturbed",
+   "layer": "test",
+   "kind": "json-snapshot",
+   "summary": "Pre-change snapshot of the live workspace (taken 21:48 before deployment) used to prove nothing else was disturbed; bots (researcher/Scout rev 41, reviewer/Sage rev 27, writer/Quill rev 32 with enabled tools/skills, provider id, model gpt-6-luna, 4096/2048 MB, 1.5 cpus), 7 group conversation ids, no active tasks, 3 recent completed routine runs. Contains no secrets (provider id is a UUID only)",
+   "feature": "feature:teaching",
+   "responsibilities": [
+    "Pre-change snapshot of the live workspace (taken 21:48 before deployment) used to prove nothing else was disturbed; bots (researcher/Scout rev 41, reviewer/Sage rev 27, writer/Quill rev 32 with enabled tools/skills, provider id, model gpt-6-luna, 4096/2048 MB, 1.5 cpus), 7 group conversation ids, no active tasks, 3 recent completed routine runs. Contains no secrets (provider id is a UUID only)"
+   ],
+   "top_level_keys": [
+    "bots",
+    "groups",
+    "active_tasks",
+    "routines"
+   ]
+  },
+  "test-results/phase62-change-manifest.json": {
+   "purpose": "Manifest of 22 changed files with sha256 and new flag against source snapshot /private/tmp/phase62-before",
+   "layer": "test",
+   "kind": "json-manifest",
+   "summary": "Manifest of 22 changed files with sha256 and new flag against source snapshot /private/tmp/phase62-before; new=true for backend/teaching.py, backend/migrations/018_teaching.sql, docker/teaching_capture.py, web/src/Teaching.tsx, tests/test_teaching.py, plan/PHASE6-TEACHING-REVIEW.md; modified include backend/worker.py, capabilities.py, app.py, docker/runtime_api.py, hermes.Dockerfile, plugins/hermbot/__init__.py, web Knowledge.tsx/style.css/Computer.tsx, tests/conftest.py and plan docs. Notes architecture/ excluded and .dockerignore adds an architecture/ exclusion. All code hashes still match the current files (verified by sha256); only plan/PHASE6-TEACHING-REVIEW.md has changed since",
+   "feature": "feature:teaching",
+   "responsibilities": [
+    "Manifest of 22 changed files with sha256 and new flag against source snapshot /private/tmp/phase62-before; new=true for backend/teaching.py, backend/migrations/018_teaching.sql, docker/teaching_capture.py, web/src/Teaching.tsx, tests/test_teaching.py, plan/PHASE6-TEACHING-REVIEW.md; modified include backend/worker.py, capabilities.py, app.py, docker/runtime_api.py, hermes.Dockerfile, plugins/hermbot/__init__.py, web Knowledge.tsx/style.css/Computer.tsx, tests/conftest.py and plan docs. Notes architecture/ excluded and .dockerignore adds an architecture/ exclusion. All code hashes still match the current files (verified by sha256); only plan/PHASE6-TEACHING-REVIEW.md has changed since"
+   ],
+   "top_level_keys": [
+    "source_snapshot",
+    "architecture_excluded",
+    "additional_change",
+    "changes"
+   ]
+  },
+  "test-results/phase62-desktop-fixture.json": {
+   "purpose": "Isolated fixture-desktop frame measurement: fixture_only, live_owner_desktop_used=false, network none, 2048MB/1.5 cpus, geometry 1440x900, 3 frames of 7981 bytes at 0.16/0.08/0.008s",
+   "layer": "test",
+   "kind": "json-metrics",
+   "summary": "Isolated fixture-desktop frame measurement: fixture_only, live_owner_desktop_used=false, network none, 2048MB/1.5 cpus, geometry 1440x900, 3 frames of 7981 bytes at 0.16/0.08/0.008s; limitation: idle desktop only, busy-screen legibility and concurrent load unmeasured",
+   "feature": "feature:teaching",
+   "responsibilities": [
+    "Isolated fixture-desktop frame measurement: fixture_only, live_owner_desktop_used=false, network none, 2048MB/1.5 cpus, geometry 1440x900, 3 frames of 7981 bytes at 0.16/0.08/0.008s; limitation: idle desktop only, busy-screen legibility and concurrent load unmeasured"
+   ],
+   "top_level_keys": [
+    "fixture_only",
+    "live_owner_desktop_used",
+    "network",
+    "memory_limit_mb",
+    "cpus",
+    "geometry",
+    "frames",
+    "limitation"
+   ]
+  },
+  "test-results/phase62-integrity.json": {
+   "purpose": "Post-deploy integrity check (2026-10-27T16:47:35Z): 8748 upstream Python files unchanged, 7 groups preserved, bot configurations unchanged, runtimes researcher/reviewer/writer healthy with private volumes /browser-state, /workspace, /opt/data per bot (hermbot_<bot>-browser/-workspace/-data)",
+   "layer": "test",
+   "kind": "json-check",
+   "summary": "Post-deploy integrity check (2026-10-27T16:47:35Z): 8748 upstream Python files unchanged, 7 groups preserved, bot configurations unchanged, runtimes researcher/reviewer/writer healthy with private volumes /browser-state, /workspace, /opt/data per bot (hermbot_<bot>-browser/-workspace/-data)",
+   "feature": "feature:teaching",
+   "responsibilities": [
+    "Post-deploy integrity check (2026-10-27T16:47:35Z): 8748 upstream Python files unchanged, 7 groups preserved, bot configurations unchanged, runtimes researcher/reviewer/writer healthy with private volumes /browser-state, /workspace, /opt/data per bot (hermbot_<bot>-browser/-workspace/-data)"
+   ],
+   "top_level_keys": [
+    "checked_at",
+    "upstream_python_files_unchanged",
+    "groups_preserved",
+    "bot_configurations_unchanged",
+    "runtimes"
+   ]
+  },
+  "test-results/phase62-native-fixture.json": {
+   "purpose": "Native capture fixture result flags, all true: native gate and observer fragmentation, qemu keys, clipboard omitted, denied input absent, late frames fenced, private keys absent",
+   "layer": "test",
+   "kind": "json-checks",
+   "summary": "Native capture fixture result flags, all true: native gate and observer fragmentation, qemu keys, clipboard omitted, denied input absent, late frames fenced, private keys absent; jpeg 17345 bytes, synthetic encode 0.0712s; no owner data used",
+   "feature": "feature:teaching",
+   "responsibilities": [
+    "Native capture fixture result flags, all true: native gate and observer fragmentation, qemu keys, clipboard omitted, denied input absent, late frames fenced, private keys absent; jpeg 17345 bytes, synthetic encode 0.0712s; no owner data used"
+   ],
+   "top_level_keys": [
+    "fixture_only",
+    "native_gate_and_observer_fragmentation",
+    "qemu_keys",
+    "clipboard_omitted",
+    "denied_input_absent",
+    "late_frames_fenced",
+    "private_keys_absent",
+    "jpeg_bytes",
+    "synthetic_encode_seconds",
+    "native_desktop_or_owner_data_used"
+   ]
+  },
+  "test-results/phase62-runtime-refresh.json": {
+   "purpose": "Three supervisor runtime requests (action ensure, status queued) for researcher, reviewer and writer, recorded when runtimes were refreshed to the Teaching image at 21:56",
+   "layer": "test",
+   "kind": "json-log",
+   "summary": "Three supervisor runtime requests (action ensure, status queued) for researcher, reviewer and writer, recorded when runtimes were refreshed to the Teaching image at 21:56",
+   "feature": "feature:teaching",
+   "responsibilities": [
+    "Three supervisor runtime requests (action ensure, status queued) for researcher, reviewer and writer, recorded when runtimes were refreshed to the Teaching image at 21:56"
+   ],
+   "top_level_keys": [
+    "(array of {id,bot_id,action,status})"
+   ]
+  },
+  "test-results/phase62-status.json": {
+   "purpose": "Overall Phase 6.2 status: implementation locally_deployed",
+   "layer": "test",
+   "kind": "json-status",
+   "summary": "Overall Phase 6.2 status: implementation locally_deployed; phase62_acceptance_complete=false; backend_tests_passed 654; new_teaching_tests 16; frontend production build true; fixture widths 1440/768/390/320 (fixture only); owner demonstration requested but not received; automated live desktop input rejected, none sent; remaining list: owner recording and protected-input canary, exact evidence review and draft generation, fresh-input and negative tests, collaborative and desktop/file cases, publication/enable and installed native skill use, busy-screen resource/legibility checks and fixture cleanup",
+   "feature": "feature:teaching",
+   "responsibilities": [
+    "Overall Phase 6.2 status: implementation locally_deployed; phase62_acceptance_complete=false; backend_tests_passed 654; new_teaching_tests 16; frontend production build true; fixture widths 1440/768/390/320 (fixture only); owner demonstration requested but not received; automated live desktop input rejected, none sent; remaining list: owner recording and protected-input canary, exact evidence review and draft generation, fresh-input and negative tests, collaborative and desktop/file cases, publication/enable and installed native skill use, busy-screen resource/legibility checks and fixture cleanup"
+   ],
+   "top_level_keys": [
+    "implementation",
+    "phase62_acceptance_complete",
+    "backend_tests_passed",
+    "new_teaching_tests",
+    "frontend_production_build",
+    "frontend_fixture_widths",
+    "frontend_fixture_only",
+    "native_fixture_checks",
+    "upstream_unchanged",
+    "architecture_excluded",
+    "owner_demonstration_requested",
+    "owner_demonstration_received",
+    "automated_live_desktop_input_rejected",
+    "live_desktop_input_sent",
+    "fixture_path",
+    "remaining"
+   ]
+  },
+  "test-results/phase62-ui-fixture.json": {
+   "purpose": "UI fixture overflow check: widths 1440/768 (dialog 650px), 390 (358px), 320 (288px), pageOverflow and dialogOverflow false everywhere",
+   "layer": "test",
+   "kind": "json-metrics",
+   "summary": "UI fixture overflow check: widths 1440/768 (dialog 650px), 390 (358px), 320 (288px), pageOverflow and dialogOverflow false everywhere; unsaved_draft_blocks_test true; script_errors empty; mutations none, no live desktop input",
+   "feature": "feature:teaching",
+   "responsibilities": [
+    "UI fixture overflow check: widths 1440/768 (dialog 650px), 390 (358px), 320 (288px), pageOverflow and dialogOverflow false everywhere; unsaved_draft_blocks_test true; script_errors empty; mutations none, no live desktop input"
+   ],
+   "top_level_keys": [
+    "ui_fixture_only",
+    "live_desktop_input",
+    "mutations",
+    "widths",
+    "unsaved_draft_blocks_test",
+    "script_errors"
+   ]
+  },
+  "test-results/phase62-vision.json": {
+   "purpose": "Vision capability probe against model gpt-6-luna: HTTP 200, 9.32s, vision_supported true, answered black/red/white/yellow/yellow/green vs expected black/red/white/blue/yellow/green -> 5/6 bands matched",
+   "layer": "test",
+   "kind": "json-probe",
+   "summary": "Vision capability probe against model gpt-6-luna: HTTP 200, 9.32s, vision_supported true, answered black/red/white/yellow/yellow/green vs expected black/red/white/blue/yellow/green -> 5/6 bands matched; no private owner evidence sent; interpretation says image processing verified, not proof a demonstrated procedure is correct",
+   "feature": "feature:teaching",
+   "responsibilities": [
+    "Vision capability probe against model gpt-6-luna: HTTP 200, 9.32s, vision_supported true, answered black/red/white/yellow/yellow/green vs expected black/red/white/blue/yellow/green -> 5/6 bands matched; no private owner evidence sent; interpretation says image processing verified, not proof a demonstrated procedure is correct"
+   ],
+   "top_level_keys": [
+    "http_status",
+    "latency_seconds",
+    "private_owner_evidence_sent",
+    "model",
+    "finish_reason",
+    "vision_supported",
+    "answer",
+    "expected",
+    "matching_bands",
+    "interpretation"
+   ]
+  },
+  "test-results/phase62-ui-inspect.html": {
+   "purpose": "Static HTML snapshot of the Teaching fixture served at 127.0.0.1:61447 for UI inspection",
+   "layer": "test",
+   "kind": "html",
+   "summary": "Saved DOM dump titled 'Hermbot teaching fixture' linking built stylesheet http://localhost:8780/assets/index-CDTu0ylw.css; shows modal 'Scout computer' with the full Teaching section: recordings select, Review captured evidence (timeline #1-#3, reviewed-procedure textarea with {{record_name}} procedure), 'Edit and test the skill' (SKILL.md for hermbot-local-record, saved draft versions, fresh test inputs, checks incl. negative case, management grant ID, disabled 'Run candidate test'), 'Publish and manage retention' (Enable after publication checkbox, Prepare publication, Publish reviewed draft, both disabled), retention text 'Private capture expires 03/11/2026, 17:30:00' with Keep recording / Delete private recording. Documents UI strings of web/src/Teaching.tsx",
+   "feature": "feature:teaching",
+   "responsibilities": [
+    "Saved DOM dump titled 'Hermbot teaching fixture' linking built stylesheet http://localhost:8780/assets/index-CDTu0ylw.css; shows modal 'Scout computer' with the full Teaching section: recordings select, Review captured evidence (timeline #1-#3, reviewed-procedure textarea with {{record_name}} procedure), 'Edit and test the skill' (SKILL.md for hermbot-local-record, saved draft versions, fresh test inputs, checks incl. negative case, management grant ID, disabled 'Run candidate test'), 'Publish and manage retention' (Enable after publication checkbox, Prepare publication, Publish reviewed draft, both disabled), retention text 'Private capture expires 03/11/2026, 17:30:00' with Keep recording / Delete private recording. Documents UI strings of web/src/Teaching.tsx"
+   ]
+  },
+  "test-results/phase62-ui-lint.json": {
+   "purpose": "UI lint/inspection report for the teaching fixture",
+   "layer": "test",
+   "kind": "json-report",
+   "summary": "Inspection report for http://127.0.0.1:61447/ at 2026-10-27T16:47:13Z; allow list [no-title,no-data-hue,palette-terracotta,heavy-shadow]; 3 viewports (1440x900 fill 0.36, 768x1024 fill 0.72, 390x844 fill 0.83), each 1 screen, 306 words, zero horizontal overflow, no broken images, no emoji, no motion; hero h2 'Scout computer' DM Sans 22px; findings is empty; images lists desktop/tablet/mobile fold and page JPGs",
+   "feature": "feature:teaching",
+   "responsibilities": [
+    "Inspection report for http://127.0.0.1:61447/ at 2026-10-27T16:47:13Z; allow list [no-title,no-data-hue,palette-terracotta,heavy-shadow]; 3 viewports (1440x900 fill 0.36, 768x1024 fill 0.72, 390x844 fill 0.83), each 1 screen, 306 words, zero horizontal overflow, no broken images, no emoji, no motion; hero h2 'Scout computer' DM Sans 22px; findings is empty; images lists desktop/tablet/mobile fold and page JPGs"
+   ],
+   "top_level_keys": [
+    "url",
+    "at",
+    "allow",
+    "viewports",
+    "findings",
+    "images"
+   ]
+  },
+  "test-results/phase62-inspection/report.json": {
+   "purpose": "UI lint/inspection report for the teaching fixture",
+   "layer": "test",
+   "kind": "json-report",
+   "summary": "Inspection report for http://127.0.0.1:61447/ at 2026-10-27T16:47:13Z; allow list [no-title,no-data-hue,palette-terracotta,heavy-shadow]; 3 viewports (1440x900 fill 0.36, 768x1024 fill 0.72, 390x844 fill 0.83), each 1 screen, 306 words, zero horizontal overflow, no broken images, no emoji, no motion; hero h2 'Scout computer' DM Sans 22px; findings is empty; images lists desktop/tablet/mobile fold and page JPGs; byte-for-byte near duplicate of phase62-ui-lint.json (differs by 1 byte)",
+   "feature": "feature:teaching",
+   "responsibilities": [
+    "Inspection report for http://127.0.0.1:61447/ at 2026-10-27T16:47:13Z; allow list [no-title,no-data-hue,palette-terracotta,heavy-shadow]; 3 viewports (1440x900 fill 0.36, 768x1024 fill 0.72, 390x844 fill 0.83), each 1 screen, 306 words, zero horizontal overflow, no broken images, no emoji, no motion; hero h2 'Scout computer' DM Sans 22px; findings is empty; images lists desktop/tablet/mobile fold and page JPGs; byte-for-byte near duplicate of phase62-ui-lint.json (differs by 1 byte)"
+   ],
+   "top_level_keys": [
+    "url",
+    "at",
+    "allow",
+    "viewports",
+    "findings",
+    "images"
+   ]
+  },
+  "tests/test_teaching.py": {
+   "purpose": "Pytest suite for the Teaching feature: privacy, encrypted persistence, task isolation, exact-version publication",
+   "layer": "test",
+   "kind": "pytest",
+   "feature": "feature:teaching",
+   "responsibilities": [
+    {
+     "text": "No pytest markers (none used); fixtures: client (TestClient with owner bearer token) at line 20; post (helper) (POST with Idempotency-Key) at line 27; capture_native (monkeypatches native.request with an in-process Capture implementing /computer (human lease epoch 4), /teaching/control, /teaching/batch) at line 31; objects (fake MinIO client patched onto teaching.store) at line 57; session (helper) (inserts a teaching_sessions row directly (state default ready)) at line 82; also uses conftest make_task",
+     "evidence": [
+      "tests/test_teaching.py:20-97",
+      "tests/conftest.py:38"
+     ]
+    },
+    {
+     "text": "test_accepted_rfb_fragmentation_and_clipboard_omission: AcceptedRFB parser: key/pointer/clipboard events identical for feed widths 1,2,7,1000; clipboard secret omitted (reason 'clipboard'); bad bytes raise ValueError",
+     "evidence": [
+      "tests/test_teaching.py:100"
+     ]
+    },
+    {
+     "text": "test_capture_privacy_fences_late_frames_and_keys: Capture: private mode omits keys, late frame after private is dropped, resume does not revive it, stale epoch observe pauses",
+     "evidence": [
+      "tests/test_teaching.py:120"
+     ]
+    },
+    {
+     "text": "test_capture_idempotency_and_drag_boundaries: Capture.control idempotent for same revision, raises for stale revision; pointer moves with no buttons dropped (drag boundaries); 8MiB cap pauses",
+     "evidence": [
+      "tests/test_teaching.py:136"
+     ]
+    },
+    {
+     "text": "test_start_control_and_private_barrier: POST teaching (Idempotency-Key replay equal, changed body 409), control start, teaching-private-input barrier pauses capture, resume 409 with stale revision, info_encrypted does not contain goal plaintext, cross-bot GET 404, unauthenticated 401",
+     "evidence": [
+      "tests/test_teaching.py:154"
+     ]
+    },
+    {
+     "text": "test_encrypted_persistence_duplicate_poll_and_review: start, collect twice is idempotent (1 timeline event, chunk object has no raw 'keysym'), finish, state ready, PUT evidence 422 for unknown frame, 200 for valid, evidence_hash frozen, generate after freeze 409, DELETE then maintain removes objects and detail 404",
+     "evidence": [
+      "tests/test_teaching.py:177"
+     ]
+    },
+    {
+     "text": "test_restarted_collector_marks_interrupted: collect on a 'recording' session whose native capture is gone sets state 'interrupted'",
+     "evidence": [
+      "tests/test_teaching.py:226"
+     ]
+    },
+    {
+     "text": "test_candidate_is_exact_task_only_and_config_fenced: PUT draft, POST test creates a task_id; capabilities.manifest for that task exposes teaching_candidate and the skill name; other task, peer manifest and enabled_skills do not; no knowledge_versions row; consulted_at set by candidate(consulted=True); test-report before completion 409; role change fences candidate() with an exception",
+     "evidence": [
+      "tests/test_teaching.py:238"
+     ]
+    },
+    {
+     "text": "test_draft_validation_and_cancel_fences_generation: PUT draft 422 for overlong name/non-skill content and for frontmatter name mismatch; cancel-generation clears job_token",
+     "evidence": [
+      "tests/test_teaching.py:302"
+     ]
+    },
+    {
+     "text": "test_generate_vision_check_and_exact_input: generate with mocked vision_canary and httpx stream: request text carries reviewed evidence, generate_one stores job_state completed, draft_hash, draft_encrypted ciphertext decrypts to the generated SKILL",
+     "evidence": [
+      "tests/test_teaching.py:337"
+     ]
+    },
+    {
+     "text": "test_publish_rejects_unverified_or_stale_candidate: POST publish with random test_id and bogus native hash returns 409",
+     "evidence": [
+      "tests/test_teaching.py:402"
+     ]
+    },
+    {
+     "text": "test_prepared_session_waits_for_owner_start: session stays 'preparing' after collect; control discard 200; maintain removes it (404)",
+     "evidence": [
+      "tests/test_teaching.py:413"
+     ]
+    },
+    {
+     "text": "test_failed_persistence_does_not_refresh_heartbeat: monotonic clock mocked: failed batch persistence does not refresh heartbeat so capture pauses after timeout; finish with stale revision raises",
+     "evidence": [
+      "tests/test_teaching.py:433"
+     ]
+    },
+    {
+     "text": "test_normalized_typing_preserves_unknown_shortcuts: teaching.summarize collapses typed keys into text, keeps ctrl+s as modifiers line and 'private step' omissions",
+     "evidence": [
+      "tests/test_teaching.py:449"
+     ]
+    },
+    {
+     "text": "test_exact_candidate_publication_versions_and_stale_evidence: full path draft > test > completed task > consulted > test-report 200 > publish: changed evidence_hash gives 409 with no file write; restored hash publishes exact content to /skills/hermbot-local-test, idempotent replay equal, status refresh_pending, 1 teaching_publications and 1 knowledge_versions, skill not enabled",
+     "evidence": [
+      "tests/test_teaching.py:463"
+     ]
+    },
+    {
+     "text": "test_deleting_source_stops_active_candidate_test: DELETE session cancels the active test task and candidate() returns None",
+     "evidence": [
+      "tests/test_teaching.py:544"
+     ]
+    },
+    {
+     "text": "test_readonly_viewer_updates_and_disconnect_do_not_pause_owner: Capture.disconnect of read-only viewer keeps recording; owner disconnect pauses",
+     "evidence": [
+      "tests/test_teaching.py:571"
+     ]
+    }
+   ],
+   "functions": [
+    {
+     "name": "test_accepted_rfb_fragmentation_and_clipboard_omission",
+     "line": 100,
+     "desc": "AcceptedRFB parser: key/pointer/clipboard events identical for feed widths 1,2,7,1000; clipboard secret omitted (reason 'clipboard'); bad bytes raise ValueError"
+    },
+    {
+     "name": "test_capture_privacy_fences_late_frames_and_keys",
+     "line": 120,
+     "desc": "Capture: private mode omits keys, late frame after private is dropped, resume does not revive it, stale epoch observe pauses"
+    },
+    {
+     "name": "test_capture_idempotency_and_drag_boundaries",
+     "line": 136,
+     "desc": "Capture.control idempotent for same revision, raises for stale revision; pointer moves with no buttons dropped (drag boundaries); 8MiB cap pauses"
+    },
+    {
+     "name": "test_start_control_and_private_barrier",
+     "line": 154,
+     "desc": "POST teaching (Idempotency-Key replay equal, changed body 409), control start, teaching-private-input barrier pauses capture, resume 409 with stale revision, info_encrypted does not contain goal plaintext, cross-bot GET 404, unauthenticated 401"
+    },
+    {
+     "name": "test_encrypted_persistence_duplicate_poll_and_review",
+     "line": 177,
+     "desc": "start, collect twice is idempotent (1 timeline event, chunk object has no raw 'keysym'), finish, state ready, PUT evidence 422 for unknown frame, 200 for valid, evidence_hash frozen, generate after freeze 409, DELETE then maintain removes objects and detail 404"
+    },
+    {
+     "name": "test_restarted_collector_marks_interrupted",
+     "line": 226,
+     "desc": "collect on a 'recording' session whose native capture is gone sets state 'interrupted'"
+    },
+    {
+     "name": "test_candidate_is_exact_task_only_and_config_fenced",
+     "line": 238,
+     "desc": "PUT draft, POST test creates a task_id; capabilities.manifest for that task exposes teaching_candidate and the skill name; other task, peer manifest and enabled_skills do not; no knowledge_versions row; consulted_at set by candidate(consulted=True); test-report before completion 409; role change fences candidate() with an exception"
+    },
+    {
+     "name": "test_draft_validation_and_cancel_fences_generation",
+     "line": 302,
+     "desc": "PUT draft 422 for overlong name/non-skill content and for frontmatter name mismatch; cancel-generation clears job_token"
+    },
+    {
+     "name": "test_generate_vision_check_and_exact_input",
+     "line": 337,
+     "desc": "generate with mocked vision_canary and httpx stream: request text carries reviewed evidence, generate_one stores job_state completed, draft_hash, draft_encrypted ciphertext decrypts to the generated SKILL"
+    },
+    {
+     "name": "test_publish_rejects_unverified_or_stale_candidate",
+     "line": 402,
+     "desc": "POST publish with random test_id and bogus native hash returns 409"
+    },
+    {
+     "name": "test_prepared_session_waits_for_owner_start",
+     "line": 413,
+     "desc": "session stays 'preparing' after collect; control discard 200; maintain removes it (404)"
+    },
+    {
+     "name": "test_failed_persistence_does_not_refresh_heartbeat",
+     "line": 433,
+     "desc": "monotonic clock mocked: failed batch persistence does not refresh heartbeat so capture pauses after timeout; finish with stale revision raises"
+    },
+    {
+     "name": "test_normalized_typing_preserves_unknown_shortcuts",
+     "line": 449,
+     "desc": "teaching.summarize collapses typed keys into text, keeps ctrl+s as modifiers line and 'private step' omissions"
+    },
+    {
+     "name": "test_exact_candidate_publication_versions_and_stale_evidence",
+     "line": 463,
+     "desc": "full path draft > test > completed task > consulted > test-report 200 > publish: changed evidence_hash gives 409 with no file write; restored hash publishes exact content to /skills/hermbot-local-test, idempotent replay equal, status refresh_pending, 1 teaching_publications and 1 knowledge_versions, skill not enabled"
+    },
+    {
+     "name": "test_deleting_source_stops_active_candidate_test",
+     "line": 544,
+     "desc": "DELETE session cancels the active test task and candidate() returns None"
+    },
+    {
+     "name": "test_readonly_viewer_updates_and_disconnect_do_not_pause_owner",
+     "line": 571,
+     "desc": "Capture.disconnect of read-only viewer keeps recording; owner disconnect pauses"
+    },
+    {
+     "name": "client",
+     "line": 20,
+     "desc": "TestClient with owner bearer token"
+    },
+    {
+     "name": "post (helper)",
+     "line": 27,
+     "desc": "POST with Idempotency-Key"
+    },
+    {
+     "name": "capture_native",
+     "line": 31,
+     "desc": "monkeypatches native.request with an in-process Capture implementing /computer (human lease epoch 4), /teaching/control, /teaching/batch"
+    },
+    {
+     "name": "objects",
+     "line": 57,
+     "desc": "fake MinIO client patched onto teaching.store"
+    },
+    {
+     "name": "session (helper)",
+     "line": 82,
+     "desc": "inserts a teaching_sessions row directly (state default ready)"
+    }
+   ],
+   "notes": [
+    {
+     "text": "Imports AcceptedRFB and Capture from docker/teaching_capture.py so docker code is unit-tested without a container; runtime_api HTTP routes themselves are bypassed via native.request monkeypatch",
+     "evidence": [
+      "tests/test_teaching.py:17",
+      "tests/test_teaching.py:36-54"
+     ]
+    },
+    {
+     "text": "16 test functions; matches new_teaching_tests=16 in test-results/phase62-status.json:5 and the 16 passing cases in phase62-backend.xml",
+     "evidence": [
+      "tests/test_teaching.py:100",
+      "test-results/phase62-status.json:5"
+     ]
+    },
+    {
+     "text": "No real network/Docker/MinIO/model: model call, MinIO and native RPC all monkeypatched",
+     "evidence": [
+      "tests/test_teaching.py:57-79",
+      "tests/test_teaching.py:340-391"
+     ]
+    }
+   ]
+  }
+ },
+ "edges": [
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching",
+   "kind": "tests",
+   "label": "HTTP route exercised via TestClient",
+   "evidence": [
+    "tests/test_teaching.py:154",
+    "tests/test_teaching.py:177",
+    "tests/test_teaching.py:413"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/control",
+   "kind": "tests",
+   "label": "HTTP route exercised via TestClient",
+   "evidence": [
+    "tests/test_teaching.py:154",
+    "tests/test_teaching.py:177",
+    "tests/test_teaching.py:413"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching-private-input",
+   "kind": "tests",
+   "label": "HTTP route exercised via TestClient",
+   "evidence": [
+    "tests/test_teaching.py:154"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}",
+   "kind": "tests",
+   "label": "HTTP route exercised via TestClient",
+   "evidence": [
+    "tests/test_teaching.py:154",
+    "tests/test_teaching.py:177",
+    "tests/test_teaching.py:413"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/evidence",
+   "kind": "tests",
+   "label": "HTTP route exercised via TestClient",
+   "evidence": [
+    "tests/test_teaching.py:177"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/generate",
+   "kind": "tests",
+   "label": "HTTP route exercised via TestClient",
+   "evidence": [
+    "tests/test_teaching.py:177",
+    "tests/test_teaching.py:337"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/cancel-generation",
+   "kind": "tests",
+   "label": "HTTP route exercised via TestClient",
+   "evidence": [
+    "tests/test_teaching.py:302"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/draft",
+   "kind": "tests",
+   "label": "HTTP route exercised via TestClient",
+   "evidence": [
+    "tests/test_teaching.py:238",
+    "tests/test_teaching.py:302",
+    "tests/test_teaching.py:463",
+    "tests/test_teaching.py:544"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test",
+   "kind": "tests",
+   "label": "HTTP route exercised via TestClient",
+   "evidence": [
+    "tests/test_teaching.py:238",
+    "tests/test_teaching.py:463",
+    "tests/test_teaching.py:544"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test-report",
+   "kind": "tests",
+   "label": "HTTP route exercised via TestClient",
+   "evidence": [
+    "tests/test_teaching.py:238",
+    "tests/test_teaching.py:463"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/publish",
+   "kind": "tests",
+   "label": "HTTP route exercised via TestClient",
+   "evidence": [
+    "tests/test_teaching.py:402",
+    "tests/test_teaching.py:463"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "route:backend/teaching.py:DELETE /api/v1/bots/{bot_id}/teaching/{session_id}",
+   "kind": "tests",
+   "label": "HTTP route exercised via TestClient",
+   "evidence": [
+    "tests/test_teaching.py:177",
+    "tests/test_teaching.py:544"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "table:teaching_sessions",
+   "kind": "tests",
+   "label": "asserted/seeded in tests",
+   "evidence": [
+    "tests/test_teaching.py:86",
+    "tests/test_teaching.py:171",
+    "tests/test_teaching.py:229",
+    "tests/test_teaching.py:325",
+    "tests/test_teaching.py:397",
+    "tests/test_teaching.py:521"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "table:teaching_tests",
+   "kind": "tests",
+   "label": "asserted/seeded in tests",
+   "evidence": [
+    "tests/test_teaching.py:280",
+    "tests/test_teaching.py:283",
+    "tests/test_teaching.py:486"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "table:teaching_publications",
+   "kind": "tests",
+   "label": "asserted/seeded in tests",
+   "evidence": [
+    "tests/test_teaching.py:539"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "table:teaching_chunks",
+   "kind": "tests",
+   "label": "asserted/seeded in tests",
+   "evidence": [
+    "tests/test_teaching.py:189"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:backend/teaching.py::collect",
+   "kind": "tests",
+   "label": "called/patched",
+   "evidence": [
+    "tests/test_teaching.py:187",
+    "tests/test_teaching.py:230",
+    "tests/test_teaching.py:419"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:backend/teaching.py::timeline",
+   "kind": "tests",
+   "label": "called/patched",
+   "evidence": [
+    "tests/test_teaching.py:189"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:backend/teaching.py::maintain",
+   "kind": "tests",
+   "label": "called/patched",
+   "evidence": [
+    "tests/test_teaching.py:221",
+    "tests/test_teaching.py:429"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:backend/teaching.py::generate_one",
+   "kind": "tests",
+   "label": "called/patched",
+   "evidence": [
+    "tests/test_teaching.py:393"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:backend/teaching.py::candidate",
+   "kind": "tests",
+   "label": "called/patched",
+   "evidence": [
+    "tests/test_teaching.py:276",
+    "tests/test_teaching.py:282",
+    "tests/test_teaching.py:299",
+    "tests/test_teaching.py:568"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:backend/teaching.py::summarize",
+   "kind": "tests",
+   "label": "called/patched",
+   "evidence": [
+    "tests/test_teaching.py:458"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:backend/teaching.py::vision_canary",
+   "kind": "tests",
+   "label": "called/patched",
+   "evidence": [
+    "tests/test_teaching.py:340"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:backend/teaching.py::encode",
+   "kind": "tests",
+   "label": "called/patched",
+   "evidence": [
+    "tests/test_teaching.py:92"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:backend/teaching.py::store",
+   "kind": "tests",
+   "label": "called/patched",
+   "evidence": [
+    "tests/test_teaching.py:78"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:docker/teaching_capture.py::Capture",
+   "kind": "tests",
+   "label": "exercised/patched",
+   "evidence": [
+    "tests/test_teaching.py:120",
+    "tests/test_teaching.py:136",
+    "tests/test_teaching.py:433",
+    "tests/test_teaching.py:571"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:docker/teaching_capture.py::AcceptedRFB",
+   "kind": "tests",
+   "label": "exercised/patched",
+   "evidence": [
+    "tests/test_teaching.py:100"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:backend/capabilities.py::manifest",
+   "kind": "tests",
+   "label": "exercised/patched",
+   "evidence": [
+    "tests/test_teaching.py:273",
+    "tests/test_teaching.py:277"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:backend/service.py::locked_task",
+   "kind": "tests",
+   "label": "exercised/patched",
+   "evidence": [
+    "tests/test_teaching.py:272",
+    "tests/test_teaching.py:567"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:backend/native.py::request",
+   "kind": "tests",
+   "label": "exercised/patched",
+   "evidence": [
+    "tests/test_teaching.py:53",
+    "tests/test_teaching.py:518"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:backend/computer.py::viewer",
+   "kind": "tests",
+   "label": "exercised/patched",
+   "evidence": [
+    "tests/test_teaching.py:34"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:backend/registry.py::require_bot",
+   "kind": "tests",
+   "label": "exercised/patched",
+   "evidence": [
+    "tests/test_teaching.py:278",
+    "tests/test_teaching.py:541"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "fn:backend/secrets.py::decrypt",
+   "kind": "tests",
+   "label": "exercised/patched",
+   "evidence": [
+    "tests/test_teaching.py:399"
+   ]
+  },
+  {
+   "source": "file:tests/test_teaching.py",
+   "target": "table:knowledge_versions",
+   "kind": "tests",
+   "label": "asserts none until publish, one after",
+   "evidence": [
+    "tests/test_teaching.py:279",
+    "tests/test_teaching.py:540"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-teaching-1440.png",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-teaching-1440.png:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-teaching-768.png",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-teaching-768.png:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-teaching-390.png",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-teaching-390.png:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-teaching-320.png",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-teaching-320.png:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-ui-failure.png",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-ui-failure.png:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-inspection/desktop-fold.jpg",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-inspection/desktop-fold.jpg:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-inspection/tablet-fold.jpg",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-inspection/tablet-fold.jpg:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-inspection/mobile-fold.jpg",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-inspection/mobile-fold.jpg:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-inspection/desktop-page-01.jpg",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-inspection/desktop-page-01.jpg:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-inspection/tablet-page-01.jpg",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-inspection/tablet-page-01.jpg:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-inspection/mobile-page-01.jpg",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-inspection/mobile-page-01.jpg:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-backend.xml",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-backend.xml:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-feature-final.xml",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-feature-final.xml:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-before.json",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-before.json:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-change-manifest.json",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-change-manifest.json:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-desktop-fixture.json",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-desktop-fixture.json:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-integrity.json",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-integrity.json:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-native-fixture.json",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-native-fixture.json:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-runtime-refresh.json",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-runtime-refresh.json:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-status.json",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-status.json:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-ui-fixture.json",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-ui-fixture.json:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-vision.json",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-vision.json:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-ui-inspect.html",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-ui-inspect.html:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-ui-lint.json",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-ui-lint.json:1"
+   ]
+  },
+  {
+   "source": "file:test-results/phase62-inspection/report.json",
+   "target": "feature:teaching",
+   "kind": "evidences",
+   "label": "phase 6.2 result artifact",
+   "evidence": [
+    "test-results/phase62-inspection/report.json:1"
+   ]
+  }
+ ],
+ "feature_fragments": [
+  {
+   "id": "feature:teaching",
+   "tests": {
+    "covered": [
+     {
+      "text": "Capture privacy: RFB parse/fragmentation, clipboard omission, private-step barrier, late-frame fence, idempotent control, drag boundaries, size cap, heartbeat, viewer disconnect",
+      "evidence": [
+       "tests/test_teaching.py:100",
+       "tests/test_teaching.py:120",
+       "tests/test_teaching.py:136",
+       "tests/test_teaching.py:433",
+       "tests/test_teaching.py:571"
+      ]
+     },
+     {
+      "text": "Start/control API with Idempotency-Key replay/conflict, owner-only and bot-scoped access (401, cross-bot 404), private-input barrier",
+      "evidence": [
+       "tests/test_teaching.py:154-174"
+      ]
+     },
+     {
+      "text": "Encrypted persistence (info_encrypted, MinIO chunks without raw keysyms, draft_encrypted), duplicate poll idempotence, interrupted recovery, discard and maintain GC",
+      "evidence": [
+       "tests/test_teaching.py:177-235",
+       "tests/test_teaching.py:413-431",
+       "tests/test_teaching.py:337-399"
+      ]
+     },
+     {
+      "text": "Evidence review freeze (422 unknown frame, evidence_hash, generate after freeze 409), draft validation, vision-checked generation, cancel-generation",
+      "evidence": [
+       "tests/test_teaching.py:177-224",
+       "tests/test_teaching.py:302-399"
+      ]
+     },
+     {
+      "text": "Candidate tests scoped to exactly one task and fenced by bot config hash; not enabled, no knowledge_versions until publish; source deletion cancels test",
+      "evidence": [
+       "tests/test_teaching.py:238-299",
+       "tests/test_teaching.py:544-568"
+      ]
+     },
+     {
+      "text": "Exact-version publication: stale evidence 409 with no write, idempotent publish, 1 publication and 1 knowledge version, skill left disabled, status refresh_pending",
+      "evidence": [
+       "tests/test_teaching.py:402-410",
+       "tests/test_teaching.py:463-541"
+      ]
+     },
+     {
+      "text": "Results: 16/16 teaching tests pass inside 654/654 backend tests; UI fixture shows no overflow at 1440/768/390/320",
+      "evidence": [
+       "test-results/phase62-backend.xml:1",
+       "test-results/phase62-ui-fixture.json:1"
+      ]
+     }
+    ],
+    "gaps": [
+     "No test for GET listing, GET timeline route, GET frames/{seq}, GET revisions and revisions/{digest}, POST keep, POST private routes, or the internal POST /internal/teaching/consult route (candidate(consulted=True) is called directly at line 282); docker runtime_api /teaching/control and /teaching/batch HTTP routes are bypassed by native.request monkeypatch",
+     "No test of the web/src/Teaching.tsx component (only fixture screenshots); no real-desktop, real MinIO, real model or concurrent-collaborator tests",
+     "Owner demonstration, protected-input canary, real publication/enable and busy-screen checks remain unperformed (phase62-status.json remaining)",
+     "No test for retention expiry timing in maintain beyond discard, nor for the migration 018 schema directly",
+     "teaching_revisions table only touched indirectly; no assertion on revisions content"
+    ]
+   }
+  },
+  {
+   "id": "feature:testing",
+   "tests": {
+    "covered": [
+     {
+      "text": "tests/test_teaching.py adds 16 tests using fixtures that stub native RPC, MinIO and the model, and imports docker/ code directly",
+      "evidence": [
+       "tests/test_teaching.py:20-97"
+      ]
+     },
+     {
+      "text": "Phase 6.2 evidence set test-results/phase62-*: JUnit (654 pass, 0 fail), fixture-only native, desktop, vision and UI checks, change manifest with sha256",
+      "evidence": [
+       "test-results/phase62-backend.xml:1",
+       "test-results/phase62-status.json:1"
+      ]
+     }
+    ],
+    "gaps": [
+     "Phase 6.2 acceptance explicitly incomplete (owner demo not received)",
+     "Fixture-only UI/native checks, no live desktop input"
+    ]
+   }
+  }
+ ],
+ "discrepancies": [
+  {
+   "text": "phase62-status.json states phase62_acceptance_complete=false and owner_demonstration_received=false: passing tests (654/654) do not demonstrate the acceptance criteria; remaining list covers real recording, publication and native skill use",
+   "severity": "medium",
+   "nodes": [
+    "feature:teaching"
+   ],
+   "evidence": [
+    "test-results/phase62-status.json:3",
+    "test-results/phase62-status.json:20"
+   ]
+  },
+  {
+   "text": "phase62-vision.json: vision probe matched only 5 of 6 bands (model answered yellow twice, missed blue), while test_generate_vision_check_and_exact_input mocks a perfect 6/6 canary; real model behaviour is weaker than the test double. Code accepts the answer via vision_canary, so threshold semantics are unverified by tests",
+   "severity": "medium",
+   "nodes": [
+    "fn:backend/teaching.py::vision_canary",
+    "file:tests/test_teaching.py"
+   ],
+   "evidence": [
+    "test-results/phase62-vision.json:1",
+    "tests/test_teaching.py:340-344",
+    "backend/teaching.py:798"
+   ]
+  },
+  {
+   "text": "phase62-ui-failure.png (22:00) is a stale failed-run artifact: shows raw lowercase 'ready' and '0.0 MiB retained' for a ~17.6 KB capture; later captures show 'Ready for review' and '17.6 KB retained'",
+   "severity": "low",
+   "nodes": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "test-results/phase62-ui-failure.png:1",
+    "test-results/phase62-teaching-390.png:1"
+   ]
+  },
+  {
+   "text": "Inspection JPGs (desktop/tablet/mobile fold) show Recordings select on 'New demonstration' while the status block shows a Ready for review recording, unlike the phase62-teaching PNGs; page-01 JPGs are padded with flat grey and show only the first screen, so the Edit/test, Publish and retention sections are never visually evidenced in images (only in phase62-ui-inspect.html DOM)",
+   "severity": "low",
+   "nodes": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "test-results/phase62-inspection/desktop-fold.jpg:1",
+    "test-results/phase62-inspection/desktop-page-01.jpg:1",
+    "test-results/phase62-ui-inspect.html:1"
+   ]
+  },
+  {
+   "text": "At 320px the Recordings select truncates its option text; minor visible defect",
+   "severity": "low",
+   "nodes": [
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "test-results/phase62-teaching-320.png:1"
+   ]
+  },
+  {
+   "text": "phase62-ui-lint.json and phase62-inspection/report.json are near-duplicate reports (1 byte apart); all UI evidence is fixture-only, not the live app (ui_fixture_only true)",
+   "severity": "low",
+   "nodes": [
+    "feature:testing"
+   ],
+   "evidence": [
+    "test-results/phase62-ui-lint.json:1",
+    "test-results/phase62-inspection/report.json:1",
+    "test-results/phase62-ui-fixture.json:2"
+   ]
+  },
+  {
+   "text": "phase62-change-manifest.json lists plan/PHASE6-TEACHING-REVIEW.md with a sha256 that no longer matches the current file (edited after the manifest); all code files still match",
+   "severity": "low",
+   "nodes": [
+    "feature:teaching"
+   ],
+   "evidence": [
+    "test-results/phase62-change-manifest.json:1"
+   ]
+  },
+  {
+   "text": "Test gap: no test hits GET timeline/frames/revisions/listing, keep, private or /internal/teaching/consult routes; docker runtime_api teaching routes are tested only through the in-process Capture double",
+   "severity": "medium",
+   "nodes": [
+    "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/keep",
+    "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/frames/{seq}",
+    "route:backend/app.py:POST /internal/teaching/consult"
+   ],
+   "evidence": [
+    "tests/test_teaching.py:282",
+    "tests/test_teaching.py:36-54"
+   ]
+  }
+ ]
+}

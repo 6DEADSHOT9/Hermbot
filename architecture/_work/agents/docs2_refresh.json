@@ -1,0 +1,2535 @@
+{
+ "agent": "docs2_refresh",
+ "files_read": [
+  "plan/PHASE6-TEACHING.md",
+  "plan/PHASE6-TEACHING-REVIEW.md",
+  "plan/CHECKLIST.md",
+  "plan/CONTEXT.md",
+  "plan/ISSUES.md",
+  "plan/PHASE-DETAILS.md",
+  "plan/README.md",
+  "architecture/_work/remap/diffs/plan__CHECKLIST.md.diff",
+  "architecture/_work/remap/diffs/plan__CONTEXT.md.diff",
+  "architecture/_work/remap/diffs/plan__ISSUES.md.diff",
+  "architecture/_work/remap/diffs/plan__PHASE-DETAILS.md.diff",
+  "architecture/_work/remap/diffs/plan__README.md.diff",
+  "backend/teaching.py",
+  "backend/migrations/018_teaching.sql",
+  "docker/teaching_capture.py",
+  "web/src/Teaching.tsx",
+  "docker/runtime_api.py (lines 20-40, 380-560 + greps)",
+  "backend/app.py (lines 415-440, 570-585 + greps)",
+  "backend/capabilities.py (lines 40-70, 150-185)",
+  "backend/knowledge.py (guard)",
+  "backend/connector_http.py (lines 60-100)",
+  "web/src/Computer.tsx (lines 10-30)",
+  "plugins/hermbot/__init__.py (lines 90-104)",
+  "docker/hermes.Dockerfile (grep)",
+  "tests/test_teaching.py (test names via grep)",
+  "test-results/phase62-backend.xml (testsuite header only)",
+  "architecture/_work/REFRESH_BRIEF.md",
+  "architecture/_work/AGENT_BRIEF.md",
+  "architecture/_work/remap/needs_check.json",
+  "architecture/_work/ids.txt",
+  "architecture/_work/agents/docs.json",
+  "architecture/_work/agents/docs_refresh.json",
+  "architecture/_work/agents/lead.json"
+ ],
+ "module_notes": {
+  "plan/PHASE6-TEACHING.md": {
+   "purpose": "Researched and now implemented-locally plan for Phase 6.2 demonstration teaching: record an owner demonstration on a bot desktop, review evidence, generate/edit/test a SKILL.md candidate and publish it natively. Remains the acceptance contract.",
+   "layer": "doc",
+   "responsibilities": [
+    {
+     "text": "Status header: recorded Oct 27 2026; implementation authorized and built locally; real owner acceptance pending; the researched scope is the acceptance contract; 6.1 voice held, 6A mobile, connected-service coordination, evaluation-before-fixes and hosting/VM deferrals preserved.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:3"
+     ]
+    },
+    {
+     "text": "Outcome/scope: owner demonstrates on the selected bot's existing computer, reviews steps and images, generates an editable skill, tests an exact candidate and explicitly publishes/enables; action timeline + keyframes, no continuous video; no host-desktop, microphone or other-bot capture; deliverable is a self-contained native SKILL.md (no executable bundles, macro replay, training, autonomous updates); recording does not sandbox the demonstrated app.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:7-13"
+     ]
+    },
+    {
+     "text": "Current-implementation inventory (what exists and the integration consequence): backend/computer.py, docker/runtime_api.py computer routes, pinned native rfb_filter.py and thumbnail.py, web/src/Computer.tsx, backend/knowledge.py, runtime skill routes, plugin/capabilities/service middleware, completed-work skill draft, artifact storage.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:17-30"
+     ]
+    },
+    {
+     "text": "Research references table (ShowUI-Aloha, Chrome Recorder, Playwright, Selenium, OpenAdapt, rrweb, WebRobot, Agent Skills, 2026 skill-reusability preprint) with the application to Hermbot; references are not selected dependencies.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:32-49"
+     ]
+    },
+    {
+     "text": "Six broader software patterns: event log with visual observations, build-and-promotion pipeline (SLSA, deployment protection), durable jobs/outbox, stable operation identity/idempotency (never replay a GUI action after uncertainty), fencing/explicit ownership, dispatch is not proof of outcome.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:51-58"
+     ]
+    },
+    {
+     "text": "Eight-step user flow: Teach a workflow in Computer, take over and wait for input readiness, explicit start with indicator, demonstrate with acknowledged privacy pause, finish and review/parameterize, generate draft from exactly the reviewed evidence, hand back and test on fresh inputs, publish and optionally enable; recording list reachable from Computer and Skills; distinct from Save a completed workflow.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:60-71"
+     ]
+    },
+    {
+     "text": "Recording states and invariants: separate ownership/capture/processing/publication fields; lifecycle preparing->recording<->paused->finalizing->ready plus interrupted/discarded/failed; one session per bot; per-event session/generation/segment/sequence/monotonic time/kind/geometry; expected revisions + idempotency keys; finish seals only the persisted prefix; viewer loss pauses capture and keeps human ownership.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:73-86"
+     ]
+    },
+    {
+     "text": "Capture at the authoritative boundary: Hermbot-owned observer around the admitted RFB stream, native RfbClientFilter unchanged, fragmentation/coalescing/QEMU keys/clipboard handled, coalesced semantic steps, bounded full-screen keyframes with geometry provenance, no DOM/ARIA claim from the outer page.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:88-98"
+     ]
+    },
+    {
+     "text": "Protected input and private evidence: acknowledged private-input pause serialized with observation/frames, privacy generation fences late frames, generic omitted marker only, ordinary Pause for arbitrary screens, no profiles/cookies/headers captured, owner-private (not in Library), reviewed evidence revisions fence processing, screen text is untrusted; redaction is defense in depth.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:100-113"
+     ]
+    },
+    {
+     "text": "Storage/retention/limits: PostgreSQL metadata + encrypted private object-store payloads, bounded volatile buffers, staged upload verified before manifest commit, no transaction across upload/model call; proposed 2 frames/s, 2 MiB/frame, 256 MiB/session, one generation job at a time; 7-day expiry with Keep/Delete, discard deletes through a retryable job.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:115-125"
+     ]
+    },
+    {
+     "text": "Draft generation: bounded processing job with the existing provider credential, no execution tools, vision support must be verified, normalized events then reviewed segments, persisted hashes/prompt-schema/provider identity/job generation, bounded repair, budget caps; required draft fields and lean SKILL.md rules (name <=64 chars, no credentials/IDs/fixed coordinates).",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:127-144"
+     ]
+    },
+    {
+     "text": "Testing an unpublished candidate: immutable draft revision bound to bot/config, evidence hash, skill bytes, parameters, checks and authority; task-scoped candidate through the existing supported tool-execution middleware (skill_view), no patching Hermes, no overwriting live skills; ordinary tasks/receipts/budgets/Stop; fresh-input and assertion requirements; candidate consultation is separate evidence from native installation.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:146-160"
+     ]
+    },
+    {
+     "text": "Publication/enablement/rollback: current owner authority + exact draft/evidence/test binding, knowledge.guard + native CAS + knowledge_versions + queued refresh, teaching provenance link, pending refresh is not ready, enable only for that bot, rollback as a new draft/version.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:162-170"
+     ]
+    },
+    {
+     "text": "Records and API contracts: four record families (session, evidence manifest/chunks, draft revisions/jobs, tests) plus existing records; proposed route family under /api/v1/bots/{bot_id}/teaching; adapter commands carry generation and epoch; no paths/keys from the browser; no screenshots/typed text in SSE.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:172-187"
+     ]
+    },
+    {
+     "text": "UI states and accessibility: Teach in Computer, recordings/drafts linked from Skills, no new top-level navigation, status text not colour-only, pane close pauses but keeps human control, reload/logout/restart reconcile and never auto-resume.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:189-195"
+     ]
+    },
+    {
+     "text": "Recovery matrix (15 failure rows) and seven implementation slices 6.2.0-6.2.6 (feasibility first); do not wait for 6.3/6.4; voice held, typed annotations; mobile teaching separate.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:197-227"
+     ]
+    },
+    {
+     "text": "Acceptance matrix (16 areas) and the real demonstration set (browser form-to-record, desktop/file workflow, collaborative procedure; owner correction, interruption/reconnect, publication conflict/rollback; blocked rather than mocked), plus closing/cleanup rules.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:229-260"
+     ]
+    },
+    {
+     "text": "Decisions and remaining validation: proposed choices are not guarantees of universal GUI learning or secret detection; feasibility slice must settle observer implementation, middleware contract, IME/clipboard cases, image limits, vision provider, encryption and retention defaults; UI automation cannot substitute for real owner teaching.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:262-266"
+     ]
+    }
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "New file (no earlier snapshot). Only the lead read an earlier version; every lead citation of it is shifted by exactly -2 lines in the current file (see citation_checks).",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:1-3"
+     ]
+    },
+    {
+     "text": "Header now states the plan was built locally with owner acceptance pending, and points to the review file; the body is still written in the future/proposal tense ('Proposed', 'Add a Hermbot-owned observer', feasibility slice 'must settle').",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:3",
+      "plan/PHASE6-TEACHING.md:183",
+      "plan/PHASE6-TEACHING.md:262-266"
+     ]
+    }
+   ]
+  },
+  "plan/PHASE6-TEACHING-REVIEW.md": {
+   "purpose": "Implementation, review and verification record for Phase 6.2 teaching: what was built, review findings corrected before acceptance, verification evidence and limits, and the pending real owner acceptance steps.",
+   "layer": "doc",
+   "responsibilities": [
+    {
+     "text": "Status: implemented locally Oct 27 2026; real owner demonstration and end-to-end native skill acceptance pending; the researched plan remains the acceptance contract; 6.1 stays on hold.",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:3"
+     ]
+    },
+    {
+     "text": "Implemented inventory: Teaching entry points in Computer and Memory & skills; accepted-RFB observer (fragmented/coalesced, normal/QEMU keys, clipboard omission) with native gate unchanged; bounded volatile collector with pause/disconnect/late-frame handling; PostgreSQL state + encrypted immutable revisions + encrypted private S3 chunks; durable bounded model generation with token-parameter retry; task-authenticated candidate consultation via supported middleware; publication through native CAS/readback/knowledge history/refresh.",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:5-13"
+     ]
+    },
+    {
+     "text": "Table of 13 review findings with cause/correction/evidence: route precedence, prepared vs running collector, failed persistence heartbeat, stale pre-finish batch, privacy transition race, globally installed skill vs task preview, stale test authorization, read-only viewer pausing, source deletion vs executing test, delayed Secure input barrier, whole-recording memory load, accessible names, max_tokens rejection.",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:15-31"
+     ]
+    },
+    {
+     "text": "Verification and practical limits: 654 backend tests passed (16 teaching) with 56 existing warnings; TypeScript/Vite build and lint; Chrome render at 1440/768/390/320 synthetic only; disposable RFB packet checks; idle 1440x900 capture 7,981 bytes/frame as feasibility only; vision probe 5/6 colour bands; integrity audit of 8,748 Hermes Python files; architecture/ excluded.",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:33-43"
+     ]
+    },
+    {
+     "text": "Pending real acceptance: four owner steps (record the fixture workflow with Pause/Secure input/Resume; freeze evidence, generate, hand back, test fresh and negative inputs; verify observations and publish/enable then verify native refresh and installed-skill use; desktop/file and collaborative cases with a scoped grant plus restart recovery, cleanup and busy-screen measurements).",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:45-50"
+     ]
+    },
+    {
+     "text": "Records that approval review rejected an automated typing test in Scout's live desktop (script not run), and the prepared owner fixture file:///workspace/hermbot-teaching-62-fixture/records.html to remove after acceptance.",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:52-54"
+     ]
+    }
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "New file (no earlier snapshot).",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:1-3"
+     ]
+    }
+   ]
+  },
+  "plan/CHECKLIST.md": {
+   "purpose": "Milestone checklist mirroring the roadmap, with per-phase completion evidence, cross-cutting follow-ups, deferred items and checkboxes; 6.2 is now recorded as built and locally deployed but unchecked.",
+   "layer": "doc",
+   "responsibilities": [
+    {
+     "text": "Phase completion ledger: P1 Oct 6, P2 Oct 7 (staging/HTTPS deferred), P3 Oct 7, P4 Oct 19, 5.1 Oct 20, 5.2 Oct 25 (547 tests), 5.3 (581), 5.4 + Phase 5 exit Oct 26 (638); Phase 6, 6A, 7, 8 pending; each milestone needs demonstration, checks, docs and passing earlier tests.",
+     "evidence": [
+      "plan/CHECKLIST.md:3"
+     ]
+    },
+    {
+     "text": "Cross-cutting follow-ups: evaluations deferred Oct 19, connected-service coordination deferred Oct 27, baseline evaluations before the fix backlog (C36 exempted and closed); ISSUES register pointer.",
+     "evidence": [
+      "plan/CHECKLIST.md:7-13"
+     ]
+    },
+    {
+     "text": "Deferred work: VM isolation revisit after Phases 1-8.",
+     "evidence": [
+      "plan/CHECKLIST.md:15-17"
+     ]
+    },
+    {
+     "text": "Phase 1 (1.1-1.5 + exit) and Phase 2 (2.1-2.5, staging/HTTPS unchecked + exit) checked items.",
+     "evidence": [
+      "plan/CHECKLIST.md:19-106"
+     ]
+    },
+    {
+     "text": "Phase 3 (3.1-3.4 + exit) and Phase 4 (4.1-4.4 + exit with the Oct 19 completion record: 447 tests, groups archived).",
+     "evidence": [
+      "plan/CHECKLIST.md:108-183"
+     ]
+    },
+    {
+     "text": "Phase 5: 5.1 routines, 5.2 events, 5.3 recurring orchestration (581 tests), 5.4 attention/notifications and Phase 5 exit with owner-confirmed closed-tab push (638 tests).",
+     "evidence": [
+      "plan/CHECKLIST.md:185-227"
+     ]
+    },
+    {
+     "text": "6.1 Voice: owner hold Oct 27, all boxes unchecked.",
+     "evidence": [
+      "plan/CHECKLIST.md:231-239"
+     ]
+    },
+    {
+     "text": "6.2 Demonstration teaching: plan link, selected next, now 'built and locally deployed' with review file noting 654 backend tests, isolated capture/UI checks and remaining owner demonstrations; milestone and its four requirement boxes stay unchecked until real acceptance.",
+     "evidence": [
+      "plan/CHECKLIST.md:240-249"
+     ]
+    },
+    {
+     "text": "6.3 capability discovery and 6.4 navigation/settings plus Phase 6 exit (voice and teaching tests) unchecked.",
+     "evidence": [
+      "plan/CHECKLIST.md:250-268"
+     ]
+    },
+    {
+     "text": "Phase 6A mobile, Phase 7 release, Phase 8 sharing: all unchecked with exit gates.",
+     "evidence": [
+      "plan/CHECKLIST.md:270-360"
+     ]
+    },
+    {
+     "text": "Cumulative verification section (work-outcomes review, README sections 4-5, CONTEXT pointer).",
+     "evidence": [
+      "plan/CHECKLIST.md:362-366"
+     ]
+    }
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "6.2 paragraph rewritten: the 'Planning is recorded; implementation/acceptance have not started' sentence is replaced by 'Implementation is built and locally deployed; review and verification record 654 backend tests, isolated capture/UI checks and the remaining owner demonstrations. Keep the milestone unchecked until real acceptance passes.' and links PHASE6-TEACHING-REVIEW.md.",
+     "evidence": [
+      "plan/CHECKLIST.md:242"
+     ]
+    },
+    {
+     "text": "Box state unchanged: 6.2 milestone and its four requirement boxes remain unchecked.",
+     "evidence": [
+      "plan/CHECKLIST.md:244-249"
+     ]
+    },
+    {
+     "text": "Still stale/unchanged: line 10 tells the owner to resume with Phase 6.1 voice planning although 6.1 is on hold (231-233).",
+     "evidence": [
+      "plan/CHECKLIST.md:10",
+      "plan/CHECKLIST.md:233"
+     ]
+    }
+   ]
+  },
+  "plan/CONTEXT.md": {
+   "purpose": "Carried-forward project context: owner decisions, architecture/ownership rules, defaults, UX and research context, plus a dated delivery log through the Oct 27 voice hold, teaching research and Phase 6.2 implementation.",
+   "layer": "doc",
+   "responsibilities": [
+    {
+     "text": "Harness decisions: Oct 13 shared work-controller refactor, Oct 11 deferral of harness independence, Oct 10 unmodified-harness rule, four source patches replaced by supported middleware.",
+     "evidence": [
+      "plan/CONTEXT.md:7-17"
+     ]
+    },
+    {
+     "text": "Current state and historical transfer handoff (superseded next-step instructions).",
+     "evidence": [
+      "plan/CONTEXT.md:19-37"
+     ]
+    },
+    {
+     "text": "User decisions table with source record numbers and exact owner corrections; management answer 'Tasks and lifecycle'.",
+     "evidence": [
+      "plan/CONTEXT.md:39-69"
+     ]
+    },
+    {
+     "text": "Architecture/ownership rules, collaboration/orchestration requirements, defaults and exclusions.",
+     "evidence": [
+      "plan/CONTEXT.md:71-116"
+     ]
+    },
+    {
+     "text": "UX/visual context and research findings (Grok Bot, Hermes), research links table, validation/delivery and environment evidence.",
+     "evidence": [
+      "plan/CONTEXT.md:118-217"
+     ]
+    },
+    {
+     "text": "Dated log: provider clarification (Oct 6), Phase 2 and 3 authorization/completion (Oct 7), skills/tools (Oct 10), work controller, tool admission, coordination (Oct 13), VM deferral, expanded phases, Phase 5 priority/mobile placement (Oct 24-25).",
+     "evidence": [
+      "plan/CONTEXT.md:219-273"
+     ]
+    },
+    {
+     "text": "Phase 5.2-5.4 log (Oct 25-26): implementation, live acceptance, coordination deferral then plan, 5.3 plan/implementation/acceptance, 5.4 plan/implementation/exit and notification repeat, Phase 5 completed for the local scope.",
+     "evidence": [
+      "plan/CONTEXT.md:276-352"
+     ]
+    },
+    {
+     "text": "Oct 27: connected-service coordination deferred again; 6.1 held and 6.2 researched (references, proposed delivery, slices); NEW section 'Phase 6.2 implementation' recording authorization (with architecture/ excluded), what was implemented, 654 tests, the rejected automated typing, the owner fixture in Scout, the image probe and the still-unchecked milestone.",
+     "evidence": [
+      "plan/CONTEXT.md:355-373"
+     ]
+    }
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "Added the Oct 27 section 'Phase 6.2 implementation' (two paragraphs): owner authorized implementation then excluded architecture/; capture, private-input barriers, encrypted private storage, evidence/draft revisions, bounded generation, task-scoped candidate consultation, exact tested publication and retention UI are implemented locally; 654 tests (16 teaching), UI fixtures at 1440/768/390/320 px, native packet/image checks, Hermes hashes/seven groups/nine volumes preserved; milestone unchecked.",
+     "evidence": [
+      "plan/CONTEXT.md:369-371"
+     ]
+    },
+    {
+     "text": "Second paragraph: approval review rejected automated typing into a live bot desktop (script did not run; do not rerun it), safe alternatives used intercepted UI data and disposable network-isolated containers, owner fixture at file:///workspace/hermbot-teaching-62-fixture/records.html, image probe 5/6 bands and the max_tokens parameter correction.",
+     "evidence": [
+      "plan/CONTEXT.md:373"
+     ]
+    },
+    {
+     "text": "The earlier Oct 27 teaching-research paragraphs are unchanged and now historical: line 366 still says 'Phase 6.2 remains unimplemented', superseded by line 371.",
+     "evidence": [
+      "plan/CONTEXT.md:366",
+      "plan/CONTEXT.md:371"
+     ]
+    }
+   ]
+  },
+  "plan/PHASE-DETAILS.md": {
+   "purpose": "Expanded per-phase workflows, boundaries, dependencies and acceptance for Phases 1-8 and 6A, with a status table, preserved decisions and open discussion items; 6.2 now links the review and says the contracts have a local implementation.",
+   "layer": "doc",
+   "responsibilities": [
+    {
+     "text": "Header and scope: updated 2026-10-26; expands the eight phases + 6A without starting implementation or reordering owner decisions.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:1-5"
+     ]
+    },
+    {
+     "text": "Status table: phases 1-4 complete locally; Phase 5 row still says 5.4 implemented and desktop push/cleanup/exit pending (stale vs CHECKLIST); Phase 6 pending; 6A, 7, 8 pending.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:7-21"
+     ]
+    },
+    {
+     "text": "Preserved decisions: Hermes unmodified, container per bot, VM deferred, evaluations first, staging deferred, mobile as 6A, coordination after Phase 5, milestone evidence rule.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:23-31"
+     ]
+    },
+    {
+     "text": "Phases 1-4 detail (1.1-4.4 with exits).",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:33-161"
+     ]
+    },
+    {
+     "text": "Phase 5 detail (5.1-5.4); the 5.4 paragraph still says 'Implementation has not started'.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:163-213",
+      "plan/PHASE-DETAILS.md:205"
+     ]
+    },
+    {
+     "text": "6.1 Voice with Oct 27 hold; 6.3 capability discovery; 6.4 navigation/settings; Phase 6 exit.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:215-229",
+      "plan/PHASE-DETAILS.md:243-263"
+     ]
+    },
+    {
+     "text": "6.2 Demonstration teaching: link to the plan and the review, local implementation noted; explicit session start/pause/stop, secret-entry exclusion across text/accessibility/screenshots/video, generated editable skill with parameters, review/test/approve before enabling, delegation steps without credential carry-over, versions with rollback, demonstration requirement.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:231-241"
+     ]
+    },
+    {
+     "text": "Phase 6A mobile, Phase 7 release, Phase 8 sharing detail, and the discussion decisions before implementation.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:265-381"
+     ]
+    }
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "Single sentence changed in 6.2: the 'remain proposed work; no runtime implementation has started' clause is replaced by 'have a local implementation; verification and remaining owner acceptance are recorded' with a new PHASE6-TEACHING-REVIEW.md link.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:233"
+     ]
+    },
+    {
+     "text": "Not updated: the file header still reads 'Updated: 2026-10-26' and the status table/5.4 text are stale.",
+     "evidence": [
+      "plan/PHASE-DETAILS.md:3",
+      "plan/PHASE-DETAILS.md:15",
+      "plan/PHASE-DETAILS.md:205"
+     ]
+    }
+   ]
+  },
+  "plan/README.md": {
+   "purpose": "Approved amended product roadmap: fixed decisions, architecture, management rules, phases 1-8 + 6A milestones, test matrix and defaults; records the Oct 27 owner decisions including 6.2 as implemented locally.",
+   "layer": "doc",
+   "responsibilities": [
+    {
+     "text": "Fixed decisions: Hermes sole harness, unmodified source, one container per bot, VM-per-bot deferred, private first, connector approvals with native-tool coverage limit.",
+     "evidence": [
+      "plan/README.md:9-23"
+     ]
+    },
+    {
+     "text": "Status ledger: Phase 4 (447 tests), 5.1, 5.2 (547), 5.3 (581), 5.4 and Phase 5 exit Oct 26 (638 tests); remote hosting deferred.",
+     "evidence": [
+      "plan/README.md:25-26"
+     ]
+    },
+    {
+     "text": "Evaluations deferred Oct 19; sequencing decision baseline-evaluations before fix backlog (C36 only exception).",
+     "evidence": [
+      "plan/README.md:28",
+      "plan/README.md:34"
+     ]
+    },
+    {
+     "text": "Oct 26/27 owner updates: connected-service coordination after Phase 5 then deferred again; Oct 27 hold on 6.1 and selection of 6.2, now stating the teaching plan is implemented locally with real owner acceptance pending (links the review).",
+     "evidence": [
+      "plan/README.md:30"
+     ]
+    },
+    {
+     "text": "VM isolation deferral; ISSUES/CHAT-COVERAGE pointers; work-outcomes plan; phase rule.",
+     "evidence": [
+      "plan/README.md:32-40"
+     ]
+    },
+    {
+     "text": "Harness-independence design kept as deferred research and removal of the four source patches.",
+     "evidence": [
+      "plan/README.md:44-56"
+     ]
+    },
+    {
+     "text": "Application components, collaboration plugin, management model/rules, public interfaces and UI.",
+     "evidence": [
+      "plan/README.md:58-152"
+     ]
+    },
+    {
+     "text": "Phase roadmap 1-5 with milestones (the 5.4 section at 349 is still stale: 'implementation/acceptance have not started').",
+     "evidence": [
+      "plan/README.md:154-355",
+      "plan/README.md:349"
+     ]
+    },
+    {
+     "text": "Phase 6: 6.1 voice on hold; 6.2 demonstration teaching 'Implementation is built locally' with review link and four bullets; 6.3; 6.4; exit gate including teaching tests.",
+     "evidence": [
+      "plan/README.md:357-395",
+      "plan/README.md:371-378"
+     ]
+    },
+    {
+     "text": "Phase 6A mobile, Phase 7 release, Phase 8 sharing.",
+     "evidence": [
+      "plan/README.md:397-490"
+     ]
+    },
+    {
+     "text": "Test and delivery requirements matrix and defaults/boundaries.",
+     "evidence": [
+      "plan/README.md:492-530"
+     ]
+    }
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "Line 30: the clause 'the researched plan is saved, with implementation pending' becomes 'the researched plan is implemented locally, with real owner acceptance pending' and the new PHASE6-TEACHING-REVIEW.md link replaces the plain plan link.",
+     "evidence": [
+      "plan/README.md:30"
+     ]
+    },
+    {
+     "text": "Line 373 (6.2 section): 'Selected next while voice is held; implementation/acceptance have not started' becomes 'Selected while voice is held. Implementation is built locally; review, checks and remaining owner acceptance are recorded' with the review link.",
+     "evidence": [
+      "plan/README.md:373"
+     ]
+    },
+    {
+     "text": "Still stale: 5.4 section line 349; 6.2 bullets (375-378) unchanged.",
+     "evidence": [
+      "plan/README.md:349",
+      "plan/README.md:375-378"
+     ]
+    }
+   ]
+  },
+  "plan/ISSUES.md": {
+   "purpose": "Canonical engineering issue/learning register: chronological history (C00-C65 plus review-table IDs), detailed records (H01-H03, recovered findings, Manik M01-M28) and maintenance rules; C65 added for Phase 6.2.",
+   "layer": "doc",
+   "responsibilities": [
+    {
+     "text": "Header and scope: created 2026-10-14, owner sequencing decision (evaluations before the fix backlog), pointers to CHAT-COVERAGE and verification metadata, manual maintenance.",
+     "evidence": [
+      "plan/ISSUES.md:1-19"
+     ]
+    },
+    {
+     "text": "Phase 1-4 stages: C00-C05; P2-01..P2-18; P3-01..P3-17; C06-C07 and UI-01..06; C08-C09; C10-C13; P4-01..P4-26 with supersession notes.",
+     "evidence": [
+      "plan/ISSUES.md:21-246"
+     ]
+    },
+    {
+     "text": "Oct 10-13 stages: C14, C14A (KAG-01..05), C15-C16A, SKILL-01..12, C17-C18, NATIVE-01..06, C19-C20 and empty OUT table, C21-C23, C24-C26 with STAR-01/02, C27-C27A with TEMP-01..11, C28-C29 and CTRL-01..06, C30 with RET-01/02, C31-C32 with GATE/COORD.",
+     "evidence": [
+      "plan/ISSUES.md:248-558"
+     ]
+    },
+    {
+     "text": "Manik incident ordered table (28 rows) and external constraints.",
+     "evidence": [
+      "plan/ISSUES.md:560-599"
+     ]
+    },
+    {
+     "text": "C33 (history was fragmented); C34-C40 (Phase 4 completion acceptance); C41-C42 routines; C43-C45 events; C46 stale requests; C47-C49 live provider events; C50-C54 recurring orchestration; C55-C64 attention/notifications.",
+     "evidence": [
+      "plan/ISSUES.md:601-888"
+     ]
+    },
+    {
+     "text": "Coverage and maintenance notes, 2026-10-14 verification correction and consolidation update.",
+     "evidence": [
+      "plan/ISSUES.md:890-902"
+     ]
+    },
+    {
+     "text": "NEW C65: Teaching capture and publication integration defects found before owner acceptance (Oct 27): root causes (route precedence, prepared vs running collector, fetch progress vs durable ack, async capture/control revisions, global vs task-specific skill state, weak test binding, accessible names), approach, verification (654 tests incl. 16 teaching, responsive UI, disposable RFB/desktop checks) and remaining real acceptance. It is placed after the 2026-10-14 consolidation paragraph, i.e. outside the dated chronology.",
+     "evidence": [
+      "plan/ISSUES.md:904-910"
+     ]
+    },
+    {
+     "text": "How-to-maintain rules, status vocabulary and new-entry template.",
+     "evidence": [
+      "plan/ISSUES.md:912-941"
+     ]
+    },
+    {
+     "text": "Existing historical records H01-H03 and unresolved recovered findings table.",
+     "evidence": [
+      "plan/ISSUES.md:943-988"
+     ]
+    },
+    {
+     "text": "Manik group incident M01-M28 detail with proposals/closure checks, correct-action list and learning priorities.",
+     "evidence": [
+      "plan/ISSUES.md:990-1196"
+     ]
+    }
+   ],
+   "changes_since_previous_pass": [
+    {
+     "text": "One new entry C65 (8 inserted lines) between the 2026-10-14 consolidation paragraph and the 'Detailed records and maintenance' heading; every later line moved by +8, which the mechanical remap already applied.",
+     "evidence": [
+      "plan/ISSUES.md:904-910"
+     ]
+    },
+    {
+     "text": "The issue count in the explorer now reads C00-C65 (earlier docs.json text says C00-C64); the 85-finding-row coverage claim at line 892 and the empty OUT table at 365-366 are unchanged.",
+     "evidence": [
+      "plan/ISSUES.md:892",
+      "plan/ISSUES.md:365-366"
+     ]
+    }
+   ]
+  }
+ },
+ "edges": [
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:backend/teaching.py",
+   "kind": "documents",
+   "label": "teaching backend (recording sessions, evidence, generation, tests, publication)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:172-187",
+    "backend/teaching.py:318-795"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:docker/teaching_capture.py",
+   "kind": "documents",
+   "label": "adapter-side accepted-RFB observer and volatile collector",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:88-98",
+    "docker/teaching_capture.py:10-210"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:docker/runtime_api.py",
+   "kind": "documents",
+   "label": "adapter teaching control/batch routes and RFB observer hook",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:20",
+    "plan/PHASE6-TEACHING.md:88-92",
+    "docker/runtime_api.py:447-482",
+    "docker/runtime_api.py:509-537"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:web/src/Teaching.tsx",
+   "kind": "documents",
+   "label": "teaching UI states and review/test/publish panel",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:189-195",
+    "web/src/Teaching.tsx:13-60"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:backend/migrations/018_teaching.sql",
+   "kind": "documents",
+   "label": "record families",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:172-181",
+    "backend/migrations/018_teaching.sql:1-38"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:backend/computer.py",
+   "kind": "documents",
+   "label": "reused ownership/session authorization",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:19"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:web/src/Computer.tsx",
+   "kind": "documents",
+   "label": "Teach entry point and secure-input barrier",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:23",
+    "web/src/Computer.tsx:16",
+    "web/src/Computer.tsx:22"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:backend/knowledge.py",
+   "kind": "documents",
+   "label": "publication reuses guard/CAS/versions",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:24",
+    "plan/PHASE6-TEACHING.md:164-170",
+    "backend/teaching.py:729-741"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:backend/capabilities.py",
+   "kind": "documents",
+   "label": "task-scoped candidate in capability manifest/prepare",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:26",
+    "plan/PHASE6-TEACHING.md:150",
+    "backend/capabilities.py:57-61",
+    "backend/capabilities.py:173"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:backend/service.py",
+   "kind": "documents",
+   "label": "test creates ordinary task via create_task",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:26",
+    "backend/teaching.py:651-661"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:plugins/hermbot/__init__.py",
+   "kind": "documents",
+   "label": "skill_view middleware returns the candidate",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:26",
+    "plan/PHASE6-TEACHING.md:152",
+    "plugins/hermbot/__init__.py:95-101"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:backend/app.py",
+   "kind": "documents",
+   "label": "internal candidate consult route and router mount",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:150-152",
+    "backend/app.py:425-435",
+    "backend/app.py:580"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:backend/artifacts.py",
+   "kind": "documents",
+   "label": "object-store client reused for private chunks",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:28",
+    "plan/PHASE6-TEACHING.md:117",
+    "backend/teaching.py:85-86"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "file:web/src/Knowledge.tsx",
+   "kind": "documents",
+   "label": "recordings reachable from Memory & skills",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:71",
+    "web/src/Knowledge.tsx:34"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "table:teaching_sessions",
+   "kind": "documents",
+   "label": "proposed record family (implemented)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:174-181",
+    "backend/migrations/018_teaching.sql:1-38"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "table:teaching_chunks",
+   "kind": "documents",
+   "label": "proposed record family (implemented)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:174-181",
+    "backend/migrations/018_teaching.sql:1-38"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "table:teaching_revisions",
+   "kind": "documents",
+   "label": "proposed record family (implemented)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:174-181",
+    "backend/migrations/018_teaching.sql:1-38"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "table:teaching_tests",
+   "kind": "documents",
+   "label": "proposed record family (implemented)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:174-181",
+    "backend/migrations/018_teaching.sql:1-38"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "table:teaching_publications",
+   "kind": "documents",
+   "label": "proposed record family (implemented)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:174-181",
+    "backend/migrations/018_teaching.sql:1-38"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "feature:teaching",
+   "kind": "documents",
+   "label": "feature documented",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:5-13"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "feature:computer",
+   "kind": "documents",
+   "label": "recording on the bot computer",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:7-9"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "feature:knowledge",
+   "kind": "documents",
+   "label": "skill generation/publication",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:162-170"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "feature:tools",
+   "kind": "documents",
+   "label": "candidate skill via execution middleware",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:150-152"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching",
+   "kind": "documents",
+   "label": "proposed route (list recordings)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:183"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching",
+   "kind": "documents",
+   "label": "proposed route (create recording)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:183"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}",
+   "kind": "documents",
+   "label": "proposed route (detail)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:183"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/control",
+   "kind": "documents",
+   "label": "proposed route (start/pause/resume/finish/discard)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:183"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/timeline",
+   "kind": "documents",
+   "label": "proposed route (authenticated timeline)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:183"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "route:backend/teaching.py:GET /api/v1/bots/{bot_id}/teaching/{session_id}/frames/{seq}",
+   "kind": "documents",
+   "label": "proposed route (authenticated frame)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:183"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/evidence",
+   "kind": "documents",
+   "label": "proposed route (evidence selection)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:183"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/generate",
+   "kind": "documents",
+   "label": "proposed route (generate)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:183"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/cancel-generation",
+   "kind": "documents",
+   "label": "proposed route (cancel)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:183"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "route:backend/teaching.py:PUT /api/v1/bots/{bot_id}/teaching/{session_id}/draft",
+   "kind": "documents",
+   "label": "proposed route (draft revision)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:183"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/test",
+   "kind": "documents",
+   "label": "proposed route (candidate test)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:183"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/publish",
+   "kind": "documents",
+   "label": "proposed route (publish)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:183"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING.md",
+   "target": "route:backend/teaching.py:DELETE /api/v1/bots/{bot_id}/teaching/{session_id}",
+   "kind": "documents",
+   "label": "proposed route (delete source)",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:183"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "target": "file:backend/teaching.py",
+   "kind": "documents",
+   "label": "review of implementation",
+   "evidence": [
+    "plan/PHASE6-TEACHING-REVIEW.md:5-13",
+    "backend/teaching.py:1-1061"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "target": "file:docker/teaching_capture.py",
+   "kind": "documents",
+   "label": "collector/observer findings",
+   "evidence": [
+    "plan/PHASE6-TEACHING-REVIEW.md:8-9",
+    "docker/teaching_capture.py:10-210"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "target": "file:docker/runtime_api.py",
+   "kind": "documents",
+   "label": "adapter findings (privacy lock, disconnect pause)",
+   "evidence": [
+    "plan/PHASE6-TEACHING-REVIEW.md:23",
+    "plan/PHASE6-TEACHING-REVIEW.md:26",
+    "docker/runtime_api.py:526-537",
+    "docker/runtime_api.py:559"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "target": "file:web/src/Teaching.tsx",
+   "kind": "documents",
+   "label": "UI findings (accessible names, callback scope)",
+   "evidence": [
+    "plan/PHASE6-TEACHING-REVIEW.md:30",
+    "web/src/Teaching.tsx:13-60"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "target": "file:web/src/Computer.tsx",
+   "kind": "documents",
+   "label": "Secure input connection fence and pane-close pause",
+   "evidence": [
+    "plan/PHASE6-TEACHING-REVIEW.md:9",
+    "plan/PHASE6-TEACHING-REVIEW.md:28",
+    "web/src/Computer.tsx:16",
+    "web/src/Computer.tsx:22"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "target": "file:tests/test_teaching.py",
+   "kind": "documents",
+   "label": "16 teaching tests",
+   "evidence": [
+    "plan/PHASE6-TEACHING-REVIEW.md:35",
+    "tests/test_teaching.py:100-578"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "target": "file:backend/app.py",
+   "kind": "documents",
+   "label": "route precedence fix and consult route",
+   "evidence": [
+    "plan/PHASE6-TEACHING-REVIEW.md:19",
+    "backend/app.py:425",
+    "backend/app.py:580"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "target": "file:backend/capabilities.py",
+   "kind": "documents",
+   "label": "task-scoped candidate preparation",
+   "evidence": [
+    "plan/PHASE6-TEACHING-REVIEW.md:12",
+    "plan/PHASE6-TEACHING-REVIEW.md:24",
+    "backend/capabilities.py:57-61"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "target": "file:backend/migrations/018_teaching.sql",
+   "kind": "documents",
+   "label": "state/manifests/revisions",
+   "evidence": [
+    "plan/PHASE6-TEACHING-REVIEW.md:10",
+    "backend/migrations/018_teaching.sql:1-38"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "target": "group:test-results/phase62-misc",
+   "kind": "documents",
+   "label": "verification evidence files",
+   "evidence": [
+    "plan/PHASE6-TEACHING-REVIEW.md:35-42"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "target": "feature:teaching",
+   "kind": "documents",
+   "label": "feature documented",
+   "evidence": [
+    "plan/PHASE6-TEACHING-REVIEW.md:5-13"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "target": "file:plan/PHASE6-TEACHING.md",
+   "kind": "documents",
+   "label": "implements/reviews",
+   "evidence": [
+    "plan/PHASE6-TEACHING-REVIEW.md:3"
+   ]
+  },
+  {
+   "source": "file:plan/README.md",
+   "target": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "kind": "documents",
+   "label": "6.2 review link",
+   "evidence": [
+    "plan/README.md:30",
+    "plan/README.md:373"
+   ]
+  },
+  {
+   "source": "file:plan/CHECKLIST.md",
+   "target": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "kind": "documents",
+   "label": "6.2 review link",
+   "evidence": [
+    "plan/CHECKLIST.md:242"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE-DETAILS.md",
+   "target": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "kind": "documents",
+   "label": "6.2 review link",
+   "evidence": [
+    "plan/PHASE-DETAILS.md:233"
+   ]
+  },
+  {
+   "source": "file:plan/CONTEXT.md",
+   "target": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "kind": "documents",
+   "label": "Phase 6.2 implementation section",
+   "evidence": [
+    "plan/CONTEXT.md:369-373"
+   ]
+  },
+  {
+   "source": "file:plan/ISSUES.md",
+   "target": "file:plan/PHASE6-TEACHING-REVIEW.md",
+   "kind": "documents",
+   "label": "C65 detail link",
+   "evidence": [
+    "plan/ISSUES.md:909"
+   ]
+  },
+  {
+   "source": "file:plan/README.md",
+   "target": "feature:teaching",
+   "kind": "documents",
+   "label": "6.2 status",
+   "evidence": [
+    "plan/README.md:30",
+    "plan/README.md:371-378"
+   ]
+  },
+  {
+   "source": "file:plan/CHECKLIST.md",
+   "target": "feature:teaching",
+   "kind": "documents",
+   "label": "6.2 checklist",
+   "evidence": [
+    "plan/CHECKLIST.md:240-249"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE-DETAILS.md",
+   "target": "feature:teaching",
+   "kind": "documents",
+   "label": "6.2 workflow",
+   "evidence": [
+    "plan/PHASE-DETAILS.md:231-241"
+   ]
+  },
+  {
+   "source": "file:plan/CONTEXT.md",
+   "target": "feature:teaching",
+   "kind": "documents",
+   "label": "teaching research and implementation log",
+   "evidence": [
+    "plan/CONTEXT.md:360-373"
+   ]
+  },
+  {
+   "source": "file:plan/ISSUES.md",
+   "target": "feature:teaching",
+   "kind": "documents",
+   "label": "C65",
+   "evidence": [
+    "plan/ISSUES.md:904-910"
+   ]
+  },
+  {
+   "source": "file:plan/CONTEXT.md",
+   "target": "file:backend/teaching.py",
+   "kind": "documents",
+   "label": "implemented capabilities listed",
+   "evidence": [
+    "plan/CONTEXT.md:371"
+   ]
+  },
+  {
+   "source": "file:plan/ISSUES.md",
+   "target": "file:backend/teaching.py",
+   "kind": "documents",
+   "label": "C65 fix targets",
+   "evidence": [
+    "plan/ISSUES.md:908"
+   ]
+  },
+  {
+   "source": "file:plan/ISSUES.md",
+   "target": "file:docker/teaching_capture.py",
+   "kind": "documents",
+   "label": "C65 collector revision/ack fixes",
+   "evidence": [
+    "plan/ISSUES.md:907-908"
+   ]
+  },
+  {
+   "source": "file:plan/ISSUES.md",
+   "target": "file:web/src/Teaching.tsx",
+   "kind": "documents",
+   "label": "C65 accessible names",
+   "evidence": [
+    "plan/ISSUES.md:907-908"
+   ]
+  },
+  {
+   "source": "file:plan/ISSUES.md",
+   "target": "file:backend/app.py",
+   "kind": "documents",
+   "label": "C65 route precedence",
+   "evidence": [
+    "plan/ISSUES.md:907-908"
+   ]
+  },
+  {
+   "source": "file:plan/CONTEXT.md",
+   "target": "feature:computer",
+   "kind": "documents",
+   "label": "Scout fixture / live desktop",
+   "evidence": [
+    "plan/CONTEXT.md:373"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE-DETAILS.md",
+   "target": "feature:computer",
+   "kind": "documents",
+   "label": "secret-entry exclusion and recording",
+   "evidence": [
+    "plan/PHASE-DETAILS.md:235"
+   ]
+  },
+  {
+   "source": "file:plan/PHASE-DETAILS.md",
+   "target": "feature:knowledge",
+   "kind": "documents",
+   "label": "draft/test/version",
+   "evidence": [
+    "plan/PHASE-DETAILS.md:237-239"
+   ]
+  },
+  {
+   "source": "file:plan/CHECKLIST.md",
+   "target": "feature:knowledge",
+   "kind": "documents",
+   "label": "teaching generates versioned skills",
+   "evidence": [
+    "plan/CHECKLIST.md:246-249"
+   ]
+  },
+  {
+   "source": "file:plan/README.md",
+   "target": "feature:knowledge",
+   "kind": "documents",
+   "label": "6.2 bullets",
+   "evidence": [
+    "plan/README.md:375-378"
+   ]
+  }
+ ],
+ "citation_checks": [
+  {
+   "was": "plan/README.md:30",
+   "now": "plan/README.md:30",
+   "correct": "plan/README.md:30",
+   "agent": "docs",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. Oct 26 owner decision: connected-service coordination after full Phase 5 (extra_nodes[2] decision)."
+  },
+  {
+   "was": "plan/README.md:30",
+   "now": "plan/README.md:30",
+   "correct": "plan/README.md:30",
+   "agent": "docs",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. production-path item 'next agreed project' (also cites README:34)."
+  },
+  {
+   "was": "plan/README.md:30",
+   "now": "plan/README.md:30",
+   "correct": "plan/README.md:30",
+   "agent": "docs_refresh",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. README responsibilities[3]: Oct 26/27 coordination + 6.2 selected (claim text 'implementation pending' is now outdated - see corrections)."
+  },
+  {
+   "was": "plan/README.md:30",
+   "now": "plan/README.md:30",
+   "correct": "plan/README.md:30",
+   "agent": "docs_refresh",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. changes_since_previous_pass[0]: coordination deferred again."
+  },
+  {
+   "was": "plan/README.md:30",
+   "now": "plan/README.md:30",
+   "correct": "plan/README.md:30",
+   "agent": "docs_refresh",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. changes_since_previous_pass[1]: 6.1 held, 6.2 selected."
+  },
+  {
+   "was": "plan/README.md:373",
+   "now": "plan/README.md:373",
+   "correct": "plan/README.md:373",
+   "agent": "docs_refresh",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. changes[1] / edge README->PHASE6-TEACHING link"
+  },
+  {
+   "was": "plan/CHECKLIST.md:240-242",
+   "now": "plan/CHECKLIST.md:240-242",
+   "correct": "plan/CHECKLIST.md:240-242",
+   "agent": "docs_refresh",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. CHECKLIST responsibilities[7] 6.2 (text outdated, see corrections), changes[1]."
+  },
+  {
+   "was": "plan/PHASE-DETAILS.md:233",
+   "now": "plan/PHASE-DETAILS.md:233",
+   "correct": "plan/PHASE-DETAILS.md:233",
+   "agent": "docs_refresh",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. changes[0] 6.2 selection + link (edit changed this very line)."
+  },
+  {
+   "was": "plan/README.md:30",
+   "now": "plan/README.md:30",
+   "correct": "plan/README.md:30",
+   "agent": "docs_refresh",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. edge README->feature:coordination."
+  },
+  {
+   "was": "plan/README.md:373",
+   "now": "plan/README.md:373",
+   "correct": "plan/README.md:373",
+   "agent": "docs_refresh",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. feature_fragments knowledge decision and limit (limit text outdated)"
+  },
+  {
+   "was": "plan/README.md:373",
+   "now": "plan/README.md:373",
+   "correct": "plan/README.md:373",
+   "agent": "docs_refresh",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. feature_fragments knowledge decision and limit (limit text outdated)"
+  },
+  {
+   "was": "plan/CHECKLIST.md:242",
+   "now": "plan/CHECKLIST.md:242",
+   "correct": "plan/CHECKLIST.md:242",
+   "agent": "docs_refresh",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. feature_fragments decision evidence for 6.2 selection."
+  },
+  {
+   "was": "plan/PHASE-DETAILS.md:233-241",
+   "now": "plan/PHASE-DETAILS.md:233-241",
+   "correct": "plan/PHASE-DETAILS.md:233-241",
+   "agent": "docs_refresh",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. feature_fragments decision[1] teaching built from admitted input (design content, text at 235-241 unchanged)."
+  },
+  {
+   "was": "plan/README.md:373",
+   "now": "plan/README.md:373",
+   "correct": "plan/README.md:373",
+   "agent": "docs_refresh",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. feature_fragments knowledge decision and limit (limit text outdated)"
+  },
+  {
+   "was": "plan/PHASE-DETAILS.md:233",
+   "now": "plan/PHASE-DETAILS.md:233",
+   "correct": "plan/PHASE-DETAILS.md:233",
+   "agent": "docs_refresh",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. changes[0] 6.2 selection + link (edit changed this very line)."
+  },
+  {
+   "was": "plan/CHECKLIST.md:242",
+   "now": "plan/CHECKLIST.md:242",
+   "correct": "plan/CHECKLIST.md:242",
+   "agent": "lead",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. edge CHECKLIST->PHASE6-TEACHING link."
+  },
+  {
+   "was": "plan/CHECKLIST.md:231-242",
+   "now": "plan/CHECKLIST.md:231-242",
+   "correct": "plan/CHECKLIST.md:231-242",
+   "agent": "lead",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. timeline update: 6.1 held and 6.2 selected 'implementation pending' (claim outdated)."
+  },
+  {
+   "was": "plan/PHASE-DETAILS.md:219-233",
+   "now": "plan/PHASE-DETAILS.md:219-233",
+   "correct": "plan/PHASE-DETAILS.md:219-233",
+   "agent": "lead",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. timeline update: 6.1 held and 6.2 selected 'implementation pending' (claim outdated)."
+  },
+  {
+   "was": "plan/README.md:30",
+   "now": "plan/README.md:30",
+   "correct": "plan/README.md:30",
+   "agent": "lead",
+   "note": "Verified in the current file; the cited line(s) still contain the claimed content. timeline: README summary notes; 30 is the owner-update paragraph."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:5",
+   "now": "plan/PHASE6-TEACHING.md:5",
+   "correct": "plan/PHASE6-TEACHING.md:3",
+   "agent": "lead",
+   "note": "Four claims cite :5 (file added during the run; two 'verified' system_design items; limit 'planned but not implemented'). Line 5 is now the '## 1. Outcome and scope' heading; the status paragraph is line 3 and it now says built locally. The limit claim itself is outdated (see corrections)."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:9-13",
+   "now": "plan/PHASE6-TEACHING.md:9-13",
+   "correct": "plan/PHASE6-TEACHING.md:9-11",
+   "agent": "lead",
+   "note": "Scope (timeline+keyframes, desktop only, SKILL.md deliverable, no macro/training); line 13 is about real actions, not part of the claim."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:17-30",
+   "now": "plan/PHASE6-TEACHING.md:17-30",
+   "correct": "plan/PHASE6-TEACHING.md:17-28",
+   "agent": "lead",
+   "note": "Existing-code table spans 17-28; line 30 is the read-only note."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:21",
+   "now": "plan/PHASE6-TEACHING.md:21",
+   "correct": "plan/PHASE6-TEACHING.md:19",
+   "agent": "lead",
+   "note": "Cited for backend/computer.py; the computer.py row is line 19 (line 21 is the pinned rfb_filter row). Shift -2."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:21-25",
+   "now": "plan/PHASE6-TEACHING.md:21-25",
+   "correct": "plan/PHASE6-TEACHING.md:19-23",
+   "agent": "lead",
+   "note": "Computer-related rows computer.py/runtime_api/rfb_filter/thumbnail/Computer.tsx. Shift -2."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:22",
+   "now": "plan/PHASE6-TEACHING.md:22",
+   "correct": "plan/PHASE6-TEACHING.md:20",
+   "agent": "lead",
+   "note": "runtime_api.py computer routes row. Shift -2."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:25",
+   "now": "plan/PHASE6-TEACHING.md:25",
+   "correct": "plan/PHASE6-TEACHING.md:23",
+   "agent": "lead",
+   "note": "web/src/Computer.tsx row. Shift -2."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:26",
+   "now": "plan/PHASE6-TEACHING.md:26",
+   "correct": "plan/PHASE6-TEACHING.md:24",
+   "agent": "lead",
+   "note": "backend/knowledge.py row. Shift -2 (line 26 is the plugin/capabilities/service row)."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:28",
+   "now": "plan/PHASE6-TEACHING.md:28",
+   "correct": "plan/PHASE6-TEACHING.md:26",
+   "agent": "lead",
+   "note": "plugins/hermbot/__init__.py, capabilities.py, service.py row. Shift -2 (line 28 is artifact storage)."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:29",
+   "now": "plan/PHASE6-TEACHING.md:29",
+   "correct": "plan/PHASE6-TEACHING.md:27",
+   "agent": "lead",
+   "note": "Existing completed-work skill draft row. Shift -2 (line 29 is blank)."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:75-88",
+   "now": "plan/PHASE6-TEACHING.md:75-88",
+   "correct": "plan/PHASE6-TEACHING.md:73-86",
+   "agent": "lead",
+   "note": "Section 6 recording states and invariants. Shift -2."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:90-100",
+   "now": "plan/PHASE6-TEACHING.md:90-100",
+   "correct": "plan/PHASE6-TEACHING.md:88-98",
+   "agent": "lead",
+   "note": "Section 7 capture at the authoritative boundary. Shift -2."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:102-119",
+   "now": "plan/PHASE6-TEACHING.md:102-119",
+   "correct": "plan/PHASE6-TEACHING.md:100-117",
+   "agent": "lead",
+   "note": "Claim has two parts: protected input/private evidence is section 8 (100-113); 'encrypted in object storage' is line 117 in section 9. Shift -2."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:148-172",
+   "now": "plan/PHASE6-TEACHING.md:148-172",
+   "correct": "plan/PHASE6-TEACHING.md:146-170",
+   "agent": "lead",
+   "note": "Sections 11 (testing) and 12 (publication). Shift -2."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:150-154",
+   "now": "plan/PHASE6-TEACHING.md:150-154",
+   "correct": "plan/PHASE6-TEACHING.md:150-152",
+   "agent": "lead",
+   "note": "Task-scoped candidate through existing middleware is 150 (isolation) and 152 (supported tool-execution middleware); 154 is the 'normal tasks' paragraph. The old range 150-154 is now off by two lines (lines 148-152 held the same content in the old file)."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:164-172",
+   "now": "plan/PHASE6-TEACHING.md:164-172",
+   "correct": "plan/PHASE6-TEACHING.md:162-170",
+   "agent": "lead",
+   "note": "Section 12 publication/enablement/rollback. Shift -2. Cited twice by lead with different claims (edge label 'planned skill generation/publication'; feature limit 'candidate-tested skills are a proposal only', outdated)."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:174-189",
+   "now": "plan/PHASE6-TEACHING.md:174-189",
+   "correct": "plan/PHASE6-TEACHING.md:172-187",
+   "agent": "lead",
+   "note": "Section 13 records/API contracts. Shift -2."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:185",
+   "now": "plan/PHASE6-TEACHING.md:185",
+   "correct": "plan/PHASE6-TEACHING.md:183",
+   "agent": "lead",
+   "note": "Proposed route family sentence. Shift -2."
+  },
+  {
+   "was": "plan/PHASE6-TEACHING.md:219-250",
+   "now": "plan/PHASE6-TEACHING.md:219-250",
+   "correct": "plan/PHASE6-TEACHING.md:217-248",
+   "agent": "lead",
+   "note": "Section 16 slices 217-227 and section 17 acceptance matrix 229-248. Shift -2 (250 is the section 18 heading)."
+  }
+ ],
+ "corrections": [
+  {
+   "agent": "docs",
+   "find": "chronological history (C00-C64 + review-table IDs)",
+   "replace": "chronological history (C00-C65 + review-table IDs)",
+   "evidence": [
+    "plan/ISSUES.md:904"
+   ]
+  },
+  {
+   "agent": "docs",
+   "find": "Every issue in plan/ISSUES.md (C00-C64, review-table IDs",
+   "replace": "Every issue in plan/ISSUES.md (C00-C65, review-table IDs",
+   "evidence": [
+    "plan/ISSUES.md:904-910"
+   ]
+  },
+  {
+   "agent": "docs_refresh",
+   "find": "Oct 27 holds 6.1 voice and selects 6.2 teaching next (plan saved, implementation pending).",
+   "replace": "Oct 27 holds 6.1 voice and selects 6.2 teaching next (the researched plan is now implemented locally; real owner acceptance pending, review in PHASE6-TEACHING-REVIEW.md).",
+   "evidence": [
+    "plan/README.md:30"
+   ]
+  },
+  {
+   "agent": "docs_refresh",
+   "find": "6.2 Demonstration teaching links PHASE6-TEACHING.md, selected next, implementation/acceptance not started.",
+   "replace": "6.2 Demonstration teaching links PHASE6-TEACHING.md and PHASE6-TEACHING-REVIEW.md, selected while voice is held; implementation is built locally and real owner acceptance is pending.",
+   "evidence": [
+    "plan/README.md:373"
+   ]
+  },
+  {
+   "agent": "docs_refresh",
+   "find": "6.2 Demonstration teaching: selected next, plan recorded, implementation not started, boxes unchecked.",
+   "replace": "6.2 Demonstration teaching: selected next; implementation built and locally deployed (654 backend tests, isolated capture/UI checks per PHASE6-TEACHING-REVIEW.md); milestone and requirement boxes stay unchecked until real owner acceptance.",
+   "evidence": [
+    "plan/CHECKLIST.md:242",
+    "plan/CHECKLIST.md:244-249"
+   ]
+  },
+  {
+   "agent": "docs_refresh",
+   "find": "6.2 teaching: selected next, researched plan linked, capture/privacy/draft/test/publication contracts remain proposed.",
+   "replace": "6.2 teaching: selected next, researched plan linked; the capture/privacy/draft/test/publication contracts now have a local implementation and PHASE6-TEACHING-REVIEW.md records verification and remaining owner acceptance.",
+   "evidence": [
+    "plan/PHASE-DETAILS.md:233"
+   ]
+  },
+  {
+   "agent": "docs_refresh",
+   "find": "seven slices; nothing implemented.",
+   "replace": "seven slices. (Implementation followed later on Oct 27; see the 'Phase 6.2 implementation' section at CONTEXT.md:369-373.)",
+   "evidence": [
+    "plan/CONTEXT.md:369-373"
+   ]
+  },
+  {
+   "agent": "docs_refresh",
+   "find": "dated delivery log through Oct 27 voice hold and teaching research.",
+   "replace": "dated delivery log through Oct 27 voice hold, teaching research and Phase 6.2 implementation.",
+   "evidence": [
+    "plan/CONTEXT.md:369-373"
+   ]
+  },
+  {
+   "agent": "docs_refresh",
+   "find": "6.2 implementation and acceptance not started; recorder protocol",
+   "replace": "6.2 implemented locally but real owner acceptance not done (the plan's validation items were exercised only with fixtures/synthetic checks); recorder protocol",
+   "evidence": [
+    "plan/README.md:373",
+    "plan/PHASE6-TEACHING-REVIEW.md:3",
+    "plan/PHASE6-TEACHING-REVIEW.md:45-50"
+   ]
+  },
+  {
+   "agent": "docs_refresh",
+   "find": "Docs record 6.2 teaching and 6.1 voice as unimplemented; code search of backend/ and docker/ found no recording/teaching/voice implementation, consistent with docs.",
+   "replace": "Docs record 6.1 voice as unimplemented and the code agrees; 6.2 teaching is now implemented (backend/teaching.py, docker/teaching_capture.py, web/src/Teaching.tsx) and the docs record it as built locally with real owner acceptance pending.",
+   "evidence": [
+    "plan/CHECKLIST.md:242",
+    "backend/teaching.py:1-1061",
+    "docker/teaching_capture.py:1-210"
+   ]
+  },
+  {
+   "agent": "lead",
+   "find": "Proposal only; implementation has not started.",
+   "replace": "Implemented locally on Oct 27 (see PHASE6-TEACHING-REVIEW.md); real owner acceptance pending.",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:3",
+    "plan/PHASE6-TEACHING-REVIEW.md:3"
+   ]
+  },
+  {
+   "agent": "lead",
+   "find": "None of the proposed tables or /teaching routes exist in schema.sql, migrations or any router yet.",
+   "replace": "The teaching tables (migration 018: teaching_sessions, teaching_chunks, teaching_revisions, teaching_tests, teaching_publications) and the /api/v1/bots/{bot_id}/teaching routes now exist.",
+   "evidence": [
+    "backend/migrations/018_teaching.sql:1-38",
+    "backend/teaching.py:318-795",
+    "backend/app.py:580"
+   ]
+  },
+  {
+   "agent": "lead",
+   "find": "Four proposed record families (teaching session, evidence manifest/chunks, draft revisions/jobs, teaching tests) and a proposed /api/v1/bots/{bot_id}/teaching route family.",
+   "replace": "Four record families (teaching session, evidence manifest/chunks, draft revisions/jobs, teaching tests) and a /api/v1/bots/{bot_id}/teaching route family; implemented as five tables (publications separate) and 14 owner routes plus an internal consult route.",
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:172-187",
+    "backend/migrations/018_teaching.sql:1-38",
+    "backend/teaching.py:318-795"
+   ]
+  },
+  {
+   "agent": "lead",
+   "find": "plan saved, implementation pending.",
+   "replace": "plan saved and implemented locally; real owner acceptance pending.",
+   "evidence": [
+    "plan/CHECKLIST.md:242",
+    "plan/PHASE-DETAILS.md:233"
+   ]
+  },
+  {
+   "agent": "lead",
+   "find": "is planned as Phase 6.2 but not implemented.",
+   "replace": "was implemented locally as Phase 6.2 (backend/teaching.py, docker/teaching_capture.py, web/src/Teaching.tsx); real owner acceptance is pending.",
+   "evidence": [
+    "plan/CHECKLIST.md:242",
+    "backend/teaching.py:1-1061"
+   ]
+  },
+  {
+   "agent": "lead",
+   "find": "teaching-generated, candidate-tested skills are a Phase 6.2 proposal only.",
+   "replace": "teaching-generated, candidate-tested skills are implemented locally (backend/teaching.py, task-scoped candidate in backend/capabilities.py:57-61); real owner acceptance is pending.",
+   "evidence": [
+    "backend/teaching.py:630-770",
+    "backend/capabilities.py:57-61"
+   ]
+  },
+  {
+   "agent": "lead",
+   "find": "planned teaching capture on bot computer",
+   "replace": "teaching capture on bot computer (implemented locally)",
+   "evidence": [
+    "docker/teaching_capture.py:68-210"
+   ]
+  },
+  {
+   "agent": "lead",
+   "find": "planned skill generation/publication",
+   "replace": "skill generation/publication (implemented locally)",
+   "evidence": [
+    "backend/teaching.py:831-957",
+    "backend/teaching.py:703-770"
+   ]
+  }
+ ],
+ "discrepancies": [
+  {
+   "text": "Plan says every retained event carries a segment (and that a resolution change opens a new geometry segment); the review repeats that segment accompanies retained observations. The collector increments self.segment on a geometry change but never writes it into events (append adds only seq, generation and time; observe adds geometry), so segment boundaries are not persisted.",
+   "severity": "medium",
+   "nodes": [
+    "file:docker/teaching_capture.py",
+    "file:plan/PHASE6-TEACHING.md",
+    "file:plan/PHASE6-TEACHING-REVIEW.md"
+   ],
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:81",
+    "plan/PHASE6-TEACHING.md:96",
+    "plan/PHASE6-TEACHING-REVIEW.md:8",
+    "docker/teaching_capture.py:80",
+    "docker/teaching_capture.py:132",
+    "docker/teaching_capture.py:144-146"
+   ]
+  },
+  {
+   "text": "Plan section 10 requires persisting prompt/schema version and provider/model identity and processing 'bounded reviewed segments' while keeping completed draft segments after a failure. Code stores provider id/revision/model name/evidence hash in job_provider only, no prompt or schema version, and makes a single chat-completions request (max_tokens 6500, one bounded JSON repair); a failure keeps no partial draft.",
+   "severity": "medium",
+   "nodes": [
+    "file:backend/teaching.py",
+    "file:plan/PHASE6-TEACHING.md"
+   ],
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:131",
+    "backend/teaching.py:583-597",
+    "backend/teaching.py:865-870",
+    "backend/teaching.py:873-922",
+    "backend/teaching.py:947-957"
+   ]
+  },
+  {
+   "text": "Plan section 11/17 describes tests bound to parameters, declared output checks and 'selected current authority', with assertion results from actual files/records; code binds only config_hash/evidence_hash/draft_hash and the checks text. Fresh inputs live only in the task prompt, the optional grant_id is passed to create_task but is not part of the binding, and the pass/fail is an owner-typed boolean plus free-text observations (review row 13 says exactly this), not machine assertions.",
+   "severity": "medium",
+   "nodes": [
+    "file:backend/teaching.py",
+    "file:plan/PHASE6-TEACHING.md"
+   ],
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:148",
+    "plan/PHASE6-TEACHING.md:156",
+    "plan/PHASE6-TEACHING.md:241",
+    "backend/teaching.py:306-309",
+    "backend/teaching.py:650-674",
+    "backend/teaching.py:696-699",
+    "plan/PHASE6-TEACHING-REVIEW.md:13"
+   ]
+  },
+  {
+   "text": "Plan section 5/12 requires handing the computer back before agent execution of the test; the backend /test route does not check the human lease (only the UI disables the button while the owner holds control, and publication's knowledge.guard checks human control later).",
+   "severity": "low",
+   "nodes": [
+    "file:backend/teaching.py",
+    "file:web/src/Teaching.tsx",
+    "file:backend/knowledge.py"
+   ],
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:68",
+    "plan/PHASE6-TEACHING.md:166",
+    "backend/teaching.py:630-684",
+    "web/src/Teaching.tsx:50",
+    "backend/knowledge.py:58-61"
+   ]
+  },
+  {
+   "text": "Plan lists a recoverable 'failed' capture state; the code never sets sessions.state='failed' (failure is the error column or job_state='failed'), 'failed' appears only in the expiry sweep list, and the UI has no label for it.",
+   "severity": "low",
+   "nodes": [
+    "file:backend/teaching.py",
+    "file:web/src/Teaching.tsx"
+   ],
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:77",
+    "backend/teaching.py:1001",
+    "backend/teaching.py:955",
+    "web/src/Teaching.tsx:10"
+   ]
+  },
+  {
+   "text": "Plan proposes four record families; migration 018 creates five tables (teaching_publications is the link to knowledge_versions). Plan describes the evidence chunks as encrypted object references, which holds, but reviewed evidence (including selected base64 frames) is also stored encrypted in Postgres (teaching_sessions.evidence_encrypted and teaching_revisions) - up to 6 MiB per frozen revision.",
+   "severity": "low",
+   "nodes": [
+    "file:backend/migrations/018_teaching.sql",
+    "file:backend/teaching.py"
+   ],
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:174-181",
+    "backend/migrations/018_teaching.sql:1",
+    "backend/migrations/018_teaching.sql:18-23",
+    "backend/teaching.py:557-566"
+   ]
+  },
+  {
+   "text": "Plan section 10 asks generation to use 'authenticated outbound patterns' with the existing provider credential; the generator calls httpx directly with redirects disabled and 30 s timeouts, not the public-address pinned socket used by backend/connector_http.request (P4-01). Provider URLs may be local, so this may be deliberate, but the plan does not say so.",
+   "severity": "low",
+   "nodes": [
+    "file:backend/teaching.py",
+    "file:backend/connector_http.py"
+   ],
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:129",
+    "backend/teaching.py:872-882",
+    "backend/connector_http.py:60-90",
+    "plan/ISSUES.md:217"
+   ]
+  },
+  {
+   "text": "Plan retention/limit proposals are implemented as proposed (2 frames/s via 0.5 s frame spacing, 2 MiB frames, 256 MiB per session plus 8 MiB volatile buffer, one generation job at a time, 7-day default expiry with Keep) - verified, no divergence; the volatile 8 MiB cap and 6 MiB model-input cap are additions not in the plan.",
+   "severity": "low",
+   "nodes": [
+    "file:docker/teaching_capture.py",
+    "file:backend/teaching.py",
+    "file:backend/migrations/018_teaching.sql"
+   ],
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:123",
+    "plan/PHASE6-TEACHING.md:125",
+    "docker/teaching_capture.py:127",
+    "docker/teaching_capture.py:158",
+    "docker/teaching_capture.py:177",
+    "backend/teaching.py:836-838",
+    "backend/teaching.py:558",
+    "backend/migrations/018_teaching.sql:9"
+   ]
+  },
+  {
+   "text": "Plan and review say recordings are not Library artifacts and live in an authenticated teaching namespace; code reuses the artifact bucket (ArtifactStore.bucket) under the 'teaching/' key prefix, so isolation from library objects is by prefix and by never creating artifact rows, not by a separate bucket.",
+   "severity": "low",
+   "nodes": [
+    "file:backend/teaching.py",
+    "file:backend/artifacts.py"
+   ],
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:117",
+    "plan/PHASE6-TEACHING-REVIEW.md:10",
+    "backend/teaching.py:85-86",
+    "backend/teaching.py:146-153",
+    "backend/teaching.py:973-975"
+   ]
+  },
+  {
+   "text": "Review claims pane-close requests a privacy pause; the pause is an effect cleanup in Computer.tsx that posts teaching-private-input whenever the Computer panel closes or the bot changes, even when no private input happened, and the backend implements it as the 'private' control action, which also appends an 'omitted: private step' marker each time.",
+   "severity": "low",
+   "nodes": [
+    "file:web/src/Computer.tsx",
+    "file:backend/teaching.py",
+    "file:docker/teaching_capture.py"
+   ],
+   "evidence": [
+    "plan/PHASE6-TEACHING-REVIEW.md:9",
+    "web/src/Computer.tsx:16",
+    "backend/teaching.py:364-378",
+    "docker/teaching_capture.py:121-122"
+   ]
+  },
+  {
+   "text": "The plan files describe a future/proposal state in their bodies ('Proposed', 'Add a Hermbot-owned observer', 'The feasibility slice must settle', 'Use ... 6.2.0 Feasibility') while the status header (line 3), the review, CHECKLIST:242 and CONTEXT:371 say the milestone is built; the 6.2.0 feasibility gates are not separately evidenced beyond the review's disposable checks.",
+   "severity": "low",
+   "nodes": [
+    "file:plan/PHASE6-TEACHING.md",
+    "file:plan/PHASE6-TEACHING-REVIEW.md"
+   ],
+   "evidence": [
+    "plan/PHASE6-TEACHING.md:3",
+    "plan/PHASE6-TEACHING.md:183",
+    "plan/PHASE6-TEACHING.md:219",
+    "plan/PHASE6-TEACHING.md:262-266",
+    "plan/PHASE6-TEACHING-REVIEW.md:33-43"
+   ]
+  },
+  {
+   "text": "CHECKLIST says teaching is 'built and locally deployed'; PHASE6-TEACHING.md and README say 'built locally'; PHASE6-TEACHING-REVIEW.md says 'implemented locally' and records a refreshed runtime. No document states which running containers carry teaching_capture.py; the Dockerfile copies it.",
+   "severity": "low",
+   "nodes": [
+    "file:plan/CHECKLIST.md",
+    "file:plan/README.md",
+    "file:docker/hermes.Dockerfile"
+   ],
+   "evidence": [
+    "plan/CHECKLIST.md:242",
+    "plan/README.md:373",
+    "plan/PHASE6-TEACHING-REVIEW.md:42",
+    "docker/hermes.Dockerfile:10"
+   ]
+  },
+  {
+   "text": "Remaining stale statements in the edited docs: README 5.4 section still says implementation/acceptance not started; PHASE-DETAILS status row and 5.4 paragraph say push/cleanup/exit pending or implementation not started and its header still says Updated 2026-10-26; CHECKLIST line 10 says to resume with Phase 6.1 voice planning although 6.1 is on hold; CONTEXT line 366 says Phase 6.2 remains unimplemented (superseded by line 371).",
+   "severity": "low",
+   "nodes": [
+    "file:plan/README.md",
+    "file:plan/PHASE-DETAILS.md",
+    "file:plan/CHECKLIST.md",
+    "file:plan/CONTEXT.md"
+   ],
+   "evidence": [
+    "plan/README.md:349",
+    "plan/PHASE-DETAILS.md:3",
+    "plan/PHASE-DETAILS.md:15",
+    "plan/PHASE-DETAILS.md:205",
+    "plan/CHECKLIST.md:10",
+    "plan/CHECKLIST.md:233",
+    "plan/CONTEXT.md:366",
+    "plan/CONTEXT.md:371"
+   ]
+  },
+  {
+   "text": "ISSUES.md C65 is appended after the 'Consolidation update, 2026-10-14' paragraph, under the 'verification correction' notes, rather than in a dated 2026-10-27 stage heading; this breaks the file's own rule to add incidents at their occurrence stage in chronological order, and the file's coverage text (lines 892, 1196) still describes the register without C65.",
+   "severity": "low",
+   "nodes": [
+    "file:plan/ISSUES.md"
+   ],
+   "evidence": [
+    "plan/ISSUES.md:896",
+    "plan/ISSUES.md:902",
+    "plan/ISSUES.md:904-910",
+    "plan/ISSUES.md:1196"
+   ]
+  },
+  {
+   "text": "Review and ISSUES C65 test counts check out: test-results/phase62-backend.xml reports tests=\"654\" failures=0, and tests/test_teaching.py defines 16 test functions - the documented 654/16 figures match the saved evidence file (not re-run here).",
+   "severity": "low",
+   "nodes": [
+    "file:tests/test_teaching.py"
+   ],
+   "evidence": [
+    "plan/PHASE6-TEACHING-REVIEW.md:35",
+    "plan/ISSUES.md:909",
+    "tests/test_teaching.py:100-578",
+    "test-results/phase62-backend.xml:1"
+   ]
+  }
+ ],
+ "feature_fragments": [
+  {
+   "id": "feature:teaching",
+   "decisions": [
+    {
+     "decision": "Record an action timeline plus selected screen keyframes; no continuous video.",
+     "why": "Continuous video is not required to teach or inspect a procedure; keyframes with capture-time/geometry provenance are cheaper and reviewable.",
+     "alternatives": "Continuous video/transcoding; a local heavyweight vision stack.",
+     "tradeoffs": "Frames after an input are later observations, not completion proof; text legibility depends on the chosen size and was measured only on an idle screen.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:9",
+      "plan/PHASE6-TEACHING.md:96",
+      "plan/PHASE6-TEACHING.md:123",
+      "plan/PHASE6-TEACHING-REVIEW.md:40"
+     ]
+    },
+    {
+     "decision": "Deliverable is one self-contained native SKILL.md (bounded Markdown).",
+     "why": "Preserves the full demonstration-to-reviewed-skill workflow without a second execution platform; ordinary Hermes loop executes it later.",
+     "alternatives": "Multi-file executable bundles, general macro replay, model training, autonomous skill updates.",
+     "tradeoffs": "Reference material must be summarized into the document; fixed screen coordinates and credentials are excluded.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:7",
+      "plan/PHASE6-TEACHING.md:11",
+      "plan/PHASE6-TEACHING.md:144"
+     ]
+    },
+    {
+     "decision": "Observe accepted RFB bytes in a Hermbot-owned adapter-side observer while the native RfbClientFilter stays the only input gate.",
+     "why": "WebSocket packets are not actions and the filter exposes allowed bytes, not a semantic callback; keep authorization unchanged.",
+     "alternatives": "Patch rfb_filter, count packets, inject a browser/DOM recorder into the outer page (cannot see a VNC framebuffer).",
+     "tradeoffs": "Unknown formats pause capture instead of being guessed; observer parses only the known accepted protocol.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:21",
+      "plan/PHASE6-TEACHING.md:90-92",
+      "plan/PHASE6-TEACHING.md:98",
+      "docker/teaching_capture.py:10-65",
+      "docker/runtime_api.py:509-537"
+     ]
+    },
+    {
+     "decision": "Protected input needs a server-acknowledged privacy pause serialized with input observation and frame capture, fenced by a privacy generation.",
+     "why": "Secure input is ordinary VNC key traffic, so the recorder cannot recognize it; a frontend indicator is insufficient; late screenshots must not repopulate evidence.",
+     "alternatives": "Password-field auto-detection in pixels; frontend-only indicator; OCR redaction as primary defense.",
+     "tradeoffs": "Capture stays paused until the owner explicitly resumes on a safe screen; redaction/OCR is only defense in depth and secrets elsewhere on screen are not detected.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:23",
+      "plan/PHASE6-TEACHING.md:43",
+      "plan/PHASE6-TEACHING.md:102-113",
+      "docker/teaching_capture.py:88-123",
+      "web/src/Computer.tsx:22"
+     ]
+    },
+    {
+     "decision": "Keep recordings owner-private, application-encrypted and outside Library/artifact sharing; metadata in PostgreSQL, payload chunks in the existing object store.",
+     "why": "Raw captures are sensitive; reuse existing storage/crypto conventions without adding a public bucket or host port.",
+     "alternatives": "Ordinary shared artifacts; a new object store; plaintext workspace fallback.",
+     "tradeoffs": "Seven-day default expiry with explicit Keep; deleting does not erase data already sent to a provider or kept by another app.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:28",
+      "plan/PHASE6-TEACHING.md:109",
+      "plan/PHASE6-TEACHING.md:117",
+      "plan/PHASE6-TEACHING.md:125",
+      "backend/teaching.py:85-98",
+      "backend/migrations/018_teaching.sql:9"
+     ]
+    },
+    {
+     "decision": "Bounded volatile capture buffers; pause (not drop or plaintext-fallback) when private persistence lags; staged chunks verified before manifest commit.",
+     "why": "A database failure must not advertise missing chunks and arbitrary actions must not be silently dropped.",
+     "alternatives": "Unbounded memory buffering; writing captures to bot workspaces.",
+     "tradeoffs": "Capture can pause under load; starting limits (2 frames/s, 2 MiB/frame, 256 MiB/session) are pilot values pending real busy-screen measurement.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:119-123",
+      "docker/teaching_capture.py:125-135",
+      "backend/teaching.py:144-173",
+      "plan/PHASE6-TEACHING-REVIEW.md:40"
+     ]
+    },
+    {
+     "decision": "Generate drafts with a bounded application job using the bot's configured provider, no execution tools, and a vision capability check.",
+     "why": "Data-to-draft transformation needs no authority; an OpenAI-compatible text endpoint does not prove image support.",
+     "alternatives": "Local vision stack; letting the agent execute the generation; unbounded provider loops.",
+     "tradeoffs": "One job at a time locally; image support is verified by a generated colour-band canary tolerating one naming error (5/6), which proves processing, not accuracy.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:129-131",
+      "plan/PHASE6-TEACHING-REVIEW.md:11",
+      "plan/PHASE6-TEACHING-REVIEW.md:41",
+      "backend/teaching.py:798-957"
+     ]
+    },
+    {
+     "decision": "Freeze exactly the owner-reviewed evidence revision for model processing; edits revoke prior processing and test binding.",
+     "why": "Matches the OpenAdapt separation of local captures, reviewed derivatives and approved upload bytes.",
+     "alternatives": "Sending raw capture or live editor state to the model.",
+     "tradeoffs": "Owner must review frames; images may contain secrets automatic detection misses.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:42",
+      "plan/PHASE6-TEACHING.md:110",
+      "backend/teaching.py:542-567",
+      "web/src/Teaching.tsx:45-47"
+     ]
+    },
+    {
+     "decision": "Test an unpublished candidate through a task-authenticated candidate view delivered by the existing supported skill_view middleware; never install or enable it globally.",
+     "why": "A prompt mentioning a disabled skill is insufficient; overwriting a live skill would affect other tasks; Hermes source must stay unmodified.",
+     "alternatives": "Temporarily writing the skill natively; patching Hermes; pasting draft instructions and calling it a native test.",
+     "tradeoffs": "Candidate consultation is a preview and is not evidence of native installation; a separate post-publish native load/use demonstration is required.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:26",
+      "plan/PHASE6-TEACHING.md:150-152",
+      "plan/PHASE6-TEACHING.md:160",
+      "plan/PHASE6-TEACHING-REVIEW.md:12",
+      "plan/PHASE6-TEACHING-REVIEW.md:24",
+      "backend/capabilities.py:57-61",
+      "plugins/hermbot/__init__.py:95-101",
+      "backend/app.py:425-435"
+     ]
+    },
+    {
+     "decision": "Bind a test to the immutable draft, evidence and material configuration (runtime/provider/connection) hashes and require a completed, consulted, owner-verified test for publication.",
+     "why": "A previously passed test must not authorize changed inputs; build-and-promotion pattern checks the specific artifact before activation.",
+     "alternatives": "Badge a version tested on any earlier pass.",
+     "tradeoffs": "Owner-observation boolean rather than machine assertions; changed config forces a fresh test.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:54",
+      "plan/PHASE6-TEACHING.md:148",
+      "plan/PHASE6-TEACHING.md:164",
+      "plan/PHASE6-TEACHING-REVIEW.md:13",
+      "plan/PHASE6-TEACHING-REVIEW.md:25",
+      "backend/teaching.py:234-274",
+      "backend/teaching.py:712-728"
+     ]
+    },
+    {
+     "decision": "Publish through knowledge.guard, native compare-and-swap, knowledge_versions and queued refresh, with a teaching provenance link; rollback is a new draft/version.",
+     "why": "Reuse existing publication semantics; a successful write with a pending refresh is not ready.",
+     "alternatives": "A parallel teaching-only install path.",
+     "tradeoffs": "Publish is rejected while work is busy or a human holds the computer.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:24",
+      "plan/PHASE6-TEACHING.md:166-170",
+      "plan/PHASE6-TEACHING-REVIEW.md:13",
+      "backend/teaching.py:729-757",
+      "backend/knowledge.py:43-64"
+     ]
+    },
+    {
+     "decision": "Separate state fields, expected revisions and idempotency keys for capture, processing and publication; PostgreSQL jobs without a broker; never replay a demonstrated GUI action after uncertainty.",
+     "why": "Fencing and stable operation identity prevent stale tabs/collectors from appending to newer recordings.",
+     "alternatives": "One combined status; Kafka/outbox platform.",
+     "tradeoffs": "Retries cover storage/job delivery only.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:55-57",
+      "plan/PHASE6-TEACHING.md:75-83",
+      "backend/teaching.py:35-43",
+      "backend/teaching.py:445-498"
+     ]
+    },
+    {
+     "decision": "Do not claim browser DOM/ARIA capture from the outer Hermbot page; noVNC/RFB carry framebuffer and low-level events only.",
+     "why": "Existing browser tool, Playwright and the desktop do not necessarily share a session.",
+     "alternatives": "Injecting a browser recorder.",
+     "tradeoffs": "Semantic targets come from owner-reviewed text, not recorded selectors.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:9",
+      "plan/PHASE6-TEACHING.md:38",
+      "plan/PHASE6-TEACHING.md:98"
+     ]
+    },
+    {
+     "decision": "Voice is held; teaching uses typed annotations; mobile teaching is Phase 6A.",
+     "why": "Owner put 6.1 on hold and selected 6.2 next.",
+     "alternatives": "Continue voice planning first.",
+     "tradeoffs": "No spoken narration in this milestone.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:227",
+      "plan/CHECKLIST.md:233"
+     ]
+    },
+    {
+     "decision": "Start with a feasibility slice (6.2.0) before dependent slices; real acceptance requires actual owner actions, not simulated API calls or UI automation.",
+     "why": "Recorder protocol, middleware contract, vision support and limits are unvalidated assumptions.",
+     "alternatives": "Build capture first and validate later; accept scripted demonstrations.",
+     "tradeoffs": "Milestone stays unchecked; automated typing into the live desktop was rejected by approval review and never ran.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:219",
+      "plan/PHASE6-TEACHING.md:252",
+      "plan/PHASE6-TEACHING.md:266",
+      "plan/PHASE6-TEACHING-REVIEW.md:52",
+      "plan/CHECKLIST.md:242-244"
+     ]
+    },
+    {
+     "decision": "Register the specific teaching router before the generic bot lifecycle routes.",
+     "why": "Generic /bots/{bot_id}/{action} route consumed the 'teaching' path segment.",
+     "alternatives": "Rename the route.",
+     "tradeoffs": "Order dependence in app.py.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:19",
+      "plan/ISSUES.md:908",
+      "backend/app.py:580"
+     ]
+    },
+    {
+     "decision": "Retry a provider 400 that rejects max_tokens with max_completion_tokens; keep every other provider failure visible.",
+     "why": "The initial HTTP 400 was a rejected token-limit parameter, not missing image support.",
+     "alternatives": "Treat any 400 as no vision support.",
+     "tradeoffs": "Tied to a specific structured error code/param.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:11",
+      "plan/PHASE6-TEACHING-REVIEW.md:31",
+      "plan/ISSUES.md:908",
+      "backend/teaching.py:888-895"
+     ]
+    },
+    {
+     "decision": "Disconnect pauses only the viewer-bound recording and read-only viewer activity never pauses the owner's recording; pane close requests a privacy pause but keeps human control.",
+     "why": "A read-only viewer or stale tab must not disturb the owning session; human ownership persists until explicit handback.",
+     "alternatives": "Auto-handback on disconnect.",
+     "tradeoffs": "Reconnect needs explicit resume.",
+     "tag": "documented",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:85",
+      "plan/PHASE6-TEACHING-REVIEW.md:9",
+      "plan/PHASE6-TEACHING-REVIEW.md:26",
+      "docker/teaching_capture.py:168-171",
+      "docker/runtime_api.py:559"
+     ]
+    }
+   ],
+   "limits": [
+    {
+     "text": "Real owner acceptance is not done: owner recording with Pause/Secure input/Resume, exact review/generation, fresh-input/negative/collaborative tests, publication with native refresh and installed-skill use remain pending; the 6.2 milestone box stays unchecked.",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:3",
+      "plan/PHASE6-TEACHING-REVIEW.md:45-50",
+      "plan/CHECKLIST.md:242-244",
+      "plan/ISSUES.md:910"
+     ]
+    },
+    {
+     "text": "Fixture/synthetic evidence only: Chrome rendering used intercepted synthetic records; RFB checks used synthetic packets in disposable containers; none of it counts as owner acceptance.",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:37",
+      "plan/PHASE6-TEACHING-REVIEW.md:39",
+      "plan/PHASE6-TEACHING-REVIEW.md:52"
+     ]
+    },
+    {
+     "text": "Approval review rejected automated typing into Scout's live desktop; the script never ran and must not be rerun or indirectly executed.",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:52",
+      "plan/CONTEXT.md:373"
+     ]
+    },
+    {
+     "text": "Capture feasibility was measured on an idle 1440x900 screen (7,981 bytes/frame); busy-screen legibility, CPU/memory and the pilot caps (2 fps, 2 MiB, 256 MiB) remain unmeasured.",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:40",
+      "plan/PHASE6-TEACHING-REVIEW.md:50",
+      "plan/PHASE6-TEACHING.md:123"
+     ]
+    },
+    {
+     "text": "Vision check is a six-band colour image tolerating one error (5/6 correct); it proves image processing, not procedure accuracy, so owner review and functional tests remain necessary.",
+     "evidence": [
+      "plan/PHASE6-TEACHING-REVIEW.md:41",
+      "backend/teaching.py:903-909"
+     ]
+    },
+    {
+     "text": "Keystrokes are not proof of final field text (IME, layout, backspace, clipboard); clipboard and geometry-change messages are recorded only as omitted markers; unsupported RFB formats pause capture.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:94",
+      "docker/teaching_capture.py:63-64",
+      "docker/runtime_api.py:536-537"
+     ]
+    },
+    {
+     "text": "Redaction/OCR cannot prove secret absence; deleting a recording does not erase data already sent to the model provider or retained by another application, and no backup/provider-history erasure is claimed.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:43",
+      "plan/PHASE6-TEACHING.md:113",
+      "plan/PHASE6-TEACHING.md:125",
+      "web/src/Teaching.tsx:56"
+     ]
+    },
+    {
+     "text": "A test is a real run (no universal dry-run), and its pass is an owner-attested boolean with observations; candidate consultation is a preview, not native installation evidence.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:154",
+      "plan/PHASE6-TEACHING.md:160",
+      "plan/PHASE6-TEACHING-REVIEW.md:13",
+      "plan/PHASE6-TEACHING-REVIEW.md:49",
+      "backend/teaching.py:686-701"
+     ]
+    },
+    {
+     "text": "Single local generation job at a time; a running job is failed after 4 minutes and generation deadline is 120 s with 100 KB response cap.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:123",
+      "backend/teaching.py:834-838",
+      "backend/teaching.py:871-887"
+     ]
+    },
+    {
+     "text": "One example does not establish branches or loops; branch/loop conditions are included only when demonstrated or owner-confirmed.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:45",
+      "plan/PHASE6-TEACHING.md:140"
+     ]
+    },
+    {
+     "text": "Not a universal GUI learner or secret detector; Phase 6.2 does not cover voice, mobile-device teaching, VM migration, broad evaluations or connector platforms.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:264-266"
+     ]
+    },
+    {
+     "text": "Recording of the owner's real actions does not sandbox the application operated; effects already performed are not undone by discard/delete.",
+     "evidence": [
+      "plan/PHASE6-TEACHING.md:13",
+      "plan/PHASE6-TEACHING.md:86"
+     ]
+    }
+   ],
+   "failures": [
+    {
+     "text": "Adapter/runtime restart interrupts the recording: the collector's session no longer matches, the row becomes 'interrupted' (retained prefix only) with no input replay.",
+     "evidence": [
+      "backend/teaching.py:121-127",
+      "plan/PHASE6-TEACHING.md:203"
+     ]
+    },
+    {
+     "text": "Object storage or persistence failure: collector heartbeat stops refreshing, pending input is paused after 15 s of lost progress and the owner sees 'Capture persistence unavailable'.",
+     "evidence": [
+      "docker/teaching_capture.py:141-142",
+      "backend/teaching.py:993-998"
+     ]
+    },
+    {
+     "text": "Generation failures (provider changed, vision check failed, invalid skill, deadline/size) set job_state failed with an owner-visible reason; late output is fenced by job token, evidence hash and session state.",
+     "evidence": [
+      "backend/teaching.py:852-853",
+      "backend/teaching.py:923-957"
+     ]
+    },
+    {
+     "text": "Native readback mismatch after publish returns 502 and asks the owner to check native history before retrying.",
+     "evidence": [
+      "backend/teaching.py:742-746"
+     ]
+    }
+   ],
+   "security": [
+    {
+     "text": "Every frame/timeline/revision route is owner-authenticated, requires the session to belong to the bot, and serves frames with Cache-Control: no-store; chunks are application-encrypted and integrity-checked (sha256 + length) on read.",
+     "evidence": [
+      "backend/teaching.py:35-43",
+      "backend/teaching.py:89-98",
+      "backend/teaching.py:529-540",
+      "plan/PHASE6-TEACHING.md:109"
+     ]
+    },
+    {
+     "text": "Secret keystrokes never reach durable capture: the barrier pauses the collector first and only an omitted-private-step marker is stored.",
+     "evidence": [
+      "docker/teaching_capture.py:118-122",
+      "web/src/Computer.tsx:22",
+      "plan/PHASE6-TEACHING.md:104-105"
+     ]
+    },
+    {
+     "text": "Candidate consultation is available only to the task that owns the test (bot identity + active task + sha256 match + config hash + skill_view allowed).",
+     "evidence": [
+      "backend/app.py:425-435",
+      "backend/teaching.py:256-274"
+     ]
+    }
+   ],
+   "components": [
+    "file:backend/teaching.py",
+    "file:docker/teaching_capture.py",
+    "file:docker/runtime_api.py",
+    "file:web/src/Teaching.tsx",
+    "file:backend/migrations/018_teaching.sql",
+    "file:tests/test_teaching.py",
+    "file:backend/capabilities.py",
+    "file:backend/app.py",
+    "file:plugins/hermbot/__init__.py",
+    "file:backend/knowledge.py",
+    "file:web/src/Computer.tsx",
+    "file:web/src/Knowledge.tsx",
+    "table:teaching_sessions",
+    "table:teaching_chunks",
+    "table:teaching_revisions",
+    "table:teaching_tests",
+    "table:teaching_publications",
+    "file:plan/PHASE6-TEACHING.md",
+    "file:plan/PHASE6-TEACHING-REVIEW.md"
+   ],
+   "reimplement": {
+    "pitfalls": [
+     {
+      "text": "C65: generic route precedence - /bots/{bot_id}/{action} swallowed 'teaching'; register the teaching router first.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:19",
+       "plan/ISSUES.md:907-908",
+       "backend/app.py:580"
+      ]
+     },
+     {
+      "text": "C65: a prepared recording (capture revision 0) must not be treated as a running collector or become interrupted before Start; allow local discard before any collector exists.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:20",
+       "backend/teaching.py:117",
+       "backend/teaching.py:471-476"
+      ]
+     },
+     {
+      "text": "C65: fetch progress is not durable acknowledgement; refresh liveness only on idle health or acknowledged progress and acknowledge only committed prefixes.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:21",
+       "docker/teaching_capture.py:198-201",
+       "backend/teaching.py:119-120",
+       "backend/teaching.py:156-173"
+      ]
+     },
+     {
+      "text": "C65: asynchronous collection and owner controls complete independently; change state only when collector and control revisions match.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:22",
+       "backend/teaching.py:128-141",
+       "backend/teaching.py:165-173"
+      ]
+     },
+     {
+      "text": "C65: serialize accepted-input observation with the adapter privacy lock, fence asynchronous images by generation and keep capture paused through secret entry.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:23",
+       "docker/runtime_api.py:526-538",
+       "docker/teaching_capture.py:173-181"
+      ]
+     },
+     {
+      "text": "C65: globally installed skill state cannot serve a task-specific preview; introduce task-authenticated candidate consultation instead of temporary installation.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:24",
+       "plan/ISSUES.md:907-908",
+       "backend/capabilities.py:57-61"
+      ]
+     },
+     {
+      "text": "C65: earlier passed tests must not authorize changed inputs; bind to source, candidate and runtime/provider/connection hashes and require actual consultation.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:25",
+       "backend/teaching.py:234-274",
+       "backend/teaching.py:718-728"
+      ]
+     },
+     {
+      "text": "C65: deleting/expiring a source must stop its executing candidate test through existing cancellation and never switch the task to an installed skill.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:27",
+       "backend/teaching.py:53-59",
+       "backend/teaching.py:788",
+       "backend/teaching.py:1003-1004"
+      ]
+     },
+     {
+      "text": "C65: a delayed Secure input barrier must not retarget the current desktop ref; keep the original RFB instance and require it still to be current before typing.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:28",
+       "web/src/Computer.tsx:22"
+      ]
+     },
+     {
+      "text": "C65: load private recordings through a bounded encrypted chunk iterator, not wholly in memory.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:29",
+       "backend/teaching.py:89-111"
+      ]
+     },
+     {
+      "text": "C65: accessible names must be explicit for selectors/textareas and callback scope cleared when switching recordings.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:30",
+       "web/src/Teaching.tsx:17",
+       "web/src/Teaching.tsx:40",
+       "web/src/Teaching.tsx:47"
+      ]
+     },
+     {
+      "text": "Plan pitfall: never let a screenshot taken after an input or a transport receipt stand as proof of application success; test completion needs actual result evidence.",
+      "evidence": [
+       "plan/PHASE6-TEACHING.md:58",
+       "plan/PHASE6-TEACHING.md:96",
+       "plan/PHASE6-TEACHING.md:156"
+      ]
+     },
+     {
+      "text": "Plan pitfall: do not copy browser profiles, cookies, headers, storage state or raw network bodies into teaching artifacts or skills; Playwright saved state can impersonate.",
+      "evidence": [
+       "plan/PHASE6-TEACHING.md:39",
+       "plan/PHASE6-TEACHING.md:108"
+      ]
+     }
+    ]
+   },
+   "tests": {
+    "covered": [
+     {
+      "text": "Accepted-RFB fragmentation and clipboard omission; privacy fences against late frames/keys; idempotency and drag boundaries; typing normalization; heartbeat not refreshed on failed persistence.",
+      "evidence": [
+       "tests/test_teaching.py:100",
+       "tests/test_teaching.py:120",
+       "tests/test_teaching.py:136",
+       "tests/test_teaching.py:449",
+       "tests/test_teaching.py:433"
+      ]
+     },
+     {
+      "text": "Start/control/private barrier, encrypted persistence with duplicate poll and review, restarted collector marks interrupted, prepared session waits for owner start, read-only viewer does not pause owner.",
+      "evidence": [
+       "tests/test_teaching.py:154",
+       "tests/test_teaching.py:177",
+       "tests/test_teaching.py:226",
+       "tests/test_teaching.py:413",
+       "tests/test_teaching.py:571"
+      ]
+     },
+     {
+      "text": "Candidate is exact-task-only and config fenced; draft validation and cancel fences generation; vision check with exact input; publish rejects unverified/stale candidates; exact publication versions and stale evidence; source deletion stops active test.",
+      "evidence": [
+       "tests/test_teaching.py:238",
+       "tests/test_teaching.py:302",
+       "tests/test_teaching.py:337",
+       "tests/test_teaching.py:402",
+       "tests/test_teaching.py:463",
+       "tests/test_teaching.py:544"
+      ]
+     },
+     {
+      "text": "Full backend suite 654 passed (test-results/phase62-backend.xml header), including the 16 teaching tests.",
+      "evidence": [
+       "plan/PHASE6-TEACHING-REVIEW.md:35"
+      ]
+     }
+    ],
+    "gaps": [
+     "No real owner recording, native installed-skill use, busy-screen capture measurement or collaborative/negative owner tests yet (review pending list).",
+     "Sub-checks like the Computer.tsx pane-close effect and Secure input fence are covered only by build/fixture checks per the review, not by an automated unit test in tests/test_teaching.py."
+    ]
+   }
+  }
+ ],
+ "unresolved_ids": [
+  "feature:teaching"
+ ]
+}

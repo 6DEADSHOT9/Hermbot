@@ -1,0 +1,462 @@
+{
+ "agent": "images2",
+ "files_read": [
+  "test-results/phase53-management-390.png",
+  "test-results/phase53-management-768.png",
+  "test-results/phase54-attention-1440.png",
+  "test-results/phase54-attention-320.png",
+  "test-results/phase54-attention-390.png",
+  "test-results/phase54-attention-768.png",
+  "test-results/phase54-attention-dark.png",
+  "test-results/phase54-settings-1440.png",
+  "test-results/phase54-settings-390.png",
+  "test-results/request-lifecycle-1440.png",
+  "test-results/request-lifecycle-390.png",
+  "test-results/response-layout-after-1440.png",
+  "test-results/response-layout-after-1920.png",
+  "test-results/response-layout-after-320.png",
+  "test-results/response-layout-after-390.png",
+  "test-results/response-layout-after-950.png",
+  "test-results/response-layout-before-1440.png",
+  "test-results/response-layout-before-390.png",
+  "test-results/skills-tools-1440.png",
+  "test-results/skills-tools-390.png",
+  "test-results/tool-admission-1440.png",
+  "test-results/tool-admission-390.png",
+  "test-results/ui-fixed-knowledge-1440.png",
+  "test-results/ui-fixed-knowledge-320.png",
+  "test-results/ui-fixed-knowledge-390.png",
+  "test-results/ui-fixed-knowledge-844.png",
+  "test-results/ui-fixed-navigation-320.png",
+  "test-results/ui-fixed-navigation-390.png",
+  "test-results/ui-inspect-390-chat.png",
+  "test-results/ui-inspect-390-navigation.png",
+  "test-results/ui-inspect-390-settings.png",
+  "test-results/ui-inspect-768-chat.png",
+  "test-results/ui-inspect-desktop-chat.png",
+  "test-results/ui-inspect-desktop-knowledge.png",
+  "test-results/ui-inspect-desktop-library.png",
+  "test-results/ui-inspect-desktop-pdf.png",
+  "test-results/ui-inspect-desktop-settings.png",
+  "test-results/ui-probe-320-chat.png",
+  "test-results/ui-probe-320-knowledge.png",
+  "test-results/ui-probe-320-navigation.png",
+  "test-results/ui-probe-390-chat.png",
+  "test-results/ui-probe-390-knowledge.png",
+  "test-results/ui-probe-390-navigation.png",
+  "test-results/ui-probe-768-chat.png",
+  "test-results/ui-probe-844-chat.png",
+  "test-results/ui-probe-desktop-chat.png",
+  "test-results/ui-probe-desktop-knowledge.png",
+  "test-results/ui-probe-desktop-pdf.png",
+  "test-results/work-completion-fixed-1440.png",
+  "test-results/work-completion-fixed-320.png",
+  "test-results/work-completion-fixed-390.png",
+  "test-results/work-controller-1440.png",
+  "test-results/work-controller-390.png",
+  "test-results/work-items-1440.png",
+  "test-results/work-items-390.png",
+  "test-results/work-outcomes-1440.png",
+  "test-results/work-outcomes-390.png",
+  "test-results/phase54-inspection/desktop-fold.jpg",
+  "test-results/phase54-inspection/desktop-page-01.jpg",
+  "test-results/phase54-inspection/mobile-320-fold.jpg",
+  "test-results/phase54-inspection/mobile-320-page-01.jpg",
+  "test-results/phase54-inspection/mobile-390-fold.jpg",
+  "test-results/phase54-inspection/mobile-390-page-01.jpg",
+  "test-results/phase54-inspection/tablet-fold.jpg",
+  "test-results/phase54-inspection/tablet-page-01.jpg"
+ ],
+ "module_notes": {
+  "test-results/phase53-management-390.png": {
+   "purpose": "Composer team-coordination settings modal (Coordinate teammates, management permission, collaborators, management operations), 390px mobile, light; modal content scrolled, Quill chat behind",
+   "layer": "test",
+   "screen": "Coordination settings modal",
+   "feature": "feature:coordination"
+  },
+  "test-results/phase53-management-768.png": {
+   "purpose": "Same team-coordination/management permission modal at 768px tablet, light; shows instructions-per-run textarea and shared work budget note",
+   "layer": "test",
+   "screen": "Coordination settings modal",
+   "feature": "feature:coordination"
+  },
+  "test-results/phase54-attention-1440.png": {
+   "purpose": "Attention modal detail view (Question needs your response, resolved/no longer actionable, Open work/Mark read), 1440 desktop light; sidebar shows Attention 0 unread, 27 need you",
+   "layer": "test",
+   "screen": "Attention modal",
+   "feature": "feature:attention"
+  },
+  "test-results/phase54-attention-320.png": {
+   "purpose": "Attention modal detail at 320px; tabs wrap onto two rows, long text clipped at fold, light",
+   "layer": "test",
+   "screen": "Attention modal",
+   "feature": "feature:attention"
+  },
+  "test-results/phase54-attention-390.png": {
+   "purpose": "Attention modal detail at 390px mobile, light; Open work/Mark read visible",
+   "layer": "test",
+   "screen": "Attention modal",
+   "feature": "feature:attention"
+  },
+  "test-results/phase54-attention-768.png": {
+   "purpose": "Attention modal detail at 768px tablet, light",
+   "layer": "test",
+   "screen": "Attention modal",
+   "feature": "feature:attention"
+  },
+  "test-results/phase54-attention-dark.png": {
+   "purpose": "Attention modal detail at 320px in dark theme; same content as light, tabs wrap",
+   "layer": "test",
+   "screen": "Attention modal (dark)",
+   "feature": "feature:attention"
+  },
+  "test-results/phase54-settings-1440.png": {
+   "purpose": "Notifications settings modal, 1440 desktop dark: browser push enable/test, notify categories (questions/reviews/results/problems), quiet hours, timezone UTC",
+   "layer": "test",
+   "screen": "Notification settings modal",
+   "feature": "feature:notifications"
+  },
+  "test-results/phase54-settings-390.png": {
+   "purpose": "Notifications settings modal at 390px mobile, dark; Send test notification disabled, sidebar bleeds through behind modal",
+   "layer": "test",
+   "screen": "Notification settings modal",
+   "feature": "feature:notifications"
+  },
+  "test-results/request-lifecycle-1440.png": {
+   "purpose": "Project chat group conversation (Scout, Sage, Quill) at 1440 light with Work/Outputs panel (Finished work 1, Outputs 21); long Scout/Quill completion messages about verified PDF",
+   "layer": "test",
+   "screen": "Group chat with work panel",
+   "feature": "feature:lifecycle"
+  },
+  "test-results/request-lifecycle-390.png": {
+   "purpose": "Mobile 390 sidebar drawer open over Project chat: teammates list, Past teammates, Groups (7), Routines, Owner; light",
+   "layer": "test",
+   "screen": "Sidebar navigation drawer",
+   "feature": "feature:lifecycle"
+  },
+  "test-results/response-layout-after-1440.png": {
+   "purpose": "Response layout check group chat after fix, 1440 light: per-teammate Queued/Working/Failed response rows with Inspect/Stop response buttons, '2 tasks in progress'; empty Work panel",
+   "layer": "test",
+   "screen": "Chat response status rows",
+   "feature": "feature:conversations"
+  },
+  "test-results/response-layout-after-1920.png": {
+   "purpose": "Response layout check after fix at 1920 wide; centered message column with sidebar and empty Work panel, light",
+   "layer": "test",
+   "screen": "Chat response status rows",
+   "feature": "feature:conversations"
+  },
+  "test-results/response-layout-after-320.png": {
+   "purpose": "Response layout check after fix at 320px; header truncated to 'Respo...', response rows stack, composer wraps actions to two lines",
+   "layer": "test",
+   "screen": "Chat response status rows",
+   "feature": "feature:conversations"
+  },
+  "test-results/response-layout-after-390.png": {
+   "purpose": "Response layout check after fix at 390px mobile light; per-teammate Queued/Working/Failed rows",
+   "layer": "test",
+   "screen": "Chat response status rows",
+   "feature": "feature:conversations"
+  },
+  "test-results/response-layout-after-950.png": {
+   "purpose": "Response layout check after fix at 950px; sidebar narrowed, group names truncated, user footer icons overlap 'Local workspace' text (minor overlap)",
+   "layer": "test",
+   "screen": "Chat response status rows",
+   "feature": "feature:conversations"
+  },
+  "test-results/response-layout-before-1440.png": {
+   "purpose": "Response layout check BEFORE fix, 1440 light: Sage failure and aggregate '4 responses and assignments in progress' with unlabelled Inspect/Stop button rows, not attributed per teammate",
+   "layer": "test",
+   "screen": "Chat response status rows (before)",
+   "feature": "feature:conversations"
+  },
+  "test-results/response-layout-before-390.png": {
+   "purpose": "Response layout check BEFORE fix, 390 mobile: aggregated progress line and unlabelled Inspect/Stop buttons",
+   "layer": "test",
+   "screen": "Chat response status rows (before)",
+   "feature": "feature:conversations"
+  },
+  "test-results/skills-tools-1440.png": {
+   "purpose": "Scout Memory & skills modal, 1440 light: Tools & application access table (native tools blocked by connected-app policy, file read/skills/memory available), curated memory empty, skills section",
+   "layer": "test",
+   "screen": "Memory & skills modal",
+   "feature": "feature:tools"
+  },
+  "test-results/skills-tools-390.png": {
+   "purpose": "Scout Memory & skills modal at 390 mobile: tools & application access table with blocked native tools and googles 13 permitted actions",
+   "layer": "test",
+   "screen": "Memory & skills modal",
+   "feature": "feature:tools"
+  },
+  "test-results/tool-admission-1440.png": {
+   "purpose": "Inspect the work modal, 1440 light over blurred Sage chat: Sage working on Research the documents, last tool activity read_file completed, queued coordination follow-up, execution 1 working",
+   "layer": "test",
+   "screen": "Inspect work modal",
+   "feature": "feature:execution"
+  },
+  "test-results/tool-admission-390.png": {
+   "purpose": "Inspect the work modal at 390 mobile: Sage working/queued assignments, read_file Completed event",
+   "layer": "test",
+   "screen": "Inspect work modal",
+   "feature": "feature:execution"
+  },
+  "test-results/ui-fixed-knowledge-1440.png": {
+   "purpose": "Scout Memory & skills modal scrolled to Skills list at 1440 after UI fix: skill search, Create skill/Import SKILL.md, skill cards with Enable buttons, Save a completed workflow; Work panel shows duplicate 'Hourly YouTube trending video names' Needs attention cards",
+   "layer": "test",
+   "screen": "Memory & skills modal",
+   "feature": "feature:knowledge"
+  },
+  "test-results/ui-fixed-knowledge-320.png": {
+   "purpose": "Skills list and Save a completed workflow section at 320px (viewport 568 tall), modal scrolled; light",
+   "layer": "test",
+   "screen": "Memory & skills modal",
+   "feature": "feature:knowledge"
+  },
+  "test-results/ui-fixed-knowledge-390.png": {
+   "purpose": "Skills list with Enable buttons and Save a completed workflow at 390 mobile after fix; skill list scroll region clips hermes-agent card",
+   "layer": "test",
+   "screen": "Memory & skills modal",
+   "feature": "feature:knowledge"
+  },
+  "test-results/ui-fixed-knowledge-844.png": {
+   "purpose": "Skills modal on 844x390 landscape phone after fix; skill list and Save a completed workflow form, modal fills height",
+   "layer": "test",
+   "screen": "Memory & skills modal",
+   "feature": "feature:knowledge"
+  },
+  "test-results/ui-fixed-navigation-320.png": {
+   "purpose": "Sidebar drawer at 320x568 after fix: Your teammates collapsed (3), Past 15, Groups 6, Routines, Owner footer pinned",
+   "layer": "test",
+   "screen": "Sidebar navigation drawer",
+   "feature": "feature:lifecycle"
+  },
+  "test-results/ui-fixed-navigation-390.png": {
+   "purpose": "Sidebar drawer at 390 mobile after fix: groups list, Routines and Owner footer pinned at bottom",
+   "layer": "test",
+   "screen": "Sidebar navigation drawer",
+   "feature": "feature:lifecycle"
+  },
+  "test-results/ui-inspect-390-chat.png": {
+   "purpose": "390 mobile sidebar drawer partly open over Work panel view; sidebar narrower than viewport with Your team, Past teammates (Phase 2 lifecycle proof), Groups, File library button overlapping footer",
+   "layer": "test",
+   "screen": "Sidebar over work panel",
+   "feature": "feature:lifecycle"
+  },
+  "test-results/ui-inspect-390-navigation.png": {
+   "purpose": "390 mobile Work panel drawer (In this conversation; 10 completed work cards with Inspect work/Save as skill links) with sidebar sliver at left; both overlays open at once",
+   "layer": "test",
+   "screen": "Work panel drawer",
+   "feature": "feature:lifecycle"
+  },
+  "test-results/ui-inspect-390-settings.png": {
+   "purpose": "Workspace settings modal at 390 mobile: tabs Workspace/Providers/Teammates/Grants, timezone, default provider, max teammates, concurrent executions, permitted tools checkboxes",
+   "layer": "test",
+   "screen": "Workspace settings modal",
+   "feature": "feature:ops"
+  },
+  "test-results/ui-inspect-768-chat.png": {
+   "purpose": "768 tablet chat with Work panel as right drawer overlaying Scout chat; sidebar shows Your team/Past/Groups; composer has Reference a skill dropdown",
+   "layer": "test",
+   "screen": "Chat with work panel drawer",
+   "feature": "feature:lifecycle"
+  },
+  "test-results/ui-inspect-desktop-chat.png": {
+   "purpose": "Scout empty-state conversation 'What should Scout work on?' with starter cards (Research & write, Analyze & check, Coordinate the team), 1440 light, Work panel with completed cards",
+   "layer": "test",
+   "screen": "Empty chat with starters",
+   "feature": "feature:conversations"
+  },
+  "test-results/ui-inspect-desktop-knowledge.png": {
+   "purpose": "Memory & skills modal at desktop, loading skills: Curated memory/Skills headings, skill search, Create skill/Import SKILL.md oddly sized buttons, Completed task select unstyled (layout issue, pre-fix)",
+   "layer": "test",
+   "screen": "Memory & skills modal",
+   "feature": "feature:knowledge"
+  },
+  "test-results/ui-inspect-desktop-library.png": {
+   "purpose": "File library modal desktop, loading state: Files/Search prior work tabs, search, conversation scope select, upload, import link, 'Loading files...'",
+   "layer": "test",
+   "screen": "File library modal",
+   "feature": "feature:artifacts"
+  },
+  "test-results/ui-inspect-desktop-pdf.png": {
+   "purpose": "File library modal searching phase3-preview.pdf: single result v1 0.6 KB upload",
+   "layer": "test",
+   "screen": "File library modal",
+   "feature": "feature:artifacts"
+  },
+  "test-results/ui-inspect-desktop-settings.png": {
+   "purpose": "Workspace settings modal at desktop 1440: Workspace tab with timezone, default provider, limits, permitted tools, Save button",
+   "layer": "test",
+   "screen": "Workspace settings modal",
+   "feature": "feature:ops"
+  },
+  "test-results/ui-probe-320-chat.png": {
+   "purpose": "320x568 Scout chat showing raw authenticated task-context JSON in a message; composer with Reference a skill dropdown; header truncated",
+   "layer": "test",
+   "screen": "Chat at 320",
+   "feature": "feature:conversations"
+  },
+  "test-results/ui-probe-320-knowledge.png": {
+   "purpose": "Memory & skills modal at 320: curated memory empty, Skills search, Create skill button tall/misaligned vs Import SKILL.md (pre-fix)",
+   "layer": "test",
+   "screen": "Memory & skills modal",
+   "feature": "feature:knowledge"
+  },
+  "test-results/ui-probe-320-navigation.png": {
+   "purpose": "Sidebar drawer at 320 pre-fix: Your team, Past teammates row clipped, Groups, footer; Past list clipped to one row",
+   "layer": "test",
+   "screen": "Sidebar navigation drawer",
+   "feature": "feature:lifecycle"
+  },
+  "test-results/ui-probe-390-chat.png": {
+   "purpose": "390x844 Scout chat with long user prompt and composer with Reference a skill select; header icons",
+   "layer": "test",
+   "screen": "Chat at 390",
+   "feature": "feature:conversations"
+  },
+  "test-results/ui-probe-390-knowledge.png": {
+   "purpose": "Memory & skills modal at 390 pre-fix: curated memory, skill search, Create skill button too tall, skills list with Enable",
+   "layer": "test",
+   "screen": "Memory & skills modal",
+   "feature": "feature:knowledge"
+  },
+  "test-results/ui-probe-390-navigation.png": {
+   "purpose": "Sidebar drawer at 390 pre-fix: Your team (Quill, Scout), Past teammates clipped, Groups, File library button in footer",
+   "layer": "test",
+   "screen": "Sidebar navigation drawer",
+   "feature": "feature:lifecycle"
+  },
+  "test-results/ui-probe-768-chat.png": {
+   "purpose": "768x1024 Scout chat: Phase3 prompt/replies, sidebar with Phase 2 UI manager and past teammates, File library button",
+   "layer": "test",
+   "screen": "Chat at 768",
+   "feature": "feature:conversations"
+  },
+  "test-results/ui-probe-844-chat.png": {
+   "purpose": "844x390 landscape phone: sidebar plus Scout chat; composer occupies most of the short viewport",
+   "layer": "test",
+   "screen": "Chat landscape",
+   "feature": "feature:conversations"
+  },
+  "test-results/ui-probe-desktop-chat.png": {
+   "purpose": "Desktop 1440 Scout chat with [POC:research] protocol fixture messages and Work panel of completed cards",
+   "layer": "test",
+   "screen": "Chat desktop",
+   "feature": "feature:conversations"
+  },
+  "test-results/ui-probe-desktop-knowledge.png": {
+   "purpose": "Memory & skills modal desktop pre-fix: skills list with Enable buttons, cut by modal height",
+   "layer": "test",
+   "screen": "Memory & skills modal",
+   "feature": "feature:knowledge"
+  },
+  "test-results/ui-probe-desktop-pdf.png": {
+   "purpose": "File library modal with title shown as phase3-preview.pdf (PDF viewer area blank/empty), version 1, SHA-256 shown; modal title mismatch with File library",
+   "layer": "test",
+   "screen": "File library PDF preview",
+   "feature": "feature:artifacts"
+  },
+  "test-results/work-completion-fixed-1440.png": {
+   "purpose": "Quill chat with Work panel after fix: Needs attention 'Unfinished result layout check' (0 of 1 required results ready, Retry task), Finished work (6) expanded with Slack delivery completed item",
+   "layer": "test",
+   "screen": "Work panel",
+   "feature": "feature:outcomes"
+  },
+  "test-results/work-completion-fixed-320.png": {
+   "purpose": "Work panel drawer at 320: Needs attention card with Retry task, collapsed Finished work (6) and Removed work (1)",
+   "layer": "test",
+   "screen": "Work panel",
+   "feature": "feature:outcomes"
+  },
+  "test-results/work-completion-fixed-390.png": {
+   "purpose": "Work panel drawer at 390: Needs attention card with Retry task, Finished/Removed work collapsed",
+   "layer": "test",
+   "screen": "Work panel",
+   "feature": "feature:outcomes"
+  },
+  "test-results/work-controller-1440.png": {
+   "purpose": "Scout Work panel, 1440: Working 'Data analysis' item with request history revision 2, Redirect and Stop task controls; request-history text oversized vs other text",
+   "layer": "test",
+   "screen": "Work panel",
+   "feature": "feature:coordination"
+  },
+  "test-results/work-controller-390.png": {
+   "purpose": "Work panel drawer at 390 with Working item, request history revision 2 and Redirect/Stop task; panel overlaps sidebar sliver, left text clipped",
+   "layer": "test",
+   "screen": "Work panel",
+   "feature": "feature:coordination"
+  },
+  "test-results/work-items-1440.png": {
+   "purpose": "Work item acceptance conversation: Work panel lists 2 Completed items (team organization report, welcoming report) with Inspect work/Save as skill and artifact links",
+   "layer": "test",
+   "screen": "Work panel",
+   "feature": "feature:outcomes"
+  },
+  "test-results/work-items-390.png": {
+   "purpose": "Work panel drawer at 390 listing 2 finished completed work items with artifact links",
+   "layer": "test",
+   "screen": "Work panel",
+   "feature": "feature:outcomes"
+  },
+  "test-results/work-outcomes-1440.png": {
+   "purpose": "Scout Work panel: Needs attention Research and delivery, 1 of 2 required results ready; Research report Ready, Slack delivery Blocked awaiting recipient/approval; sidebar Scout 'Needs answer'",
+   "layer": "test",
+   "screen": "Work panel outcomes",
+   "feature": "feature:outcomes"
+  },
+  "test-results/work-outcomes-390.png": {
+   "purpose": "Work panel drawer at 390 with Needs attention item, 1 of 2 required results ready; left text clipped under sidebar sliver",
+   "layer": "test",
+   "screen": "Work panel outcomes",
+   "feature": "feature:outcomes"
+  },
+  "test-results/phase54-inspection/desktop-fold.jpg": {
+   "purpose": "Attention modal, 1440x? desktop fold; 'Attention is refreshing; try again shortly Retry' error state with 28 unread, 27 need response; Quill chat behind",
+   "layer": "test",
+   "screen": "Attention modal (refresh error)",
+   "feature": "feature:attention"
+  },
+  "test-results/phase54-inspection/desktop-page-01.jpg": {
+   "purpose": "Full-page capture of Attention refresh-error state at 1600x500; page content only left 1600 wide with large blank grey area on right",
+   "layer": "test",
+   "screen": "Attention modal (refresh error)",
+   "feature": "feature:attention"
+  },
+  "test-results/phase54-inspection/mobile-320-fold.jpg": {
+   "purpose": "Attention modal at 320x200 fold: header, close, Needs you/Updates tabs only (short viewport crop)",
+   "layer": "test",
+   "screen": "Attention modal",
+   "feature": "feature:attention"
+  },
+  "test-results/phase54-inspection/mobile-320-page-01.jpg": {
+   "purpose": "Full-page capture at 320 wide (1560 px canvas): Attention modal occupies left, rest grey overlay; crop artifact",
+   "layer": "test",
+   "screen": "Attention modal",
+   "feature": "feature:attention"
+  },
+  "test-results/phase54-inspection/mobile-390-fold.jpg": {
+   "purpose": "Attention modal detail at 390 fold: 27 need response, 28 unread; resolved question text",
+   "layer": "test",
+   "screen": "Attention modal",
+   "feature": "feature:attention"
+  },
+  "test-results/phase54-inspection/mobile-390-page-01.jpg": {
+   "purpose": "Full-page capture at 390 (1560 canvas) of Attention detail; grey overlay fills right, capture artifact",
+   "layer": "test",
+   "screen": "Attention modal",
+   "feature": "feature:attention"
+  },
+  "test-results/phase54-inspection/tablet-fold.jpg": {
+   "purpose": "Attention modal detail at 768x1024 tablet fold with Open work and Mark read",
+   "layer": "test",
+   "screen": "Attention modal",
+   "feature": "feature:attention"
+  },
+  "test-results/phase54-inspection/tablet-page-01.jpg": {
+   "purpose": "Full-page capture at tablet (1536x683 canvas) of Attention detail; grey overlay on right half, capture artifact",
+   "layer": "test",
+   "screen": "Attention modal",
+   "feature": "feature:attention"
+  }
+ }
+}

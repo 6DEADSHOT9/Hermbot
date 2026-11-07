@@ -1,0 +1,20 @@
+// Read-only verification that closing unknown tracking keeps recovery visible and retry disabled.
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import {writeFile} from 'node:fs/promises';
+const taskId='d1090118-252b-46c9-bd5a-053bff317e3c',opId='a8df463a-07dc-4324-a231-6c7fc1e303a2';
+const browser=await chromium.launch({headless:true}),context=await browser.newContext({baseURL:'http://api:8000',viewport:{width:1440,height:1000}}),page=await context.newPage(),errors=[];
+page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(15000);
+await page.goto('/');await page.getByLabel('Owner token').fill(process.env.OWNER_TOKEN);await page.getByRole('button',{name:'Open workspace'}).click();await page.getByRole('navigation',{name:'Team conversations'}).waitFor();
+const task=await (await context.request.get(`/api/v1/tasks/${taskId}`)).json(),state=await (await context.request.get('/api/v1/state')).json();
+assert.equal(task.status,'cancelled');assert.equal(task.connector_state,'unresolved');
+const group=state.conversations.find(c=>c.id===task.conversation_id);
+await page.getByRole('navigation',{name:'Group conversations'}).getByRole('button',{name:new RegExp(group.title)}).click();
+await page.getByRole('button',{name:'Review application outcome',exact:true}).waitFor();assert.ok(await page.getByRole('button',{name:'Retry task',exact:true}).isDisabled());
+await page.getByRole('button',{name:'Review application outcome',exact:true}).click();
+const card=page.getByRole('dialog').locator('.grant-card').filter({hasText:opId});await card.getByRole('button',{name:'Reconcile outcome'}).click();
+assert.equal(await card.getByLabel('Recorded outcome').locator('option[value="unresolved"]').count(),0);
+assert.equal(await card.getByLabel('Recorded outcome').locator('option').count(),2);
+await page.screenshot({path:'/output/phase4-mcp-recovery-closed.png',fullPage:true});assert.deepEqual(errors,[]);
+await writeFile('/output/phase4-mcp-recovery-closed.json',JSON.stringify({task_id:taskId,operation_id:opId,closed_unknown_outcome_remains_visible:true,retry_disabled:true,later_verified_reconciliation_available:true,provider_calls:0,script_errors:errors},null,2));await browser.close();
+console.log('Closed unknown outcome stays visible, retry remains disabled, and later verification is available.');

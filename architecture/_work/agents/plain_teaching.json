@@ -1,0 +1,290 @@
+{
+ "features": {
+  "feature:teaching": {
+   "plain": "Teaching lets you show a teammate how to do a task. You do the task yourself on the teammate's own computer while it records. You then check what was recorded and pick what the AI model may see. The model writes a short instruction sheet, called a skill. You run a real test where the teammate follows that sheet on new inputs. You check the result. If it passed, you publish the sheet so the teammate can use it from then on. Recordings are private, encrypted and deleted after seven days unless you keep them.",
+   "analogy": "It is like training a new colleague. You do the job once while they take notes and photos. You go over the notes together and cross out anything private. They write a checklist. They try the checklist on a fresh case while you watch. When it works, the checklist goes into the team handbook.",
+   "key_terms": [
+    "recording (a `teaching_sessions` row)",
+    "keyframe (a screenshot taken after you act)",
+    "private input pause",
+    "reviewed evidence",
+    "skill draft (`SKILL.md`)",
+    "candidate test",
+    "publish",
+    "retention and expiry"
+   ]
+  }
+ },
+ "flows": {
+  "flow:m": {
+   "plain": "This is the full path from showing a task to the teammate using it as a skill. You record, review, generate, test, check and publish. Then the teammate's runtime reloads so it can see the new skill.",
+   "steps_plain": [
+    "You take control of the teammate's computer. The teammate's own tools finish first, then the computer is yours.",
+    "You type the goal and the expected result. The app checks you really hold the computer, then creates a new recording that is ready to start.",
+    "You press Start. The computer begins recording and takes a first screenshot.",
+    "You do the task. Only key presses and clicks that the computer actually accepts are noted, plus a screenshot at most twice a second.",
+    "Before you type a password, the Secure input box asks the recorder to pause first. It only types once the pause is confirmed, so the secret is never saved.",
+    "Every second, a background worker collects new notes, encrypts them, saves them to private storage, checks the saved copy, and then marks them as kept.",
+    "You resume when the screen is safe, then press Finish. The recording becomes ready only after every last note is safely stored.",
+    "You look over the list of steps and screenshots. You rewrite the procedure in your own words and pick up to 12 screenshots.",
+    "You save this reviewed evidence. It is frozen and encrypted, so you know exactly what the model will see.",
+    "You ask for a draft. The request waits in a queue that handles one draft at a time.",
+    "The model first proves it can see images by naming colour bands in a test picture. Then it writes a skill sheet, which the app checks for the right format.",
+    "You edit and save the exact sheet, give the computer back, and start a test with fresh inputs and checks. This creates a normal task for the teammate.",
+    "During that task only, the teammate can open the draft sheet. The app notes that it really opened it.",
+    "When the task is done, you look at the real result and record whether the checks passed.",
+    "You publish. The app rechecks that this exact sheet passed its test, writes it to the teammate, reads it back to confirm, and saves a version.",
+    "The teammate's runtime reloads in the background so it can use the new skill. Until then the status shows as pending."
+   ]
+  }
+ },
+ "state_machines": {
+  "sm:teaching-session": {
+   "plain": "The life of one recording, from creation to deletion.",
+   "states_plain": {
+    "preparing": "Created, not recording yet.",
+    "recording": "Your actions are being noted.",
+    "paused": "Nothing is being noted right now.",
+    "finalizing": "Finished; the last notes are being saved.",
+    "ready": "Everything is saved; you can review it.",
+    "interrupted": "The teammate's computer restarted; only the saved part remains.",
+    "discarded": "You threw it away; it will be wiped.",
+    "deleting": "Deleted or expired; the wipe is in progress.",
+    "deleted": "Wiped; only a small record remains.",
+    "failed": "Listed in the code but never actually used."
+   }
+  },
+  "sm:teaching-capture": {
+   "plain": "The recorder inside the teammate's computer. It keeps notes only in memory until the worker collects them.",
+   "states_plain": {
+    "(none)": "No recording loaded.",
+    "paused": "Loaded but not noting anything.",
+    "recording": "Noting accepted actions and screenshots.",
+    "ready": "Finished; waiting for the last notes to be collected.",
+    "discarded": "Notes thrown away."
+   }
+  },
+  "sm:teaching-job": {
+   "plain": "The progress of asking the AI model to write a draft.",
+   "states_plain": {
+    "idle": "No draft request.",
+    "queued": "Waiting its turn.",
+    "running": "The model is working on it.",
+    "completed": "A draft was saved.",
+    "failed": "Something went wrong; you can retry.",
+    "cancelled": "Stopped by you, or by deletion."
+   }
+  },
+  "sm:teaching-test": {
+   "plain": "The progress of one test run of a draft skill.",
+   "states_plain": {
+    "created": "The test task was made.",
+    "consulted": "The teammate opened the draft.",
+    "completed": "The test task finished.",
+    "verified_passed": "You said the checks passed.",
+    "verified_failed": "You said the checks failed.",
+    "stale": "The draft, evidence or setup changed since this test.",
+    "cancelled": "Stopped because the recording was deleted.",
+    "scrubbed": "Private test text was wiped."
+   }
+  },
+  "sm:teaching-publication": {
+   "plain": "Whether a tested draft has become a real skill.",
+   "states_plain": {
+    "unpublished": "Not published yet.",
+    "refresh_pending": "Written to the teammate; waiting for its runtime to reload."
+   }
+  }
+ },
+ "glossary": [
+  {
+   "term": "Recording",
+   "plain": "One teaching session: the notes, screenshots and draft for one task you showed.",
+   "node": "table:teaching_sessions"
+  },
+  {
+   "term": "Chunk",
+   "plain": "One encrypted bundle of recorded notes kept in private storage.",
+   "node": "table:teaching_chunks"
+  },
+  {
+   "term": "Revision",
+   "plain": "A frozen copy of your reviewed evidence or of one draft.",
+   "node": "table:teaching_revisions"
+  },
+  {
+   "term": "Candidate test",
+   "plain": "A real task where the teammate tries the draft on new inputs.",
+   "node": "table:teaching_tests"
+  },
+  {
+   "term": "Publication",
+   "plain": "The record that a tested draft became a real skill version.",
+   "node": "table:teaching_publications"
+  },
+  {
+   "term": "Private input pause",
+   "plain": "A pause the app confirms before Secure input types a secret, so the secret is never recorded.",
+   "node": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching-private-input"
+  },
+  {
+   "term": "Recorder",
+   "plain": "Code inside the teammate's computer that notes accepted key presses and clicks.",
+   "node": "fn:docker/teaching_capture.py::Capture"
+  },
+  {
+   "term": "Accepted input",
+   "plain": "Only key presses and clicks the computer actually let through, not everything you tried.",
+   "node": "fn:docker/teaching_capture.py::AcceptedRFB"
+  },
+  {
+   "term": "Collector",
+   "plain": "A background job that picks up new notes every second and stores them safely.",
+   "node": "fn:backend/teaching.py::collect"
+  },
+  {
+   "term": "Vision check",
+   "plain": "A small coloured test picture that proves the model can read images.",
+   "node": "fn:backend/teaching.py::vision_canary"
+  },
+  {
+   "term": "Draft generation",
+   "plain": "The step where the AI model writes the skill sheet from your reviewed evidence.",
+   "node": "fn:backend/teaching.py::generate_one"
+  },
+  {
+   "term": "Consult",
+   "plain": "The teammate opening the draft during its test task.",
+   "node": "route:backend/app.py:POST /internal/teaching/consult"
+  },
+  {
+   "term": "Setup fingerprint",
+   "plain": "A short code that changes when the teammate's settings, model or connections change, so old tests stop counting.",
+   "node": "fn:backend/teaching.py::config_hash"
+  },
+  {
+   "term": "Keep",
+   "plain": "A switch that stops a recording from expiring after seven days.",
+   "node": "route:backend/teaching.py:POST /api/v1/bots/{bot_id}/teaching/{session_id}/keep"
+  },
+  {
+   "term": "Maintenance loop",
+   "plain": "Background work that saves notes, expires old recordings and wipes deleted ones.",
+   "node": "fn:backend/teaching.py::maintain"
+  },
+  {
+   "term": "Private storage",
+   "plain": "The object storage bucket where encrypted recording bundles live.",
+   "node": "bucket:hermbot"
+  },
+  {
+   "term": "Model provider",
+   "plain": "The outside AI service that writes the draft.",
+   "node": "actor:model-provider"
+  }
+ ],
+ "discrepancies": [
+  {
+   "key": "Publishing from teaching with Enable unchecked",
+   "what": "If you publish without ticking Enable, the app turns the skill off. This happens even if it was already on.",
+   "why_it_matters": "Updating a skill you already use can quietly switch it off. The screen says enabling is a separate choice.",
+   "fix_hint": "Possible fix: send no enable value when the box is unticked, so the current on or off setting stays."
+  },
+  {
+   "key": "The full candidate SKILL.md content is placed in capabilities.manifest",
+   "what": "The full draft is sent to the teammate in its general task context, not only when it opens the draft.",
+   "why_it_matters": "The 'opened the draft' check proves less than it seems. It also breaks an earlier rule that skill text stays out of this list.",
+   "fix_hint": "Possible fix: keep only the draft's name and fingerprint in `teaching_candidate`, and return the text only from the consult route."
+  },
+  {
+   "key": "Deletion/expiry purge calls the bot runtime before deleting MinIO objects",
+   "what": "Wiping a recording first contacts the teammate's computer. If that computer is off or gone, the wipe never happens.",
+   "why_it_matters": "Private screenshots and key presses can stay in storage forever after you deleted them.",
+   "fix_hint": "Possible fix: delete the stored bundles and database rows even when the teammate's computer cannot be reached, and clear its memory later."
+  },
+  {
+   "key": "Test inputs and checks are stored encrypted in teaching_tests.checks_encrypted",
+   "what": "Test inputs and checks are saved encrypted, but the same text is also saved unencrypted in the test task.",
+   "why_it_matters": "The encryption gives a false sense of privacy for that text.",
+   "fix_hint": "Possible fix: warn owners not to put private data in tests, or keep sensitive values out of the task text."
+  },
+  {
+   "key": "'Use seven-day expiry' (unpin) does not reset expires_at",
+   "what": "Turning off Keep does not give a fresh seven days. An old recording is deleted right away.",
+   "why_it_matters": "You may lose a recording you expected to keep for another week.",
+   "fix_hint": "Possible fix: set a new expiry date seven days ahead when Keep is turned off, or warn first."
+  },
+  {
+   "key": "State 'failed' appears in the expiry SQL",
+   "what": "A 'failed' recording state is listed but nothing ever uses it.",
+   "why_it_matters": "It makes the design look more complete than it is and can confuse readers.",
+   "fix_hint": "Possible fix: remove the state, or set it when recording truly fails."
+  },
+  {
+   "key": "Review doc says segment accompanies retained observations",
+   "what": "The code counts screen-size segments but never saves that number, and the counter never changes.",
+   "why_it_matters": "Notes from different screen sizes cannot be told apart, despite what the review says.",
+   "fix_hint": "Possible fix: compare against the real current screen size and save the segment on each note."
+  },
+  {
+   "key": "Plan recovery matrix says a new viewer/lease epoch can resume",
+   "what": "After a new takeover or a new login, you cannot resume the same recording. You can only finish or discard it.",
+   "why_it_matters": "A short interruption can force you to start a new recording.",
+   "fix_hint": "Possible fix: allow a confirmed resume that binds the recording to the new session and starts a new segment."
+  },
+  {
+   "key": "A session stuck in 'finalizing'",
+   "what": "A recording that is still saving when the teammate's computer goes away stays stuck, and it never expires.",
+   "why_it_matters": "It blocks new recordings for that teammate and keeps private data.",
+   "fix_hint": "Possible fix: let expiry and discard handle 'finalizing' without the teammate's computer."
+  },
+  {
+   "key": "has no UI caller; the UI uses the bot-level teaching-private-input route",
+   "what": "One pause route for a single recording is never called by the screen.",
+   "why_it_matters": "Unused routes add surface area and confusion.",
+   "fix_hint": "Possible fix: remove the route or use it from the screen."
+  },
+  {
+   "key": "onActive prop is never supplied",
+   "what": "The teaching panel can report an active recording, but no page listens.",
+   "why_it_matters": "Dead code; the feature it hints at does not exist.",
+   "fix_hint": "Possible fix: remove the prop or wire it to a recording badge."
+  },
+  {
+   "key": "Plan says generation/test/publication each have their own",
+   "what": "The plan promised separate status for tests and publishing, but the code only stores status for drafts.",
+   "why_it_matters": "Readers of the plan may expect more tracking than exists.",
+   "fix_hint": "Possible fix: update the plan, or add simple status fields."
+  },
+  {
+   "key": "Plan says retries resume the same generation job",
+   "what": "A draft request that runs too long is marked failed. It is not resumed.",
+   "why_it_matters": "You must press Generate again.",
+   "fix_hint": "Possible fix: requeue it once automatically, or update the plan."
+  },
+  {
+   "key": "Collector final UPDATE always overwrites reason",
+   "what": "The pause reason shown can come from an older update.",
+   "why_it_matters": "You may see a slightly wrong reason message.",
+   "fix_hint": "Possible fix: only update the reason together with the state."
+  },
+  {
+   "key": "Every computer-panel close and every Secure input",
+   "what": "Each panel close or Secure input adds a 'private step' note and a stored receipt.",
+   "why_it_matters": "Recordings get extra private-step notes and the receipt table grows.",
+   "fix_hint": "Possible fix: skip the pause when already paused, and label a panel close differently."
+  },
+  {
+   "key": "UI captureLabel has no label for 'failed'",
+   "what": "The screen lacks names for some states, and Discard is off while saving even though the server allows it.",
+   "why_it_matters": "Small gaps in what the screen shows.",
+   "fix_hint": "Possible fix: add the missing labels and allow Discard while saving."
+  },
+  {
+   "key": "AcceptedRFB keeps the bytes that raised",
+   "what": "After one unknown message, the recorder keeps failing on that connection until you reconnect.",
+   "why_it_matters": "Recording keeps pausing and you may not know why.",
+   "fix_hint": "Possible fix: reset the reader after an error, or tell you to reconnect."
+  }
+ ]
+}

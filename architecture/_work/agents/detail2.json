@@ -1,0 +1,3111 @@
+{
+ "agent": "detail2",
+ "files_read": [
+  "test-results/phase53-management-390.png",
+  "test-results/phase53-management-768.png",
+  "test-results/phase54-attention-1440.png",
+  "test-results/phase54-attention-320.png",
+  "test-results/phase54-attention-390.png",
+  "test-results/phase54-attention-768.png",
+  "test-results/phase54-attention-dark.png",
+  "test-results/phase54-settings-1440.png",
+  "test-results/phase54-settings-390.png",
+  "test-results/request-lifecycle-1440.png",
+  "test-results/request-lifecycle-390.png",
+  "test-results/response-layout-after-1440.png",
+  "test-results/response-layout-after-1920.png",
+  "test-results/response-layout-after-320.png",
+  "test-results/response-layout-after-390.png",
+  "test-results/response-layout-after-950.png",
+  "test-results/response-layout-before-1440.png",
+  "test-results/response-layout-before-390.png",
+  "test-results/skills-tools-1440.png",
+  "test-results/skills-tools-390.png",
+  "test-results/tool-admission-1440.png",
+  "test-results/tool-admission-390.png",
+  "test-results/ui-fixed-knowledge-1440.png",
+  "test-results/ui-fixed-knowledge-320.png",
+  "test-results/ui-fixed-knowledge-390.png",
+  "test-results/ui-fixed-knowledge-844.png",
+  "test-results/ui-fixed-navigation-320.png",
+  "test-results/ui-fixed-navigation-390.png",
+  "test-results/ui-inspect-390-chat.png",
+  "test-results/ui-inspect-390-navigation.png",
+  "test-results/ui-inspect-390-settings.png",
+  "test-results/ui-inspect-768-chat.png",
+  "test-results/ui-inspect-desktop-chat.png",
+  "test-results/ui-inspect-desktop-knowledge.png",
+  "test-results/ui-inspect-desktop-library.png",
+  "test-results/ui-inspect-desktop-pdf.png",
+  "test-results/ui-inspect-desktop-settings.png",
+  "test-results/ui-probe-320-chat.png",
+  "test-results/ui-probe-320-knowledge.png",
+  "test-results/ui-probe-320-navigation.png",
+  "test-results/ui-probe-390-chat.png",
+  "test-results/ui-probe-390-knowledge.png",
+  "test-results/ui-probe-390-navigation.png",
+  "test-results/ui-probe-768-chat.png",
+  "test-results/ui-probe-844-chat.png",
+  "test-results/ui-probe-desktop-chat.png",
+  "test-results/ui-probe-desktop-knowledge.png",
+  "test-results/ui-probe-desktop-pdf.png",
+  "test-results/work-completion-fixed-1440.png",
+  "test-results/work-completion-fixed-320.png",
+  "test-results/work-completion-fixed-390.png",
+  "test-results/work-controller-1440.png",
+  "test-results/work-controller-390.png",
+  "test-results/work-items-1440.png",
+  "test-results/work-items-390.png",
+  "test-results/work-outcomes-1440.png",
+  "test-results/work-outcomes-390.png",
+  "test-results/phase54-inspection/desktop-fold.jpg",
+  "test-results/phase54-inspection/desktop-page-01.jpg",
+  "test-results/phase54-inspection/mobile-320-fold.jpg",
+  "test-results/phase54-inspection/mobile-320-page-01.jpg",
+  "test-results/phase54-inspection/mobile-390-fold.jpg",
+  "test-results/phase54-inspection/mobile-390-page-01.jpg",
+  "test-results/phase54-inspection/tablet-fold.jpg",
+  "test-results/phase54-inspection/tablet-page-01.jpg"
+ ],
+ "module_notes": {
+  "test-results/phase53-management-390.png": {
+   "purpose": "Mobile modal: team coordination / management permission settings for Quill",
+   "visible_text": [
+    "Quill",
+    "Phase 5.3 recurring acceptance ub8e16180031 (select, clipped at top)",
+    "Teammate",
+    "Sage",
+    "Team coordination",
+    "Coordinate teammates",
+    "Management permission",
+    "Manage Scout, Quill · until 10/27/2026",
+    "Collaborators for each run",
+    "Scout",
+    "Quill",
+    "Management operations",
+    "Assign work",
+    "Inspect results",
+    "Redirect work",
+    "Stop owned work",
+    "Reassign work",
+    "Authorized until 10/27/2026, 10:55:17 AM. Only selected collaborators participate. Permission is checked again for every run and action.",
+    "The active work budget is shared across the manager and collaborators. Connected-app changes keep their existing review rules.",
+    "Instructions for each run",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "top bar (hamburger, Quill avatar/name, kebab, layers)",
+    "scrim",
+    "scrolled modal sheet",
+    "selects",
+    "fieldset Team coordination",
+    "checkboxes",
+    "disclosure",
+    "helper paragraphs",
+    "textarea (cut off)",
+    "composer footer hint"
+   ],
+   "state": "Modal scrolled mid-way; Reassign work checkbox focused; Assign work checked+disabled",
+   "viewport": "390x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Modal content scrolled so top select is cut off with no visible sticky header or close button",
+     "where": "top of modal"
+    },
+    {
+     "text": "Modal bottom edge overlaps/cuts the instructions textarea",
+     "where": "bottom y~850"
+    },
+    {
+     "text": "Header subtitle hidden behind scrim; low-contrast dimmed background",
+     "where": "top bar"
+    }
+   ]
+  },
+  "test-results/phase53-management-768.png": {
+   "purpose": "Tablet modal: team coordination settings with instructions textarea",
+   "visible_text": [
+    "Quill",
+    "Ready",
+    "Team coordination",
+    "Coordinate teammates",
+    "Management permission",
+    "Manage Scout, Quill · until 10/27/2026",
+    "Collaborators for each run",
+    "Scout",
+    "Quill",
+    "Management operations",
+    "Assign work",
+    "Inspect results",
+    "Redirect work",
+    "Stop owned work",
+    "Reassign work",
+    "Authorized until 10/27/2026, 10:55:17 AM. Only selected collaborators participate. Permission is checked again for every run and action.",
+    "The active work budget is shared across the manager and collaborators. Connected-app changes keep their existing review rules.",
+    "Instructions for each run",
+    "Coordinate the selected teammates and return a local report.",
+    "Each run starts fresh, reuses the selected files, and posts results in this conversation. Your... (cut off)",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "top bar icons",
+    "scrim",
+    "modal",
+    "fieldset",
+    "select",
+    "checkboxes",
+    "textarea",
+    "clipped footer text"
+   ],
+   "state": "Modal scrolled; Reassign work focused; textarea has text",
+   "viewport": "768x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Modal scrolled so its header/title is not visible; no sticky header or close button",
+     "where": "top of modal"
+    },
+    {
+     "text": "Final helper text 'Each run starts fresh...' clipped by modal bottom edge",
+     "where": "y~855"
+    },
+    {
+     "text": "Modal legend 'Team coordination' touches the top edge",
+     "where": "y~56"
+    }
+   ]
+  },
+  "test-results/phase54-attention-1440.png": {
+   "purpose": "Desktop Attention modal showing resolved question detail",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate…",
+    "Your teammates 3",
+    "Quill Writing",
+    "Sage Review",
+    "Scout Research",
+    "Past teammates 15",
+    "Groups 8",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Project chat temp2",
+    "Attention 0 unread · 27 need you",
+    "Routines",
+    "Owner Local workspace",
+    "Quill Writing, synthesis, and clear deliverables",
+    "Ready",
+    "In this conversation",
+    "Work 8",
+    "Outputs 0",
+    "Finished work (8)",
+    "Removed work (1)",
+    "Attention",
+    "Questions, reviews and results from your teammates.",
+    "Needs you",
+    "Updates",
+    "History",
+    "Mark visible read",
+    "27 need your response · 0 unread updates",
+    "← Back to list",
+    "Question needs your response",
+    "Continue the local Phase 5.4 notification demonstration?",
+    "This request is resolved or no longer actionable.",
+    "Reviewed local attention demonstration complete. Scout's artifact states 67 = 42, and Scout's submitted execution evidence reports the native terminal command returned 42. Quill's artifact states 1011 = 110 and includes the command and terminal output. I independently calculated the combined total in the native terminal: 42+110 returned 152. Both required contributions are fulfilled; no external changes were made.",
+    "Open work",
+    "Mark read",
+    "Message Q…",
+    "Coordinate team",
+    "@ Mention",
+    "send · new line",
+    "Your team works in the background. You stay in control.",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "sidebar",
+    "chat header",
+    "right panel (Work/Outputs tabs)",
+    "dim scrim",
+    "Attention dialog with close X, tabs, detail view, buttons",
+    "composer"
+   ],
+   "state": "Attention modal open on a resolved question detail",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Resolved/non-actionable request still offers 'Open work' primary button",
+     "where": "modal bottom"
+    },
+    {
+     "text": "'Needs you' tab says 27 pending yet detail is resolved; confusing",
+     "where": "modal header"
+    },
+    {
+     "text": "Mark visible read looks disabled low contrast",
+     "where": "top right of modal"
+    },
+    {
+     "text": "Tiny 'Back to list' text and small close X",
+     "where": "modal"
+    }
+   ]
+  },
+  "test-results/phase54-attention-320.png": {
+   "purpose": "320px Attention modal, content truncated",
+   "visible_text": [
+    "Quill",
+    "Attention",
+    "Questions, reviews and results from your teammates.",
+    "Needs you",
+    "Updates",
+    "History",
+    "Mark visible read",
+    "27 need your response · 0 unread updates",
+    "← Back to list",
+    "Question needs your response",
+    "Continue the local Phase 5.4 notification demonstration?",
+    "This request is resolved or no longer actionable.",
+    "Reviewed local attention demonstration complete. Scout's artifact states 67 = 42, ... I independently calculated the (cut off)",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "top bar",
+    "modal with scrolling body",
+    "tabs wrapped to two rows",
+    "close X"
+   ],
+   "state": "Modal open, content scrolled-off at bottom",
+   "viewport": "320x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Tabs wrap: History drops to second row, Mark visible read on its own row, using lots of vertical space",
+     "where": "tabs area"
+    },
+    {
+     "text": "Text clipped at modal bottom mid-sentence; action buttons not visible without scroll",
+     "where": "bottom"
+    },
+    {
+     "text": "Header subtitle 'Writing, synthesis, an...' truncated and overlapped by modal",
+     "where": "top bar"
+    },
+    {
+     "text": "Close X sits close to title block",
+     "where": "top right"
+    }
+   ]
+  },
+  "test-results/phase54-attention-390.png": {
+   "purpose": "390px Attention modal with buttons visible",
+   "visible_text": [
+    "Quill",
+    "Attention",
+    "Questions, reviews and results from your teammates.",
+    "Needs you",
+    "Updates",
+    "History",
+    "Mark visible read",
+    "27 need your response · 0 unread updates",
+    "← Back to list",
+    "Question needs your response",
+    "Continue the local Phase 5.4 notification demonstration?",
+    "This request is resolved or no longer actionable.",
+    "Reviewed local attention demonstration complete. Scout's artifact states 67 = 42 ... returned 152. Both required contributions are fulfilled; no external changes were made.",
+    "Open work",
+    "Mark read",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "top bar",
+    "modal",
+    "tabs",
+    "Mark visible read on own row",
+    "action buttons"
+   ],
+   "state": "Modal open detail view",
+   "viewport": "390x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Mark visible read wraps onto its own row, low contrast disabled look",
+     "where": "below tabs"
+    },
+    {
+     "text": "Open work/Mark read buttons sit flush with modal bottom edge",
+     "where": "y~833"
+    },
+    {
+     "text": "Resolved item still shows Open work",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/phase54-attention-768.png": {
+   "purpose": "768px Attention modal detail view",
+   "visible_text": [
+    "Quill Writing, synthesis, and clear deliverables",
+    "Ready",
+    "(background text: ... 'Provider endpoint must resolve to a public address.' I did not repeat the action. Outcome slack_delivery: ID f731ca2a-8b7e-4e51-9497-f4439f69cb51; revision 1; status blocked; evidence: failed provider receipt.)",
+    "Attention",
+    "Questions, reviews and results from your teammates.",
+    "Needs you",
+    "Updates",
+    "History",
+    "Mark visible read",
+    "27 need your response · 0 unread updates",
+    "← Back to list",
+    "Question needs your response",
+    "Continue the local Phase 5.4 notification demonstration?",
+    "This request is resolved or no longer actionable.",
+    "Reviewed local attention demonstration complete. ... 42+110 returned 152. Both required contributions are fulfilled; no external changes were made.",
+    "Open work",
+    "Mark read",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "top bar",
+    "dim scrim over chat",
+    "modal",
+    "composer"
+   ],
+   "state": "Modal open detail view",
+   "viewport": "768x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Mark visible read appears disabled/low contrast",
+     "where": "top right of modal"
+    },
+    {
+     "text": "Background chat text bleeds through scrim at top",
+     "where": "y~70-120"
+    }
+   ]
+  },
+  "test-results/phase54-attention-dark.png": {
+   "purpose": "320px Attention modal in dark theme",
+   "visible_text": [
+    "Quill",
+    "Attention",
+    "Questions, reviews and results from your teammates.",
+    "Needs you",
+    "Updates",
+    "History",
+    "Mark visible read",
+    "27 need your response · 0 unread updates",
+    "← Back to list",
+    "Question needs your response",
+    "Continue the local Phase 5.4 notification demonstration?",
+    "This request is resolved or no longer actionable.",
+    "Reviewed local attention demonstration complete. ... I independently calculated the (cut off)",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "top bar",
+    "modal",
+    "tabs",
+    "close X (light-green outline)"
+   ],
+   "state": "Modal open, dark theme, content cut at bottom",
+   "viewport": "320x900",
+   "theme": "dark",
+   "defects": [
+    {
+     "text": "Mark visible read disabled button very low contrast",
+     "where": "y~300"
+    },
+    {
+     "text": "Modal borders barely distinguishable from dark background",
+     "where": "modal edges"
+    },
+    {
+     "text": "Text clipped at modal bottom",
+     "where": "bottom"
+    },
+    {
+     "text": "Tabs wrap to two rows",
+     "where": "tabs"
+    },
+    {
+     "text": "Header subtitle truncated",
+     "where": "top bar"
+    }
+   ]
+  },
+  "test-results/phase54-settings-1440.png": {
+   "purpose": "Desktop dark Notifications settings modal",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate…",
+    "Your teammates 3",
+    "Quill Writing",
+    "Sage Review",
+    "Scout Research",
+    "Past teammates 15",
+    "Groups 8",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Project chat temp2",
+    "Attention 0 unread · 27 need you",
+    "Routines",
+    "Owner Local workspace",
+    "Quill Writing, synt…",
+    "Ready",
+    "Notifications",
+    "Choose when Hermbot can bring you back. In-app attention is always available.",
+    "Browser notifications",
+    "Notification text is private: it only says Hermbot has an update. Open the app to read the details.",
+    "Enable this browser",
+    "Send test notification",
+    "Allow push to registered browsers",
+    "Notify me about",
+    "Questions",
+    "Reviews",
+    "Results",
+    "Problems and setup",
+    "Quiet hours",
+    "Pause all browser notifications during quiet hours",
+    "From",
+    "22:00",
+    "Until",
+    "08:00",
+    "Timezone",
+    "UTC",
+    "send · new line",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "sidebar",
+    "chat header",
+    "dark modal with close X",
+    "primary button",
+    "disabled secondary button",
+    "checkboxes",
+    "time inputs",
+    "timezone field",
+    "composer"
+   ],
+   "state": "Notifications modal scrolled/cropped at bottom; Send test notification disabled",
+   "viewport": "1440x900",
+   "theme": "dark",
+   "defects": [
+    {
+     "text": "Timezone field cut off by modal bottom edge",
+     "where": "y~810-855"
+    },
+    {
+     "text": "Send test notification disabled, low contrast",
+     "where": "y~297"
+    },
+    {
+     "text": "Modal sits over chat with right panel apparently hidden; modal top clipped near header",
+     "where": "top"
+    },
+    {
+     "text": "Chat header subtitle truncated 'Writing, synt'",
+     "where": "header"
+    }
+   ]
+  },
+  "test-results/phase54-settings-390.png": {
+   "purpose": "390px dark Notifications settings modal",
+   "visible_text": [
+    "Notifications",
+    "Choose when Hermbot can bring you back. In-app attention is always available.",
+    "Browser notifications",
+    "Notification text is private: it only says Hermbot has an update. Open the app to read the details.",
+    "Enable this browser",
+    "Send test notification",
+    "Allow push to registered browsers",
+    "Notify me about",
+    "Questions",
+    "Reviews",
+    "Results",
+    "Problems and setup",
+    "Quiet hours",
+    "Pause all browser notifications during quiet hours",
+    "From",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "partially visible sidebar behind modal",
+    "modal",
+    "buttons",
+    "checkboxes",
+    "time input cut off"
+   ],
+   "state": "Modal open in dark theme, cut off at From input",
+   "viewport": "390x900",
+   "theme": "dark",
+   "defects": [
+    {
+     "text": "From time input cut off at modal bottom",
+     "where": "y~840"
+    },
+    {
+     "text": "Sidebar fragments (partial words) visible behind modal at left, offset layout shows sidebar open",
+     "where": "left edge"
+    },
+    {
+     "text": "Send test notification disabled low contrast",
+     "where": "y~389"
+    }
+   ]
+  },
+  "test-results/request-lifecycle-1440.png": {
+   "purpose": "Desktop Project chat with Scout/Quill messages about PDF",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate…",
+    "Scout Research",
+    "Past teammates 15",
+    "Groups 7",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Project chat temp2",
+    "Manik's task",
+    "Project chat3",
+    "Project chat",
+    "3 teammates each",
+    "Routines",
+    "Owner Local workspace",
+    "Project chat",
+    "Scout · Sage · Quill",
+    "Ready",
+    "The owner's authorization is already applied. The required writer task cc9f5ea0-563a-46f9-a868-7cd7fac804e6 is still running; the exercise outcome remains pending until the verified PDF contribution is delivered and merged.",
+    "Quill 11:36 AM",
+    "Published the verified standalone original-practice PDF as artifact 9164a844-853c-5953-9156-9b1222fbf0a2. Six pages; 12 original exam-style questions; 32 indicative marks; detailed solutions; exact answer checks passed. Provenance and scope assumptions are stated in the PDF.",
+    "Scout 11:40 AM",
+    "Current requirements have been reviewed and satisfied. ... appended it to the complete NCERT solutions book and published version 2 as a 26-page PDF. ... no question is guaranteed to recur in an examination.",
+    "Reply",
+    "Message your team…",
+    "To Quill",
+    "Coordinate team",
+    "@ Mention",
+    "In this conversation",
+    "Work 1",
+    "Outputs 21",
+    "Finished work (1)",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "sidebar",
+    "chat header",
+    "message list",
+    "composer",
+    "right panel"
+   ],
+   "state": "Group chat Project chat with completed messages",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Top message's sender row is cropped by the header bar",
+     "where": "y~70"
+    },
+    {
+     "text": "Dense long paragraphs with small 11px meta text",
+     "where": "message column"
+    }
+   ]
+  },
+  "test-results/request-lifecycle-390.png": {
+   "purpose": "390px sidebar drawer open over chat",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate…",
+    "Scout Research",
+    "Past teammates 15",
+    "Groups 7",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Project chat temp2",
+    "Manik's task",
+    "Project chat3",
+    "Project chat",
+    "3 teammates each",
+    "Routines",
+    "Owner Local workspace"
+   ],
+   "components": [
+    "drawer sidebar",
+    "partial chat behind (text fragments)",
+    "composer partially visible"
+   ],
+   "state": "Mobile nav drawer open, no scrim dimming",
+   "viewport": "390x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Drawer left edge clipped: hermbot logo and search box flush/cut at x=0 and no left padding",
+     "where": "left edge"
+    },
+    {
+     "text": "Drawer has no visible close button, and background not dimmed",
+     "where": "drawer"
+    },
+    {
+     "text": "Selected 'Project chat' highlight extends past drawer right edge/left edge",
+     "where": "y~710-770"
+    }
+   ]
+  },
+  "test-results/response-layout-after-1440.png": {
+   "purpose": "Desktop response-layout check: per-teammate response status rows (after fix)",
+   "visible_text": [
+    "Response layout check",
+    "Scout · Quill · Sage",
+    "Working",
+    "You 08:39 AM",
+    "Discuss the options with me.",
+    "Reply",
+    "Scout 08:39 AM",
+    "Here are the options so far.",
+    "Scout Queued",
+    "Inspect response",
+    "Stop response",
+    "Quill Working",
+    "Sage Failed",
+    "Could not finish this response. Fixture response failed.",
+    "2 tasks in progress",
+    "Message your team…",
+    "To Sage",
+    "Coordinate team",
+    "@ Mention",
+    "send · new line",
+    "Your team works in the background. You stay in control.",
+    "hermbot",
+    "Find a teammate…",
+    "Scout Queued",
+    "Quill Working",
+    "PAST TEAMMATES 12",
+    "GROUPS 4",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Response layout check",
+    "3 teammates",
+    "Connections",
+    "File library",
+    "Private workspace",
+    "Owner Local workspace",
+    "In this conversation",
+    "Work 0",
+    "Outputs 0",
+    "A clear view of the work.",
+    "Actual assignments appear here. Discussion and progress questions stay in the conversation.",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "sidebar",
+    "chat header with status",
+    "message list with per-teammate status rows",
+    "composer",
+    "empty-state right panel"
+   ],
+   "state": "Scout queued, Quill working, Sage failed; empty work panel",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": []
+  },
+  "test-results/response-layout-after-1920.png": {
+   "purpose": "1920px response layout (after fix), centered chat column",
+   "visible_text": [
+    "Response layout check",
+    "Scout · Quill · Sage",
+    "Working",
+    "You 08:39 AM",
+    "Discuss the options with me.",
+    "Reply",
+    "Scout 08:39 AM",
+    "Here are the options so far.",
+    "Scout Queued",
+    "Inspect response",
+    "Stop response",
+    "Quill Working",
+    "Sage Failed",
+    "Could not finish this response. Fixture response failed.",
+    "2 tasks in progress",
+    "Message your team…",
+    "To Sage",
+    "Coordinate team",
+    "@ Mention",
+    "send · new line",
+    "Your team works in the background. You stay in control.",
+    "hermbot",
+    "Find a teammate…",
+    "Scout Queued",
+    "Quill Working",
+    "PAST TEAMMATES 12",
+    "GROUPS 4",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Response layout check",
+    "3 teammates",
+    "Connections",
+    "File library",
+    "Private workspace",
+    "Owner Local workspace",
+    "In this conversation",
+    "Work 0",
+    "Outputs 0",
+    "A clear view of the work."
+   ],
+   "components": [
+    "sidebar",
+    "header",
+    "centered message column",
+    "composer",
+    "right panel empty state"
+   ],
+   "state": "Same fixture state",
+   "viewport": "1920x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Very large blank gutters; chat column narrow relative to viewport, right panel mostly empty",
+     "where": "center/right"
+    }
+   ]
+  },
+  "test-results/response-layout-after-320.png": {
+   "purpose": "320px response layout (after fix)",
+   "visible_text": [
+    "Respo… (title truncated)",
+    "Scout · Qu…",
+    "Discuss the options with me.",
+    "Scout 08:39 AM",
+    "Here are the options so far.",
+    "Scout Queued",
+    "Quill Working",
+    "Sage Failed",
+    "Could not finish this response. Fixture response failed.",
+    "2 tasks in progress",
+    "Message your team…",
+    "To Sage",
+    "Coordinate team",
+    "@ Mention",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "top bar with 5 icons",
+    "message list",
+    "composer"
+   ],
+   "state": "Mobile, same fixture",
+   "viewport": "320x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Title truncated to 'Respo…' and subtitle 'Scout · Qu…' because header icons crowd it",
+     "where": "header"
+    },
+    {
+     "text": "Composer toolbar wraps: clock icon drops to its own row under To/Coordinate/doc icons",
+     "where": "composer y~810"
+    },
+    {
+     "text": "Tiny 'Coordinate team' label",
+     "where": "composer"
+    }
+   ]
+  },
+  "test-results/response-layout-after-390.png": {
+   "purpose": "390px response layout (after fix)",
+   "visible_text": [
+    "Response layout c…",
+    "Scout · Quill · Sage",
+    "You 08:39 AM",
+    "Discuss the options with me.",
+    "Reply",
+    "Scout 08:39 AM",
+    "Here are the options so far.",
+    "Scout Queued",
+    "Inspect response",
+    "Stop response",
+    "Quill Working",
+    "Sage Failed",
+    "Could not finish this response. Fixture response failed.",
+    "2 tasks in progress",
+    "Message your team…",
+    "To Sage",
+    "Coordinate team",
+    "@ Mention",
+    "send · new line",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "top bar",
+    "message list",
+    "composer"
+   ],
+   "state": "Mobile, same fixture",
+   "viewport": "390x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Title truncated 'Response layout c…'",
+     "where": "header"
+    },
+    {
+     "text": "Composer toolbar wraps, clock icon on second row beside @ Mention",
+     "where": "composer"
+    },
+    {
+     "text": "Small 8-9px footer hint text",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/response-layout-after-950.png": {
+   "purpose": "950px response layout with truncated sidebar",
+   "visible_text": [
+    "Response layout check",
+    "Scout · Quill · Sage",
+    "Working",
+    "You 08:39 AM",
+    "Discuss the options with me.",
+    "Reply",
+    "Scout 08:39 AM",
+    "Here are the options so far.",
+    "Scout Queued",
+    "Inspect response",
+    "Stop response",
+    "Quill Working",
+    "Sage Failed",
+    "Could not finish this response. Fixture response failed.",
+    "2 tasks in progress",
+    "hermbot",
+    "Find a teammate…",
+    "Scout Queued",
+    "Quill Working",
+    "PAST TEAMMATES 12",
+    "GROUPS 4",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Response layout check",
+    "3 teammates",
+    "Connections",
+    "File library",
+    "Private workspace",
+    "Owner Local workspace"
+   ],
+   "components": [
+    "narrow sidebar",
+    "header",
+    "messages",
+    "composer"
+   ],
+   "state": "Tablet-width, same fixture",
+   "viewport": "950x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Sidebar logo/icons wrap: people and + icons stacked below hermbot logo",
+     "where": "sidebar top"
+    },
+    {
+     "text": "Group names truncated 'Kaggle competi…', 'Response layou…'",
+     "where": "sidebar"
+    },
+    {
+     "text": "Selected group row clipped at bottom by Connections button (3 teammates cut)",
+     "where": "sidebar y~680"
+    },
+    {
+     "text": "Owner row: 'Local workspace' overlaps the moon/layers icons",
+     "where": "sidebar bottom y~876"
+    }
+   ]
+  },
+  "test-results/response-layout-before-1440.png": {
+   "purpose": "Desktop response layout BEFORE fix: aggregated in-progress block",
+   "visible_text": [
+    "Response layout check",
+    "Scout · Quill · Sage",
+    "Working",
+    "You 08:37 AM",
+    "Discuss the options with me.",
+    "Scout 08:37 AM",
+    "Here are the options so far.",
+    "Sage could not finish this response. Fixture response failed.",
+    "Inspect response",
+    "4 responses and assignments in progress",
+    "Inspect response",
+    "Stop response",
+    "Inspect response",
+    "Stop response",
+    "Message your team…",
+    "To Sage",
+    "hermbot",
+    "Find a teammate…",
+    "Scout Queued",
+    "Quill Working",
+    "PAST TEAMMATES 12",
+    "GROUPS 4",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Response layout check",
+    "3 teammates",
+    "Connections",
+    "File library",
+    "Private workspace",
+    "Owner Local workspace",
+    "In this conversation",
+    "Work 0",
+    "Outputs 0",
+    "A clear view of the work."
+   ],
+   "components": [
+    "sidebar",
+    "chat",
+    "unlabeled generic action buttons",
+    "composer",
+    "right empty panel"
+   ],
+   "state": "Before-fix layout",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Inspect/Stop response buttons are unlabeled by teammate - two identical rows ambiguous",
+     "where": "y~490-580"
+    },
+    {
+     "text": "Large unused vertical gap between content and composer",
+     "where": "y~590-710"
+    }
+   ]
+  },
+  "test-results/response-layout-before-390.png": {
+   "purpose": "390px response layout BEFORE fix",
+   "visible_text": [
+    "Response layout c…",
+    "Scout · Quill · Sage",
+    "You 08:37 AM",
+    "Discuss the options with me.",
+    "Scout 08:37 AM",
+    "Here are the options so far.",
+    "Sage could not finish this response. Fixture response failed.",
+    "Inspect response",
+    "4 responses and assignments in progress",
+    "Inspect response",
+    "Stop response",
+    "Inspect response",
+    "Stop response",
+    "Message your team…",
+    "To Sage",
+    "Coordinate team",
+    "@ Mention"
+   ],
+   "components": [
+    "header",
+    "messages",
+    "buttons",
+    "composer"
+   ],
+   "state": "Before-fix",
+   "viewport": "390x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Duplicate unlabeled Inspect/Stop response buttons",
+     "where": "y~490-560"
+    },
+    {
+     "text": "Title truncated",
+     "where": "header"
+    },
+    {
+     "text": "Composer toolbar wraps",
+     "where": "composer"
+    }
+   ]
+  },
+  "test-results/skills-tools-1440.png": {
+   "purpose": "Desktop Scout Memory & skills modal over blurred app (top of modal)",
+   "visible_text": [
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Tools & application access",
+    "Read local files Available",
+    "Edit local files: Connected-app policy requires reviewed connector tools; this native tool is blocked.",
+    "Run local commands: (same blocked message)",
+    "Use the browser: (same)",
+    "Use the desktop: (same)",
+    "Consult skills Available",
+    "Maintain memory Available",
+    "Connected applications use the access configured in Connections. Native commands, browser automation and file editing are restricted for this teammate's work.",
+    "googles · 13 permitted application actions",
+    "Curated memory",
+    "Personal notes No saved entries",
+    "User profile No saved entries",
+    "Skills",
+    "Your teammate automatically consults relevant enabled skills for each assignment. Enabling a skill does not (cut off)",
+    "Background (blurred): Skills and tools acceptance ..., Finished work, Retry task"
+   ],
+   "components": [
+    "blurred backdrop",
+    "modal",
+    "table of tool access",
+    "memory cards",
+    "close X"
+   ],
+   "state": "Modal opened to top; backdrop blurred",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Blocked-tool message text is small low-contrast gray",
+     "where": "tool table"
+    },
+    {
+     "text": "Skills paragraph clipped at modal bottom",
+     "where": "y~850"
+    },
+    {
+     "text": "Backdrop blur makes background unreadable; blurred ghost text",
+     "where": "backdrop"
+    }
+   ]
+  },
+  "test-results/skills-tools-390.png": {
+   "purpose": "390px Memory & skills modal",
+   "visible_text": [
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Tools & application access",
+    "Read local files Available",
+    "Edit local files Connected-app policy requires reviewed connector tools; this native tool is blocked.",
+    "Run local commands",
+    "Use the browser",
+    "Use the desktop",
+    "Consult skills Available",
+    "Maintain memory Available",
+    "Connected applications use the access configured in Connections...",
+    "googles · 13 permitted application actions",
+    "Curated memory",
+    "Personal notes No saved entries",
+    "User profile (cut off)"
+   ],
+   "components": [
+    "modal",
+    "two-column table",
+    "cards"
+   ],
+   "state": "Modal top",
+   "viewport": "390x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "User profile card cut off at modal bottom",
+     "where": "y~850"
+    },
+    {
+     "text": "Gray status text low contrast and small",
+     "where": "table"
+    },
+    {
+     "text": "Header text of app truncated 'Skills and tools ac…' behind scrim",
+     "where": "top"
+    }
+   ]
+  },
+  "test-results/tool-admission-1440.png": {
+   "purpose": "Desktop Inspect the work modal for Sage",
+   "visible_text": [
+    "Inspect the work",
+    "Assignments, execution progress and decisions for this operation.",
+    "Research the documents",
+    "Sage",
+    "Working · Research the documents",
+    "Last tool activity: read_file · completed · 2 min ago",
+    "Last progress: 2 min ago",
+    "Last runtime contact: 0 sec ago",
+    "Sage",
+    "Queued · Coordination follow-up",
+    "Execution 1: Working",
+    "read_file · Completed",
+    "10:40:55 AM",
+    "Backdrop (blurred): Sage Review, code validation, and coordination; Working · 1 queued; Parallel research"
+   ],
+   "components": [
+    "blurred backdrop",
+    "small modal",
+    "status blocks"
+   ],
+   "state": "Modal showing Sage work inspection",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Second 'Sage' entry is indented inconsistently relative to the first",
+     "where": "y~505"
+    },
+    {
+     "text": "Very small low-contrast gray metadata text",
+     "where": "modal"
+    },
+    {
+     "text": "Large empty space at bottom of modal",
+     "where": "y~620-668"
+    }
+   ]
+  },
+  "test-results/tool-admission-390.png": {
+   "purpose": "390px Inspect the work modal",
+   "visible_text": [
+    "Inspect the work",
+    "Assignments, execution progress and decisions for this operation.",
+    "Research the documents",
+    "Sage",
+    "Working · Research the documents",
+    "Last tool activity: read_file · completed · 2 min ago",
+    "Last progress: 2 min ago",
+    "Last runtime contact: 0 sec ago",
+    "Sage",
+    "Queued · Coordination follow-up",
+    "Execution 1: Working",
+    "read_file · Completed",
+    "10:40:55 AM"
+   ],
+   "components": [
+    "modal",
+    "status blocks"
+   ],
+   "state": "Same",
+   "viewport": "390x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Second Sage entry indented",
+     "where": "y~518"
+    },
+    {
+     "text": "Metadata text tiny",
+     "where": "modal"
+    },
+    {
+     "text": "Backdrop sidebar fragments partially visible, sidebar offset clipped",
+     "where": "left"
+    }
+   ]
+  },
+  "test-results/ui-fixed-knowledge-1440.png": {
+   "purpose": "Desktop Scout Skills section with work cards in right panel",
+   "visible_text": [
+    "Skills",
+    "Your teammate automatically consults relevant enabled skills for each assignment. Enabling a skill does not change its tool or application access.",
+    "Find a skill",
+    "Create skill",
+    "Import SKILL.md",
+    "claude-code Delegate coding to Claude Code CLI (features, PRs). Enable",
+    "codex Delegate coding to OpenAI Codex CLI (features, PRs). Enable",
+    "computer-use Drive the desktop background-first; escalate on signal. Enable",
+    "hermes-agent Use, configure, theme, extend, and orchestrate Hermes Agent. Enable",
+    "opencode (cut off)",
+    "Save a completed workflow",
+    "Completed task",
+    "Choose completed work",
+    "Review workflow draft",
+    "Scout Research, ... Ready",
+    "In this conversation Work 20 Outputs 11",
+    "Needs attention: Hourly YouTube trending video names (x2) Scout owns this work; Request history · revision 1; 0 of 1 required results ready; Inspect work; Remove from work list",
+    "Finished work (18)",
+    "Removed work (1)",
+    "Groups 6",
+    "Manik's task",
+    "Attention 0 unread · 27 need you",
+    "Routines"
+   ],
+   "components": [
+    "sidebar",
+    "modal scrolled",
+    "skill list with Enable buttons",
+    "internal scroll area",
+    "right panel work cards"
+   ],
+   "state": "Modal scrolled to Skills; list is its own scroll area",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Skill list scroll area clips 'opencode' card at its bottom and hides it beneath 'Save a completed workflow'",
+     "where": "y~620-650"
+    },
+    {
+     "text": "Modal top cut: 'No saved entries' row cut at top",
+     "where": "y~45"
+    },
+    {
+     "text": "Review workflow draft disabled low contrast",
+     "where": "y~804"
+    },
+    {
+     "text": "Find a skill input has no visible placeholder, Import SKILL.md button different size/baseline from Create skill",
+     "where": "y~280"
+    }
+   ]
+  },
+  "test-results/ui-fixed-knowledge-320.png": {
+   "purpose": "320x568 Skills modal showing nested scroll",
+   "visible_text": [
+    "Scout",
+    "claude-code Delegate coding to Claude Code CLI (features, PRs). Enable",
+    "codex Delegate coding to OpenAI Codex CLI (features, PRs). Enable",
+    "computer-use Drive the desktop background-first; escalate on signal. Enable",
+    "hermes-agent (cut off)",
+    "Save a completed workflow",
+    "Completed task",
+    "Choose completed work",
+    "Review workflow draft",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "modal",
+    "nested scroll list",
+    "select",
+    "disabled button"
+   ],
+   "state": "Short viewport",
+   "viewport": "320x568",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Modal close X not visible; modal top cut at header",
+     "where": "top"
+    },
+    {
+     "text": "hermes-agent card clipped by Save a completed workflow",
+     "where": "y~305-340"
+    },
+    {
+     "text": "Footer hint overlapped by modal bottom",
+     "where": "y~545"
+    }
+   ]
+  },
+  "test-results/ui-fixed-knowledge-390.png": {
+   "purpose": "390px Scout Skills section in modal",
+   "visible_text": [
+    "Your teammate automatically consults relevant enabled skills for each assignment. Enabling a skill does not change its tool or application access.",
+    "Find a skill",
+    "Create skill",
+    "Import SKILL.md",
+    "claude-code Delegate coding to Claude Code CLI (features, PRs). Enable",
+    "codex Delegate coding to OpenAI Codex CLI (features, PRs). Enable",
+    "computer-use Drive the desktop background-first; escalate on signal. Enable",
+    "hermes-agent Use, configure, theme, extend, and orchestrate... Enable",
+    "Save a completed workflow",
+    "Completed task",
+    "Choose completed work",
+    "Review workflow draft",
+    "Your team works in the background. You stay in control.",
+    "Scout"
+   ],
+   "components": [
+    "modal",
+    "find input",
+    "Create/Import buttons",
+    "nested scroll list",
+    "select",
+    "disabled button"
+   ],
+   "state": "Modal scrolled to Skills",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Modal top text clipped ('Your teammate automatically...' cut at top edge)",
+     "where": "top y~45"
+    },
+    {
+     "text": "Create skill and Import SKILL.md buttons different heights/font weights",
+     "where": "y~216-260"
+    },
+    {
+     "text": "hermes-agent card clipped by nested scroll container",
+     "where": "y~600"
+    },
+    {
+     "text": "Review workflow draft disabled low contrast",
+     "where": "y~758"
+    }
+   ]
+  },
+  "test-results/ui-fixed-knowledge-844.png": {
+   "purpose": "Landscape phone 844x390 Skills modal",
+   "visible_text": [
+    "Drive the desktop background-first; escalate on signal.",
+    "Enable",
+    "hermes-agent Use, configure, theme, extend, and orchestrate Hermes Agent. Enable",
+    "opencode (cut off)",
+    "Save a completed workflow",
+    "Completed task",
+    "Choose completed work",
+    "Review workflow draft",
+    "Ready",
+    "Message…",
+    "Your team w… (cut)"
+   ],
+   "components": [
+    "modal nearly full height",
+    "nested list",
+    "composer behind"
+   ],
+   "state": "Landscape short viewport",
+   "viewport": "844x390",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Modal fills viewport; no visible header/close; first Enable button clipped at top",
+     "where": "top"
+    },
+    {
+     "text": "opencode card cut off by nested scroll container",
+     "where": "y~140-165"
+    },
+    {
+     "text": "Modal bottom nearly touches viewport edge",
+     "where": "y~370"
+    }
+   ]
+  },
+  "test-results/ui-fixed-navigation-320.png": {
+   "purpose": "320x568 nav drawer",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate…",
+    "Your teammates 3",
+    "Past teammates 15",
+    "Groups 6",
+    "The dawn of ai",
+    "3 teammates",
+    "Kaggle competitions",
+    "3 teammates",
+    "Anthropic ipo",
+    "Routines",
+    "Owner Local workspace"
+   ],
+   "components": [
+    "drawer",
+    "search",
+    "collapsible sections",
+    "group list in scroll area",
+    "Routines",
+    "user footer"
+   ],
+   "state": "Drawer open on short screen; groups collapsed sections",
+   "viewport": "320x568",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Anthropic ipo item cut off by Routines row (subtitle hidden)",
+     "where": "y~430-460"
+    },
+    {
+     "text": "Drawer width leaves only sliver of dimmed app visible",
+     "where": "right edge"
+    }
+   ]
+  },
+  "test-results/ui-fixed-navigation-390.png": {
+   "purpose": "390x844 nav drawer",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate…",
+    "Your teammates 3",
+    "Past teammates 15",
+    "Groups 6",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Project chat temp2",
+    "Manik's task",
+    "Project chat3",
+    "3 teammates each",
+    "Routines",
+    "Owner Local workspace"
+   ],
+   "components": [
+    "drawer",
+    "scrim",
+    "groups list",
+    "footer"
+   ],
+   "state": "Drawer open",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Groups list fits; blank gap above Routines (no defect beyond whitespace)",
+     "where": "y~660-730"
+    }
+   ]
+  },
+  "test-results/ui-inspect-390-chat.png": {
+   "purpose": "Mobile drawer + inspect panel (earlier layout; drawer open over work panel)",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate…",
+    "YOUR TEAM 5",
+    "Quill Writing",
+    "Scout Research",
+    "PAST TEAMMATES",
+    "Phase 2 lifecycle proof Deleted · saved conversation (x2)",
+    "GROUPS",
+    "Browser verified group 3 teammates",
+    "Private workspace",
+    "Owner Local workspace",
+    "File library",
+    "Background: ...tool must be terminal command and timeout at ...; hermbot-phase3-...; granted CSV ...22.csv using read_file; ...ount c…"
+   ],
+   "components": [
+    "drawer without scrim",
+    "work cards behind",
+    "close X"
+   ],
+   "state": "Drawer open over work panel",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Drawer left edge clipped: hermbot logo, search box and Quill/Scout avatars flush against x=0",
+     "where": "left edge"
+    },
+    {
+     "text": "Past teammates list cut off mid-item by Groups heading",
+     "where": "y~540"
+    },
+    {
+     "text": "File library button overlaps/crowds Owner row and is below it",
+     "where": "bottom y~790"
+    },
+    {
+     "text": "Drawer shows behind work panel, text fragments of cards visible",
+     "where": "right"
+    }
+   ]
+  },
+  "test-results/ui-inspect-390-navigation.png": {
+   "purpose": "Mobile work panel 'In this conversation' with drawer sliver",
+   "visible_text": [
+    "In this conversation",
+    "Work 10",
+    "Outputs 9",
+    "Completed",
+    "Inspect workSave as skill",
+    "On this first turn, your first tool must be terminal with this exact foreground command and timeout at least 15 seconds: python -c…",
+    "Scout owns this task",
+    "First call skill_view with name hermbot-phase3-report to load the enabled skill. Then propose a reviewed improvement to your user …",
+    "Your first tool call must read the granted CSV phase3-input-1791318046522.csv using read_file. Calculate the total of its Amount c…",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "left drawer sliver",
+    "right work panel",
+    "work cards",
+    "close X"
+   ],
+   "state": "Work panel open over remains of drawer",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "'Inspect work' and 'Save as skill' links render concatenated with no spacing ('Inspect workSave as skill')",
+     "where": "each card top"
+    },
+    {
+     "text": "Cards' text truncated with ellipsis",
+     "where": "cards"
+    },
+    {
+     "text": "Left drawer sliver and background fragments visible",
+     "where": "left edge x<70"
+    },
+    {
+     "text": "Tiny underlined link text",
+     "where": "cards"
+    }
+   ]
+  },
+  "test-results/ui-inspect-390-settings.png": {
+   "purpose": "Workspace settings modal (mobile)",
+   "visible_text": [
+    "Workspace settings",
+    "Manage your teammates, model providers and permissions.",
+    "Workspace",
+    "Providers",
+    "Teammates",
+    "Grants",
+    "Timezone",
+    "UTC",
+    "Default provider",
+    "Environment provider",
+    "Maximum teammates",
+    "10",
+    "Concurrent executions",
+    "3",
+    "Permitted tools",
+    "file",
+    "terminal",
+    "skills",
+    "memory",
+    "browser",
+    "computer_use",
+    "(green button cut off at bottom)"
+   ],
+   "components": [
+    "modal",
+    "tabs",
+    "inputs",
+    "select",
+    "fieldset checkboxes",
+    "button cut off"
+   ],
+   "state": "Workspace tab",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Primary save button cut off at modal bottom",
+     "where": "y~795"
+    },
+    {
+     "text": "Tab row tight; 'Grants' close to right edge",
+     "where": "y~193"
+    },
+    {
+     "text": "Last checkbox computer_use looks darker than others",
+     "where": "y~733"
+    }
+   ]
+  },
+  "test-results/ui-inspect-768-chat.png": {
+   "purpose": "Tablet portrait Scout chat with work panel",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate…",
+    "YOUR TEAM 5",
+    "Quill Writing",
+    "Scout Research",
+    "Sage Review",
+    "Phase 2 UI manager You coordinate c…",
+    "PAST TEAMMATES",
+    "Phase 2 lifecycle proof Deleted · saved con… (x2)",
+    "GROUPS",
+    "Browser verified group 3 teammates",
+    "Private workspace",
+    "Owner Local workspace",
+    "File library",
+    "Scout Research, evidence, and data analysis",
+    "In this conversation",
+    "Work 10",
+    "Outputs 9",
+    "Completed x4",
+    "Inspect workSave as skill",
+    "Scout owns this task",
+    "Scout 08:20 PM PHASE3_FINAL Total: 42",
+    "Scout 08:21 PM PHASE3_FINAL Total: 42",
+    "You 07:32 AM First call skill_view with name ...",
+    "Message Scout…",
+    "Coordinate team",
+    "@ Mention",
+    "Reference a skill",
+    "Your team works in the background. You stay in control.",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "sidebar",
+    "chat header",
+    "message list",
+    "work panel overlay with close X",
+    "composer"
+   ],
+   "state": "Work panel overlays right half covering chat",
+   "viewport": "768x1024",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Work panel covers half of chat and composer buttons (send button hidden)",
+     "where": "right half"
+    },
+    {
+     "text": "Inspect workSave as skill concatenated",
+     "where": "cards"
+    },
+    {
+     "text": "Owner row: 'Local workspace' wraps into two lines, crowded by icons",
+     "where": "sidebar bottom"
+    },
+    {
+     "text": "Browser verified group card cut off at bottom ('3 teammates' clipped)",
+     "where": "sidebar y~822"
+    },
+    {
+     "text": "Chat messages truncated behind panel",
+     "where": "center"
+    }
+   ]
+  },
+  "test-results/ui-inspect-desktop-chat.png": {
+   "purpose": "Desktop Scout empty chat with starter cards and work panel",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate…",
+    "YOUR TEAM 5",
+    "Quill Writing",
+    "Scout Research",
+    "Sage Review",
+    "PAST TEAMMATES",
+    "Phase 2 lifecycle proof Deleted · saved conversation",
+    "Phase 2 clone proof",
+    "GROUPS",
+    "Browser verified group 3 teammates",
+    "Private workspace",
+    "Owner Local workspace",
+    "File library",
+    "Scout Research, evidence, and data analysis",
+    "Ready",
+    "A LITTLE HELP, A LOT OF POSSIBILITY",
+    "What should Scout work on?",
+    "Give a teammate an outcome. They can work with the rest of your team and bring the result back here.",
+    "Research & write Turn evidence into a useful report",
+    "Analyze & check Work through data together",
+    "Coordinate the team Assign work and combine the results",
+    "Message Scout…",
+    "Coordinate team",
+    "@ Mention",
+    "Reference a skill",
+    "send · new line",
+    "In this conversation",
+    "Work 10",
+    "Outputs 9",
+    "Completed",
+    "Inspect workSave as skill",
+    "On this first turn, your first tool must be terminal with this exact foreground command and timeout at least 15 seconds: python -c…",
+    "Scout owns this task",
+    "First call skill_view with name hermbot-phase3-report ...",
+    "Your first tool call must read the granted CSV phase3-input-1791318046522.csv using read_file...",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "sidebar",
+    "header",
+    "hero empty state with 3 cards",
+    "composer",
+    "right work panel with cards"
+   ],
+   "state": "Empty conversation view",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "'Inspect workSave as skill' links concatenated without gap",
+     "where": "work cards"
+    },
+    {
+     "text": "'Phase 2 clone proof' past teammate cut off by Groups header",
+     "where": "sidebar y~590"
+    },
+    {
+     "text": "File library button sits below Owner row, crowding",
+     "where": "sidebar bottom"
+    },
+    {
+     "text": "Reference a skill select has dropdown arrow detached far from label",
+     "where": "composer y~837"
+    },
+    {
+     "text": "Fourth work card cut off at panel bottom",
+     "where": "right panel bottom"
+    },
+    {
+     "text": "Empty state with work 10 completed items contradictory",
+     "where": "center vs right"
+    }
+   ]
+  },
+  "test-results/ui-inspect-desktop-knowledge.png": {
+   "purpose": "Desktop Memory & skills modal (initial/unloaded state)",
+   "visible_text": [
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Curated memory",
+    "Skills",
+    "Find a skill",
+    "Create skill",
+    "Import SKILL.md",
+    "Save a completed workflow",
+    "Completed task",
+    "Choose completed work",
+    "Review workflow draft"
+   ],
+   "components": [
+    "blurred backdrop",
+    "modal",
+    "headings",
+    "input",
+    "buttons"
+   ],
+   "state": "Memory section empty, skill list empty/unrendered",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Curated memory and Skills headings stacked with no content beneath (sections empty/unrendered)",
+     "where": "y~337-361"
+    },
+    {
+     "text": "Create skill button is tall (~65px) vs Import SKILL.md short; mismatched sizes",
+     "where": "y~457-521"
+    },
+    {
+     "text": "Completed task select renders as plain text with no control border; label/value misaligned",
+     "where": "y~608-624"
+    },
+    {
+     "text": "Review workflow draft disabled low contrast",
+     "where": "y~661"
+    }
+   ]
+  },
+  "test-results/ui-inspect-desktop-library.png": {
+   "purpose": "Desktop File library modal loading",
+   "visible_text": [
+    "File library",
+    "Keep files and versioned outputs, share selected versions with conversations, and find prior work.",
+    "Files",
+    "Search prior work",
+    "Search",
+    "Filename or document text",
+    "Conversation All files · new uploads stay private",
+    "Upload a file",
+    "https://…",
+    "Import link",
+    "Loading files…"
+   ],
+   "components": [
+    "blurred backdrop",
+    "modal",
+    "tab buttons",
+    "search input",
+    "select",
+    "upload button",
+    "URL input"
+   ],
+   "state": "Loading files state",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "'Loading files…' with nothing else, no spinner",
+     "where": "y~635"
+    },
+    {
+     "text": "Backdrop text shows raw JSON fragments (blurred)",
+     "where": "backdrop"
+    },
+    {
+     "text": "Conversation select label and value tiny, arrow far right of narrow value",
+     "where": "y~480"
+    },
+    {
+     "text": "Upload a file button styled as full-width input-like box",
+     "where": "y~525"
+    }
+   ]
+  },
+  "test-results/ui-inspect-desktop-pdf.png": {
+   "purpose": "Desktop File library modal with search result phase3-preview.pdf",
+   "visible_text": [
+    "File library",
+    "Keep files and versioned outputs, share selected versions with conversations, and find prior work.",
+    "Files",
+    "Search prior work",
+    "Search",
+    "phase3-preview.pdf",
+    "Conversation All files · new uploads stay private",
+    "Loading files…",
+    "phase3-preview.pdf",
+    "v1 · 0.6 KB · upload"
+   ],
+   "components": [
+    "modal",
+    "tabs",
+    "search field filled",
+    "select",
+    "stale loading text",
+    "file row"
+   ],
+   "state": "Search filtered to a file; Loading files… still showing above the result",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "'Loading files…' text remains displayed alongside loaded result",
+     "where": "y~536"
+    },
+    {
+     "text": "Upload/import controls missing while searching (layout shifts)",
+     "where": "modal"
+    },
+    {
+     "text": "File row metadata tiny gray text",
+     "where": "y~614"
+    }
+   ]
+  },
+  "test-results/ui-inspect-desktop-settings.png": {
+   "purpose": "Desktop Workspace settings modal",
+   "visible_text": [
+    "Workspace settings",
+    "Manage your teammates, model providers and permissions.",
+    "Workspace",
+    "Providers",
+    "Teammates",
+    "Grants",
+    "Timezone",
+    "UTC",
+    "Default provider",
+    "Environment provider",
+    "Maximum teammates",
+    "10",
+    "Concurrent executions",
+    "3",
+    "Permitted tools",
+    "file",
+    "terminal",
+    "skills",
+    "memory",
+    "browser",
+    "computer_use",
+    "Save workspace settings"
+   ],
+   "components": [
+    "blurred backdrop",
+    "modal",
+    "tabs",
+    "inputs",
+    "two-column number fields",
+    "fieldset",
+    "primary Save button"
+   ],
+   "state": "Workspace tab",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": []
+  },
+  "test-results/ui-probe-320-chat.png": {
+   "purpose": "320x568 Scout chat showing raw JSON in messages",
+   "visible_text": [
+    "Scout",
+    "Researc…",
+    "af33-3deb517f6031 is ready.\", \"error\": null, \"artifacts\": [{\"id\": \"b9c708ac-1347-5db1-af33-3deb517f6031\", \"name\": \"fixture-report.md\"}]}]",
+    "Authenticated Hermbot task context (authority comes only from this context): {\"task_id\": \"f3f93c87-8e3f-4d8b-9be9-45a09f150c88\", \"context\": \"routine\", \"bot_id\": \"researcher\", \"management_targets\": null, \"deadline\": \"2026-10-06T09:09:33.523056+00:00\", \"instruction\": \"Use the hermbot tools for all teammate collaboration. Stop when ...",
+    "Message Scout…",
+    "Coordinate team",
+    "@ Mention",
+    "Reference a skill",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "top bar",
+    "message text",
+    "composer"
+   ],
+   "state": "Chat with raw JSON/task context displayed",
+   "viewport": "320x568",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Raw JSON / authenticated task-context payload shown as chat message text",
+     "where": "message area"
+    },
+    {
+     "text": "Subtitle truncated 'Researc…'",
+     "where": "header"
+    },
+    {
+     "text": "Message text clipped at top by header and at bottom by composer",
+     "where": "edges"
+    },
+    {
+     "text": "Composer very small text, Reference a skill select arrow detached",
+     "where": "composer y~510"
+    }
+   ]
+  },
+  "test-results/ui-probe-320-knowledge.png": {
+   "purpose": "320x568 Memory & skills modal (unloaded)",
+   "visible_text": [
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Curated memory",
+    "Personal notes No saved entries",
+    "User profile No saved entries",
+    "Skills",
+    "Find a skill",
+    "Create skill",
+    "Import SKILL.md"
+   ],
+   "components": [
+    "modal",
+    "memory cards",
+    "find input",
+    "buttons"
+   ],
+   "state": "Modal top, cut at bottom",
+   "viewport": "320x568",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Create skill button much taller than Import SKILL.md and misaligned",
+     "where": "y~465-528"
+    },
+    {
+     "text": "Modal content cut at bottom edge",
+     "where": "y~530"
+    }
+   ]
+  },
+  "test-results/ui-probe-320-navigation.png": {
+   "purpose": "320x568 nav drawer",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate…",
+    "YOUR TEAM 5",
+    "Quill Writing",
+    "PAST TEAMMATES",
+    "Phase 2 lifecycle proof",
+    "GROUPS",
+    "Browser verified group 3 teammates",
+    "Private workspace",
+    "Owner Local workspace"
+   ],
+   "components": [
+    "drawer",
+    "scrim",
+    "lists",
+    "footer"
+   ],
+   "state": "Drawer open; only Quill listed",
+   "viewport": "320x568",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Scout and Sage missing; list clipped - Quill shown then Past teammates item cut off at 'Phase 2 lifecycle proof' (subtitle clipped)",
+     "where": "y~320-345"
+    },
+    {
+     "text": "Team list scroll areas truncated on short screen",
+     "where": "drawer"
+    }
+   ]
+  },
+  "test-results/ui-probe-390-chat.png": {
+   "purpose": "390px Scout chat with raw task-context JSON and long You message",
+   "visible_text": [
+    "Scout",
+    "Research, evidence, an…",
+    "\"name\": \"fixture-report.md\"}]}]",
+    "Authenticated Hermbot task context (authority comes only from this context): {\"task_id\": \"f3f93c87-8e3f-4d8b-9be9-45a09f150c88\", \"context\": \"routine\", \"bot_id\": \"researcher\", \"management_targets\": null, \"deadline\": \"2026-10-06T09:09:33.523056+00:00\", \"instruction\": \"Use the hermbot tools for all teammate collaboration. Stop when asked. End your turn while waiting for children or reviews.\"}",
+    "Reply",
+    "You 08:20 PM",
+    "Your first tool call must read the granted CSV phase3-input-1791318035813.csv using read_file. Calculate the total of its Amount column. Then call hermbot_publish exactly twice ... Finish with hermbot_finish containing PHASE3_FINAL and the total. Do not delegate, change settings... (cut)",
+    "Message Scout…",
+    "Coordinate team",
+    "@ Mention",
+    "Reference a skill",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "top bar",
+    "messages",
+    "composer"
+   ],
+   "state": "Chat with raw JSON message",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Raw JSON / authenticated task-context payload rendered as chat message",
+     "where": "upper message"
+    },
+    {
+     "text": "Subtitle truncated 'Research, evidence, an…'",
+     "where": "header"
+    },
+    {
+     "text": "Last message text cut under composer",
+     "where": "y~650"
+    }
+   ]
+  },
+  "test-results/ui-probe-390-knowledge.png": {
+   "purpose": "390px Memory & skills modal with skill list",
+   "visible_text": [
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Curated memory",
+    "Personal notes No saved entries",
+    "User profile No saved entries",
+    "Skills",
+    "Find a skill",
+    "Create skill",
+    "Import SKILL.md",
+    "claude-code Delegate coding to Claude Code CLI (features, PRs). Enable",
+    "codex ... Enable",
+    "computer-use ... Enable",
+    "hermes-agent Use, configure, theme, extend, and orchestrate (cut) Enable"
+   ],
+   "components": [
+    "modal",
+    "cards",
+    "find input",
+    "buttons",
+    "skill list"
+   ],
+   "state": "Memory & skills modal",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Create skill button taller than Import SKILL.md, mismatched",
+     "where": "y~457-521"
+    },
+    {
+     "text": "hermes-agent card cut at modal bottom",
+     "where": "y~790"
+    },
+    {
+     "text": "Modal content cut off without visible scroll affordance",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/ui-probe-390-navigation.png": {
+   "purpose": "390px nav drawer",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate…",
+    "YOUR TEAM 5",
+    "Quill Writing",
+    "Scout Research",
+    "PAST TEAMMATES",
+    "Phase 2 lifecycle proof Deleted · saved conversation (x2)",
+    "GROUPS",
+    "Browser verified group 3 teammates",
+    "Private workspace",
+    "Owner Local workspace",
+    "File library"
+   ],
+   "components": [
+    "drawer",
+    "scrim with chat fragments",
+    "footer"
+   ],
+   "state": "Drawer open",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Third past teammate cut mid-item above Groups",
+     "where": "y~540"
+    },
+    {
+     "text": "Sage missing from team list (only Quill, Scout visible of 5) - list height-constrained",
+     "where": "your team"
+    },
+    {
+     "text": "File library button below Owner row, crowded",
+     "where": "y~773-813"
+    }
+   ]
+  },
+  "test-results/ui-probe-768-chat.png": {
+   "purpose": "768x1024 Scout chat, tablet, no right panel",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate…",
+    "YOUR TEAM 5",
+    "Quill Writing",
+    "Scout Research",
+    "Sage Review",
+    "Phase 2 UI manager You coordinate c…",
+    "PAST TEAMMATES",
+    "Phase 2 lifecycle proof Deleted · saved con… (x2)",
+    "GROUPS",
+    "Browser verified group 3 teammates (cut)",
+    "Private workspace",
+    "Owner Local workspace",
+    "File library",
+    "Scout Research, evidence, and data analysis",
+    "Ready",
+    "PHASE3_FINAL Total: 42 (x2)",
+    "You 07:32 AM First call skill_view with name hermbot-phase3-report to load the enabled skill. ... PHASE3_LEARNING_SAVED. Do not apply the memory yourself, access other files, delegate or request another review.",
+    "Message Scout…",
+    "Coordinate team",
+    "@ Mention",
+    "Reference a skill",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "sidebar",
+    "header",
+    "messages",
+    "composer"
+   ],
+   "state": "Tablet chat",
+   "viewport": "768x1024",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Browser verified group card clipped at bottom ('3 teammates' cut off)",
+     "where": "sidebar y~822"
+    },
+    {
+     "text": "Owner row 'Local workspace' wraps in two lines",
+     "where": "sidebar y~922"
+    },
+    {
+     "text": "Reference a skill select arrow detached from label",
+     "where": "composer y~961"
+    },
+    {
+     "text": "Top message cut at header",
+     "where": "y~88"
+    }
+   ]
+  },
+  "test-results/ui-probe-844-chat.png": {
+   "purpose": "844x390 landscape Scout chat",
+   "visible_text": [
+    "hermbot",
+    "Find a teammate…",
+    "YOUR TEAM 5",
+    "Scout Research",
+    "PAST TEAMMATES",
+    "Phase 2 lifecycle proof (cut)",
+    "GROUPS",
+    "Scout",
+    "Research, evidence, and data analysis",
+    "Ready",
+    "PHASE3_LEARNING_SAVED",
+    "Reply",
+    "Message Scout…",
+    "Coordinate team",
+    "@ Mention",
+    "Reference a skill",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "sidebar",
+    "header",
+    "tiny message area",
+    "tall composer"
+   ],
+   "state": "Landscape short viewport",
+   "viewport": "844x390",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Composer takes ~half the viewport height leaving ~100px for messages",
+     "where": "y~200-345"
+    },
+    {
+     "text": "Sidebar list clipped: only Scout shown; Phase 2 item cut",
+     "where": "sidebar"
+    },
+    {
+     "text": "Sidebar footer (Owner, File library) not visible",
+     "where": "bottom left"
+    }
+   ]
+  },
+  "test-results/ui-probe-desktop-chat.png": {
+   "purpose": "Desktop Scout chat showing raw protocol fixture/JSON message",
+   "visible_text": [
+    "hermbot",
+    "YOUR TEAM 5",
+    "Quill Writing",
+    "Scout Research",
+    "Sage Review",
+    "PAST TEAMMATES",
+    "Phase 2 lifecycle proof Deleted · saved conversation (x2)",
+    "Phase 2 clone proof",
+    "GROUPS",
+    "Browser verified group 3 teammates",
+    "Scout Research, evidence, and data analysis",
+    "Ready",
+    "You 08:38 AM [POC:research] Research the supplied material and ask Quill to produce the report.",
+    "Scout 08:38 AM [Protocol fixture] Assignments accepted; yielding to the worker.",
+    "You 08:43 AM [POC:research] Ask Quill to write.",
+    "Quill 08:43 AM [Protocol fixture] Artifact bd1ed456-b459-5fbf-bd3f-dc216d9bdd3d is ready.",
+    "Scout 08:43 AM [Protocol fixture] Completed and combined the supplied task updates. Your delegated work has updates. Inspect failures, reconcile before reassigning, and combine results when done. [{\"id\": \"47fcab99-3314-4610-9aa6-62226e7b77ef\", \"bot_id\": \"writer\", \"status\": \"completed\", \"output\": \"[Protocol fixture] Artifact ... is ready.\", \"error\":",
+    "In this conversation Work 10 Outputs 9",
+    "Completed",
+    "Inspect workSave as skill",
+    "Scout owns this task",
+    "File library",
+    "Each teammate has its own private workspace.",
+    "Message Scout…",
+    "Coordinate team",
+    "@ Mention",
+    "Reference a skill",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "sidebar",
+    "header",
+    "message list",
+    "composer",
+    "work panel"
+   ],
+   "state": "Chat with fixture messages",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Raw JSON array rendered inside Scout message text",
+     "where": "bottom message y~640-690"
+    },
+    {
+     "text": "Last message clipped by composer top edge",
+     "where": "y~700"
+    },
+    {
+     "text": "'Inspect workSave as skill' concatenated links",
+     "where": "work cards"
+    },
+    {
+     "text": "'Phase 2 clone proof' cut off by Groups heading",
+     "where": "sidebar y~590"
+    },
+    {
+     "text": "Fourth work card clipped at panel bottom",
+     "where": "right panel"
+    }
+   ]
+  },
+  "test-results/ui-probe-desktop-knowledge.png": {
+   "purpose": "Desktop Memory & skills modal with skills list",
+   "visible_text": [
+    "Scout · Memory & skills",
+    "Review native memory, manage skill versions, and turn completed work into a reusable procedure.",
+    "Curated memory",
+    "Personal notes No saved entries",
+    "User profile No saved entries",
+    "Skills",
+    "Find a skill",
+    "Create skill",
+    "Import SKILL.md",
+    "claude-code Delegate coding to Claude Code CLI (features, PRs). Enable",
+    "codex Delegate coding to OpenAI Codex CLI (features, PRs). Enable",
+    "computer-use Drive the desktop background-first; escalate on signal. Enable",
+    "hermes-agent Use, configure, theme, extend, and orchestrate Hermes Agent. Enable",
+    "opencode (cut off)"
+   ],
+   "components": [
+    "blurred backdrop",
+    "modal",
+    "cards",
+    "skill list"
+   ],
+   "state": "Modal scrolled/clipped at bottom",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "opencode card cut off at modal bottom",
+     "where": "y~830-855"
+    },
+    {
+     "text": "Create skill button much taller than Import SKILL.md",
+     "where": "y~465-528"
+    },
+    {
+     "text": "Find a skill label and input spacing inconsistent (label sits tight over input)",
+     "where": "y~408"
+    }
+   ]
+  },
+  "test-results/ui-probe-desktop-pdf.png": {
+   "purpose": "Desktop file preview modal for phase3-preview.pdf with blank viewer",
+   "visible_text": [
+    "phase3-preview.pdf",
+    "Keep files and versioned outputs, share selected versions with conversations, and find prior work.",
+    "Files",
+    "Search prior work",
+    "Search",
+    "phase3-preview.pdf",
+    "Conversation All files · new uploads stay private",
+    "Version 1 · 0.6 KB · upload",
+    "SHA-256: 91075dd46502afbd48191b5c69b7e75833364637adb01882ce38497359b01127"
+   ],
+   "components": [
+    "blurred backdrop",
+    "modal with file title",
+    "tabs",
+    "search",
+    "select",
+    "metadata",
+    "large blank preview frame"
+   ],
+   "state": "PDF preview area blank",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "PDF preview frame is empty/blank white (no rendered content or error)",
+     "where": "y~413-855"
+    },
+    {
+     "text": "Modal title replaced by filename while description still says 'Keep files...'",
+     "where": "y~91-148"
+    },
+    {
+     "text": "Preview frame runs off modal bottom",
+     "where": "y~855"
+    },
+    {
+     "text": "Metadata tiny gray text",
+     "where": "y~362-386"
+    }
+   ]
+  },
+  "test-results/work-completion-fixed-1440.png": {
+   "purpose": "Desktop Quill chat with work panel: unfinished result and finished work",
+   "visible_text": [
+    "hermbot",
+    "YOUR TEAM 3",
+    "Scout Research",
+    "Quill Writing",
+    "Sage Review",
+    "PAST TEAMMATES 14",
+    "GROUPS 4",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Anthropic ipo",
+    "Connections",
+    "File library",
+    "Private workspace",
+    "Owner Local workspace",
+    "Quill Writing, synthesis, and clear deliverables",
+    "Ready",
+    "You 09:27 AM write about the dawn of ai",
+    "Quill 09:27 AM The dawn of AI",
+    "Before artificial intelligence had a name, it lived in a question: Could a machine learn to think? ... What should machines help us do, and how do we ensure that their growing abilities serve people well?",
+    "You 08:36 AM",
+    "Message Quill…",
+    "In this conversation",
+    "Work 7",
+    "Outputs 0",
+    "Needs attention",
+    "Unfinished result layout check",
+    "Quill owns this work",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "A required result still needs access",
+    "Retry task",
+    "Finished work (6)",
+    "Completed",
+    "Find a bot with Slack and send the message",
+    "1 of 1 required results ready",
+    "Send the exact requested Slack message to Manik",
+    "Ready",
+    "Confirmed by provider",
+    "3 assignments and revisions in this work item",
+    "Execution note",
+    "Completed",
+    "write about the dawn of ai",
+    "Historical completion · required results were not recorded"
+   ],
+   "components": [
+    "sidebar",
+    "chat",
+    "work panel with cards, expanded details, retry button"
+   ],
+   "state": "Work panel with needs-attention and finished items",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Inconsistent font sizes in work cards: some meta tiny (9px), summary lines larger (13px), 'Historical completion · required results were not recorded' large gray text",
+     "where": "right panel y~800-850"
+    },
+    {
+     "text": "Last card clipped at panel bottom by footer",
+     "where": "y~850"
+    },
+    {
+     "text": "Anthropic ipo sidebar item cut off by Connections button",
+     "where": "sidebar y~670-690"
+    },
+    {
+     "text": "Last chat message clipped by composer",
+     "where": "y~700"
+    }
+   ]
+  },
+  "test-results/work-completion-fixed-320.png": {
+   "purpose": "320px work panel drawer",
+   "visible_text": [
+    "In this conversation",
+    "Work 7",
+    "Outputs 0",
+    "Needs attention",
+    "Unfinished result layout check",
+    "Quill owns this work",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "A required result still needs access",
+    "Retry task",
+    "Finished work (6)",
+    "Removed work (1)",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "left dimmed strip",
+    "work panel",
+    "cards",
+    "collapsed groups",
+    "close X"
+   ],
+   "state": "Panel open",
+   "viewport": "320x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Retry task button overlaps/abuts error text 'A required result still needs access'",
+     "where": "y~283-333"
+    },
+    {
+     "text": "Panel covers nearly all screen; only 32px strip of app",
+     "where": "left"
+    },
+    {
+     "text": "Tiny meta text",
+     "where": "cards"
+    }
+   ]
+  },
+  "test-results/work-completion-fixed-390.png": {
+   "purpose": "390px work panel drawer with sidebar sliver",
+   "visible_text": [
+    "In this conversation",
+    "Work 7",
+    "Outputs 0",
+    "Needs attention",
+    "Unfinished result layout check",
+    "Quill owns this work",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "A required result still needs access",
+    "Retry task",
+    "Finished work (6)",
+    "Removed work (1)",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "sidebar sliver at left",
+    "work panel",
+    "cards",
+    "close X (highlighted)"
+   ],
+   "state": "Panel open",
+   "viewport": "390x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Retry task button tight against the error text above",
+     "where": "y~283-333"
+    },
+    {
+     "text": "Sidebar sliver at left shows cropped controls and chat fragments",
+     "where": "x<70"
+    },
+    {
+     "text": "Close X shows filled background (focus state) ",
+     "where": "top right"
+    }
+   ]
+  },
+  "test-results/work-controller-1440.png": {
+   "purpose": "Desktop Scout chat, work panel with revision history",
+   "visible_text": [
+    "Scout Working",
+    "Data analysis",
+    "Working",
+    "Scout owns this work",
+    "Request history · revision 2",
+    "Revision 2: Include uncertainty estimates",
+    "Recorded 10/12/2026, 7:19:06 PM",
+    "Your updated instructions are recorded and awaiting delivery to the affected teammates.",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Redirect",
+    "Stop task",
+    "Work 1",
+    "Outputs 11",
+    "[POC:research] ... messages with raw JSON '[{\"id\": \"47fcab99-...\", \"bot_id\": \"writer\", \"status\": \"completed\", ...}]'"
+   ],
+   "components": [
+    "sidebar",
+    "chat",
+    "work panel card with revision history",
+    "raw JSON message"
+   ],
+   "state": "Revision-2 instructions recorded",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Revision history heading/body use much larger font than surrounding card text (inconsistent typography)",
+     "where": "right panel y~235-325"
+    },
+    {
+     "text": "Raw JSON array in Scout message",
+     "where": "chat y~600-670"
+    },
+    {
+     "text": "Redirect and Stop task controls tiny text",
+     "where": "y~460"
+    },
+    {
+     "text": "Last chat message clipped by composer",
+     "where": "y~690-700"
+    }
+   ]
+  },
+  "test-results/work-controller-390.png": {
+   "purpose": "390px work panel over shifted sidebar",
+   "visible_text": [
+    "this conversation (clipped)",
+    "Work 1",
+    "Outputs 11",
+    "Working",
+    "Data analysis",
+    "Scout owns this work",
+    "Request history · revision 2",
+    "Your updated instructions are recorded and awaiting delivery to the affected teammates.",
+    "0 of 1 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Redirect",
+    "Stop task",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "sidebar pushed left (clipped)",
+    "work panel",
+    "close X"
+   ],
+   "state": "Panel open",
+   "viewport": "390x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Work panel's left edge cuts content: 'In this conversation' shown as 'his conversation', 'Work' as 'rk', 'Working' status dot clipped, 'Scout owns' clipped",
+     "where": "left of panel x~100"
+    },
+    {
+     "text": "Sidebar visible partially shifted off screen, labels clipped ('ai', 'petitions')",
+     "where": "left"
+    },
+    {
+     "text": "Request history heading larger font than the rest",
+     "where": "y~233"
+    }
+   ]
+  },
+  "test-results/work-items-1440.png": {
+   "purpose": "Desktop project chat with finished work items",
+   "visible_text": [
+    "Scout Research",
+    "Quill Writing",
+    "Sage Review",
+    "GROUPS 3",
+    "The dawn of ai",
+    "Kaggle competitions",
+    "Work item acceptanc… (cut off)",
+    "Work item acceptance 0209dc34",
+    "Scout · Quill",
+    "Ready",
+    "Scout 03:22 PM You're welcome!",
+    "You 03:22 PM Create a separate report listing two ways to welcome a new teammate. Publish welcoming.md using only these ideas: introduce their colleagues and share a starter checklist. Do not revise the previous report. Do not delegate or use connected applications, browser or terminal.",
+    "Scout 03:22 PM Published the separate welcoming.md report as version 1 ... Artifact ID: 262265f7-cb7e-508c-aef5-d1ecce05ed44. The previous team-organization.md report was not changed.",
+    "You 03:26 PM Revise the team-organization.md report again: add a brief concluding sentence. ...",
+    "To Scout",
+    "Work 2",
+    "Outputs 5",
+    "Finished work (2)",
+    "Completed",
+    "Write short team organization report",
+    "Scout owns this work",
+    "Inspect work",
+    "Save as skill",
+    "Remove from work list",
+    "5 assignments and revisions in this work item",
+    "team-organization.md",
+    "Create welcoming report",
+    "welcoming.md"
+   ],
+   "components": [
+    "sidebar",
+    "chat",
+    "work panel with Finished work list"
+   ],
+   "state": "Completed work items",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Selected group 'Work item acceptanc…' clipped by Connections button at sidebar bottom",
+     "where": "sidebar y~652-685"
+    },
+    {
+     "text": "Larger gray summary text '5 assignments and revisions...' inconsistent with tiny meta text",
+     "where": "right panel y~315"
+    }
+   ]
+  },
+  "test-results/work-items-390.png": {
+   "purpose": "390px work items panel",
+   "visible_text": [
+    "In this conversation",
+    "Work 2",
+    "Outputs 5",
+    "Finished work (2)",
+    "Completed",
+    "Write short team organization report",
+    "Scout owns this work",
+    "Inspect work",
+    "Save as skill",
+    "Remove from work list",
+    "5 assignments and revisions in this work item",
+    "team-organization.md",
+    "Create welcoming report",
+    "welcoming.md",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "dimmed chat on left",
+    "work panel",
+    "cards",
+    "close X"
+   ],
+   "state": "Panel open",
+   "viewport": "390x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Panel covers ~80% of width, chat text fragments cut by panel edge",
+     "where": "left strip"
+    },
+    {
+     "text": "Tiny meta text 9px and low-contrast links",
+     "where": "cards"
+    }
+   ]
+  },
+  "test-results/work-outcomes-1440.png": {
+   "purpose": "Desktop Scout chat with work panel showing required results",
+   "visible_text": [
+    "Scout Needs answer",
+    "Research and delivery",
+    "Needs attention",
+    "Scout owns this work",
+    "1 of 2 required results ready",
+    "Research report Ready Reported by bot",
+    "Slack delivery Blocked Awaiting recipient and exact approval",
+    "Remove this requirement",
+    "Inspect work",
+    "Remove from work list",
+    "Redirect",
+    "Stop task",
+    "Work 1",
+    "Outputs 11",
+    "Scout 08:43 AM [Protocol fixture] Completed and combined ... [{\"id\": \"47fcab99-...\", \"bot_id\": \"writer\" ...}]"
+   ],
+   "components": [
+    "sidebar",
+    "chat",
+    "work panel card with required results"
+   ],
+   "state": "Needs attention with one blocked result",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Raw JSON array in Scout message",
+     "where": "chat y~630-700"
+    },
+    {
+     "text": "Last message clipped under composer",
+     "where": "y~695"
+    },
+    {
+     "text": "Tiny meta text ('Reported by bot', links)",
+     "where": "right panel"
+    }
+   ]
+  },
+  "test-results/work-outcomes-390.png": {
+   "purpose": "390px work panel over shifted sidebar (outcomes)",
+   "visible_text": [
+    "his conversation (clipped)",
+    "Work 1",
+    "Outputs 11",
+    "Needs attention",
+    "Research and delivery",
+    "Scout owns this work",
+    "1 of 2 required results ready",
+    "Inspect work",
+    "Remove from work list",
+    "Redirect",
+    "Stop task",
+    "Each teammate has its own private workspace."
+   ],
+   "components": [
+    "sidebar pushed left",
+    "work panel",
+    "close X"
+   ],
+   "state": "Panel open",
+   "viewport": "390x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Left edge of panel clipped: 'his conversation', 'rk', dot of status cut, 'cout owns this work', 'edirect'",
+     "where": "x~100"
+    },
+    {
+     "text": "Sidebar partially visible, labels clipped",
+     "where": "left"
+    }
+   ]
+  },
+  "test-results/phase54-inspection/desktop-fold.jpg": {
+   "purpose": "Desktop Attention modal in error/refresh state",
+   "visible_text": [
+    "Attention",
+    "Questions, reviews and results from your teammates.",
+    "Needs you",
+    "Updates",
+    "History",
+    "Mark visible read",
+    "27 need your response · 28 unread updates",
+    "Attention is refreshing; try again shortly Retry",
+    "← Back to list",
+    "Quill 21:45 The second attempt also failed; the follow-up \"you got surprized huh, just wait.\" was not sent. Slack returned a definitive failed receipt (operation_id 157d3882-247d-499c-a9d3-4af58e542c33, result null): \"Provider endpoint must resolve to a public address.\" ... evidence: two failed provider receipts.",
+    "Attention 28 unread · 27 need you",
+    "Routines",
+    "Owner Local workspace",
+    "In this conversation",
+    "Work 8",
+    "Outputs 0",
+    "Finished work (8)",
+    "Removed work (1)",
+    "Message Quill…",
+    "Coordinate team",
+    "@ Mention"
+   ],
+   "components": [
+    "sidebar",
+    "header",
+    "dim scrim",
+    "small modal",
+    "right panel"
+   ],
+   "state": "Attention refresh failed/inline retry message, empty detail below",
+   "viewport": "1440x900",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "'Retry' link is tiny and styled like body text beside the refresh message",
+     "where": "modal y~507"
+    },
+    {
+     "text": "'Back to list' shown but no list/detail content under it (empty state)",
+     "where": "modal y~575"
+    },
+    {
+     "text": "Mark visible read appears disabled",
+     "where": "modal top right"
+    }
+   ]
+  },
+  "test-results/phase54-inspection/desktop-page-01.jpg": {
+   "purpose": "Full-page capture (1600x500) of Attention modal; right 800px blank gray",
+   "visible_text": [
+    "Attention",
+    "Questions, reviews and results from your teammates.",
+    "Needs you",
+    "Updates",
+    "History",
+    "Mark visible read",
+    "27 need your response · 28 unread updates",
+    "Attention is refreshing; try again shortly Retry",
+    "← Back to list",
+    "Quill 21:46 The second attempt also failed ...",
+    "In this conversation Work 8 Outputs 0",
+    "Finished work (8)",
+    "Removed work (1)",
+    "Attention 28 unread · 27 need you",
+    "Routines",
+    "Owner Local workspace"
+   ],
+   "components": [
+    "app screenshot occupying left 800px",
+    "gray blank canvas right half",
+    "modal"
+   ],
+   "state": "Same refresh error state, downscaled",
+   "viewport": "1600x500",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Right half of the screenshot (x>800) is flat gray empty canvas - capture artifact",
+     "where": "right half"
+    },
+    {
+     "text": "Modal text very small due to downscale",
+     "where": "modal"
+    }
+   ]
+  },
+  "test-results/phase54-inspection/mobile-320-fold.jpg": {
+   "purpose": "320x200 fold crop of Attention modal header",
+   "visible_text": [
+    "Attention",
+    "Questions, reviews and results from your teammates.",
+    "Needs you",
+    "Updates"
+   ],
+   "components": [
+    "modal header",
+    "close X",
+    "tabs"
+   ],
+   "state": "Only the top of the modal in a 200px-high viewport",
+   "viewport": "320x200",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Viewport only 200px tall: tabs cut off at bottom ('History' not visible), body not visible",
+     "where": "bottom"
+    },
+    {
+     "text": "Modal edge touches the viewport top",
+     "where": "top"
+    }
+   ]
+  },
+  "test-results/phase54-inspection/mobile-320-page-01.jpg": {
+   "purpose": "1560x244 page capture of 320px Attention modal with blank gray right area",
+   "visible_text": [
+    "Attention",
+    "Questions, reviews and results from your teammates.",
+    "Needs you",
+    "Updates"
+   ],
+   "components": [
+    "modal at far left",
+    "gray empty canvas"
+   ],
+   "state": "Short capture",
+   "viewport": "1560x244",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Right ~1170px flat gray canvas (capture artifact)",
+     "where": "right"
+    },
+    {
+     "text": "Modal and tabs cut off at bottom of capture; History tab not visible",
+     "where": "bottom"
+    }
+   ]
+  },
+  "test-results/phase54-inspection/mobile-390-fold.jpg": {
+   "purpose": "390x844 Attention modal detail view with unread count",
+   "visible_text": [
+    "Attention",
+    "Questions, reviews and results from your teammates.",
+    "Needs you",
+    "Updates",
+    "History",
+    "Mark visible read",
+    "27 need your response · 28 unread updates",
+    "← Back to list",
+    "Question needs your response",
+    "Continue the local Phase 5.4 notification demonstration?",
+    "This request is resolved or no longer actionable.",
+    "Reviewed local attention demonstration complete. ... 42+110 returned 152. Both required contributions are fulfilled; no external changes were made.",
+    "Your team works in the background. You stay in control."
+   ],
+   "components": [
+    "top bar",
+    "modal",
+    "tabs",
+    "Mark visible read own row",
+    "close X"
+   ],
+   "state": "Detail view; action buttons below fold",
+   "viewport": "390x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Mark visible read wraps to own row, disabled low contrast",
+     "where": "y~250"
+    },
+    {
+     "text": "Open work / Mark read buttons not visible: only divider line at modal bottom, content cut",
+     "where": "y~795"
+    },
+    {
+     "text": "Header subtitle covered by modal",
+     "where": "top"
+    }
+   ]
+  },
+  "test-results/phase54-inspection/mobile-390-page-01.jpg": {
+   "purpose": "1560x844 page capture of 390px Attention modal with blank gray right area",
+   "visible_text": [
+    "Attention",
+    "Questions, reviews and results from your teammates.",
+    "Needs you",
+    "Updates",
+    "History",
+    "Mark visible read",
+    "27 need your response · 28 unread updates",
+    "← Back to list",
+    "Question needs your response",
+    "Continue the local Phase 5.4 notification demonstration?",
+    "This request is resolved or no longer actionable.",
+    "Reviewed local attention demonstration complete... were made."
+   ],
+   "components": [
+    "modal left",
+    "gray empty canvas"
+   ],
+   "state": "Same as mobile-390-fold in wide capture",
+   "viewport": "1560x844",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Right 1170px flat gray canvas (capture artifact)",
+     "where": "right"
+    },
+    {
+     "text": "Action buttons cut off at modal bottom",
+     "where": "y~795"
+    }
+   ]
+  },
+  "test-results/phase54-inspection/tablet-fold.jpg": {
+   "purpose": "768x1024 Attention modal detail view",
+   "visible_text": [
+    "Attention",
+    "Questions, reviews and results from your teammates.",
+    "Needs you",
+    "Updates",
+    "History",
+    "Mark visible read",
+    "27 need your response · 28 unread updates",
+    "← Back to list",
+    "Question needs your response",
+    "Continue the local Phase 5.4 notification demonstration?",
+    "This request is resolved or no longer actionable.",
+    "Reviewed local attention demonstration complete. ... no external changes were made.",
+    "Open work",
+    "Mark read",
+    "Quill Writing, synthesis, and clear deliverables",
+    "Ready",
+    "try again",
+    "Message Quill…",
+    "Coordinate team",
+    "@ Mention"
+   ],
+   "components": [
+    "top bar",
+    "scrim",
+    "modal",
+    "composer"
+   ],
+   "state": "Detail view with buttons",
+   "viewport": "768x1024",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Resolved request still offers primary 'Open work' button",
+     "where": "modal y~748"
+    },
+    {
+     "text": "Background chat text bleeds at modal edges (right side fragments)",
+     "where": "y~220-290"
+    }
+   ]
+  },
+  "test-results/phase54-inspection/tablet-page-01.jpg": {
+   "purpose": "1536x683 page capture of 768px Attention modal, blank gray right half",
+   "visible_text": [
+    "Attention",
+    "Questions, reviews and results from your teammates.",
+    "Needs you",
+    "Updates",
+    "History",
+    "Mark visible read",
+    "27 need your response · 28 unread updates",
+    "← Back to list",
+    "Question needs your response",
+    "Continue the local Phase 5.4 notification demonstration?",
+    "This request is resolved or no longer actionable.",
+    "Reviewed local attention demonstration complete...",
+    "Open work",
+    "Mark read",
+    "Quill Writing, synthesis, and clear deliverables",
+    "Ready",
+    "try again"
+   ],
+   "components": [
+    "app capture left 512px",
+    "gray canvas",
+    "modal"
+   ],
+   "state": "Downscaled capture",
+   "viewport": "1536x683",
+   "theme": "light",
+   "defects": [
+    {
+     "text": "Right ~1024px flat gray canvas (capture artifact)",
+     "where": "right"
+    },
+    {
+     "text": "Modal text small due to scaling",
+     "where": "modal"
+    },
+    {
+     "text": "Modal left edge near viewport edge (x~40) with top bar partially behind",
+     "where": "left"
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,2430 @@
+{
+ "features": {
+  "feature:connectors": {
+   "title": "Connected applications (Google, Slack, GitHub, MCP)",
+   "purpose": "Let owner-selected bots read from and act on external accounts through a fixed action catalog, with exact owner review or scoped standing permission for every mutation, durable receipts and owner reconciliation of uncertain effects. Credentials never reach bots.",
+   "logic": [
+    "Owner creates a connection (provider, bots, actions, per-action resource allow-list) and connects it via OAuth (Google/GitHub with PKCE; Slack OAuth only over HTTPS) or a private token; MCP uses a public HTTPS endpoint plus discovery",
+    "Bots discover allowed actions with hermbot_connectors (connections.accessible) and call hermbot_connector -> /internal/tools -> service.tool_action -> connections.invoke",
+    "invoke authorizes bot/action, resolves remembered references, validates arguments against the fixed catalog and resource policy",
+    "Reads execute immediately using a refreshed credential; results are redacted, references remembered, Drive imports saved to the library; auth failures mark needs_reconnect",
+    "Mutations: one unfinished per task; outcome bound; frozen payload; queued directly when an owner requested authorization or a standing permission matches, else an exact owner review (approval + pending operation)",
+    "Owner Allow once queues the op (connection revision recheck); deny settles outcome and resumes bot; edit supersedes the op and creates a new review",
+    "Task worker drive_one rechecks grant, policy, task state, revision, payload hash, approval/authorization/standing budget, commits dispatching marker, calls provider, records receipt and resumes the bot",
+    "Lost receipts (stale dispatching lease) become uncertain; owner reconciles with evidence; unresolved closure only after task stopped",
+    "Revocation: best-effort provider revoke, local credential removal, standing permissions revoked, event sources paused",
+    "Connections tab: cards per connection (provider, status, account, assigned teammates, action count, error); Edit access, Connect/Reconnect (OAuth redirect), Use access token, Discover MCP tools, Revoke.",
+    "Add/Edit connection: provider google/slack/github/mcp (MCP needs HTTPS endpoint), teammates, permitted actions (mutation actions marked 'reviewed change'), per-action resource allow lists.",
+    "OAuth setup tab: client id/secret per provider and displayed callback URL.",
+    "Permissions tab: standing permission for one bot + action + exact resource with expiry hours and max uses; revoke.",
+    "Activity tab: operations with exact arguments/result receipt; uncertain/unresolved can be reconciled with provider evidence."
+   ],
+   "decisions": [
+    "Fixed catalog of actions with server-side endpoints",
+    "Commit dispatching marker before the provider call; never auto-replay",
+    "All MCP tool calls treated as mutations",
+    "Connections never restrict native tools",
+    "Pinned-address transport with no redirects/proxies and bounded size/time",
+    "Embed operation identity in provider requests (Gmail Message-ID, Calendar id, Drive appProperties, Slack client_msg_id)",
+    "Connect once, enable for selected bots: OAuth lifecycle with encrypted credentials, refresh, revoke and reconnect kept in the backend; agents get scoped tool access only; Gmail, Calendar, Drive, Slack, GitHub and configurable MCP connections; prefer connectors over browser clicking.",
+    "Common authorization service for all connector mutations: approval covers the specific proposed action, editing invalidates stale approval, standing permissions are scoped and revocable, delegation never grants the recipient the sender's credentials, and terminal/browser paths cannot silently bypass connector policy.",
+    "Prefer a structured connector over clicking a website; connectors are installed account-wide via a marketplace of plugins",
+    "Milestone connectors chosen by the user: Gmail, Calendar, Drive, Slack, GitHub plus extensible MCP and browser access"
+   ]
+  },
+  "feature:routines": {
+   "title": "Routines (scheduled saved work)",
+   "purpose": "Owner saves instructions, required results, inputs and a schedule; each occurrence becomes ordinary durable work with bounded overlap/missed/daily policies, history and explicit pause/resume/archive; chat can prepare inactive drafts.",
+   "logic": [
+    "Save creates immutable revision + owner source message; state draft/active/paused; next_run_at computed by next_at",
+    "ensure_binding creates per-bot routine_schedulers token/generation; worker reconcile_schedulers pushes it to the runtime which creates a Hermes no-agent cron job",
+    "Every minute docker/routine_wakeup.py posts to /internal/routine-wake; wake authenticates and ticks",
+    "tick handles definite-failure pause, archived destination pause, missed occurrences (gap row, catch-up latest), admission and next_run_at/finished",
+    "admit dedupes occurrence, checks overlap/start window/daily cap/access, records skipped or admitted with frozen context (+since_success window) and creates the task via create_saved_task",
+    "Worker first claim locks the definition and rechecks start_allowed",
+    "Owner controls: Run now, pause, pause-stop, resume, archive; edits cancel unstarted queued runs",
+    "Entry: sidebar Routines or composer clock button (pre-fills instructions from draft; disabled with attachments, threads, coordination or no provider).",
+    "Editor: name, results conversation + teammate, optional team coordination grant, instructions, schedule kind once/interval/daily/weekdays/weekly/monthly with timezone, expected results (report/artifact/connector_effect/execution_check/native_effect), inputs, budget, start window, catch-up skip/latest, max runs per UTC day, information window since_success.",
+    "Live 'Next occurrences' preview via POST /routines/preview (350ms debounce); save blocked on preview error or no next occurrence when enabled.",
+    "List shows state, schedule text, next run, last run, errors and scheduler staleness (>180s); actions Edit, History, Run now, Pause/Resume, Pause and stop current run, Delete (archive, confirm).",
+    "History lists runs with status/origin/revision/output; Open run and results navigates to the conversation thread; Stop current run."
+   ],
+   "decisions": [
+    "Use a Hermes native no-agent cron job only as a wake signal; DB decides due work",
+    "Missed runs skipped by default, optional latest within window, no backlog replay",
+    "One unfinished occurrence at a time (incl. unresolved connector effects/uncertain outcomes)",
+    "Three consecutive definite failures pause scheduling",
+    "Routines reuse Hermes scheduled jobs (no competing scheduler), with natural-language proposals plus editable schedule form, timezone-aware next-run preview, pause/resume, run now, history, and defined overlap, missed-run and failure behavior; unattended collaboration uses the same delegation tools and preserves initiating-user authorization.",
+    "Recurring orchestration: schedule a manager to coordinate specified bots with standing grants, budgets and initiating-user context; revocation prevents new dispatch and cancels owned pending work per the user's chosen stop action.",
+    "Routines are standing responsibilities attached to a bot, triggered by schedule or events (issues, PRs, webhooks, Slack, Linear), shown in the bot's main interface",
+    "Routines implemented as namespaced cron jobs [bot:<name>] whose runs land in the bot's chat history",
+    "Scheduler ticks every 60s with a file lock; jobs may load skills and run in a workdir",
+    "Hermes cron is only a wake signal: one supported --no-agent one-minute script job per active bot sends a scoped token; the database decides due occurrences and admits ordinary work."
+   ]
+  },
+  "feature:events": {
+   "title": "Event triggers (poll, Slack Socket Mode, signed webhooks)",
+   "purpose": "Owner-saved triggers start ordinary teammate work from authenticated provider events, with durable delivery/event/match/run records, own-write suppression, coalescing and bounded admission.",
+   "logic": [
+    "Owner creates a source (provider, connection, transport, resource), saves secrets, and triggers with filters and saved instructions",
+    "event-worker claims sources with fenced leases; polls (Drive/Calendar/Gmail/GitHub) or runs Slack Socket Mode; http sources are verified then heartbeat",
+    "Webhook ingress verifies signatures and identity, then receive() -> ingest() commits before ack",
+    "ingest dedupes delivery and event identity, applies own-write suppression and per-trigger match/baseline/access, creates pending runs or coalesces",
+    "admit_pending converts ready runs into tasks through routines.create_saved_task (origin event)",
+    "Worker first-claim gate claim_locks/start_allowed",
+    "Lifecycle cascades: connection change, source edit/secrets/pause, conversation archive/membership pause triggers",
+    "Routines panel 'Events' mode hosts EventTriggers with views triggers, sources, edit, source-edit, history, deliveries.",
+    "Sources: Slack (Socket Mode app token), GitHub (poll or signed webhook), Google Drive/Calendar/Gmail (poll), generic signed webhook (Standard Webhooks headers); credential saved via /secrets with optional previous-key overlap; actions check/pause/archive/resync.",
+    "Trigger editor: source, event types, AND conditions (equals/contains/starts_with on provider-specific fields), teammate/conversation, coordination, instructions, expected results with optional 'request this action for every occurrence', limits (budget, start delay, runs/day, max pending), ignore bot-origin events, coalescing for latest-state types.",
+    "Sample-event check via POST /event-triggers/preview (no work started).",
+    "History: work occurrences with event counts and Open/Stop; received events with matched/ignored reason and expandable context; Deliveries log with duplicate counts and Retry recording for recording_failed."
+   ],
+   "decisions": [
+    "Separate event-worker service with no Docker socket/model credentials",
+    "Delivery identity, logical event identity, match and occurrence are separate durable records",
+    "Own-write suppression by correlating successful connector receipts with provider resource versions",
+    "Polling for Google/GitHub, Socket Mode for Slack by default",
+    "Explicit listening baseline; no historical replay",
+    "Event-triggered work via authenticated GitHub and Slack ingestion, general webhooks and Google change detection (subscription or polling), with event deduplication and prevention of self-triggered loops; narrow matching rules preferred over broad listeners.",
+    "Events (webhooks, GitHub PRs/issues, Slack messages, workflow failures) start sessions just like prompts or other bots",
+    "Room log records turn.started/turn.settled and streams member activity to plugins via on_room_member_activity hook",
+    "Separate event-worker collector with only DB/encryption access (no Docker socket, no model credentials).",
+    "Use outbound transports (Slack Socket Mode, provider polling with cursors) instead of public webhooks for local operation; signed HTTP supported if ingress exists."
+   ]
+  },
+  "feature:management": {
+   "title": "Recurring management (standing grants on routines/triggers)",
+   "purpose": "A routine or trigger can make its teammate an accountable manager of explicitly selected collaborators under an owner-issued standing grant; scope is frozen per occurrence and intersected with the live grant.",
+   "logic": [
+    "Definition includes optional management {grant_id, targets, operations}; delegate required, manager not a target",
+    "validate checks grant kind standing, manager, not revoked/expired, targets/operations subset, collaborators available",
+    "At admission bind freezes scope onto work_items.management_scope and inherit sets task grant_id/run ids/management_work_item_id",
+    "Occurrence tasks/failure use management_work_item_id so cosmetic reclassification cannot detach work",
+    "worker.advance_waiters runs pause_invalid to pause definitions whose grant expired/revoked",
+    "Workspace settings > Grants: create standing grant (manager, targets, operations incl. lifecycle ones marked owner-approval, expiry hours, new-bot budget, per-bot memory/CPU caps); list unexpired/standing grants with revoke-and-stop.",
+    "Lifecycle proposals arrive as approvals of kind 'lifecycle' showing configuration/before/resources/affected tasks; 'Edit proposal' replaces it via PUT /api/v1/proposals/{id}.",
+    "TaskInspector lists teammate proposals and the owner-issued authority (targets/operations/expiry).",
+    "Recurring management for routines/triggers uses RecurringManagement to pick or create a delegate standing grant."
+   ],
+   "decisions": [
+    "Never auto-select a replacement grant; invalid definitions pause",
+    "Static management_work_item_id association",
+    "Bot deletion, access-policy changes and credential administration remain owner-only actions; manager-proposed bot creation, configuration and runtime start/stop require owner approval or a matching standing permission, with exact change and resource implications shown before approval and handling for rejection, stale proposals, provisioning failure and partial completion; every management operation is attributed and recorded.",
+    "Capability catalog and settings: curated templates, skills, connectors and trusted plugins with prerequisites and permission changes shown before activation; templates are recipes not clones; usage, budgets and export controls.",
+    "Roster with avatar, last message, unread, hide, sections and pin; hiding is display-only",
+    "Per-session YOLO toggle, context-usage meter, cache hit rate in status bar",
+    "Any ordinary bot becomes a manager only via an owner-issued scoped grant (targets, operations, budget, duration); task-bound by default, standing grants for ongoing.",
+    "Managers cannot self-escalate, approve on the owner's behalf, read private histories/memory/credentials, gain connector access, or delete bots; stopping a runtime needs separate authority.",
+    "Lifecycle proposals show exact config/prior state/resources/affected work; edits create fresh approvals; approved ops go through a durable supervisor outbox; manager resumes after provisioning; retries reuse original identity.",
+    "Recurring/event management binds an optional {grant_id, targets, operations} object; server freezes scope at admission; each use intersects with the current grant; no automatic alternate grant."
+   ]
+  },
+  "feature:notifications": {
+   "title": "Web push notifications",
+   "purpose": "Bring the owner back when attention items change (questions, reviews, results, problems) via standards Web Push with generic payloads, preferences, quiet hours, batching, and durable fenced delivery; clicks open the current state.",
+   "logic": [
+    "Owner enables push in Notifications: SW registration, PushManager.subscribe, POST subscription (validated, encrypted, device cookie, generation)",
+    "Attention projector (notification-worker) materializes new item versions and calls enqueue",
+    "enqueue inserts per-subscription deliveries honoring prefs/category/quiet/delay/freshness/overflow",
+    "claim rechecks relevance and policy, batches quiet/burst, leases one delivery",
+    "deliver sends generic VAPID push through pinned transport, classifies result, retires bad subscriptions",
+    "sw.js shows generic notification and routes click to /?attention=<id>",
+    "Preference save suppresses pending and re-enqueues under the new revision",
+    "Owner menu > Notifications opens settings (10s poll) showing worker health, browser enablement, categories (questions/reviews/results/problems), quiet hours with IANA timezone, and registered browsers.",
+    "Enable this browser: checks secure context/Push support/configured keys/permission; requests permission in the click gesture; registers /sw.js; subscribes with the VAPID public key; POSTs the subscription with key_id; turns push_enabled on.",
+    "Service worker shows a generic notification and opens /?attention=<id> on click; the app opens the Attention panel at that item.",
+    "Disable a device (DELETE subscription) and sign out both clear the local push subscription."
+   ],
+   "decisions": [
+    "Generic notification text only; opaque target",
+    "Postgres outbox + separate notification-worker; no hosted notification engine",
+    "Quiet-hour deferral before transport and generic catch-up summary",
+    "pywebpush through PinnedSession",
+    "Activity inbox with unread results, questions, approvals and failures; browser push, preferences and quiet hours; duplicate suppression and each notification linked to the correct task; manager summaries link to underlying tasks.",
+    "Per-bot notification setting; OS/mobile notifications when a bot finishes or needs input, suppressed while the app is focused; hidden bots never toast but badge a dot",
+    "Errors appear above the composer as dismissible notices with request ids; clearing does not undo external actions",
+    "Standards Web Push with a small service worker and pywebpush 2.3.0 via Hermbot's constrained pinned-address transport.",
+    "Separate notification-worker (control network only, no model/bot credentials) with independent projection and sending pumps.",
+    "Push off until explicit opt-in; OS text always generic; details only in authenticated app."
+   ]
+  },
+  "feature:lifecycle": {
+   "title": "Teammate lifecycle and provisioning",
+   "purpose": "Owner (and, with approval, manager bots) create, edit, clone, archive, restore, start, stop and delete persistent teammates. Every change becomes an immutable bot_operations snapshot that the worker drives through the Docker-owning supervisor, which (re)creates a hardened per-bot container with private network and volumes. UI shows provisioning/error/active status and allows retry.",
+   "logic": [
+    "Owner mutation routes require Idempotency-Key; registry.mutation takes advisory lock on the key and replays/409s via owner_receipts.",
+    "validate_config resolves default provider/model, enforces permitted tools, skill names, and 'skills' tool for enabled skills.",
+    "register: global advisory lock 887832102, max_bots, id bot-<16hex>, generate bot token + runtime key (Fernet-encrypted, token sha256-hashed), runtime_url http://hermbot-bot-<id>:8642, DM conversation.",
+    "reserve_lifecycle fences: human computer control, pending op (incl as clone source), uncertain work; busy work requires interrupt and is cancelled.",
+    "owner_operation sets desired_state (stopped for stop/archive/delete), revision+1; delete needs exact name; restore only archived; archived bots can't start/stop.",
+    "enqueue snapshots configuration, revision, provider (with secret_encrypted), timezone, desired_state, previous_status, encrypted creds; status -> provisioning|deleting; readiness cleared.",
+    "Worker loop: queue_initial bootstraps 'ensure' for active bots with applied_revision<revision; claim leases ops 120 s; drive each.",
+    "drive waits while the bot (or clone source) has active/reserved attempts; cancels proposal-backed queued ops whose task/grant ended; marks applying; decrypts and POSTs RuntimeSpec to supervisor.",
+    "Supervisor operate: per-bot thread lock, receipt replay by operation_id with request_hash check, execute, fsync receipt + dir, cleanup clone helper.",
+    "execute_operation: stop/archive stop the container; delete removes container, helpers, owned volumes and dynamic network; others ensure (clone first when action clone).",
+    "ensure: create/verify volumes+network, connect api/worker, fingerprint; recreate container with env/labels/binds/limits/healthcheck; start and wait healthy (75 s).",
+    "On success bots.status active/archived/deleted with applied_revision=revision; delete nulls credentials and removes participants; events emitted.",
+    "On HTTP failure op failed, bot error with reason; transport errors keep op applying for re-drive.",
+    "Owner retry of failed op re-checks revision, busy work, clone source revision and live manager authority without consuming creation budget."
+   ],
+   "decisions": [
+    "Only the supervisor holds the Docker socket; API/worker request lifecycle via an authenticated narrow HTTP API with server-owned names/images/mounts.",
+    "Durable outbox with immutable payload snapshot and leased workers.",
+    "Supervisor receipt files fsynced on a dedicated volume keyed by operation_id with request hash.",
+    "Wait for Docker health before reporting success.",
+    "Reuse the compose-created volumes/networks for the three core bots under supervisor management.",
+    "Recreate the container for each new operation (fingerprint includes operation_id/revision).",
+    "One bot owns exactly one container and one persistent Hermes runtime, with separate data volume, workspace, browser profile and resource limits.",
+    "Only a container supervisor manages container lifecycle; agent containers never get the Docker socket or another bot's state directory; mounting the same Hermes database into several runtimes is avoided.",
+    "Bot lifecycle operations: create, configure, clone, archive, restore, start, stop, delete; cloning copies selected configuration and skills while history, credentials and memory need explicit selection; start with Docker Compose on one host, then dynamic provisioning.",
+    "Hermes owns native execution history and agent state; PostgreSQL owns product metadata, task coordination, group transcripts and rebuildable search projections that keep source identifiers."
+   ]
+  },
+  "feature:artifacts": {
+   "title": "Artifacts, file library and attachments",
+   "purpose": "Immutable, checksummed files in MinIO: owner uploads and link imports in a file library with versions and explicit conversation shares; bot-published text/files with task provenance and grants; conversation attachments installed into the recipient's private workspace safely.",
+   "logic": [
+    "Single bucket 'hermbot' created at api startup.",
+    "Library save: filename/type/magic validation, preview extraction, version families via advisory locks, object key library/<family>/<id>, insert artifacts.",
+    "Bot publish uses uuid5(receipt_id) id; grants publisher task and parent via artifact_access.",
+    "publish_file pulls bytes through adapter /workspace/export with integrity checks.",
+    "Reads verify size and sha256 (502 on mismatch).",
+    "Link import: public IPs only, re-checked per redirect, pinned IP connection, 12 s wall deadline, 10 MB, no compression.",
+    "Downloads served with nosniff, no-store and CSP sandbox (PDF frame-ancestors self).",
+    "Attachments: uploaded to attachments/<conv>/<id>; installed per attempt through supervisor exec staging and write_attachment.py.",
+    "Outputs tab lists conversation artifacts (chat.artifacts) and opens them in the Library at that id.",
+    "Library: search by name/text, scope by conversation, 50 per page; upload (<=10MB base64) or import link; detail shows version/size/source/task/SHA-256; preview by content type; Download via /api/v1/artifacts/{id}?download=true.",
+    "Versions: 'Add new version' uploads with previous_id; version selector switches selection.",
+    "Shares: share selected version with a conversation, revoke share; note that admitted tasks keep their explicit grants.",
+    "Use in this conversation: shares then attaches as artifact_ids to the next message (max 10).",
+    "Search prior work: GET /api/v1/history/search; result click navigates to the conversation."
+   ],
+   "decisions": [
+    "Immutable objects; sharing is explicit per version; revoke blocks new admission only.",
+    "Attachments staged via docker exec argv chunks into root-only /run/hermbot-staging.",
+    "File bytes for publish_file travel through the adapter, not model arguments.",
+    "Artifacts are durable first-class objects in S3-compatible storage with uploads, link ingestion, previews, versions, originating tasks, search, downloads and per-task access grants; bots exchange artifacts by reference without mounting private volumes together; the conversation holds the final result or a link.",
+    "Library and structured cards: previews of documents, images, tables and code, editable drafts, and a searchable Library linked to originating conversations; revise existing artifacts rather than creating disconnected copies.",
+    "Artifacts are durable outputs bots create or modify (documents, designs, code, data) as a first-class concept alongside bots, chats, prompts and tools",
+    "Right-hand preview rail and in-app browser comment/annotate mode with selectors and computed styles for feedback on artifacts",
+    "Artifacts are immutable objects in S3-compatible storage (MinIO) with checksums and version families; PostgreSQL holds metadata/grants.",
+    "Bots publish existing workspace files through the authenticated runtime adapter (hermbot_publish_file), not through model arguments.",
+    "Access by explicit grants: uploads owner-private until shared; shares apply to one version; admitted tasks keep exact version grants after share revocation."
+   ]
+  },
+  "feature:knowledge": {
+   "title": "Native memory and skills",
+   "purpose": "Owner inspects/edits a bot's native Hermes memory and owner-managed hermbot-* skills, enables installed skills, views immutable history, drafts skills from completed work; bots can propose learning that the owner reviews before it is applied.",
+   "logic": [
+    "Adapter reads/writes knowledge files with CAS (sha256 expected hash), flock and atomic replace.",
+    "guard requires idle, running, unfenced bot without pending op.",
+    "apply validates the full future config before the native write, records knowledge_versions on change, applies config and enqueues 'configure' to refresh Hermes.",
+    "Bot hermbot_review(kind skill|memory) freezes payload incl expected hash and revision.",
+    "Owner decision: once -> queued; drive_proposals applies under task lock, waits for refresh op completion, then resumes task.",
+    "Open from chat header (Memory & skills) or 'Save as skill' on a completed work item (loads /tasks/{id}/skill-draft).",
+    "Curated memory: 'User profile' and 'Personal notes' targets; edit with character limit; empty content removes.",
+    "Skills: filter, enable/disable (POST .../enabled with expected_revision), open content (bundled read-only), create new from template, import SKILL.md (renamed hermbot-*), save with expected_hash and optional enable.",
+    "Saved versions load as drafts; saving creates a new version against the current native hash.",
+    "All edits disabled until the runtime is active and running; notice that the runtime refreshes after save."
+   ],
+   "decisions": [
+    "Native compare-and-swap plus durable runtime refresh before continuation.",
+    "Owner-editable skills limited to hermbot- prefix; bundled skills read-only.",
+    "Private bot memory stays private; shared project knowledge is a separate resource bots access deliberately; memory can be inspected, edited, removed and searched; memory is not an authoritative source for changing facts.",
+    "Skills: reuse Hermes skills; add create/edit/version/import/enable, save successful workflows as reviewed skills; bots may propose improvements but cannot silently replace approved versions; capability catalog pins executable plugin versions and requires owner authorization.",
+    "Bounded curated memory (MEMORY.md/USER.md) frozen at session start plus unbounded FTS5 session search and optional external providers",
+    "Memory entries scanned for injection/exfiltration patterns and optionally gated by write_approval",
+    "Per-bot memory and per-role context, with shared context only via group chats",
+    "Do not point two agent processes at the same Hermes home",
+    "Memory/skills are native Hermes state edited through Hermbot's private adapter with compare-and-swap, immutable version history and a durable runtime refresh before the next run.",
+    "Bot-proposed memory/skill improvements require owner review (editable before approval); Save as skill creates a disabled draft."
+   ]
+  },
+  "feature:tools": {
+   "title": "Capabilities, tool admission and native tool inventory",
+   "purpose": "Compute and enforce exactly which native and hermbot_* tools a bot may see and execute for its current task; consult enabled skills via hermbot_prepare; expose an owner diagnostic.",
+   "logic": [
+    "Probe records inventory (toolsets, skills with required_tools) into bots.readiness.",
+    "manifest derives available/allowed/blocked tools from permissions, inventory version and revision match, intent, grant, human control and connections.",
+    "Plugin llm_request filters schemas to allowed_tools; tool_execution middleware re-checks per call through /internal/context.",
+    "hermbot_prepare validates requirements and returns raw skill bodies.",
+    "Connector ref: handles resolved by tool_references.",
+    "Workspace settings 'Permitted tools' (file, terminal, skills, memory, browser, computer_use) bound the per-teammate Tools checkboxes in BotEditor.",
+    "Enabled skills are a comma list with datalist of installed skills from GET /bots/{id}/skills (only when runtime running).",
+    "CapabilitySummary (Knowledge panel) shows availability per native tool or blocked_tools message, and assigned connections with action counts; notes connections keep native tools available."
+   ],
+   "decisions": [
+    "Use existing Hermes llm_request/tool_execution middleware; no upstream patches.",
+    "Discovery never grants authority; execution rechecks.",
+    "A Hermbot Hermes plugin registers collaboration, orchestration-proposal and artifact tools available in every supported task context (chat, group, routine, connected task).",
+    "Per-bot toolsets and MCP enablement are configured through bot settings with the model under advanced settings; model providers are owner-managed with different permitted models per bot.",
+    "Tools and skills live at account level while memory and routines belong to the bot",
+    "Custom tools should be plugins (tools, hooks, slash commands, capability-gated overrides), not core patches; skills preferred when instructions plus shell suffice",
+    "Toolsets as named bundles (core, composite, platform, per-MCP-server) with opt-in workflow-gated toolsets",
+    "MCP write-capable tools on untrusted servers require approval consent",
+    "Hermes source stays unmodified; integration only via configuration, supported plugin hooks and llm_request/tool_execution middleware plus Hermbot's private runtime adapter; the four earlier source patches were removed.",
+    "Connections never disable owner-enabled native tools (terminal/browser/file editing), including for collaborators and revoked connections."
+   ]
+  },
+  "feature:computer": {
+   "title": "Private bot computer, noVNC and takeover",
+   "purpose": "Each bot has an isolated desktop/browser (TigerVNC, Xfce, Chromium, cua-driver) with persistent browser profile; owner views a thumbnail or live noVNC stream, takes over input exclusively, and hands back explicitly.",
+   "logic": [
+    "Takeover: per-bot advisory lock; require active running bot with no pending op; commit DB fence human first.",
+    "Adapter acquires native lease (closes plugin admission), drains admitted tools exclusively, writes ready marker for epoch/viewer.",
+    "WS relay api->adapter->RFB unix socket; input filtered until ready; session re-verified every 5 s; disconnect keeps control.",
+    "Handback releases native lease; DB fence set agent only when native confirms agent.",
+    "Dispatch, context, lifecycle, knowledge and monitor all respect computer_controls.",
+    "Open from header Monitor icon or from a secure-input review ('Open computer for secure input').",
+    "Polls status (1.5s) and thumbnail (2s); Start computer when stopped.",
+    "Expand live view: noVNC RFB to wss/ws same-origin /api/v1/bots/{id}/computer/ws, scaleViewport, view-only unless this session holds input-ready human control; reconnect button after disconnect.",
+    "Take over / Reclaim / Confirm control and Hand back (force when another session holds it) via POST computer/control; Stop computer disabled during human control; Open browser only when in control.",
+    "Secure input field types characters into the focused remote field via RFB.sendKey and clears immediately; Enter/Tab/Escape helpers."
+   ],
+   "decisions": [
+    "Two fences: DB admission fence plus native lease/epoch.",
+    "Disconnect never hands back.",
+    "Each bot gets its own browser/desktop; the UI exposes three visibility levels (status, pinned preview, full-screen takeover with handback) via an authenticated proxy to Hermes Bot Screen; agent input is suspended during human ownership and ownership persists across disconnect with explicit recovery; browser sessions persist across container recreation.",
+    "Browser sessions are bot-specific initially (Hermes Bot Screen default), unlike Grok Bot's shared signed-in browser; sharing logins would need a separate design while connector credentials can be shared via the backend.",
+    "Each bot has its own screen with status, preview and takeover levels; human takes control for login/2FA/CAPTCHA/payment then hands back",
+    "Screens are work surfaces, not security boundaries; bots share the OS user, files and browser",
+    "computer_use approval maps to runtime modes (standard, bounded with reviewed manifest, unrestricted); destructive actions refused when no one can answer and hard-blocked combos exist",
+    "Browser work goes through the browser toolset not computer_use; browser sessions persist across handoff",
+    "Each bot has its own private desktop/browser environment with a persistent browser-profile volume.",
+    "Reuse pinned Hermes Bot Desktop lease/thumbnail/RFB primitives behind an authenticated per-runtime adapter on the private bot network."
+   ]
+  },
+  "feature:auth": {
+   "title": "Owner auth, sessions, service credentials and encryption",
+   "purpose": "Single-owner authentication by bootstrap token exchanged for opaque revocable cookie sessions; separate credentials for supervisor, each bot and each runtime; persisted credentials encrypted with CONFIG_ENCRYPTION_KEY; workspace settings and providers.",
+   "logic": [
+    "verify bearer OWNER_TOKEN or session cookie hash.",
+    "login/logout manage owner_sessions and cookies.",
+    "Origin check for non-GET and no-store/nosniff headers.",
+    "Bot identity by token hash.",
+    "Fernet encryption helpers.",
+    "Startup refuses short service secrets.",
+    "Validation errors never echo inputs.",
+    "Login screen asks for the owner token from .env (password field); POST /api/v1/session with Authorization Bearer; the token is discarded from component state.",
+    "All requests use same-origin cookies; 401 triggers global reset to login (SSE closed, query cache and idempotency keys cleared).",
+    "Sign out: DELETE /api/v1/session, clear browser push, close SSE, clear caches.",
+    "Secrets are write-only in UI: provider api_key, OAuth client secret, connection tokens, event source credentials use password inputs with autocomplete off/new-password and are cleared after save.",
+    "Workspace settings (timezone, default provider, limits, permitted tools, decision provider, connected app action mode) via GET/PUT /api/v1/settings."
+   ],
+   "decisions": [
+    "Opaque server-side sessions over JWT.",
+    "Separate Fernet key from service tokens.",
+    "Start as a private single-owner app with secure owner login and session management; invited members and owner/admin/member roles come only after the private release; private bots and DMs stay private by default; team bots keep one owning runtime with member-scoped sessions, credentials, workspaces and browser contexts; personal OAuth follows the requesting member.",
+    "Private workspace with accounts and invited teammates, no public signup or billing; owner-managed provider credentials",
+    "Private bots/DMs first, with explicit sharing of bots and groups later",
+    "Team Bot chats stay private per teammate; owner cannot read teammates' chats",
+    "Single owner authenticates with OWNER_TOKEN and receives opaque, expiring, revocable HttpOnly/SameSite session cookies.",
+    "Provider keys and connector secrets encrypted in PostgreSQL with CONFIG_ENCRYPTION_KEY; never returned to the browser.",
+    "Owner-managed model providers; bots may use different permitted models; OpenAI-compatible API first, subscriptions later.",
+    ".env seeds the initial provider once; owner-edited profiles persist (initial import recorded)."
+   ]
+  },
+  "feature:runtime-gate": {
+   "title": "Runtime tool admission gate",
+   "purpose": "Make owner computer takeover safe under Hermes's concurrent tool starts: every tool callback holds a shared flock; takeover closes admission via the native lease and drains with an exclusive flock before input is enabled.",
+   "logic": [
+    "admit(): human_holds check, LOCK_SH|LOCK_NB, recheck.",
+    "drain(): LOCK_EX polling with ownership checks and 70 s timeout.",
+    "Plugin wraps every tool in admit; reports pause.",
+    "Adapter control uses drain then ready marker.",
+    "Computer panel shows lease holder and 'Waiting for in-flight work to settle' until input_ready; 'Bot tools and new dispatch remain paused until handback' when admission_paused.",
+    "Status label waiting_computer = 'Waiting for computer handback'; CapabilitySummary asks to hand back the computer; TaskActivity shows tool.admitted 'admitted; waiting to start'.",
+    "phase3_inflight.py proves takeover waits for a running foreground tool (>4s) and the effect runs once after handback; phase3_recovery_driver injects worker pause/restart and runtime recreation."
+   ],
+   "decisions": [
+    "Shared per-callback admission instead of exclusive mutex.",
+    "Approvals come from real runtime requests, shown as structured action cards with approve/deny/expiry/cancel; external writes require approval unless covered by an explicit standing permission; secure input stays outside transcripts; unknown action scopes pause for review; managers collect required reviews but cannot approve on the user's behalf.",
+    "Wrap the Hermes runtime through its API server (runs, sessions, jobs, skills/toolsets discovery) bearer-gated by API_SERVER_KEY with per-profile scoping",
+    "Profiles are not a sandbox; real isolation requires container/terminal backends",
+    "Bot Mode protocol injection requires exact title 'Bot Chat' plus a ui_meta hermes-bots marker, so headless installs must write both",
+    "Per-bot runtime gate with shared nonblocking admission for concurrent tool callbacks; exclusive drain only when takeover closes admission; exact viewer/epoch gates readiness; timeouts keep input disabled.",
+    "Worker/API restarts reconnect existing run identities without replaying uncertain actions.",
+    "Hermes source unmodified; four patches replaced by supported middleware and private adapter"
+   ]
+  },
+  "feature:testing": {
+   "title": "Test architecture, protocol fixture and acceptance evidence",
+   "purpose": "Verify Hermbot at four boundaries: (1) a pytest regression suite against an isolated PostgreSQL database hermbot_test (plus MinIO) with fakes for Docker, Hermes runtime RPC and providers; (2) a deterministic OpenAI-compatible protocol fixture model that drives real pinned Hermes runtimes via compose.protocol.yaml; (3) owner-authorized live acceptance drivers that use the paid configured model and sometimes real connected accounts, writing manifest/evidence JSON into test-results/; (4) Playwright browser scripts (real or mocked API) that write screenshots and JSON. Read-only audits (scripts/*_audit.py) re-verify saved evidence against current state.",
+   "logic": [
+    "scripts/check.py starts postgres+storage, creates hermbot_test if missing, builds hermbot-tools:phase1 from backend/Tools.Dockerfile, runs ruff over backend/plugins/docker/tests/scripts, then pytest -q --junitxml=/app/test-results/backend.xml inside the tools container on hermbot_control with DATABASE_URL rewritten to hermbot_test.",
+    "pytest config: testpaths=tests; markers integration/hermes/live declared.",
+    "tests/conftest.py session fixture exits unless DATABASE_URL ends with /hermbot_test, runs db.initialize(); per-test autouse fixture truncates tables, reseeds preferences, resets the 3 seed bots/workspace settings and patches worker.settings; make_task factory creates tasks via service.create_task.",
+    "Fakes: native.request (runtime adapter RPC), connector_providers.execute, provisioning.supervisor, containers.docker_request/runtime_command, notifications.send/PinnedSession.post, socket/HTTP servers on loopback; real plugin and docker/*.py modules loaded from /app via importlib.",
+    "Protocol stack: compose.protocol.yaml adds service model-fixture (uvicorn tests.model_fixture:app :8010 on the three bot networks) and points MODEL_BASE_URL/MODEL_NAME of api, worker and the hermes-* services to it; prompt markers [POC:*] script tool calls.",
+    "Acceptance drivers (python -m tests.<driver>) call http://api:8000 with OWNER_TOKEN, submit each request with an Idempotency-Key (often twice to prove dedupe), persist a manifest before mutations, support resumable modes (start/status/continue/verify/cleanup), and verify via API plus direct DB reads (tool_receipts, events, result_acceptances).",
+    "Operator-in-the-loop: recovery drivers write test-results/recovery-signal.json and poll for recovery-<name>-done markers created after the operator performs the Docker action; browser phase2-work/phase3-ui-fixes use the same pattern served by scripts/phase3_recovery_driver.py.",
+    "Browser checks: Node ESM scripts with playwright 1.56.1, log in via the Owner token form, either drive real flows or intercept /api/v1/* with page.route to inject fixtures, assert no page errors and no horizontal overflow across viewports, write PNG/JSON to /output.",
+    "Evidence export/audit: tests/export_evidence.py aggregates durable receipts into execution-evidence.json; scripts/*_audit.py (phase2/3/4, skills_tools, native_tools, work_outcomes, routines_final/integrity) perform read-only re-verification and upstream-source comparisons.",
+    "Verifier self-tests: tests/test_phase4_acceptance_evidence.py and tests/test_event_provider_acceptance.py unit-test the acceptance verification helpers so the harness cannot produce false positives.",
+    "scripts/check.py runs ruff + pytest in hermbot-tools against hermbot_test and writes test-results/backend.xml, which every audit reads for test counts/failures.",
+    "Audit scripts cross-check saved test-results evidence JSON against live API state and Docker inspection; acceptance drivers create fixtures through the owner API and write proof manifests.",
+    "UI is exercised by Playwright scripts in tests/browser (e.g. ui-regressions, work-items, routines, event-triggers, phase3-computer), referenced by audits via test-results JSON."
+   ],
+   "decisions": [
+    "Separate deterministic protocol acceptance from live-model acceptance",
+    "Every pytest test runs against real PostgreSQL (autouse fixture) rather than SQLite/mocks",
+    "Acceptance drivers are resumable, manifest-first and never resubmit lost work",
+    "Owner/human performs irreversible or privileged actions (approvals of real writes, Docker restarts, OS push permission, secure input)",
+    "Use container paths (/app, /opt/hermes, /output) in tests and drivers",
+    "Phases deliver usable capability, preserve earlier acceptance tests and close only on exit gates; POC is the first working increment of the final architecture with real containers, not a mock; cumulative matrix covers collaboration, orchestration, management, authority, execution, recovery, external actions, artifacts, routines, computer, UI and team access; use deterministic fake providers/connectors for failure paths plus real Hermes/model runs for acceptance; test real connectors with read-only and approved writes.",
+    "Phase 1 POC proves manual and autonomous collaboration across research/writing, data processing and code/review, from chats, groups and one-shot scheduled tasks, plus manager orchestration with injected recoverable failure, redirect and cancellation, and failure handling (browser disconnect, container restart, duplicate delivery, pending approval).",
+    "Verification at every milestone with lint, typecheck, tests and build; plan file as source of truth plus status/decisions doc",
+    "Doctor-style triage command for environment checks (computer-use doctor with exit codes)",
+    "Deterministic fakes exercise failure paths; acceptance requires real Hermes/model runs; synthetic responses never count as live acceptance."
+   ]
+  },
+  "feature:ops": {
+   "title": "Operational tooling (configure, upgrade, check, stop, notification keys, audits, acceptance drivers)",
+   "purpose": "Host-side Python scripts that create and upgrade the private .env without printing secrets, run the isolated test suite in containers, stop the stack safely, generate VAPID keys, and produce/verify acceptance evidence (test-results/*.json) against the live local workspace and Docker state.",
+   "logic": [
+    "Bootstrap: configure.py creates .env exclusively (0600) with random tokens/passwords and CONFIG_ENCRYPTION_KEY; compose refuses to start until those exist.",
+    "Upgrade: upgrade_config.py appends CONFIG_ENCRYPTION_KEY and PUBLIC_URL only if missing and re-chmods 0600.",
+    "Push keys: notification_setup.py --contact mailto:... generates a P-256 VAPID pair once (preserves an existing private key), then api and notification-worker must be recreated.",
+    "Checks: check.py starts postgres/storage, ensures hermbot_test, builds hermbot-tools, runs ruff and pytest (junit to test-results/backend.xml) on hermbot_control.",
+    "Stop: stop.py stops the worker first (prevents desired-state reconciliation restarting bots), then labelled managed runtimes, then all compose services; volumes preserved.",
+    "Audits (read-only): phase2/phase3/phase4, native_tools, skills_tools, work_outcomes, routines_final, routines_integrity verify saved evidence vs live API (owner Bearer token read from .env), artifact sha256, container image/volume/hardening, upstream Hermes source unchanged, and write *-audit.json proofs.",
+    "Acceptance drivers (mutating, staged): phase3_inflight, phase3_browser_persistence, phase3_recovery_driver (signal files), group_work_history (--apply), event_trigger_acceptance and event_provider_acceptance (stage argv; proof manifest guards against duplicate fixtures)."
+   ],
+   "decisions": [
+    "Scripts never print credential values; audits project Docker inspect output without container environments.",
+    "Stop the worker before the runtimes in stop.py.",
+    "Acceptance drivers persist a proof manifest before mutation and refuse to re-run setup when it exists.",
+    "Tests run in a separate hermbot_test database inside a pinned tools container.",
+    "Failure injection in phase3_recovery_driver validates container labels and limits targets to researcher/writer.",
+    "Deployment on Docker Compose (dev and initial single server), PostgreSQL-backed work queues instead of a separate message broker, SSE for durable events with cursor reconnect plus WebSockets for computer and voice transport, pinned images, containerized dev tooling because Node is not installed locally.",
+    "Release hardening phase: consistent backups of Postgres, object storage and each bot's runtime state with restore on a clean host, graceful drain and upgrades, correlated logs with support identifiers, monitoring of queue age/stuck approvals/container health, resource and spending limits, extended unattended run and provider-outage tests, runbooks.",
+    "Defaults and boundaries: start with three bots, validate release with ten registered bots and three active tasks, groups up to six, English UI with localization-ready resources; no public signup, billing, native mobile or desktop packaging; model quality evaluated separately from UI/workflow parity.",
+    "Run Hermes in Docker (nousresearch/hermes-agent) with data volume, s6 supervision per profile and moderate resource limits (1-4GB, 1-2 CPU); Chromium is the heaviest",
+    "Local POC first then always-on Linux server; Docker locally"
+   ]
+  },
+  "feature:intake": {
+   "title": "Message intake, work items and revisions",
+   "purpose": "The owner just sends chat messages. Hermbot decides, before any bot executes, whether a message is discussion, a status question, a new assignment, an update to existing work, an answer to a pending question, a cancellation or a routine draft. It records concrete required results and owner-quoted authorizations, keeps one work card per requested outcome across many messages and bots, and delivers revisions to running or waiting executions. Cards can be hidden/restored without touching execution.",
+   "logic": [
+    "POST /api/v1/messages (intent auto by default) creates the carrier task (status queued, orchestration_version=2, coordination_version=1, intake_status pending) and the owner message in one transaction, idempotent on Idempotency-Key.",
+    "claim_new never dispatches a v2 task while message_intent is still 'auto', so nothing executes before interpretation.",
+    "work_intake.advance_one (worker background loop) claims the oldest pending auto task per conversation (FIFO: no earlier pending task in the same conversation) with FOR UPDATE SKIP LOCKED and a 60s lease.",
+    "Evidence is assembled: latest owner message, 60 recent messages, pending questions, up to 30 candidate work items with outcomes, saved routines, standing grants, supported connector actions, current time, JSON schema.",
+    "The receiving bot's provider/model is called at {base_url}/chat/completions with json_object response, optional read_context tool (<=3 calls per round), up to 4 rounds within 45s; schema/alignment validation errors are fed back as system messages.",
+    "apply() re-locks the task, refuses if the owner edited the message (hash) or any observed work revision changed, then forces owner_work_target when the message came from Redirect/edit/answer.",
+    "Each operation beyond the first gets a derived task (request_key intake:{task}:{index}) inheriting grant, files and thread, so one message can both answer and revise work.",
+    "Routine intent saves an inactive draft after quote/conversation/bot checks; the carrier becomes discussion with a continuation telling the bot to point at the draft.",
+    "Cancel intent cancels non-terminal roots of the work item and supersedes all its requirements.",
+    "Other intents go through work_items.route(intake=True): assignment -> new_item; update -> fences (unless intake), reuse responsible participant when previous root settled, or mark 'steered' when an active root exists; status/discussion just tag the message.",
+    "Assignment/update then call work_controller.apply with requirements (nulls preserve existing target/dependencies/required), supersede_keys and requested_effects.",
+    "work_controller.apply is idempotent per (work item, source owner message, kind), supersedes requirements (invalidating undispatched drafts and authorizations), registers requirements with owner_revision=True, bumps work revision, records authorizations whose quote is a substring of the owner message, writes work_changes, and emits 'revise' commands for every other non-terminal task of the work item.",
+    "Commands are written to work_commands and to controls (same id) in the same transaction; work_controller.advance/reconcile later refreshes bindings, admits matching connector drafts and wakes waiting tasks that have pending owner directions.",
+    "Intake marks every carrier intake_status applied with intake_result and emits message.interpreted; clarification becomes a continuation instructing the bot to ask."
+   ],
+   "decisions": [
+    "Interpret owner messages in the backend with a structured model call before execution, instead of letting the receiving bot route via hermbot_route_message.",
+    "Only the latest authenticated owner message is a source of authority; requested_effects and routine proposals must quote it verbatim.",
+    "Optimistic concurrency: apply only if message hash and observed work revisions are unchanged since evidence was gathered; no DB transaction held across the model call.",
+    "Per-conversation FIFO intake.",
+    "Revisions are delivered as durable commands + controls written in the same transaction as the revision.",
+    "Work items are independent of execution trees; message association changes never stop/replay execution.",
+    "Bot creation is by describing a role (name, role, avatar, model, capability config), with focused single-job bots recommended; first-run flow covers create bot, connect app, give first task.",
+    "Direct user messages take priority over background work and can redirect the current turn; queue vs steer is a deliberate choice",
+    "Idempotency-keyed run creation for retry-safe intake over the runtime API",
+    "Ordinary messages are interpreted automatically; no message-intent dropdown, work selector or skill picker in the composer."
+   ]
+  },
+  "feature:outcomes": {
+   "title": "Required results, evidence and result acceptance",
+   "purpose": "Execution completion is not work completion. Each work item records versioned required results (report, artifact, connector_effect, execution_check, native_effect). Bots submit claims with hermbot_finish; the backend applies them only after the run settles and only with suitable evidence (provider receipts, accessible artifacts, reviewed contributions, tool execution evidence). The card shows partial progress, needs-answer/needs-approval/uncertain states, and the owner can drop requirements or reconcile uncertain native effects.",
+   "logic": [
+    "Requirements are registered by intake (owner_revision) or, for legacy v0/v1 work, by the root task's hermbot_prepare.outcomes; keys unique, dependency graph acyclic, provenance = owner message.",
+    "Changing a requirement bumps its revision and resets it to pending; needs expected_revision; non-owner changes need a new owner update; fulfilled external effects immutable; owner revisions invalidate undispatched drafts and authorizations (retaining them if destination unchanged).",
+    "Root tasks are bound to all outcomes (task_outcomes with revision); children get only outcomes shared at delegation.",
+    "Coordination v1: each outcome gets an accountable owner_task_id (first live root assignment) and delegations create contributions or transfer the deliverable.",
+    "hermbot_publish/publish_file stores an artifact; if bound to an artifact/report outcome with ready dependencies it records evidence (or acceptance); otherwise supporting evidence only.",
+    "Connector actions bind to an unfinished connector_effect outcome and its revision; settlement of the operation calls effect_settled (succeeded -> record; denied/failed -> blocked; uncertain/unresolved -> uncertain).",
+    "hermbot_finish converts results-by-key into claims, validates them provisionally, and stores pending_result/pending_outcomes; nothing is fulfilled yet.",
+    "When the runtime settles, worker.settle calls outcomes.settle: non-completed runs fail unfinished assigned outcomes (except v2 helpers); completed runs re-validate claims in a savepoint and record each; any validation error rejects the whole batch (work.evidence_rejected).",
+    "record(): with an accountable owner it goes through result_acceptance.record: contributors' fulfilments become 'submitted' contributions; the owner's fulfilment validates contributions/reviews/read_artifact receipts and inserts a result_acceptances row (UNIQUE per outcome revision) then marks the outcome fulfilled.",
+    "Work status projection: uncertain > budget pause > (legacy fallback) > needs_answer > uncertain ops > needs_approval > working > completed (all required fulfilled) > cancelled > task stop states > needs_attention > working/planning.",
+    "Owner drop: versioned cancel of an unfulfilled requirement (v2 also invalidates drafts, revokes auth, cancels questions, records owner action); owner reconcile: uncertain native_effect -> fulfilled/failed/uncertain with owner evidence.",
+    "Budget interruption after a native tool started marks unconfirmed native_effect outcomes uncertain.",
+    "Work card summary 'X of Y required results ready' from item.progress; each outcome shows status, optional flag, reason, evidence strength label (reviewed artifact / provider receipt / artifact exists / model reported / owner attested), contributions and acceptance review.",
+    "Remove this requirement: mutate POST /api/v1/outcomes/{id}/drop {expected_revision}."
+   ],
+   "decisions": [
+    "Separate work item, requirement, task/attempt, connector operation, question and approval records.",
+    "Apply claims only after the run settles, in a savepoint, validating the whole batch.",
+    "Evidence strength is explicit (provider_receipt, artifact_exists, reviewed_artifact, model_reported, owner_attested).",
+    "Accountable owner accepts shared deliverables; contributions cannot fulfil them; accepted file contributions require a read_artifact receipt.",
+    "Native external effects (browser/terminal) cannot be accepted by model claim; they need owner reconciliation.",
+    "Distinguish a logical task from an execution run: a run may finish while its task awaits a teammate or human decision; task status, delegation tree and results are first-class API objects.",
+    "Do not claim universal exactly-once external execution; use durable identities and provider idempotency where available, surface uncertain outcomes, and reconcile existing receipts/provider state before any retry.",
+    "Treat the form of an answer as part of the answer: inline cards for drafts, routines created, settings changed, bot-to-bot messages",
+    "Plan then goal: plans answer how, goals answer what must be true before done; durable goals persist across turns",
+    "Separate record types: work item, required outcome, task/attempt, connector operation, human question, approval; extend the existing work item instead of a new workflow system."
+   ]
+  },
+  "feature:coordination": {
+   "title": "Teammate coordination: messages, delegation, waits, replacement",
+   "purpose": "Teammates collaborate through backend-mediated tools. hermbot_message queues a scoped, non-blocking inbox message; hermbot_delegate creates an asynchronous child assignment (contribution or deliverable transfer); hermbot_wait names results actually required and releases execution capacity; failures wake the responsible teammate; settled unsuccessful contributions can be replaced. Legacy (coordination v0) delegation blocks the parent in waiting_children and resumes it with child results.",
+   "logic": [
+    "hermbot_delegate -> tool_action -> service.delegate: bot running, no self-delegation, grant allows delegate, depth < MAX_DELEGATION_DEPTH, no ancestor cycle, root handoffs < min(MAX_HANDOFFS, grant), outcome ids required (v2 defaults to all unfinished assigned), sibling dependencies, granted artifacts/attachments, skill capability check.",
+    "Child task inserted queued (or blocked with dependencies) with handoff brief, same work item/intent/versions, grant inherited; task_outcomes shared; coordination v1 -> result_acceptance.assign creates contribution or transfers deliverable; dependencies rows; artifact_access; root handoffs+1.",
+    "Legacy: parent set waiting_children; v1: parent continues running.",
+    "hermbot_message (v1) -> coordination.send: recipient running, conversation participant or work collaborator or grant target; reply_to must address this bot; teammate_messages pending.",
+    "Busy recipient: /internal/context returns teammate_inbox; plugin llm_request injects it and calls /internal/inbox-delivered to mark delivered to the current attempt.",
+    "Idle recipient: claim_new first runs schedule_inboxes, which creates one internal peer_message discussion task per recipient/conversation/work for unanswered messages (or delivered ones whose attempt settled) and links response_task_id.",
+    "hermbot_wait -> coordination.wait: only directly owned child tasks (no same-bot, no wait cycle) or messages sent by this task; coordination_waits rows; task -> waiting_results.",
+    "At settlement a v1 task with unaccepted required contributions or an explicit wait stays waiting_results (capacity released).",
+    "advance_waiters -> coordination.advance: for each waiting_results task without active attempt, evaluate waits (child status/dependency_ready, replies, failed responses) and required contributions; requeue with a data-only continuation when nothing pending or something failed and the signature changed; clear waits when not pending.",
+    "Contributor finish submits contribution (result_acceptance.record), accountable owner then accepts with reviewed_task_ids and read_artifact receipts.",
+    "Replacement: delegate with replaces_task_id supersedes a settled failed/interrupted/cancelled contribution preserving required flag; manager reassign (grant op) replaces a failed child, rewires waits/dependencies/contributions.",
+    "Legacy dependencies: blocked children released in advance_waiters when all parents dependency_ready, with dependency outputs and artifact grants in continuation; waiting_children parents resume when children terminal (or actionable failure) and signature differs from observed_terminal_children.",
+    "Read access: hermbot_read_artifact only for artifacts produced by or granted to the task; status/work_status expose public assignment state.",
+    "'Coordinate team' switch sends managed_bot_ids (<=9 selected peers) and, with 'Allow lifecycle proposals for owner review', management_operations incl. create/configure/start/stop."
+   ],
+   "decisions": [
+    "Informational messages are non-blocking inbox entries separate from assignments.",
+    "Explicit waits release execution capacity.",
+    "Peer replies to idle recipients run as internal discussion executions that cannot spawn reply loops.",
+    "Manager authority is a grant scoped to targets/operations; delegation never transfers credentials or private state.",
+    "All application-managed bot-to-bot communication goes through a Hermbot Hermes plugin plus a backend coordination service rather than relying on Hermes native message_agent/hermes peer alone.",
+    "Delegation is asynchronous: a waiting parent releases its execution slot and the worker delivers child results and resumes the parent continuation; bounded depth (3), at most 10 automatic handoffs per chain, budgets and cancellation propagation.",
+    "Communication contract distinguishes message, task request and task result with stable IDs, sender, recipient, originating conversation, deadline and status; delivery acknowledgement means accepted, not finished; reconcile an existing request before resubmitting.",
+    "Manager orchestration: a manager is an ordinary bot with a scoped management grant (targets, operations, budget, duration); managers plan, assign, monitor, redirect, recover and finish work; cannot self-escalate; relationship does not reveal private conversations, credentials or memory; stopping a whole runtime needs separate authority; configuration changes apply between runs; reassignment reconciles the old attempt first.",
+    "Group rooms of 2 to 6 bots with bounded serial rounds (3) and message caps (10), @mention scoping, bots may pass, @user escalation raising needs-you",
+    "Bot-to-bot handoff via asynchronous message_agent with attribution, delivery ids, typed failure reasons and at-most-one retry for transient errors"
+   ]
+  },
+  "feature:execution": {
+   "title": "Execution dispatch, policy, budgets, monitoring, stop/redirect/retry and recovery",
+   "purpose": "Runs teammate work on per-bot Hermes runtimes continuously until completion, a real wait, Stop, an owner deadline or the shared active budget. The worker admits queued tasks one per bot under global capacity, dispatches native runs with stable idempotency keys, streams events, accounts active time, delivers decisions and directions, settles results, recovers safely after restarts, and refuses to replay anything whose effect may have happened (uncertain).",
+   "logic": [
+    "claim_new: global advisory lock; capacity max_active - active/reserved attempts; per bot: active+running+provider+applied revision, no human computer control, readiness compatible, no pending lifecycle op, no active attempt; oldest queued eligible task.",
+    "Lock order with SKIP LOCKED: trigger locks, routine definition, work item, root task, bot row; then locked_task and recheck queued.",
+    "Preflight: routine/trigger start_allowed, pending connector ops -> waiting_approval, grant valid (else cancel), deadline (cancel kind deadline), budget (pause).",
+    "Native session per conversation/bot or per thread; prompt = continuation or input + thread context + skills + handoff brief + occurrence scope + attachments + granted files + pending owner/manager controls; instructions MANAGED_POLICY(v2)/POLICY + COORDINATION_POLICY.",
+    "Insert attempt 'dispatching' with Idempotency-Key hermbot:{attempt_id}, 12s lease; controls/work_commands included; task running, attempts+1, continuation/pending cleared; event task.started.",
+    "drive: copy attachments, ensure native session, POST /v1/runs (Idempotency-Key), store runtime_run_id; account time; pause if budget exhausted; stop if stopping; start event stream; GET /v1/runs/{id} status.",
+    "Terminal status -> settle; budget exhausted -> pause; else deliver decided runtime approvals (POST /approval) and one pending control (POST /steer), then queue a monitor assessment.",
+    "settle maps runtime terminal to task state (see sm:task), with bounded automatic recovery for retryable failures before any tool ran and complete event coverage (MAX_RECOVERIES).",
+    "Budgets: shared per work item (assignment/update) or per root; account() charges only while observed running; pause() moves tree to pausing_budget/paused_budget; Continue adds the workspace allowance after fences.",
+    "Monitor: when decision_mode enabled and a run is silent 180s or repeats tool failures, queue an assessment; separate loop claims it, re-validates currency, calls decisions.assess; with decision_actions and confidence>=0.85 inserts a monitor control (never stops/approves).",
+    "Stop: service.cancel stops descendants (attempts -> stopping; tasks cancelling or cancelled, uncertain kept), cancels pending reviews/questions/proposals/ops; drive sends POST /v1/runs/{id}/stop; settle preserves the owner's stop reason.",
+    "Redirect: service.steer; v2 creates an auto-intake message targeted at the work (revision path), legacy inserts a control delivered via native steer or next continuation.",
+    "Retry (owner): only settled failed/interrupted/cancelled, not all required fulfilled, no unknown connector outcome, whole tree settled; creates a new task (v2 via intake with owner_work_target).",
+    "Restart recovery: claim_existing re-leases attempts with expired lease; drive reuses runtime_run_id (poll) or re-POSTs with same idempotency key (<23h); 404 for accepted run -> uncertain; streams resume with gap flag."
+   ],
+   "decisions": [
+    "PostgreSQL is the queue (advisory lock + SKIP LOCKED + leases), not a broker.",
+    "One active/uncertain attempt per bot enforced by a partial unique index.",
+    "Never automatically replay an effect that may have happened; mark uncertain.",
+    "Budgets measure active execution time shared across teammates and revisions of a work item, not wall-clock.",
+    "Execution monitoring is advisory and opt-in.",
+    "Use Hermes authenticated Runs/HTTP-SSE API (or JSON-RPC gateway) for execution, streaming events, steering, stop and approvals via an adapter; probe the installed version and choose transport per workflow.",
+    "Default one active execution per bot; queued human instructions are preserved, never silently dropped; direct human messages take priority and can redirect the current turn; stop semantics cascade to children.",
+    "Background execution requires an always-on Linux host: develop locally in Docker then move the same architecture to a persistent server; the browser closing must not stop execution.",
+    "Background run model: runs with SSE events, stop, steer, approval endpoints; detached completions never start unsolicited model turns",
+    "Cron-style execution is not an exactly-once side-effect guarantee"
+   ]
+  },
+  "feature:attention": {
+   "title": "Owner questions, approvals/reviews, decisions and attention inbox",
+   "purpose": "Separates information requests (typed questions with answers) from permission for exact actions (approvals), resolves them through authenticated owner endpoints or ordinary chat, closes stale prompts without inventing decisions, and projects everything needing the owner (questions, reviews, results, problems, setup) into a durable versioned attention inbox that drives badges and optional push.",
+   "logic": [
+    "hermbot_ask (or legacy review kind=input) -> inputs.ask: validate choices, dedupe by question hash, fence other reviews/ops, insert input_request (expiry min(24h, deadline)), task waiting_input.",
+    "Owner answers via card (POST /api/v1/input-requests/{id}/answer) or chat (intake answer_question -> work_items.route answer uses the actual owner text for text questions).",
+    "inputs.answer locks task+question, checks hash/type/expiry/stop/conversation/grant/outcome revision, records answer idempotently, appends continuation, requeues unless an attempt is still active; for v2 owner answers creates an auto-intake task and sets resume_after_intake so the original waits for interpretation.",
+    "hermbot_review -> request_review: rejects connector-shaped generic reviews, fences pending question/op/review, prepares knowledge/connector payloads, validates secure input, inserts approval with payload hash and expiry, task waiting_approval.",
+    "Runtime command approvals come from the Hermes event stream (approval.request) and are inserted idempotently by source_id.",
+    "Owner decides (POST /api/v1/approvals/{id}) with payload hash; repeat of same decision idempotent; secure input requires computer handed back; kind dispatch to knowledge/connections/lifecycle; generic kinds write guidance continuation and requeue; runtime decisions delivered by deliver_decisions to /v1/runs/{id}/approval.",
+    "Owner edits a review (PUT): old approval and its pending drafts superseded, new review created and linked.",
+    "reconcile_requests (on settle and every loop) closes pending approvals/questions when the task closed, expired or a runtime approval's attempt ended; an expiry stops waiting work (kind review_expired).",
+    "owner_requests.valid is the shared actionability predicate for /state, inputs.pending and attention.",
+    "Attention: DB triggers mark subjects dirty in attention_pending inside source transactions; notification worker drains (try-lock), projects task (questions/reviews/legacy result/problem), work (result only when completed and fully settled; problem states) and source setup items; materialize bumps version on fingerprint change and enqueues push; close_missing deactivates stale items.",
+    "Inbox API pages needs/updates/history with counts in one statement; read/dismiss/unread only the observed versions; dismiss cannot clear live owner decisions.",
+    "Sidebar 'Attention' row shows unread and needs-you counts from GET /api/v1/attention?limit=1 (5s).",
+    "Attention panel tabs Needs you / Updates / History with cursor paging; Mark read/unread/Dismiss (dismiss hidden for active owner-needed items); Mark visible read.",
+    "Detail resolves the live source; if still active it embeds the InputCard or the same ApprovalCard used in chat; Open work navigates to the conversation/thread and opens TaskInspector; settings-type items open Connections or Routines/Event triggers."
+   ],
+   "decisions": [
+    "Typed questions are separate from approvals.",
+    "Closing a prompt never records an owner decision; expiry stops waiting work rather than resuming as if answered.",
+    "Attention invalidation via DB triggers in the same transaction (transactional outbox) with generation counters, level-based reconciliation, no max(event id) watermark.",
+    "Reading never authorizes; read_version only advances to the version presented.",
+    "Present each bot with presence/state from the avatar (idle, thinking, working, waiting, blocked, done) with hover detail, and distinguish working, unread results, questions, approvals and failures; status wording must differentiate working, waiting-for-me and failed.",
+    "Avatar carries lifecycle state (idle/thinking/working/waiting/blocked/done) with hover for current action instead of step logs",
+    "Sidebar distinguishes needs-attention (question/approval/handoff) from unread activity from working",
+    "Ordinary questions are persistent typed input requests separate from approvals; an answer never grants permission and an approval supplies no answer text.",
+    "Reviews bind an exact payload/hash; editing creates a new approval and supersedes the old (HTTP 409 on stale); managers request but cannot approve.",
+    "Attention is a durable current-state view separating source state, owner read state and transport state; reading/dismissing never answers or approves."
+   ]
+  },
+  "feature:conversations": {
+   "title": "Conversations: DMs, groups, threads, transcripts, live updates",
+   "purpose": "Owner chats with teammates in one DM per bot or in groups of 2-6 bots. Messages can be threaded (separate native sessions), carry attachments, mentions, skill refs and library files. The UI loads paginated transcripts with reactions, receives live updates through SSE, and can read the authoritative native Hermes history.",
+   "logic": [
+    "DM per bot is bootstrapped (unique index one_dm_per_bot); groups created with >=2 distinct registered bots.",
+    "Every owner submission inserts a user message with source_id request:{task_id}; bot results insert assistant messages runtime-result:{attempt_id}; both idempotent via ON CONFLICT(source_id).",
+    "Threads: reply_to_message_id normalized to the thread root; worker maps thread root+bot to its own native session (thread_sessions) and prefixes the parent message as quoted context.",
+    "Mentions must be participants; stored on the owner message.",
+    "Attachments must belong to the conversation; worker lists them in the prompt and provisioning copies them into the bot workspace before the run.",
+    "Transcript API returns 100 messages per page (before cursor, thread filter) with work association, reply counts, reactions, artifacts, attachments.",
+    "Live updates: SSE /api/v1/events polls events every 0.5s; UI EventSource appends message.delta text to partial bubbles and debounces invalidation of state/chat/attention queries.",
+    "Archived conversations disappear from /state and block new work, peer messages and attention.",
+    "Native history proxied from Hermes /api/sessions/{id}/messages (authoritative incl. compacted).",
+    "Reactions toggle, group edit/removal, conversation archive/restore and attachment upload are in product.py.",
+    "Sidebar: teammates (DMs), past teammates, groups; sections collapsible and persisted in localStorage 'hermbot-sidebar-sections'; search expands all sections.",
+    "Groups: create/edit (2-6 members, title <=120) via POST /api/v1/groups or PUT /api/v1/groups/{id}; remove via DELETE (saved work remains).",
+    "Transcript: markdown messages with byline, edited marker, 'saved routine instructions' label for routine-revision sources, mentions, attachment download links, Reply (thread) and \ud83d\udc4d reactions.",
+    "Threads: opening a message sets ?thread=<id> on the conversation query and replies send reply_to_message_id."
+   ],
+   "decisions": [
+    "Hermes owns native session history; Hermbot stores its own transcript of owner messages and final results.",
+    "Reply threads use separate native sessions.",
+    "SSE is a DB-poll invalidation channel; UI re-fetches state.",
+    "Bots, not chats, are the primary navigation objects: a roster of persistent teammates, each with a permanent conversation; threads, reactions, mentions, skill references, attachments, queued messages, steer/stop and visible retry.",
+    "Group chats of up to six bots with attributed messages, @mention routing, membership editing and human escalation; a single authoritative room history and exactly one active server-side driver per room that decides whose turn runs; limits on rounds, time and spending; the browser never owns group execution.",
+    "Message UX: structured progress is derived from real runtime events, never invented text; duplicate clicks and reconnects must not resubmit; reopening restores active run, partial output and pending approvals.",
+    "One permanent canonical Bot Chat per bot; /new compacts rather than forks; archiving retires and starts a fresh canonical chat",
+    "Composer features borrowed from Grok Bot: / for saved skills, @ for bots/groups/routines/connectors, reply/thread/react, steering while work runs, editable drafts before send, Stop now",
+    "Heterogeneous transcript where conversation, system events, interactive cards and visualizations share one timeline",
+    "The browser never drives execution; one authoritative server-side transcript/driver per room; closing the client doesn't stop work."
+   ]
+  }
+ },
+ "flows": {
+  "flow:c": {
+   "title": "Connector action > review/approval > provider call > receipt/reconciliation",
+   "summary": "A bot calls hermbot_connector; reads run inline; mutations are frozen into a review (or matched to an owner request/standing permission), queued after Allow once, dispatched by the task worker with a committed dispatching marker, and settled with a definitive receipt or left uncertain for owner reconciliation.",
+   "steps": [
+    "Bot tool hermbot_connector posts to /internal/tools; app.tools validates arguments and calls service.tool_action",
+    "tool_action resolves the connection and, for mutations, requires a work item; then calls connections.invoke",
+    "invoke authorizes bot/action, resolves remembered references, validates arguments against the fixed catalog and resource allow-list",
+    "Read: get credential (refresh if near expiry), call fixed provider endpoint via pinned transport, redact, remember references (or import Drive file to library); auth failure marks needs_reconnect and pauses event sources",
+    "Mutation: reject if task already has an unfinished op; resolve outcome; prepare_review freezes payload with connection revision and outcome revision",
+    "If an owner-requested authorization or a standing permission matches, insert a queued operation directly and set task waiting_approval",
+    "Otherwise service.request_review creates an approval (payload hash) and record_review inserts a pending connector_operations row",
+    "Attention trigger marks the task dirty; owner sees the review (flow:g)",
+    "Owner decides POST /api/v1/approvals/{id}: once -> op queued after connection revision recheck; deny/cancel -> denied, outcome settled, bot resumed. Edit (PUT) supersedes op and creates a new review",
+    "Task worker loop calls drive_one each iteration; under global advisory lock it marks stale dispatching ops uncertain and selects one queued op whose task has no active attempt",
+    "Under per-connection advisory lock, task lock and connection row lock, recheck grant, bot/action, task state/expiry, revision, resource, outcome state/dependencies, payload hash and approval/authorization/standing budget; failures finish as failed",
+    "Commit status dispatching with 120s lease in a separate transaction before the provider sees the request; increment standing permission use",
+    "Call MCP tools/call or the fixed provider adapter with operation-derived identifiers",
+    "finish_operation records succeeded/failed/uncertain, settles the outcome effect, emits connector.<status> and resumes the bot with a definitive receipt (uncertain does not resume)",
+    "Worker claim gate keeps a task with unfinished connector ops in waiting_approval",
+    "Owner reconciles uncertain ops in Connections > Activity (succeeded/failed with evidence, or unresolved after stopping) without replay",
+    "Successful receipts later feed own-write suppression for event triggers"
+   ]
+  },
+  "flow:d": {
+   "title": "Routine tick > admission > run > history",
+   "summary": "Saved routine revisions bind a per-bot wake token; the task worker installs a Hermes no-agent 1-minute cron job in the bot runtime that posts a scoped wake; the API ticks due routines, admits idempotent occurrences into ordinary tasks; the worker first-claim gate rechecks; history derives status from work items.",
+   "steps": [
+    "Owner saves routine via POST /api/v1/routines (app.py) or PUT /api/v1/routines/{id}; idempotent owner mutation; chat intake may save an inactive draft",
+    "save validates access (incl. management grant), inserts owner source message and immutable revision, sets state/next_run_at, cancels unstarted runs on revision change, ensures scheduler binding",
+    "Task worker runs routines.run; every 10s reconcile_schedulers computes wanted (any active routine) and PUTs generation/token/enabled to the bot runtime",
+    "runtime_api writes hermbot_routine_wakeup.py and hermbot-routine-wakeup.json {url, token}, creates/pauses/resumes the Hermes cron job \"Hermbot wake <generation>\" (every 1m, --no-agent)",
+    "Each minute Hermes runs the script, which POSTs {} with the bearer token to /internal/routine-wake/{bot}/{generation}",
+    "wake verifies generation and token hash, records last_tick_at and ticks if enabled",
+    "tick locks up to 50 due active routines for the bot (SKIP LOCKED); pauses after 3 definite failures or archived destination; records a gap row and applies catch-up latest after downtime",
+    "admit dedupes occurrence (and same scheduled_at across revisions), checks overlap, start window, daily cap and access; inserts admitted/skipped run with reason and frozen context (+since_success window)",
+    "admit creates a system thread message and, in a savepoint, create_saved_task: service.create_task (orchestration v2), budget, management bind, work_controller.apply requirements/effects; failure -> skipped",
+    "tick advances next_run_at (or state finished when none)",
+    "Worker claim_new locks the routine definition (SKIP LOCKED) and calls start_allowed which cancels if paused/archived/revised/destination archived/start window missed/access invalid",
+    "Execution proceeds as ordinary work (flow:a); pause_invalid in advance_waiters pauses definitions with invalid grants",
+    "Owner views history (display_status from work items) and controls run/pause/pause-stop/resume/archive"
+   ]
+  },
+  "flow:e": {
+   "title": "Event trigger (poll/socket/webhook) > trigger_worker > work",
+   "summary": "Events arrive by webhook ingress (API) or collectors in the event-worker (polls, Slack Socket Mode); each is durably deduped and matched to active trigger revisions in one transaction before acknowledgement; the event-worker admits ready pending runs into ordinary tasks via the shared saved-work path.",
+   "steps": [
+    "Owner creates source, saves secrets, creates trigger (owner message revision, activated_at baseline for non-poll)",
+    "event-worker main loop (1s) claims poll sources (<=4 jobs, includes http) and socket sources (<=10) with 360s fenced leases",
+    "poll: credentials (connection refresh under row lock + source secrets), verify identity on initializing, http sources only heartbeat, fetch one page outside DB transaction",
+    "Drive: verify newly observed Google Docs against successful drive.create receipts with a read-only export",
+    "commit_page under lease: normalize items, ingest each, upsert resource versions, store cursor/progress atomically, schedule next poll, set activated_at on first complete baseline",
+    "socket: apps.connections.open, pinned wss connect, hello app_id, heartbeat extends lease; each envelope recorded via receive then acked after commit",
+    "webhook: POST /hooks/{provider}/{id} reads <=1 MiB in 10s, locks source, verifies signature with current/previous secret, handles Slack url_verification, receive(); response sent after commit",
+    "receive dedupes by delivery key/body hash, applies daily cap, normalizes (unsupported/recording_failed recorded), calls ingest and stores encrypted body only if recorded",
+    "ingest: event_key dedupe, availability check, own-write suppression, per active trigger match/baseline/access, insert event (encrypted if retained), delivery, pending/coalesced runs, matches",
+    "advance -> admit_pending: rotate, expire, lock conversation without waiting, overlap and per-bot queue checks, validate, self-event recheck (ignored), daily cap, wait for unsettled connector ops, then system thread + create_saved_task(origin=event) -> admitted",
+    "Worker claim_new: triggers.claim_locks then start_allowed with nonblocking share locks; cancels if revised/paused/expired/invalid",
+    "Failures classify source status, back off and pause triggers when access/resync/inspection needed; maintenance expires payloads/secrets and pauses unavailable destinations; heartbeat file for compose healthcheck"
+   ]
+  },
+  "flow:g": {
+   "title": "Notification fan-out > web push > service worker",
+   "summary": "Domain row changes mark attention dirty via DB triggers; the notification-worker projects attention items and enqueues per-browser deliveries; a separate pump claims and sends generic VAPID Web Push through the pinned transport; the service worker shows a generic notification and routes clicks to the current attention resolution.",
+   "steps": [
+    "Browser registration: Notifications.tsx registers /sw.js, PushManager.subscribe, POST /api/v1/notifications/subscriptions; server validates keys/endpoint, encrypts, sets device cookie and generation",
+    "AFTER INSERT/UPDATE triggers on tasks, approvals, connector_operations, routine_definitions, event_sources, connections, etc. call attention_dirty",
+    "notification-worker project pump: attention.drain (try-lock 887832154) projects subjects; reconcile updates heartbeat_at; maintenance expires subscriptions/deliveries; touch heartbeat file",
+    "materialize of a new item version calls notifications.enqueue",
+    "enqueue: requires push_enabled, category, configured VAPID, unread active item; quiet deferral, category delays, 24h freshness; per matching subscription insert delivery or overflow summary (ON CONFLICT DO NOTHING)",
+    "delivery pump: claim under try-lock scans 30 due deliveries; suppresses irrelevant (eligible re-projects), reschedules quiet, folds batches into one summary (covered), defers bursts >=3/min, leases one as dispatching with TTL",
+    "deliver: live recheck, pywebpush with generic payload, Topic hash, VAPID claims, via PinnedSession -> connector_http.request",
+    "Record accepted/failed/expired/pending with backoff (lease-token fenced); 404/410 retire subscription, 401/403 server_key_error, accept updates subscription status",
+    "Push service wakes the browser service worker: push handler shows generic \"Hermbot\" notification with sanitized tag and validated target",
+    "notificationclick focuses/navigates a same-origin window to /?attention=<id>; App reads the param and resolves GET /api/v1/attention/{id} to current state",
+    "Owner preference save suppresses pending deliveries and re-enqueues current items; logout disables this browser subscription"
+   ]
+  },
+  "flow:f": {
+   "title": "Manager lifecycle proposal > owner approval > supervisor outbox > provisioning > manager resumes",
+   "summary": "A manager bot holding a grant proposes create/configure/start/stop; the owner approves the exact snapshot; the decision enqueues a bot_operation that the worker drives through the supervisor; the manager task resumes with a continuation once provisioning settles.",
+   "steps": [
+    "Owner issues authority: standing grant (POST /api/v1/grants) or a task grant created with the task.",
+    "Manager model calls hermbot_propose; plugin forwards to /internal/tools with framework tool_call_id as receipt.",
+    "lifecycle.prepare checks grant authority/targets/creation budget, assigns server id for create, validates full config within grant resource limits, rejects busy targets without interrupt and uncertain work, freezes provider revision and affected tasks.",
+    "lifecycle.propose inserts approvals(kind lifecycle, payload hash, expiry) and lifecycle_proposals(pending); task -> waiting_approval; manager told to end turn.",
+    "Optionally owner edits: PUT /api/v1/proposals/{id} supersedes old proposal, stales approval, re-proposes.",
+    "Owner approves via POST /api/v1/approvals/{id} with expected_payload_hash; expiry/task-stopped/grant rechecked.",
+    "lifecycle.decide: deny -> proposal denied + resume. Approve -> recheck authority and provider revision; create: group <=6, register bot, grant created_bots+1 and target appended, participant added; else bot NOWAIT lock, expected revision, identical affected tasks, reserve_lifecycle, apply config or desired_state.",
+    "registry.enqueue(key proposal:<id>, proposal_id) creates bot_operations(queued) snapshot; proposal -> queued with operation_id; bots.status provisioning.",
+    "Worker loop claims op (120 s lease), drive waits for idle bot, re-checks the manager task and grant before dispatch (else cancels op, bot error, proposal cancelled), marks op and proposal applying.",
+    "drive decrypts provider key, bot token, runtime key and POSTs RuntimeSpec to supervisor /operations/{action} with SUPERVISOR_TOKEN.",
+    "Supervisor: per-bot lock, receipt replay or execute ensure: volumes/network, connect api/worker, create hardened hermbot-bot-<id>, start, wait healthy; write fsynced receipt.",
+    "Success: op completed, bot status active (or archived/deleted), applied_revision set, readiness cleared; proposal completed; lifecycle.resume appends continuation (bot id/action/state, use hermbot_teammates) and requeues the manager task.",
+    "Failure: op failed, bot error, proposal failed, manager resumed with failure text; transport loss leaves op applying for re-drive.",
+    "Probe refreshes readiness (networks reconcile + capabilities); new bot becomes dispatchable; resumed manager attempt dispatched by claim_new."
+   ]
+  },
+  "flow:i": {
+   "title": "Login, session and owner authentication",
+   "summary": "Owner pastes OWNER_TOKEN once; the API mints an opaque HttpOnly session cookie whose hash is stored; every owner request/WebSocket is verified against the bearer or the cookie hash; logout and session revocation are explicit.",
+   "steps": [
+    "Compose requires OWNER_TOKEN; api lifespan refuses any service secret shorter than 32 chars.",
+    "UI POSTs /api/v1/session with Authorization Bearer token.",
+    "auth.verify compares bearer with compare_digest.",
+    "auth.login creates token_urlsafe(32), stores sha256 in owner_sessions with 1-day expiry and sets hermbot_session cookie HttpOnly SameSite=Strict (Secure if https).",
+    "Later requests: owner dependency verifies cookie hash not revoked/expired; middleware rejects cross-origin non-GET.",
+    "WebSocket computer stream: Origin==Host, verify, re-verify every 5 s.",
+    "Owner can list and revoke sessions by hash.",
+    "Logout revokes current session, signs out push device, deletes cookies.",
+    "Bots authenticate separately with HERMBOT_BOT_TOKEN hash lookup."
+   ]
+  },
+  "flow:j": {
+   "title": "Bot create / clone / delete provisioning path",
+   "summary": "Owner lifecycle requests become bot_operations snapshots driven by the worker through the supervisor; clone uses a helper container; delete removes runtime and private volumes but keeps history.",
+   "steps": [
+    "Create: POST /api/v1/bots (Idempotency-Key) -> validate_config -> register (lock, max_bots, id, credentials, DM) -> enqueue 'create'.",
+    "Clone: POST /bots/{id}/clone -> roster lock, source revision check, reserve source, register target, enqueue 'clone' with source_bot_id, source_revision, source_was_running, copy_options.",
+    "Worker drives op; skips while target or clone source has active attempts.",
+    "Supervisor ensure(clone=True): clone_state validates options/ownership, stops source, runs hermbot-clone-<op> (root, no network, source ro, target rw) executing copy_state.py, waits, restarts source if it was running; then creates runtime; cleanup_clone removes helper.",
+    "copy_state copies memory/skills/workspace and history via SQLite backup; skips symlinks and credential/config names; browser volume never copied.",
+    "Runtime container start triggers hermes_bootstrap and health checks on 8642/8643.",
+    "Delete: POST /bots/{id}/delete with exact-name confirmation -> desired stopped, enqueue delete, status deleting (bot token rejected).",
+    "Supervisor delete removes container, clone helpers, owned volumes and dynamic network (disconnecting api/worker).",
+    "Completion: status deleted, credentials nulled, participants removed; conversations remain as Past teammates."
+   ]
+  },
+  "flow:k": {
+   "title": "Attachment upload > MinIO > install into bot workspace",
+   "summary": "Owner uploads base64 file to a conversation; bytes stored in MinIO with sha256; before each native run the worker reads (verifying checksum) and the supervisor installs them into /workspace/attachments/<id>/<name> via root exec staging and write_attachment.py.",
+   "steps": [
+    "UI POST /api/v1/conversations/{id}/attachments with Idempotency-Key.",
+    "Validate ASCII plain name, MIME allowlist, strict base64, 1 B..10 MB; compute sha256.",
+    "put_object to bucket hermbot key attachments/<conv>/<id> with sha metadata; insert attachments row (idempotent receipt).",
+    "Owner message/task carries attachment_ids (tasks.attachment_ids).",
+    "Worker drive (before native start, no human control) calls provisioning.copy_attachments: attachments + artifacts granted to the task.",
+    "ArtifactStore.read_bytes verifies size and sha256; POST supervisor /attachments with base64.",
+    "Supervisor validates filename, base64, size and checksum, finds runtime, then under the per-bot lock: STAGING_INIT, 60 000-byte STAGING_WRITE chunks, exec write_attachment.py, all as root via docker exec.",
+    "write_attachment.install re-validates, walks /workspace with O_NOFOLLOW dir fds, writes temp O_EXCL, fsync, chown hermes, atomic replace; staging unlinked.",
+    "Bot reads /workspace/attachments/<id>/<name>; owner can download via GET /api/v1/attachments/{id}."
+   ]
+  },
+  "flow:l": {
+   "title": "Stack startup sequence",
+   "summary": "Compose orders postgres (healthy) and storage (started) before api; api initializes DB under an advisory lock, runs schema+migrations, seeds core bots, bootstraps credentials and creates the bucket; worker waits for api health and the runtime image build, then bootstraps 'ensure' operations that make the supervisor create runtime containers, whose bootstrap starts the adapter and Hermes gateway.",
+   "steps": [
+    "runtime-image service builds hermbot-hermes:phase4 and exits 0 (network none).",
+    "postgres healthy via pg_isready; storage started (no healthcheck); supervisor starts independently (no depends_on).",
+    "api starts after postgres healthy and storage started.",
+    "api lifespan: secret length check; db.initialize: open pool, advisory xact lock 887832101, run schema.sql then sorted migrations, seed Scout/Quill/Sage with runtime_url http://hermes-<id>:8642 and DMs, registry.bootstrap (env provider import, per-bot credentials).",
+    "ArtifactStore.initialize creates bucket 'hermbot' if missing.",
+    "api healthcheck /health runs SELECT 1.",
+    "worker (after api healthy and runtime-image completed) and event/notification workers (after api healthy) also run db.initialize serialized by the advisory lock.",
+    "Worker loop: queue_initial enqueues 'ensure' for active bots with applied_revision < revision (fresh seeds have 1 > 0); drive -> supervisor creates hermbot-bot-<id> (migrating any legacy compose container found by find_runtime).",
+    "Runtime bootstrap: install read-only plugin, drop to hermes, clean Chromium markers, write config.yaml/SOUL.md, validate skills, spawn adapter 8643, exec Hermes gateway 8642.",
+    "Supervisor waits for container health; worker probe stores readiness; dispatch enabled for compatible bots. Restart: runtimes restart unless-stopped; worker reconciles networks."
+   ]
+  },
+  "flow:a": {
+   "title": "Owner message -> intake -> work item -> dispatch -> native run -> events -> outcome/acceptance -> UI",
+   "summary": "An owner chat message (intent auto) becomes a queued carrier task; the worker's intake loop interprets it with the bot's model provider and applies work item/requirement changes; claim_new admits the task into an attempt; drive starts a Hermes run; the Hermbot plugin calls /internal/context and /internal/tools during the run; runtime events are streamed into events; settle applies finish claims to outcomes (acceptance) and posts the result message; SSE and /state polling update the UI and attention.",
+   "steps": [
+    "UI composer posts POST /api/v1/messages with a client Idempotency-Key and MessageRequest payload (intent defaults to 'auto').",
+    "Middleware rejects cross-origin non-GET; owner dependency verifies session cookie/bearer.",
+    "submit_message -> submit validates the key and calls service.create_task with orchestration_version=2, coordination_version=1, context chat/group.",
+    "create_task: advisory xact lock on request_key, fingerprint compare (replay returns existing row), validations (conversation not archived FOR SHARE, bot active/running, participant, files, skills, thread root, mentions, grants).",
+    "INSERT tasks status 'queued'; set budget/attachments; insert owner user message source_id request:{task}; set orchestration_version=2, owner_message_id, intake_status 'pending'; message_intent stays 'auto'; event task.queued. DB trigger attention_tasks marks the task dirty.",
+    "Response 202 with task row; UI also receives events via SSE.",
+    "Worker process (svc:worker) main loop runs work_intake.run as a background asyncio task.",
+    "advance_one claims the oldest queued auto task with intake pending/interpreting per conversation FIFO (FOR UPDATE OF t SKIP LOCKED), sets interpreting + attempts+1 + 60s lease, builds evidence and reads the bot's provider.",
+    "interpret() POSTs {provider.base_url}/chat/completions (Bearer decrypted provider key) with INSTRUCTION + evidence, optional read_context tool; validates Interpretation and delivery alignment; up to 4 rounds/45s.",
+    "apply() in a new transaction: locked_task, skip if applied/stopped, message hash + observed revision checks, forced target, combined operations, derived tasks for extra operations.",
+    "Assignment: work_items.route(intake=True) -> new_item inserts work_items, sets task work_item_id/message_intent 'assignment', links work_item_messages, event work.created.",
+    "work_controller.apply registers requirements (work_outcomes, task_outcomes, owner_task_id), bumps revision, records work_authorizations from quoted requested_effects, writes work_changes, emits revise commands to other active tasks, event work.revised.",
+    "Intake marks intake_status 'applied' (+intake_result), optional clarification continuation, event message.interpreted.",
+    "Worker main loop each second: work_controller.advance (reconcile commands), advance_waiters, claim_existing, then claim_new.",
+    "claim_new takes global advisory lock 887832103, schedules inboxes, computes capacity, checks bot eligibility and picks the oldest queued task no longer 'auto'; acquires work item/root/bot locks with SKIP LOCKED; preflight (grant, deadline, budget, connector ops).",
+    "Session lookup/creation (sessions or thread_sessions), prompt assembly (input, thread, skills, handoff, attachments, granted files, pending controls), MANAGED_POLICY + COORDINATION_POLICY.",
+    "INSERT attempts 'dispatching' (idempotency_key hermbot:{attempt}, 12s lease, worker_id); controls/work_commands 'included'; task 'running'; event task.started (UI clears partial text).",
+    "drive(): copy attachments into bot workspace, ensure native session (GET/POST /api/sessions), POST /v1/runs with Idempotency-Key; store runtime_run_id and status running; budget accounting.",
+    "Inside the bot, the Hermbot plugin pre_llm_call hook POSTs /internal/context; app.context resolves the admitted task through active_task (attempt by bot+session) and returns message_routing (work, outcomes, owner instructions, authorization), capabilities, connector policy, teammate inbox.",
+    "llm_request middleware re-fetches context to cache the work revision, injects inbox, acknowledges inbox and records tool visibility.",
+    "Each tool call passes execution_boundary -> admitted_execution: /internal/context with tool_call_id (event tool.admitted), work revision check, routing/capability gating; hermbot_* tools POST /internal/tools with receipt_id=tool_call_id and expected_work_revision.",
+    "app.tools validates args (ARGUMENT_MODELS) and requires expected_work_revision; service.tool_action dedupes via tool_receipts, checks revision/waiting_input/routing/require_work, executes the operation (e.g. publish -> artifacts + outcome evidence; finish -> pending_result/pending_outcomes), stores receipt, event tool.receipt.",
+    "Concurrently collect_events streams GET /v1/runs/{id}/events; record_event inserts each event (source_id runtime:{attempt}:{seq}, ON CONFLICT DO NOTHING), marks stream complete on run.* terminal events, creates runtime approvals.",
+    "drive polls GET /v1/runs/{id}; while running it delivers decisions/controls and queues monitor assessments; on terminal status calls settle and cancels the stream task.",
+    "settle(): lock task+attempt, account time, set attempt status/terminal, reconcile_requests, compute task state (completed / waiting_* / failed / recovery requeue).",
+    "outcomes.settle re-validates finish claims in a savepoint and records each: accountable owner path -> result_acceptance.record inserts result_acceptances, accepts reviewed contributions, marks outcome fulfilled, event result.accepted.",
+    "Completed with output: grant child artifacts to parent, insert assistant message runtime-result:{attempt}, event task.completed (or task.failed when empty / task.{state}).",
+    "SSE: GET /api/v1/events polls events id>cursor every 0.5s and yields 'update' frames; UI EventSource appends message.delta and debounces invalidation of state/chat/attention queries.",
+    "UI re-fetches /api/v1/state (work_items via list_items + outcomes.projection) and the conversation transcript; WorkItems renders card status/progress.",
+    "Notification worker drains attention_pending and materializes a work 'result' item once work is completed and fully settled (or a problem item); Attention panel polls /api/v1/attention."
+   ]
+  },
+  "flow:b": {
+   "title": "Teammate coordination: message / delegate / wait / finish / read_artifact",
+   "summary": "A running teammate (coordination v1) delegates contributions to peers, messages them via a durable inbox, waits explicitly for required results (releasing capacity), is resumed by coordination.advance, inspects contributed artifacts, and accepts the shared deliverable at settlement.",
+   "steps": [
+    "Manager calls hermbot_teammates to discover peers and their effective capabilities.",
+    "hermbot_delegate -> /internal/tools -> tool_action resolves outcome_keys and calls service.delegate.",
+    "delegate validates bot/grant/depth/cycle/handoff budget/outcome ids/dependencies/files/skills.",
+    "Child task inserted queued/blocked with handoff brief and inherited work item/versions; outcomes.share binds task_outcomes; result_acceptance.assign inserts a pending contribution (or transfers deliverable); dependencies/artifact_access; root handoffs+1; event task.delegated; parent keeps running (v1).",
+    "hermbot_message -> coordination.send inserts teammate_messages pending (scoped recipient, validated reply_to); event teammate.message_sent.",
+    "If the recipient is running, its next /internal/context returns teammate_inbox; plugin llm_request injects it and POSTs /internal/inbox-delivered -> coordination.delivered marks delivered to that attempt.",
+    "If idle, claim_new's schedule_inboxes creates a peer_message discussion task for the recipient and links response_task_id; it then runs like any task and replies with hermbot_message reply_to.",
+    "Child runs (flow:a steps for dispatch), publishes artifacts and calls hermbot_finish with results; at settlement result_acceptance.record marks its contribution 'submitted' with submission payload (not fulfilment).",
+    "Manager calls hermbot_wait with task_ids/message_ids: coordination_waits inserted (cycle checks), task -> waiting_results; it ends its turn.",
+    "Manager's settle keeps it waiting_results (capacity released) while required contributions are unaccepted.",
+    "advance_waiters -> coordination.advance: when waits resolve or fail and the update signature changed, requeue the manager with a data-only continuation listing submissions/replies/failures.",
+    "Resumed manager inspects contributed files with hermbot_read_artifact (receipt recorded) and work_status.",
+    "Manager finishes with results(key, artifact_id, review, reviewed_task_ids); at its settlement validate() checks contributions submitted+completed, reviews listed, read_artifact receipts, review text; result_acceptances inserted, contributions accepted, outcome fulfilled.",
+    "Failed required contribution: advance wakes the manager; it may delegate with replaces_task_id (supersede, keep required) or reassign (manager grant).",
+    "Legacy v0: delegate sets parent waiting_children; advance_waiters releases blocked dependents and resumes the parent with all child results when children settle."
+   ]
+  },
+  "flow:h": {
+   "title": "Stop / retry / recovery after worker or container restart",
+   "summary": "Owner Stop cancels a task tree and the worker stops the native run; Redirect becomes a revision or control; Retry creates a new task after the old tree settles; Continue adds budget. After a worker crash another (or restarted) worker takes over expired attempt leases and reconnects to the same native run identity; ambiguous cases become uncertain instead of replaying.",
+   "steps": [
+    "Stop: UI POST /api/v1/tasks/{id}/stop -> service.cancel on the locked task.",
+    "cancel walks descendants (or occurrence tree); for each non-terminal task: attempts -> stopping, task -> cancelling (active attempt) / cancelled / stays uncertain; stop_kind/stop_reason; discards monitor controls; cancels pending approvals, questions, lifecycle/knowledge proposals, connector drafts; event task.stop_requested.",
+    "drive sees attempt 'stopping' and POSTs /v1/runs/{id}/stop; polling continues until terminal.",
+    "settle forces status 'cancelled' for cancelling tasks and uses the stored stop_reason as error; failed parents cancel descendants.",
+    "Redirect: POST /api/v1/tasks/{id}/steer (owner_receipts idempotency) -> service.steer: v2 creates an auto-intake task with owner_work_target (revision path, flow:a), legacy inserts a controls row.",
+    "deliver_decisions sends one pending control via POST /v1/runs/{id}/steer (dispatching -> delivered); 409 returns it to pending for the next continuation; transport errors mark it uncertain; stale 'dispatching' from an old lease become uncertain.",
+    "Retry: POST /api/v1/tasks/{id}/retry requires failed/interrupted/cancelled, not all required results fulfilled, no unknown connector outcomes, no active attempts in tree; creates replacement task (v2 via intake targeting the work item).",
+    "Continue after budget pause: POST /api/v1/tasks/{id}/continue -> execution_policy.continue_work adds allowance and restores each paused task to queued/waiting_input/waiting_approval/blocked/waiting_results/waiting_children.",
+    "Retry interpretation: POST /api/v1/messages/{id}/retry-interpretation resets intake to pending.",
+    "Worker restart: new WORKER_ID; claim_existing re-leases attempts in dispatching/running/waiting_for_approval/stopping/external/reserved whose lease expired (12s) using FOR UPDATE SKIP LOCKED; uncertain attempts are excluded.",
+    "drive on a re-leased attempt: with runtime_run_id it skips start and polls the same run; without it, re-POSTs /v1/runs with the same Idempotency-Key (Hermes dedupes), unless the attempt is >23h old (mark_uncertain).",
+    "Event stream restarts; coverage flag event_stream_gap records that events may have been missed (prevents later automatic recovery).",
+    "Bot container restart: GET /v1/runs/{id} 404 for an accepted run -> attempt/task uncertain (no replay); other HTTP errors keep the receipt and retry next loop; runtime 'interrupted' status settles task interrupted (retryable by owner).",
+    "Automatic recovery: settle requeues a definitely failed retryable run (rate limit/provider/connection) when no tool started, coverage complete, grant/connector checks pass, budget left and recovery_failures < MAX_RECOVERIES (default 2); event execution.recovery_queued.",
+    "Uncertain tasks/attempts block: bot slot (unique index and claim checks), reassignment/replacement, lifecycle changes and revisions; no code transitions an attempt out of 'uncertain'.",
+    "Deadline/grant enforcement each loop: advance_waiters cancels tasks past deadline or with expired/revoked grants."
+   ]
+  }
+ },
+ "state_machines": {
+  "sm:connection": {
+   "entity": "Connection",
+   "table": "table:connections",
+   "states": [
+    "disconnected",
+    "connected",
+    "needs_reconnect",
+    "revoked"
+   ],
+   "transitions": [
+    "disconnected -> connected: token saved",
+    "needs_reconnect -> connected: token saved / OAuth finish",
+    "revoked -> connected: token saved again",
+    "disconnected -> connected: OAuth finish success",
+    "connected -> needs_reconnect: ProviderFailure.auth on read/dispatch",
+    "* -> needs_reconnect: OAuth exchange failed",
+    "* -> revoked: owner revoke",
+    "* -> disconnected: MCP endpoint changed"
+   ]
+  },
+  "sm:connector-operation": {
+   "entity": "External connector operation",
+   "table": "table:connector_operations",
+   "states": [
+    "pending",
+    "queued",
+    "dispatching",
+    "succeeded",
+    "failed",
+    "uncertain",
+    "unresolved",
+    "denied",
+    "cancelled",
+    "superseded"
+   ],
+   "transitions": [
+    "pending -> queued: owner Allow once",
+    "pending -> denied: owner deny/cancel",
+    "pending -> superseded: owner edits review",
+    "pending -> queued: owner-requested authorization matched by work controller",
+    "(new) -> queued: standing permission or requested authorization at invoke",
+    "(new) -> pending: review recorded",
+    "pending -> cancelled: review closed/task stopped/requirement revised",
+    "queued -> cancelled: task stopped / requirement revised",
+    "queued -> failed: recheck fails before dispatch",
+    "queued -> dispatching: marker committed",
+    "dispatching -> succeeded: provider receipt",
+    "dispatching -> failed: definitive provider failure / MCP admission failure",
+    "dispatching -> uncertain: possible effect (uncertain failure / incomplete Slack receipt)",
+    "dispatching -> uncertain: stale lease recovery",
+    "uncertain -> succeeded: owner reconcile",
+    "uncertain -> failed: owner reconcile",
+    "uncertain -> unresolved: owner closes after stop",
+    "unresolved -> succeeded: owner reconcile later",
+    "unresolved -> failed: owner reconcile later"
+   ]
+  },
+  "sm:routine": {
+   "entity": "Routine definition",
+   "table": "table:routine_definitions",
+   "states": [
+    "draft",
+    "active",
+    "paused",
+    "finished",
+    "archived"
+   ],
+   "transitions": [
+    "(new) -> draft: chat intake draft save",
+    "(new) -> active: owner save enabled",
+    "(new) -> paused: owner save disabled",
+    "draft -> archived: promoted into replaced routine / archive",
+    "active -> paused: owner pause/pause-stop or edit disabled",
+    "paused -> active: owner resume (revalidated)",
+    "finished -> active: resume or save with future schedule",
+    "active -> paused: three consecutive definite failures",
+    "active -> paused: destination archived",
+    "active -> paused: management grant invalid",
+    "active -> finished: no upcoming occurrence",
+    "* -> archived: owner archive"
+   ]
+  },
+  "sm:routine-run": {
+   "entity": "Routine occurrence",
+   "table": "table:routine_runs",
+   "states": [
+    "admitted",
+    "skipped"
+   ],
+   "transitions": [
+    "(new) -> admitted: admission checks passed",
+    "(new) -> skipped: admission rejected / gap summary",
+    "admitted -> skipped: task creation failed in savepoint",
+    "admitted -> admitted: queued task cancelled before start (reason updated)"
+   ]
+  },
+  "sm:legacy-routine": {
+   "entity": "Phase 1 one-shot native routine",
+   "table": "table:routines",
+   "states": [
+    "creating",
+    "scheduled",
+    "uncertain",
+    "running",
+    "completed",
+    "failed",
+    "cancelled"
+   ],
+   "transitions": [
+    "creating -> scheduled: Hermes /api/jobs returned id",
+    "creating -> uncertain: job creation failed",
+    "scheduled -> running: routine admission in context",
+    "running -> completed: turn ended",
+    "running -> failed: turn ended",
+    "scheduled -> cancelled: stop before due"
+   ]
+  },
+  "sm:event-source": {
+   "entity": "Event source",
+   "table": "table:event_sources",
+   "states": [
+    "initializing",
+    "ready",
+    "listening",
+    "retrying",
+    "reconnecting",
+    "needs_access",
+    "needs_resync",
+    "needs_inspection",
+    "paused",
+    "archived",
+    "disconnected (projected)"
+   ],
+   "transitions": [
+    "(new) -> initializing: create",
+    "* -> initializing: owner edit enabled / secrets saved / check / resync",
+    "* -> paused: owner edit disabled / pause",
+    "* -> archived: owner archive",
+    "initializing -> ready: http source verified",
+    "initializing -> ready: page committed",
+    "ready -> listening: socket heartbeat",
+    "listening -> ready: no active triggers",
+    "listening -> reconnecting: socket ended",
+    "* -> retrying: transient failure",
+    "* -> reconnecting: socket failure",
+    "* -> needs_access: auth failure / connection changed",
+    "* -> needs_resync: Calendar 410 / Gmail 404",
+    "* -> needs_inspection: 3+ schema/client errors",
+    "ready -> disconnected (projected): checked_at older than threshold"
+   ]
+  },
+  "sm:event-trigger": {
+   "entity": "Event trigger definition",
+   "table": "table:event_trigger_definitions",
+   "states": [
+    "draft",
+    "active",
+    "paused",
+    "archived"
+   ],
+   "transitions": [
+    "(new) -> active: save enabled",
+    "(new) -> draft: save disabled",
+    "* -> active: edit enabled / resume",
+    "* -> paused: edit disabled / owner pause",
+    "active -> paused: source change/secrets/pause/check, connection change, collector failure",
+    "active -> paused: conversation archive/membership/maintenance",
+    "active -> paused: pending capacity exceeded",
+    "active -> paused: management grant invalid",
+    "* -> archived: owner archive"
+   ]
+  },
+  "sm:trigger-run": {
+   "entity": "Event occurrence",
+   "table": "table:trigger_runs",
+   "states": [
+    "pending",
+    "admitted",
+    "ignored",
+    "cancelled",
+    "expired",
+    "failed"
+   ],
+   "transitions": [
+    "(new) -> pending: matched event",
+    "pending -> pending: coalesced update extends ready_at / blocked reason / rotation",
+    "pending -> cancelled: cancel_unstarted",
+    "pending -> expired: start_before passed",
+    "pending -> ignored: self-event recheck",
+    "pending -> admitted: task created"
+   ]
+  },
+  "sm:trigger-delivery": {
+   "entity": "Delivery record",
+   "table": "table:trigger_deliveries",
+   "states": [
+    "recorded",
+    "ignored",
+    "duplicate",
+    "unsupported",
+    "recording_failed",
+    "reprocessed"
+   ],
+   "transitions": [
+    "(new) -> recorded: ingest retained",
+    "(new) -> ignored: ingest no match",
+    "(new) -> duplicate: event_key exists",
+    "(new) -> unsupported: normalize returned none / socket non-event",
+    "(new) -> recording_failed: normalization error",
+    "recording_failed -> reprocessed: owner retry",
+    "* -> *: redelivery increments duplicate_count"
+   ]
+  },
+  "sm:notification-delivery": {
+   "entity": "Push delivery",
+   "table": "table:notification_deliveries",
+   "states": [
+    "pending",
+    "dispatching",
+    "accepted",
+    "failed",
+    "expired",
+    "suppressed",
+    "covered"
+   ],
+   "transitions": [
+    "(new) -> pending: enqueue / test / overflow catch-up",
+    "pending -> suppressed: claim relevance check fails / preference save",
+    "pending -> pending: quiet reschedule / burst defer",
+    "pending -> covered: batch folded into summary",
+    "expired -> pending: summary upsert revives unattempted summary",
+    "suppressed -> pending: summary upsert revives unattempted summary",
+    "pending -> dispatching: claim lease",
+    "dispatching -> dispatching: expired lease reclaimed",
+    "dispatching -> accepted: 2xx",
+    "dispatching -> failed: terminal status or attempts>=5",
+    "dispatching -> expired: next retry beyond expiry",
+    "dispatching -> pending: retry with backoff",
+    "pending -> expired: maintenance"
+   ]
+  },
+  "sm:push-subscription": {
+   "entity": "Browser push subscription",
+   "table": "table:push_subscriptions",
+   "states": [
+    "registered",
+    "accepted_by_push_service",
+    "server_key_error",
+    "expired",
+    "replaced",
+    "revoked",
+    "signed_out"
+   ],
+   "transitions": [
+    "(new) -> registered: register",
+    "* -> registered: re-register same device",
+    "registered -> accepted_by_push_service: push accepted",
+    "* -> server_key_error: 401/403",
+    "* -> expired: 404/410 or expiry maintenance",
+    "* -> replaced: other row for same device/endpoint",
+    "* -> revoked: owner delete",
+    "* -> signed_out: logout"
+   ]
+  },
+  "sm:bot": {
+   "entity": "Teammate (bots.status; also desired_state running|stopped and revision vs applied_revision)",
+   "table": "table:bots",
+   "states": [
+    "start",
+    "active",
+    "provisioning",
+    "deleting",
+    "error",
+    "archived",
+    "deleted"
+   ],
+   "transitions": [
+    "start -> provisioning: register",
+    "start -> active: core bot seed (applied_revision 0 < revision 1 triggers ensure)",
+    "active -> provisioning: enqueue non-delete op",
+    "error -> provisioning: enqueue non-delete op",
+    "archived -> provisioning: enqueue non-delete op",
+    "active -> deleting: enqueue delete",
+    "error -> deleting: enqueue delete",
+    "archived -> deleting: enqueue delete",
+    "provisioning -> active: op completed (non archive/delete)",
+    "provisioning -> archived: archive completed or configure/ensure of previously archived",
+    "deleting -> deleted: delete completed",
+    "provisioning -> error: supervisor HTTP failure or cancelled before dispatch",
+    "deleting -> error: supervisor HTTP failure or cancelled before dispatch",
+    "error -> provisioning: owner retry"
+   ]
+  },
+  "sm:bot-operation": {
+   "entity": "Lifecycle outbox entry",
+   "table": "table:bot_operations",
+   "states": [
+    "start",
+    "queued",
+    "applying",
+    "completed",
+    "failed",
+    "cancelled",
+    "uncertain"
+   ],
+   "transitions": [
+    "start -> queued: enqueue",
+    "queued -> applying: drive",
+    "applying -> applying: transport error; re-claimed after 120 s lease",
+    "applying -> completed: supervisor success",
+    "applying -> failed: HTTPStatusError",
+    "queued -> cancelled: task terminal/grant revoked or expired",
+    "failed -> queued: owner retry"
+   ]
+  },
+  "sm:lifecycle-proposal": {
+   "entity": "Manager lifecycle proposal",
+   "table": "table:lifecycle_proposals",
+   "states": [
+    "start",
+    "pending",
+    "denied",
+    "superseded",
+    "cancelled",
+    "queued",
+    "applying",
+    "completed",
+    "failed"
+   ],
+   "transitions": [
+    "start -> pending: propose",
+    "pending -> denied: decide deny/cancel",
+    "pending -> superseded: replace",
+    "pending -> cancelled: task cancel or review closure",
+    "pending -> queued: decide approve",
+    "queued -> applying: drive",
+    "queued -> cancelled: authority ended before dispatch",
+    "applying -> completed: op completed",
+    "applying -> failed: op failed"
+   ]
+  },
+  "sm:grant": {
+   "entity": "Management grant (derived; no status column)",
+   "table": "table:grants",
+   "states": [
+    "start",
+    "active",
+    "revoked",
+    "expired"
+   ],
+   "transitions": [
+    "start -> active: create standing grant or task grant",
+    "active -> active: create approved: created_bots+1, targets append",
+    "active -> revoked: POST /api/v1/grants/{id}/revoke",
+    "active -> expired: time; check_grant fails"
+   ]
+  },
+  "sm:knowledge-proposal": {
+   "entity": "Reviewed learning proposal",
+   "table": "table:knowledge_proposals",
+   "states": [
+    "start",
+    "pending",
+    "queued",
+    "applying",
+    "completed",
+    "failed",
+    "denied",
+    "cancelled",
+    "superseded"
+   ],
+   "transitions": [
+    "start -> pending: record_proposal",
+    "pending -> queued: decide once",
+    "pending -> denied: decide deny/cancel",
+    "pending -> cancelled: decide deny/cancel",
+    "pending -> superseded: review edit",
+    "pending -> cancelled: task cancel",
+    "queued -> cancelled: task cancel",
+    "queued -> applying: drive_proposals apply",
+    "applying -> completed: refresh op completed",
+    "queued -> failed: error (non-503)",
+    "applying -> failed: error (non-503)"
+   ]
+  },
+  "sm:computer-control": {
+   "entity": "Computer control (DB fence + native lease/epoch + ready marker)",
+   "table": "table:computer_controls",
+   "states": [
+    "agent",
+    "human-pending",
+    "human-ready"
+   ],
+   "transitions": [
+    "agent -> human-pending: owner takeover: fence committed then lease.acquire",
+    "human-pending -> human-ready: drain succeeded; marker written",
+    "human-pending -> human-pending: DrainTimeout/OwnershipChanged -> 409, admission stays paused",
+    "human-ready -> human-pending: another session reclaims (new epoch)",
+    "agent -> human-pending: status observes native human lease (fence mirrored)",
+    "human-pending -> agent: handback confirmed by native lease",
+    "human-ready -> agent: handback confirmed by native lease"
+   ]
+  },
+  "sm:owner-session": {
+   "entity": "Owner browser session",
+   "table": "table:owner_sessions",
+   "states": [
+    "start",
+    "active",
+    "revoked",
+    "expired"
+   ],
+   "transitions": [
+    "start -> active: login",
+    "active -> revoked: logout / DELETE owner-sessions",
+    "active -> expired: expires_at <= now"
+   ]
+  },
+  "sm:runtime-container": {
+   "entity": "Docker runtime container hermbot-bot-<id>",
+   "table": null,
+   "states": [
+    "absent",
+    "created",
+    "running-starting",
+    "healthy",
+    "stopped",
+    "removed"
+   ],
+   "transitions": [
+    "absent -> created: ensure containers/create",
+    "created -> running-starting: start when desired running",
+    "running-starting -> healthy: healthcheck",
+    "healthy -> removed: new operation recreates or delete",
+    "stopped -> removed: new operation recreates or delete",
+    "healthy -> stopped: stop/archive",
+    "stopped -> running-starting: reconcile_networks or ensure start"
+   ]
+  },
+  "sm:task": {
+   "entity": "Task / assignment execution",
+   "table": "table:tasks",
+   "states": [
+    "(initial)",
+    "queued",
+    "blocked",
+    "scheduled",
+    "running",
+    "waiting_children",
+    "waiting_results",
+    "waiting_approval",
+    "waiting_input",
+    "waiting_computer",
+    "cancelling",
+    "pausing_budget",
+    "paused_budget",
+    "completed",
+    "failed",
+    "cancelled",
+    "interrupted",
+    "uncertain"
+   ],
+   "transitions": [
+    "(initial) -> queued: create_task / delegate without deps / peer inbox task",
+    "(initial) -> blocked: delegate with depends_on",
+    "queued -> scheduled: one-shot routine creation",
+    "scheduled -> running: routine admission in /internal/context",
+    "queued -> running: claim_new",
+    "queued -> waiting_approval: claim_new finds pending connector ops",
+    "running -> waiting_approval: request_review / connector review / lifecycle proposal",
+    "running -> waiting_input: inputs.ask",
+    "running -> waiting_results: coordination.wait",
+    "running -> waiting_children: legacy delegate",
+    "running -> completed: settle: completed with output and no waits/blockers",
+    "running -> failed: settle: runtime failure, blockers, empty output, manager without accepted results",
+    "running -> interrupted: settle: runtime terminal status interrupted",
+    "running -> queued: settle: bounded automatic recovery or pending controls",
+    "running -> waiting_computer: settle: attempt computer_paused",
+    "running -> waiting_results: settle: required contributions outstanding (v1)",
+    "running -> waiting_children: settle: live or newly settled children (legacy)",
+    "waiting_results -> completed: settle re-check after outcome settlement",
+    "waiting_input -> queued: inputs.answer (no active attempt) / advance_waiters / settle when no pending question",
+    "waiting_approval -> queued: decide / knowledge.resume / lifecycle / settle when nothing pending",
+    "waiting_computer -> queued: advance_waiters after handback",
+    "blocked -> queued: advance_waiters dependencies ready / work_controller.reconcile with owner direction",
+    "waiting_children -> queued: advance_waiters children settled / reconcile direction",
+    "waiting_results -> queued: coordination.advance / reconcile direction",
+    "queued -> cancelling: cancel with active attempt"
+   ]
+  },
+  "sm:attempt": {
+   "entity": "Native execution attempt",
+   "table": "table:attempts",
+   "states": [
+    "(initial)",
+    "reserved",
+    "external",
+    "dispatching",
+    "running",
+    "waiting_for_approval",
+    "stopping",
+    "uncertain",
+    "completed",
+    "failed",
+    "cancelled",
+    "interrupted"
+   ],
+   "transitions": [
+    "(initial) -> dispatching: claim_new",
+    "(initial) -> reserved: create_routine",
+    "reserved -> external: routine admission",
+    "dispatching -> running: run accepted",
+    "dispatching -> stopping: cancel or budget pause",
+    "running -> stopping: cancel or budget pause",
+    "reserved -> stopping: cancel or budget pause",
+    "reserved -> completed: settle with runtime status",
+    "reserved -> failed: settle with runtime status",
+    "reserved -> cancelled: settle with runtime status",
+    "reserved -> interrupted: settle with runtime status",
+    "external -> completed: settle with runtime status",
+    "external -> failed: settle with runtime status",
+    "external -> cancelled: settle with runtime status",
+    "external -> interrupted: settle with runtime status",
+    "dispatching -> completed: settle with runtime status",
+    "dispatching -> failed: settle with runtime status",
+    "dispatching -> cancelled: settle with runtime status",
+    "dispatching -> interrupted: settle with runtime status",
+    "running -> completed: settle with runtime status",
+    "running -> failed: settle with runtime status",
+    "running -> cancelled: settle with runtime status",
+    "running -> interrupted: settle with runtime status",
+    "stopping -> completed: settle with runtime status",
+    "stopping -> failed: settle with runtime status"
+   ]
+  },
+  "sm:intake": {
+   "entity": "Message interpretation",
+   "table": "table:tasks",
+   "states": [
+    "(initial)",
+    "legacy",
+    "pending",
+    "interpreting",
+    "applied",
+    "failed"
+   ],
+   "transitions": [
+    "(initial) -> pending: create_task with auto intent and orchestration v2",
+    "(initial) -> legacy: other submissions",
+    "pending -> interpreting: advance_one claim (lease expired)",
+    "interpreting -> applied: apply",
+    "interpreting -> pending: error with attempts<3 (5s backoff)",
+    "interpreting -> failed: error at 3 attempts",
+    "failed -> pending: retry-interpretation",
+    "(initial) -> applied: delegate children / peer tasks"
+   ]
+  },
+  "sm:work-item": {
+   "entity": "Work card (derived status)",
+   "table": "table:work_items",
+   "states": [
+    "planning",
+    "working",
+    "needs_answer",
+    "needs_approval",
+    "uncertain",
+    "needs_attention",
+    "pausing_budget",
+    "paused_budget",
+    "waiting_results",
+    "completed",
+    "cancelled",
+    "hidden"
+   ],
+   "transitions": [
+    "planning -> uncertain: uncertain connector state or outcome",
+    "working -> uncertain: uncertain connector state or outcome",
+    "needs_answer -> uncertain: uncertain connector state or outcome",
+    "needs_approval -> uncertain: uncertain connector state or outcome",
+    "needs_attention -> uncertain: uncertain connector state or outcome",
+    "pausing_budget -> uncertain: uncertain connector state or outcome",
+    "paused_budget -> uncertain: uncertain connector state or outcome",
+    "waiting_results -> uncertain: uncertain connector state or outcome",
+    "hidden -> uncertain: uncertain connector state or outcome",
+    "planning -> needs_answer: pending question for item",
+    "working -> needs_answer: pending question for item",
+    "needs_approval -> needs_answer: pending question for item",
+    "uncertain -> needs_answer: pending question for item",
+    "needs_attention -> needs_answer: pending question for item",
+    "pausing_budget -> needs_answer: pending question for item",
+    "paused_budget -> needs_answer: pending question for item",
+    "waiting_results -> needs_answer: pending question for item",
+    "hidden -> needs_answer: pending question for item",
+    "planning -> needs_approval: pending draft",
+    "working -> needs_approval: pending draft",
+    "needs_answer -> needs_approval: pending draft",
+    "uncertain -> needs_approval: pending draft",
+    "needs_attention -> needs_approval: pending draft",
+    "pausing_budget -> needs_approval: pending draft",
+    "paused_budget -> needs_approval: pending draft"
+   ]
+  },
+  "sm:requirement": {
+   "entity": "Required result (work outcome)",
+   "table": "table:work_outcomes",
+   "states": [
+    "(initial)",
+    "pending",
+    "fulfilled",
+    "blocked",
+    "failed",
+    "uncertain",
+    "cancelled"
+   ],
+   "transitions": [
+    "(initial) -> pending: register insert",
+    "blocked -> pending: revision (revision+1) / target edit",
+    "failed -> pending: revision (revision+1) / target edit",
+    "uncertain -> pending: revision (revision+1) / target edit",
+    "cancelled -> pending: revision (revision+1) / target edit",
+    "pending -> fulfilled: record / result_acceptance.record",
+    "pending -> blocked: effect_settled connector result",
+    "pending -> uncertain: effect_settled connector result",
+    "pending -> blocked: finish claim status at settlement",
+    "pending -> failed: finish claim status at settlement",
+    "pending -> uncertain: finish claim status at settlement",
+    "pending -> failed: execution not completed",
+    "pending -> uncertain: budget pause after native tool started (native_effect)",
+    "pending -> cancelled: supersede / drop route",
+    "blocked -> cancelled: supersede / drop route",
+    "failed -> cancelled: supersede / drop route",
+    "uncertain -> cancelled: supersede / drop route",
+    "uncertain -> fulfilled: owner native reconcile",
+    "uncertain -> failed: owner native reconcile"
+   ]
+  },
+  "sm:input-request": {
+   "entity": "Typed owner question",
+   "table": "table:input_requests",
+   "states": [
+    "(initial)",
+    "pending",
+    "answered",
+    "cancelled",
+    "expired"
+   ],
+   "transitions": [
+    "(initial) -> pending: inputs.ask",
+    "pending -> answered: inputs.answer",
+    "pending -> cancelled: reconcile_requests closed / cancel / supersede / drop",
+    "pending -> expired: reconcile_requests expiry"
+   ]
+  },
+  "sm:approval": {
+   "entity": "Owner review",
+   "table": "table:approvals",
+   "states": [
+    "(initial)",
+    "pending",
+    "decided",
+    "delivered",
+    "stale",
+    "superseded",
+    "cancelled",
+    "expired"
+   ],
+   "transitions": [
+    "(initial) -> pending: request_review / runtime approval.request / lifecycle proposal",
+    "pending -> decided: decide",
+    "decided -> delivered: deliver_decisions success",
+    "decided -> stale: native 409",
+    "pending -> stale: invalidate_operations / admit_requested_drafts / lifecycle edit",
+    "decided -> stale: invalidate_operations / admit_requested_drafts / lifecycle edit",
+    "pending -> superseded: edit_review",
+    "pending -> cancelled: reconcile_requests / cancel",
+    "pending -> expired: reconcile_requests / cancel",
+    "cancelled -> expired: deadline sweep relabels undecided expired"
+   ]
+  },
+  "sm:contribution": {
+   "entity": "Contribution to a requirement revision",
+   "table": "table:result_contributions",
+   "states": [
+    "(initial)",
+    "pending",
+    "submitted",
+    "accepted",
+    "superseded",
+    "blocked",
+    "failed",
+    "uncertain"
+   ],
+   "transitions": [
+    "(initial) -> pending: assign / revision refresh",
+    "pending -> submitted: result_acceptance.record for non-owner",
+    "pending -> blocked: unfinished claim at settlement",
+    "pending -> failed: unfinished claim at settlement",
+    "pending -> uncertain: unfinished claim at settlement",
+    "submitted -> accepted: owner acceptance with reviewed_task_ids",
+    "pending -> superseded: replacement",
+    "submitted -> superseded: replacement",
+    "blocked -> superseded: replacement",
+    "failed -> superseded: replacement",
+    "uncertain -> superseded: replacement"
+   ]
+  },
+  "sm:teammate-message": {
+   "entity": "Peer inbox message",
+   "table": "table:teammate_messages",
+   "states": [
+    "(initial)",
+    "pending",
+    "delivered",
+    "cancelled"
+   ],
+   "transitions": [
+    "(initial) -> pending: send",
+    "pending -> delivered: delivered()",
+    "pending -> cancelled: schedule_inboxes checks / manager occurrence cancel",
+    "delivered -> cancelled: schedule_inboxes checks / manager occurrence cancel"
+   ]
+  },
+  "sm:control": {
+   "entity": "Direction to an execution",
+   "table": "table:controls",
+   "states": [
+    "(initial)",
+    "pending",
+    "included",
+    "dispatching",
+    "delivered",
+    "uncertain",
+    "discarded",
+    "superseded"
+   ],
+   "transitions": [
+    "(initial) -> pending: steer / command / monitor",
+    "pending -> included: claim_new",
+    "pending -> dispatching: deliver_decisions",
+    "dispatching -> delivered: steer ok",
+    "dispatching -> pending: steer 409",
+    "dispatching -> discarded: steer 409",
+    "dispatching -> uncertain: error or stale lease",
+    "pending -> discarded: steer/cancel/settle/pause",
+    "pending -> superseded: reconcile on stopped task"
+   ]
+  },
+  "sm:work-command": {
+   "entity": "Revision command outbox",
+   "table": "table:work_commands",
+   "states": [
+    "(initial)",
+    "pending",
+    "recorded",
+    "included",
+    "delivered",
+    "superseded"
+   ],
+   "transitions": [
+    "(initial) -> pending: command()",
+    "pending -> recorded: reconcile",
+    "pending -> superseded: reconcile on terminal/stopping task",
+    "pending -> included: claim_new",
+    "recorded -> included: claim_new",
+    "pending -> delivered: deliver_decisions",
+    "recorded -> delivered: deliver_decisions"
+   ]
+  },
+  "sm:assessment": {
+   "entity": "Execution assessment",
+   "table": "table:execution_assessments",
+   "states": [
+    "(initial)",
+    "queued",
+    "evaluating",
+    "observed",
+    "applied",
+    "discarded",
+    "unavailable"
+   ],
+   "transitions": [
+    "(initial) -> queued: queue",
+    "queued -> evaluating: claim",
+    "evaluating -> unavailable: lease expiry / error",
+    "evaluating -> observed: apply",
+    "evaluating -> applied: apply",
+    "evaluating -> discarded: apply"
+   ]
+  },
+  "sm:attention": {
+   "entity": "Attention item",
+   "table": "table:attention_items",
+   "states": [
+    "(initial)",
+    "unread",
+    "needs_owner",
+    "read",
+    "dismissed",
+    "inactive",
+    "pruned"
+   ],
+   "transitions": [
+    "(initial) -> unread: materialize insert (initial bootstrap items start read)",
+    "needs_owner -> unread: materialize fingerprint change bumps version / reactivates",
+    "read -> unread: materialize fingerprint change bumps version / reactivates",
+    "dismissed -> unread: materialize fingerprint change bumps version / reactivates",
+    "inactive -> unread: materialize fingerprint change bumps version / reactivates",
+    "unread -> read: acknowledge read",
+    "read -> dismissed: acknowledge dismiss (not live needs_owner)",
+    "read -> unread: acknowledge unread",
+    "dismissed -> unread: acknowledge unread",
+    "unread -> inactive: close_missing",
+    "needs_owner -> inactive: close_missing",
+    "read -> inactive: close_missing",
+    "dismissed -> inactive: close_missing",
+    "inactive -> pruned: maintenance",
+    "read -> pruned: maintenance"
+   ]
+  }
+ },
+ "system_design": {
+  "topology": [
+   "Compose services: postgres, storage (MinIO), api, worker, event-worker, notification-worker, supervisor, runtime-image helper; dynamic hermbot-bot-* containers owned by supervisor; legacy fixed hermes-* services under 'legacy' profile.",
+   "Networks: control for DB/storage/workers; per-bot networks joined by api and worker; only 127.0.0.1:8780 published.",
+   "Three layers from the planning thread: UI, product backend, Hermes adapter + Hermes runtime; Hermes authoritative for execution.",
+   "Compose project 'hermbot': postgres, storage (MinIO), api, worker, event-worker, notification-worker, supervisor, runtime-image build helper; legacy hermes-* under profile 'legacy'; model-fixture only with compose.protocol.yaml. Dynamic hermbot-bot-<id> runtimes and hermbot-clone-<op> helpers are created by the supervisor, not compose.",
+   "Networks: control (postgres, storage, api, worker, both workers, supervisor); one bridge network per bot (runtime + api + worker). Only host port 127.0.0.1:8780->api:8000.",
+   "Each runtime serves Hermes native API (8642) and Hermbot adapter (8643); calls back to api:8000 /internal with its bot token.",
+   "The React SPA is compiled in the api image (node stage: npm ci, tsc -b, vite build) and served by the same FastAPI process via StaticFiles at '/' after all API routes, so UI and API share one origin (127.0.0.1:8780).",
+   "Browser-facing channels: JSON REST (/api/v1/*), one SSE stream (/api/v1/events), a per-bot noVNC WebSocket (/api/v1/bots/{id}/computer/ws), Web Push via the browser vendor push service to /sw.js, and browser navigation for OAuth callbacks."
+  ],
+  "control-vs-data-plane": [
+   "Owner routes configure connections/routines/triggers/preferences (control); workers move data: task worker dispatches effects, event-worker collects/admits events, notification-worker projects/pushes",
+   "Control plane: FastAPI + PostgreSQL own coordination, receipts, leases, controls, approvals, projections; supervisor owns container lifecycle. Data/execution plane: each Hermes runtime owns its agent loop and native session history.",
+   "Runtime integration only through authenticated Runs API, supported plugin hooks/middleware and Hermbot's private per-runtime adapter (desktop, knowledge, routine wake).",
+   "Control plane: api/worker decide; supervisor alone mutates Docker (create/stop/delete/exec) via narrow authenticated API; desired_state/revision recorded in PostgreSQL.",
+   "Data plane: Hermes runs execute inside runtimes; bytes move through MinIO (artifacts/attachments), adapter export, supervisor attachment exec, and RFB WebSocket relays.",
+   "PostgreSQL is the control plane (coordination, receipts, leases, approvals, projections); Hermes owns execution and native session history."
+  ],
+  "isolation": [
+   "Per-bot network, identity token, native API credential and data/workspace/browser volumes; never mount the same Hermes DB in multiple runtimes.",
+   "Runtime hardening: read-only root FS, root-owned plugin mount, CapDrop ALL + no-new-privileges, non-root gateway; no Docker socket.",
+   "Boundary is a trusted single-owner tool-admission boundary, not OS sandboxing of arbitrary background processes.",
+   "Stronger VM-per-bot isolation researched and deferred until after Phases 1-8.",
+   "Per-bot container, network, identity and data/workspace/browser volumes; bots cannot reach postgres, storage, supervisor or other bots (not on their networks).",
+   "Runtime hardening: read-only rootfs, no-new-privileges, cap_drop ALL with CHOWN/DAC_OVERRIDE/FOWNER/SETGID/SETUID only for bootstrap, tmpfs /tmp,/run,/opt/data/plugins, init, memory/CPU limits; bootstrap drops to hermes uid; plugin dir root-owned read-only.",
+   "Docker socket only in supervisor (runs as root); app containers run as uid 10001; event/notification workers read-only with small tmpfs and limits.",
+   "Isolation is a trusted single-owner container boundary, not hostile-code OS isolation; bots have outbound egress (bridge networks) and can read their own env secrets (model key, runtime key, bot token)."
+  ],
+  "durability": [
+   "Connector effects: dispatching marker committed in its own transaction before provider call; stale lease (120s) -> uncertain; never auto-replayed; owner reconcile records evidence",
+   "Event ingestion idempotency layers: trigger_deliveries PK (source, delivery_key) + body_hash, trigger_events UNIQUE (source, event_key), trigger_runs UNIQUE (trigger, occurrence_key), trigger_matches PK; HTTP/socket ack only after commit",
+   "Poll cursor/progress committed atomically with the events of that page under lease fence",
+   "Own-write suppression: Slack bot identity and successful connector receipts correlated to provider versions; rechecked at admission after receipts settle",
+   "Routine occurrences unique per (routine, occurrence_key); owner mutations idempotent through owner_receipts (registry.mutation)",
+   "Push deliveries unique per (subscription, generation, purpose); lease_token fences result writes; generations fence stale registrations",
+   "Event payloads retained encrypted 7 days; consumed identities kept forever to block old redelivery",
+   "PostgreSQL is queue/outbox/receipt store (no broker); artifacts immutable in MinIO with checksums; supervisor receipts fsynced on its own volume.",
+   "Never replay uncertain effects; reconcile with receipts/provider state; no universal exactly-once claims.",
+   "Event collector commits events and cursor per page together and acknowledges after commit; attention uses transactional dirty hints rather than a sequence watermark."
+  ],
+  "concurrency": [
+   "Advisory locks: 887832104 connector dispatcher; hashtextextended(connector:<id>) per connection; 887832115 source creation; 887832154 attention projection/notification claim (try-lock); 887832155 push registration; owner:<key> per idempotency key",
+   "Due-row selection uses FOR UPDATE SKIP LOCKED (routine tick, trigger admission, source claim, invalid-grant pause) so multiple workers do not block each other",
+   "Admission takes destination conversation/connection share locks without waiting to avoid inverting archive/revocation lock order",
+   "Connector dispatch holds task row, connection row and per-connection advisory locks during the provider call (up to 20s per request; MCP several requests), so revocation waits for an admitted effect",
+   "Event collectors refresh OAuth credentials under the connection row lock; connector read path refreshes without that lock (possible concurrent refresh)",
+   "One active/uncertain attempt per bot, three concurrent executions; waiting parents release slots.",
+   "Lock discipline recorded across reviews: NOWAIT shared bot lock for admission, workspace-before-source, root-before-grant, nonblocking destination share lock, work/root before grant, domain->attention->delivery, independent maintenance commits.",
+   "Tool admission: shared nonblocking per-callback admission with exclusive takeover drain.",
+   "Optimistic concurrency fields are threaded from UI state into every edit: expected_revision (bots, routines, triggers, sources, connections, providers, outcomes, skill enable), expected_hash (knowledge), expected_payload_hash (approvals), expected_input_hash (queued instructions), expected_question_hash (answers), attention item version.",
+   "Stale async results are dropped via generation counters (chat scope, usePanelScope)."
+  ],
+  "workers": [
+   "event-worker: separate compose service running backend.trigger_worker (read_only, tmpfs /tmp, 384m, 0.5 CPU, control net, depends on api healthy); healthcheck asserts /tmp/hermbot-events-heartbeat mtime < 30s; heartbeat touched after each ~1s pass",
+   "event-worker concurrency per process: up to 4 poll/http jobs (threads) and 10 Slack socket tasks; leases 360s fenced by lease_owner WORKER_ID + generation",
+   "notification-worker: separate compose service with two independent 0.5s pumps (projection, delivery); healthcheck on /tmp/hermbot-notifications-heartbeat (<30s); API exposes DB heartbeat_at (<30s) as worker_healthy because the file is container-local",
+   "Task worker hosts connector dispatch (drive_one once per loop iteration) and the routine scheduler reconciliation task (every 10s)",
+   "Routine timing source is a per-bot Hermes native cron job (every 1m, no-agent script) inside each bot runtime; the API wake endpoint performs tick",
+   "worker: durable dispatch, continuations, recovery, lifecycle outbox; event-worker: provider collection only; notification-worker: attention projection and Web Push with independent pumps.",
+   "Worker process: 1s main loop (provisioning, probe/20, work_controller.advance, advance_waiters, knowledge.drive_proposals, connections.drive_one, claim_existing, claim_new, drive gather) plus asyncio loops execution_monitor.run, work_intake.run, routines.run.",
+   "Notification worker runs attention drain/reconcile/maintenance and push delivery every 0.5s."
+  ],
+  "recovery": [
+   "Source lease expiry lets another collector resume; socket shutdown records reconnecting + gap_since; failures back off exponentially (<=1h, honors Retry-After)",
+   "After downtime routines record one gap row and optionally admit only the latest occurrence within the start window",
+   "Expired notification leases are reclaimable; expired deliveries/subscriptions cleaned by maintenance",
+   "Worker restart reconnects existing native run identities; only desired-running runtimes start; stop.py preserves volumes.",
+   "Phase 5 exit verified API/task/event/notification worker restarts preserved task, run, attempt and session IDs.",
+   "Unknown connector outcomes: Reconcile outcome or close as Outcome unknown; retry/reassign blocked.",
+   "Outbox + leases + supervisor receipts make provisioning replay-safe across worker/supervisor restarts.",
+   "Runtimes restart unless-stopped; worker probe reconnects api/worker to bot networks and restarts exited runtimes; supervisor-managed containers survive 'docker compose stop'.",
+   "Every service re-runs idempotent schema/migrations under an advisory lock at startup.",
+   "Recovery is verified by operator-signalled container recreation and worker restarts while work is pending (approvals survive, attempts not duplicated)."
+  ],
+  "security": [
+   "Webhook auth: HMAC over raw body (GitHub sha256; Slack v0 with 300s timestamp; Standard Webhooks v1 with 300s timestamp), constant-time compare, optional previous-secret overlap, payload identity bound to stored Slack team/app and GitHub repository id; 1 MiB/10s body limit",
+   "OAuth: hashed one-use state, HttpOnly binding cookie scoped to callback path, initiating owner session check, connection/app revision fence, PKCE S256 (Google/GitHub), 10-minute expiry; callback page no-store with CSP default-src none",
+   "All credentials, event payloads, cursors, signing secrets, push subscriptions and wake tokens encrypted with Fernet CONFIG_ENCRYPTION_KEY; hashes (sha256) used for lookup",
+   "Outbound requests use a pinned public address, no redirects or proxies, bounded size/time; MCP and push endpoints validated as public HTTPS",
+   "VAPID private key only in notification-worker environment; API has only public key/subject",
+   "Routine wake token is visible to the bot runtime (written into HERMES_HOME) but can only trigger a tick; it cannot supply instructions or grant access",
+   "External event text and connector results are labelled untrusted data; saved owner revision supplies instructions and authority",
+   "Owner token login with opaque revocable cookies; secrets encrypted with CONFIG_ENCRYPTION_KEY; API access logs disabled; validation errors omit inputs.",
+   "Outbound HTTP (link import, connectors, MCP, Web Push) pinned to validated public IPs, TLS to original hostname, no redirects/proxies, absolute deadlines.",
+   "Open: ordinary-chat secrets propagate to task/attempt records (M28)."
+  ],
+  "observability": [
+   "db.event records connector.<status>, routine.*, trigger.*, trigger.source.error, notifications.preferences",
+   "Source health projected as disconnected when check-ins are stale; routine scheduler binding error/last_tick_at shown in routine list",
+   "Activity distinguishes observed tool activity, last progress and runtime contact; contact alone isn't progress; optional execution assessments.",
+   "Issue register is manual; no automatic runtime failure capture; intake failure details discarded (M25); Phase 7.2 correlated logs pending.",
+   "Verification evidence is persisted as JSON manifests per acceptance run in test-results/, written before mutation and updated after each step, giving a durable audit trail of task/attempt/approval IDs.",
+   "Receipts are verified from durable product tables (tool_receipts, events, result_acceptances, connector_operations) and native runtime history (GET /api/v1/conversations/{id}/runtime-history/{bot}) rather than from model output.",
+   "Integrity audits record upstream Hermes source equality (2169 Python files) and SHA-256 of pinned executor/plugin to bind evidence to exact versions.",
+   "UI evidence captures screenshots at fixed viewports (1440/768/390/320/844) and asserts no page errors and no horizontal overflow; optional design inspector via TASTE_SCRIPTS.",
+   "UI surfaces server-side health: worker check-in for notifications, routine scheduler staleness (>180s), event source status/gaps/errors, runtime_error per bot, provisioning failures, assessment status, last runtime contact/progress per task.",
+   "Recent activity panel shows the last 6 non-delta events for the active conversation from a 20-event in-memory buffer."
+  ],
+  "scaling-spof": [
+   "Connector dispatch is globally serialized: one operation per worker iteration (~1s loop)",
+   "Push dispatch: claim returns at most one delivery per 0.5s cycle under a global try-lock shared with projection",
+   "Local caps: 100 live sources, 100 triggers/source, 10,000 deliveries/source/day, 200 listed routines, 10 browsers, 1000 pending deliveries/browser",
+   "Routines for a bot only tick while that bot runtime and its Hermes cron are running; machine/Docker must stay awake",
+   "Single machine, single owner; computer and Docker must stay awake; no remote wake; single PostgreSQL/MinIO.",
+   "Release validation target: ten registered bots and three active tasks; one desktop per bot not all concurrent.",
+   "Single supervisor with in-process per-bot locks and file receipts; single postgres and MinIO; single owner. Worker leases allow multiple workers for bot_operations.",
+   "One active attempt per bot (DB index) and max_concurrent_runs 1 in Hermes; workspace max_bots 3..30.",
+   "Global claim advisory lock and DB-polling SSE (0.5s per client) bound throughput; single PostgreSQL is SPOF; per-bot single active attempt."
+  ],
+  "production-path": [
+   "Private Linux staging with HTTPS was part of milestone 2.5 but deferred by the owner on 2026-10-07 ('for now we will run the system on this machine only'); still unchecked.",
+   "Original deployment choice: local Docker POC, then the same architecture on an always-on Linux server (rejected server-from-start and local-throughout).",
+   "HTTPS prerequisites already identified: Slack OAuth needs an HTTPS PUBLIC_URL callback; provider webhooks need reachable ingress; phone Web Push needs HTTPS reachable by the phone.",
+   "Subscription authentication (Codex/Claude via Hermes) is follow-up work; ChatGPT/Codex sign-in does not provide documented Decisions access.",
+   "Phase 7 dependable release: backups incl. encryption material, clean-host restore, upgrades/migrations, monitoring, soak tests, runbooks; deployed private app required before sharing.",
+   "Phase 8 sharing requires OS-enforced member isolation inside shared team runtimes (design unresolved).",
+   "VM per bot: pilot one technology (Virtualization.framework/Lume, Apple Container, QEMU/KVM, Firecracker/Kata) after the roadmap.",
+   "Next agreed project: connected-service work coordination; then evaluations precede backlog fixes.",
+   "Linux staging/HTTPS deferred; cookie Secure only with https PUBLIC_URL.",
+   "Per-bot VM isolation proposed and deferred beyond the roadmap; keep supervisor/coordination/credentials outside guests; guest root changes trust in plugin/adapter."
+  ],
+  "tradeoffs": [
+   "Never replay uncertain external effects",
+   "Native Hermes cron as wake signal rather than backend scheduler",
+   "Polling/socket over webhooks for local deployment",
+   "Generic push payloads",
+   "One container + persistent Hermes runtime per bot",
+   "Supervisor-only Docker socket with authenticated interface and durable receipts",
+   "PostgreSQL as queue/outbox/receipts (no broker)",
+   "MinIO (S3-compatible) for immutable artifacts",
+   "Owner-review model for external writes (exact review or standing permission)",
+   "Custom Hermbot plugin collaboration path instead of native message_agent/peer"
+  ],
+  "verified": [
+   "Owner auth: bearer OWNER_TOKEN compared with hmac.compare_digest, or an opaque hermbot_session cookie whose sha256 must match an unrevoked, unexpired owner_sessions row.",
+   "Session cookie is HttpOnly, SameSite=strict, 1-day expiry, Secure only when PUBLIC_URL is https; logout revokes the row and disables the device's push subscription.",
+   "Bot identity: /internal routes take a per-bot bearer token whose sha256 must match bots.bot_token_hash for a bot not deleted/archived.",
+   "Supervisor API requires SUPERVISOR_TOKEN (hmac compare) and is the only process talking to Docker, via the /var/run/docker.sock unix socket mounted only into svc:supervisor.",
+   "Dynamic bots are created as hermbot-bot-<id> with read-only rootfs, no-new-privileges, CapDrop ALL (+5 caps for bootstrap), tmpfs mounts and binds for data/workspace/browser volumes.",
+   "Secrets at rest: provider keys, bot tokens and runtime keys are Fernet-encrypted with CONFIG_ENCRYPTION_KEY; only hashes are used for comparison.",
+   "Schema bootstrap runs under pg_advisory_xact_lock(887832101): schema.sql, then every migrations/*.sql in order, then seed bots and registry.bootstrap.",
+   "Flow a verified: intake claims with FOR UPDATE SKIP LOCKED-style FIFO and a 60 s lease; dispatch claim_new is serialised by pg_advisory_xact_lock(887832103) and bounded by workspace max_active.",
+   "Flow f verified: lifecycle.propose writes approvals + lifecycle_proposals and parks the task in waiting_approval; registry.enqueue writes the bot_operations outbox row; the supervisor replays receipts per operation_id under a per-bot lock.",
+   "Only published host port is 127.0.0.1:8780 -> api:8000; postgres and storage sit on the control network only."
+  ]
+ },
+ "discrepancies": [
+  {
+   "key": "HTTP 401 and any non-rate-limited 403 are classified as auth",
+   "severity": "medium",
+   "text": "HTTP 401 and any non-rate-limited 403 are classified as auth failures, so an action-specific write-scope rejection marks the whole connection needs_reconnect (disabling still-valid reads and pausing event sources). Documented as open issue C37 deferred until baseline evaluations.",
+   "evidence": [
+    "backend/connector_http.py:121-123",
+    "backend/connections.py:294-295",
+    "plan/ISSUES.md:639-647"
+   ]
+  },
+  {
+   "key": "README says notifications remain later work and 'Phase 5.4 a",
+   "severity": "medium",
+   "text": "README says notifications remain later work and 'Phase 5.4 and later milestones remain pending', but README itself documents Attention/push (lines 163-171), plan/README and CHECKLIST mark 5.4 and the Phase 5 exit complete, and code ships notification-worker/notification API.",
+   "evidence": [
+    "README.md:5",
+    "README.md:141",
+    "README.md:163-171"
+   ]
+  },
+  {
+   "key": "plan/README.md 5.4 section says 'Planning is complete; imple",
+   "severity": "medium",
+   "text": "plan/README.md 5.4 section says 'Planning is complete; implementation/acceptance have not started' while the same file's summary records 5.4 + exit passed Oct 26.",
+   "evidence": [
+    "plan/README.md:349",
+    "plan/README.md:26",
+    "plan/CHECKLIST.md:217-227"
+   ]
+  },
+  {
+   "key": "PHASE-DETAILS.md (header 'Updated: 2026-10-26') still report",
+   "severity": "medium",
+   "text": "PHASE-DETAILS.md (header 'Updated: 2026-10-26') still reports 5.4 desktop push/cleanup and Phase 5 exit pending and that 5.4 implementation has not started.",
+   "evidence": [
+    "plan/PHASE-DETAILS.md:3",
+    "plan/PHASE-DETAILS.md:15",
+    "plan/PHASE-DETAILS.md:205"
+   ]
+  },
+  {
+   "key": "README claims the plugin advertises '19 application operatio",
+   "severity": "medium",
+   "text": "README claims the plugin advertises '19 application operations, including hermbot_ask'. plugin.yaml lists 19 tools but omits hermbot_ask, hermbot_work_status and hermbot_publish_file; the plugin actually registers 22 tools (TOOLS dict) matching backend ARGUMENT_MODELS (22), and runtime readiness requires all 22.",
+   "evidence": [
+    "README.md:145",
+    "plugins/hermbot/plugin.yaml:4-23",
+    "plugins/hermbot/__init__.py:169-202"
+   ]
+  },
+  {
+   "key": "ISSUES.md 'Documented review findings: OUT' table has a head",
+   "severity": "medium",
+   "text": "ISSUES.md 'Documented review findings: OUT' table has a header but no rows, so the 11 WORK-OUTCOMES-REVIEW findings are not indexed; the coverage claim '85 finding rows in six review documents' equals P2(18)+P3(17)+UI(6)+P4(26)+NATIVE(6)+SKILL(12) and excludes them. CHAT-COVERAGE links T1-U75..U80 to 'OUT'.",
+   "evidence": [
+    "plan/ISSUES.md:361-367",
+    "plan/ISSUES.md:892",
+    "plan/WORK-OUTCOMES-REVIEW.md:26-38"
+   ]
+  },
+  {
+   "key": "CHECKLIST line 10 says to resume the roadmap with Phase 6.1 ",
+   "severity": "medium",
+   "text": "CHECKLIST line 10 says to resume the roadmap with Phase 6.1 voice planning, but the same file, README and PHASE-DETAILS hold 6.1 and select 6.2.",
+   "evidence": [
+    "plan/CHECKLIST.md:10",
+    "plan/CHECKLIST.md:233",
+    "plan/README.md:365"
+   ]
+  },
+  {
+   "key": "Lead-verified: no UPDATE moves a task or attempt out of stat",
+   "severity": "high",
+   "text": "Lead-verified: no UPDATE moves a task or attempt out of status 'uncertain' (only writes INTO uncertain exist), although error texts tell the owner to reconcile; uncertain work keeps blocking its bot and a max_active slot.",
+   "evidence": [
+    "backend/worker.py:392-393",
+    "backend/worker.py:523-532",
+    "backend/app.py:551-554"
+   ]
+  },
+  {
+   "key": "Lead-verified: the internal() dependency checking INTERNAL_T",
+   "severity": "medium",
+   "text": "Lead-verified: the internal() dependency checking INTERNAL_TOKEN is defined but never attached to any route (no Depends(internal) anywhere); /internal/* routes authenticate bots by per-bot token instead, so INTERNAL_TOKEN only gates startup length checks.",
+   "evidence": [
+    "backend/app.py:77-79",
+    "backend/app.py:41",
+    "backend/app.py:67-74"
+   ]
+  },
+  {
+   "key": "INTERNAL_TOKEN is mandatory in compose and length-checked at",
+   "severity": "medium",
+   "text": "INTERNAL_TOKEN is mandatory in compose and length-checked at startup, but the app.internal() dependency that verifies it is never used by any route.",
+   "evidence": [
+    "compose.yaml:6",
+    "backend/app.py:41",
+    "backend/app.py:77-79"
+   ]
+  },
+  {
+   "key": "Legacy-profile hermes-* services cannot pass current readine",
+   "severity": "medium",
+   "text": "Legacy-profile hermes-* services cannot pass current readiness: no HERMBOT_ADAPTER_KEY (adapter rejects all authenticated calls), no BOT_ID (routine scheduler KeyError), no browser-state volume, healthcheck only 8642; README says retained for migration reference only.",
+   "evidence": [
+    "compose.yaml:24-28",
+    "compose.yaml:174-203",
+    "docker/runtime_api.py:38-40"
+   ]
+  },
+  {
+   "key": "PHASE3.md says the runtime image is hermbot-hermes:phase3; c",
+   "severity": "medium",
+   "text": "PHASE3.md says the runtime image is hermbot-hermes:phase3; code/compose use phase4 (historical doc).",
+   "evidence": [
+    "plan/PHASE3.md:50",
+    "compose.yaml:31",
+    "backend/containers.py:20"
+   ]
+  },
+  {
+   "key": "pyproject.toml declares markers integration/hermes/live, but",
+   "severity": "medium",
+   "text": "pyproject.toml declares markers integration/hermes/live, but hermes and live are never applied to any test and there is no unit marker; only 7 of 24 pytest files set pytestmark=integration although every test requires PostgreSQL through the autouse conftest fixture.",
+   "evidence": [
+    "pyproject.toml:24",
+    "tests/conftest.py:11-23",
+    "tests/test_phase2.py:14"
+   ]
+  },
+  {
+   "key": "tests/browser/response-layout.mjs and tests/browser/work-com",
+   "severity": "medium",
+   "text": "tests/browser/response-layout.mjs and tests/browser/work-completion.mjs are empty (0 bytes), yet test-results contains response-layout-*.png/response-layout-check.json and work-completion-fixed-*.png/work-completion-ui.json; the generating scripts are lost.",
+   "evidence": [
+    "tests/browser/response-layout.mjs:1",
+    "tests/browser/work-completion.mjs:1",
+    "test-results/response-layout-check.json:1"
+   ]
+  },
+  {
+   "key": "Several evidence files have no producer anywhere in tests/ o",
+   "severity": "medium",
+   "text": "Several evidence files have no producer anywhere in tests/ or scripts/: phase54-attention-*.png, phase54-browser.json, phase54-settings-*.png, phase54-inspection/*, ui-inspect-*.png, ui-probe-*, ui-visual-audit.json, phase52/53/54-ui-lint.json, coordination-upstream-source.json, coordination-running-plugin.json, tool-gate-{before,preservation,rollout,running-source,upstream-source}.json, phase4-review-schema-upgrade.json, work-outcomes-source.json, native-tools-source.json, container-isolation.json, desktop-memory-fix.json, phase52-drive-correlation.json \u2014 produced by ad-hoc commands or external tools (e.g. TASTE_SCRIPTS inspector), so not reproducible from the repo.",
+   "evidence": [
+    "test-results/phase54-browser.json:1",
+    "test-results/ui-visual-audit.json:1",
+    "test-results/tool-gate-upstream-source.json:1"
+   ]
+  },
+  {
+   "key": "Acceptance drivers and browser scripts hard-code owner-works",
+   "severity": "medium",
+   "text": "Acceptance drivers and browser scripts hard-code owner-workspace identifiers (routine 421a0c64\u2026, group 5739adf6\u2026, MCP task/operation IDs, approval 1d1793e1\u2026, group title 'The dawn of ai', protocol root task IDs), so they are historical one-offs rather than repeatable tests.",
+   "evidence": [
+    "tests/routine_restart_acceptance.py:10",
+    "tests/routine_draft_acceptance.py:10",
+    "tests/browser/phase4-mcp-recovery.mjs:5"
+   ]
+  },
+  {
+   "key": "phase5_exit_acceptance verify()/cleanup() require proof keys",
+   "severity": "medium",
+   "text": "phase5_exit_acceptance verify()/cleanup() require proof keys restart_verified, closed_tab_result_navigation_verified and closed_tab_task_id that no script in the repo writes; they must be hand-edited into /app/test-results/phase5-exit-live.json, so the gate cannot pass autonomously and cleanup raises KeyError otherwise.",
+   "evidence": [
+    "tests/phase5_exit_acceptance.py:93",
+    "tests/phase5_exit_acceptance.py:134",
+    "tests/phase5_exit_acceptance.py:136"
+   ]
+  },
+  {
+   "key": "Unit module test_phase4_acceptance_evidence imports live-acc",
+   "severity": "medium",
+   "text": "Unit module test_phase4_acceptance_evidence imports live-acceptance modules (phase4_read_acceptance -> protocol_acceptance) whose import has side effects: os.environ[\"OWNER_TOKEN\"] KeyError if unset and an httpx client is constructed at import. Pure verifier tests therefore cannot be collected without live-stack env.",
+   "evidence": [
+    "tests/test_phase4_acceptance_evidence.py:9",
+    "tests/protocol_acceptance.py:10",
+    "tests/protocol_acceptance.py:11"
+   ]
+  },
+  {
+   "key": "event_trigger_acceptance.py browser-cleanup stage deletes ro",
+   "severity": "medium",
+   "text": "event_trigger_acceptance.py browser-cleanup stage deletes rows directly from event_trigger_revisions, event_trigger_definitions, messages and event_sources, bypassing API invariants; event_provider_acceptance.reconcile_creation UPDATEs trigger_resource_versions and inserts events directly.",
+   "evidence": [
+    "scripts/event_trigger_acceptance.py:155-178",
+    "scripts/event_provider_acceptance.py:75-78"
+   ]
+  },
+  {
+   "key": "Steer route without Idempotency-Key uses a random key, so cl",
+   "severity": "medium",
+   "text": "Steer route without Idempotency-Key uses a random key, so client retries are not idempotent (a v2 Redirect creates a fresh intake task per retry).",
+   "evidence": [
+    "backend/app.py:265",
+    "backend/app.py:273",
+    "backend/service.py:641-643"
+   ]
+  },
+  {
+   "key": "Intake FIFO only considers pending/interpreting rows, so a f",
+   "severity": "medium",
+   "text": "Intake FIFO only considers pending/interpreting rows, so a failed earlier interpretation does not hold later messages; after a retry the earlier message is applied after later ones.",
+   "evidence": [
+    "backend/work_intake.py:375",
+    "backend/app.py:210-212"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "svc:runtime-image",
+   "label": "runtime-image",
+   "purpose": null
+  },
+  {
+   "id": "svc:postgres",
+   "label": "postgres",
+   "purpose": null
+  },
+  {
+   "id": "svc:storage",
+   "label": "storage",
+   "purpose": null
+  },
+  {
+   "id": "svc:api",
+   "label": "api",
+   "purpose": null
+  },
+  {
+   "id": "svc:worker",
+   "label": "worker",
+   "purpose": null
+  },
+  {
+   "id": "svc:event-worker",
+   "label": "event-worker",
+   "purpose": null
+  },
+  {
+   "id": "svc:notification-worker",
+   "label": "notification-worker",
+   "purpose": null
+  },
+  {
+   "id": "svc:supervisor",
+   "label": "supervisor",
+   "purpose": null
+  },
+  {
+   "id": "svc:hermes-researcher",
+   "label": "hermes-researcher (legacy)",
+   "purpose": null
+  },
+  {
+   "id": "svc:hermes-writer",
+   "label": "hermes-writer (legacy)",
+   "purpose": null
+  },
+  {
+   "id": "svc:hermes-reviewer",
+   "label": "hermes-reviewer (legacy)",
+   "purpose": null
+  },
+  {
+   "id": "svc:model-fixture",
+   "label": "model-fixture (protocol)",
+   "purpose": null
+  },
+  {
+   "id": "actor:google-gmail",
+   "label": "Gmail API",
+   "purpose": "Connector reads/sends (gmail.googleapis.com) and Gmail history polling for gmail.message.added events"
+  },
+  {
+   "id": "actor:google-calendar",
+   "label": "Google Calendar API",
+   "purpose": "Connector calendar list/availability/events/create/update/delete and incremental-sync polling"
+  },
+  {
+   "id": "actor:google-drive",
+   "label": "Google Drive API",
+   "purpose": "Connector search/read/import/create/upload and Changes API polling; export for creation verification"
+  },
+  {
+   "id": "actor:google-oauth",
+   "label": "Google OAuth endpoints",
+   "purpose": "Authorization (accounts.google.com), token exchange/refresh and revoke (oauth2.googleapis.com)"
+  },
+  {
+   "id": "actor:slack",
+   "label": "Slack Web API / Events / Socket Mode",
+   "purpose": "Connector search/channels/members/history/post, OAuth v2, auth.revoke, auth.test probe, apps.connections.open websocket and signed Events API webhooks"
+  },
+  {
+   "id": "actor:github",
+   "label": "GitHub REST API / webhooks",
+   "purpose": "Connector repo/issue/PR/file reads and writes, OAuth + token revoke, issue/comment polling with ETags and signed webhooks"
+  },
+  {
+   "id": "actor:mcp-server",
+   "label": "Owner-configured MCP server",
+   "purpose": "Public HTTPS Streamable HTTP MCP endpoint: initialize, tools/list, tools/call, session DELETE"
+  },
+  {
+   "id": "actor:webhook-sender",
+   "label": "Generic Standard Webhooks sender",
+   "purpose": "Any external system posting signed custom.event JSON to /hooks/webhook/{source}"
+  },
+  {
+   "id": "actor:browser-push-service",
+   "label": "Browser push service (e.g. FCM/Mozilla/Apple)",
+   "purpose": "Receives VAPID-signed encrypted Web Push from notification-worker and delivers to the registered browser service worker"
+  },
+  {
+   "id": "svc:hermbot-bot-*",
+   "label": "Per-bot Hermes runtime container (supervisor-managed)",
+   "purpose": "One persistent Hermes agent per teammate with the Hermbot plugin, private adapter and desktop; created/recreated only by the supervisor."
+  },
+  {
+   "id": "svc:hermbot-clone-*",
+   "label": "Clone helper container hermbot-clone-<operation_id>",
+   "purpose": "Short-lived root helper that copies selected state between bot volumes."
+  },
+  {
+   "id": "bucket:hermbot",
+   "label": "MinIO bucket 'hermbot'",
+   "purpose": "Single bucket for all objects."
+  },
+  {
+   "id": "actor:owner",
+   "label": "Owner",
+   "purpose": "Single trusted human operator using the browser UI on 127.0.0.1:8780."
+  },
+  {
+   "id": "actor:model-provider",
+   "label": "OpenAI-compatible model provider",
+   "purpose": "Called by Hermes inside each bot (OPENAI_BASE_URL/KEY) and by backend decision assessments."
+  },
+  {
+   "id": "actor:docker-engine",
+   "label": "Docker Engine",
+   "purpose": "Reached only by the supervisor over /var/run/docker.sock, API v1.45."
+  }
+ ],
+ "modules": [
+  {
+   "id": "file:backend/__init__.py",
+   "purpose": "Package marker (single empty line).",
+   "layer": "config"
+  },
+  {
+   "id": "file:backend/activity.py",
+   "purpose": "Observed execution activity snapshots (latest attempt contact vs. real progress/tool events) for UI.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/app.py",
+   "purpose": "FastAPI application: owner REST API core routes, SSE event stream, bot-facing /internal/* plugin endpoints, router assembly and SPA static mount.",
+   "layer": "api"
+  },
+  {
+   "id": "file:backend/artifacts.py",
+   "purpose": "MinIO-backed ArtifactStore: bucket init, bot text publish, workspace file publish via adapter, checksum-verified reads.",
+   "layer": "persistence"
+  },
+  {
+   "id": "file:backend/attention.py",
+   "purpose": "Durable, versioned owner attention projection (questions, reviews, results, problems/setup) materialized from domain state; never advances work.",
+   "layer": "notifications"
+  },
+  {
+   "id": "file:backend/auth.py",
+   "purpose": "Owner authentication: bootstrap bearer token plus revocable, expiring opaque cookie sessions.",
+   "layer": "api"
+  },
+  {
+   "id": "file:backend/capabilities.py",
+   "purpose": "Effective execution capability manifest per bot/task; preparation (hermbot_prepare) with skill consultation and typed blockers; owner inspection route.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/computer.py",
+   "purpose": "Owner desktop control routes and authenticated WebSocket relay to a bot's adapter; maintains the persistent DB admission fence computer_controls.",
+   "layer": "api"
+  },
+  {
+   "id": "file:backend/connections.py",
+   "purpose": "Scoped connection registry, exact-action authorization, connector review/standing-permission admission and the durable external-operation outbox/dispatcher.",
+   "layer": "connectors"
+  },
+  {
+   "id": "file:backend/connector_catalog.py",
+   "purpose": "Fixed connector action catalog with strict pydantic argument contracts; models cannot supply URLs or HTTP methods.",
+   "layer": "connectors"
+  },
+  {
+   "id": "file:backend/connector_http.py",
+   "purpose": "Pinned-address, bounded HTTPS transport shared by connectors, OAuth, event collectors and web push; no redirects, proxies or secret error bodies.",
+   "layer": "connectors"
+  },
+  {
+   "id": "file:backend/connector_mcp.py",
+   "purpose": "Owner-configured Streamable HTTP MCP client with JSON/SSE responses, bounded discovery and conservative mutation policy.",
+   "layer": "connectors"
+  },
+  {
+   "id": "file:backend/connector_oauth.py",
+   "purpose": "Owner-initiated OAuth with one-use hashed state, browser-binding cookie, PKCE and encrypted refresh tokens; best-effort provider revocation.",
+   "layer": "connectors"
+  },
+  {
+   "id": "file:backend/connector_providers.py",
+   "purpose": "Google (Gmail/Calendar/Drive), Slack and GitHub adapters using fixed API roots and explicit payloads.",
+   "layer": "connectors"
+  },
+  {
+   "id": "file:backend/containers.py",
+   "purpose": "Supervisor API and sole Docker boundary: server-owned names, images, mounts, hardening and commands for per-bot runtimes, clone helpers and attachment installation.",
+   "layer": "runtime-control"
+  },
+  {
+   "id": "file:backend/coordination.py",
+   "purpose": "Durable peer communication (teammate inbox) and explicit waits for coordination_version 1 work, independent of the harness.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/db.py",
+   "purpose": "psycopg pool, transactional connection helper, schema/migration initialization with core bot seed, event and message helpers.",
+   "layer": "persistence"
+  },
+  {
+   "id": "file:backend/decisions.py",
+   "purpose": "Replaceable decision-provider adapter for execution assessments; recommends continue/investigate/input_needed and never executes.",
+   "layer": "connectors"
+  },
+  {
+   "id": "file:backend/execution_monitor.py",
+   "purpose": "Optional asynchronous execution assessments via a decision provider, producing bounded monitor guidance controls.",
+   "layer": "workers"
+  },
+  {
+   "id": "file:backend/execution_policy.py",
+   "purpose": "Active execution budgets (shared per work item or root), accounting of active seconds, budget pause/continue, deadlines and review expiry.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/inputs.py",
+   "purpose": "Typed owner questions (input_requests) distinct from approvals: ask, answer, list pending, and the owner answer route.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/knowledge.py",
+   "purpose": "Owner/agent knowledge (memory and skills) edits with native compare-and-swap, immutable knowledge_versions, durable runtime refresh and reviewed learning proposals.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/library.py",
+   "purpose": "Owner file library: immutable versioned objects, uploads, SSRF-hardened link import, previews/extraction, explicit conversation shares, history search.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/lifecycle.py",
+   "purpose": "Manager lifecycle proposals: managers propose; owners approve exact snapshots; worker executes via the bot_operations outbox; manager task resumes on settlement.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/models.py",
+   "purpose": "Pydantic request/argument models (strict, extra=forbid) for owner API and hermbot tool operations; ARGUMENT_MODELS map.",
+   "layer": "api"
+  },
+  {
+   "id": "file:backend/native.py",
+   "purpose": "Authenticated transport to a bot's private adapter on port 8643.",
+   "layer": "runtime-control"
+  },
+  {
+   "id": "file:backend/notification_api.py",
+   "purpose": "Owner-only attention inbox API, notification preferences and private browser push registration.",
+   "layer": "api"
+  },
+  {
+   "id": "file:backend/notification_worker.py",
+   "purpose": "notification-worker process: independent attention projection pump and push dispatch pump (no model or bot credentials).",
+   "layer": "workers"
+  },
+  {
+   "id": "file:backend/notifications.py",
+   "purpose": "Push policy and durable delivery outbox for Web Push; vendor acceptance is not proof of display or reading.",
+   "layer": "notifications"
+  },
+  {
+   "id": "file:backend/outcomes.py",
+   "purpose": "Persistent required results (work_outcomes) per work item: registration, revisions, bindings to tasks, evidence, claim validation/settlement, connector binding, derived work status and owner drop/reconcile routes.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/owner_requests.py",
+   "purpose": "Shared predicate for whether a pending question/review is still owner-actionable.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/policy.py",
+   "purpose": "Load the shared native-tool instruction from plugins/hermbot/policy.json so worker, backend and plugin use one policy text.",
+   "layer": "config"
+  },
+  {
+   "id": "file:backend/product.py",
+   "purpose": "Owner product API router (Phase 2+): settings, providers, bots lifecycle, operations retry, grants, proposals edit, groups/conversations, attachments, reactions, task edit/retry/continue, owner sessions.",
+   "layer": "api"
+  },
+  {
+   "id": "file:backend/provisioning.py",
+   "purpose": "Worker-side lifecycle outbox driver: claims leased bot_operations, re-validates authority, decrypts the frozen snapshot and calls the supervisor; also copies task attachments into bot workspaces.",
+   "layer": "runtime-control"
+  },
+  {
+   "id": "file:backend/recurring_management.py",
+   "purpose": "Recurring management: owner-selected standing grant authority frozen onto a routine/event occurrence and inherited by its tasks.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/registry.py",
+   "purpose": "Owner registry and immutable lifecycle outbox: bot/provider/workspace/grant persistence, credential bootstrap, configuration validation, lifecycle fencing and idempotent owner mutations.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/result_acceptance.py",
+   "purpose": "Single acceptance boundary for current requirements: accountable owner, contributions, review rules and immutable acceptance records.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/routine_models.py",
+   "purpose": "Pydantic models for schedules, saved work definitions (shared by routines and event triggers), requested external effects and recurring management scope.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/routine_schedule.py",
+   "purpose": "Single schedule calculator for preview and admission, independent of server timezone.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/routines.py",
+   "purpose": "Saved owner routines (scheduled instructions): revisions, native wake binding, occurrence admission, first-claim gate, history and owner routes.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/runtime.py",
+   "purpose": "Versioned client for each bot's native Hermes API server (port 8642) plus readiness/inventory probe that also checks the private adapter.",
+   "layer": "runtime-control"
+  },
+  {
+   "id": "file:backend/secrets.py",
+   "purpose": "Credential hashing and Fernet encryption at rest.",
+   "layer": "persistence"
+  },
+  {
+   "id": "file:backend/service.py",
+   "purpose": "Durable coordination core: task creation with idempotency, lock order helper, grants, delegation, reviews, request closure, cancellation, reassignment, bot tool dispatch (tool_action) and steering.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/settings.py",
+   "purpose": "Frozen environment settings singleton and legacy bot-id constants.",
+   "layer": "config"
+  },
+  {
+   "id": "file:backend/supervisor.py",
+   "purpose": "uvicorn entrypoint for the supervisor service; re-exports backend.containers.app.",
+   "layer": "runtime-control"
+  },
+  {
+   "id": "file:backend/tool_references.py",
+   "purpose": "Account-scoped connector resource references ('ref:<uuid>') and requested-authorization matching.",
+   "layer": "connectors"
+  },
+  {
+   "id": "file:backend/trigger_api.py",
+   "purpose": "Owner source/trigger setup API and provider-authenticated webhook ingress; credentials never enter receipts.",
+   "layer": "api"
+  },
+  {
+   "id": "file:backend/trigger_models.py",
+   "purpose": "Owner-saved event source/trigger models and the normalized EventData contract; external payloads never supply authority.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/trigger_providers.py",
+   "purpose": "Fixed provider endpoints for event collection, identity probes, HTTP normalization, signatures and poll paging.",
+   "layer": "connectors"
+  },
+  {
+   "id": "file:backend/trigger_worker.py",
+   "purpose": "event-worker process: independent collectors (poll + Slack Socket Mode) and event admission/maintenance loop.",
+   "layer": "workers"
+  },
+  {
+   "id": "file:backend/triggers.py",
+   "purpose": "Durable event reception and revision-bound work admission: sources, trigger definitions, matching, own-write suppression, pending runs and admission.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/work_controller.py",
+   "purpose": "Applies owner revisions (from intake/owner UI) to work items with provenance, and reconciles durable revision commands into controls for active/waiting executions.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/work_intake.py",
+   "purpose": "Backend message intake: interprets each authenticated owner 'auto' message once with the bot's configured model provider into validated operations, then applies them transactionally to work items/requirements.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/work_items.py",
+   "purpose": "User-facing work items (cards) independent of execution trees: creation, message association/routing, projection listing, conversation-only gating and owner hide/restore/associate routes.",
+   "layer": "domain"
+  },
+  {
+   "id": "file:backend/worker.py",
+   "purpose": "Execution worker process: claims queued tasks into attempts, drives native Hermes runs over HTTP, ingests runtime events, settles results, advances waiters, and hosts intake/monitor/routine background loops.",
+   "layer": "workers"
+  }
+ ]
+}

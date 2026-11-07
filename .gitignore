@@ -1,0 +1,48 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+.model-broker-venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+
+# Node / web build
+node_modules/
+web/dist/
+*.tsbuildinfo
+
+# Raw planning-session transcripts (private)
+plan/archive/
+
+# Test output
+test-results/
+playwright-report/
+
+# Local tooling output
+.taste-skill/
+
+# Architecture explorer: generated and scratch files (rebuild with architecture/refresh.py)
+architecture/model.json
+architecture/_work/mech.json
+architecture/_work/shots/
+architecture/_work/snapshots/
+architecture/_work/remap/
+architecture/_work/agents/scratch-*/
+architecture/_work/*.txt
+!architecture/_work/ids.txt
+architecture/_work/dbg.mjs
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.log
