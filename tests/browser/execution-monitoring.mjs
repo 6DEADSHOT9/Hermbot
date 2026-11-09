@@ -17,9 +17,11 @@ try {
     if(!fixture){
       const source=state.work_items.find(w=>w.bot_id==='writer'&&w.current_task);
       assert.ok(source,'A real work item supplies the fixture shape');
-      const task={...source.current_task,id:taskId,root_id:taskId,grant_id:null,status:'paused_budget',stop_kind:'budget',stop_reason:'Active work budget reached',work_item_id:itemId,error:null,input:'Execution budget UI fixture',output:'Report is ready',parent_id:null,depth:0,connector_state:null};
+      // The source item may live in any conversation; the fixture belongs to Quill's direct conversation, where the check looks.
+      const direct=state.conversations.find(c=>c.kind==='dm'&&c.bot_id==='writer');assert.ok(direct,'Quill has a direct conversation');
+      const task={...source.current_task,id:taskId,root_id:taskId,conversation_id:direct.id,grant_id:null,status:'paused_budget',stop_kind:'budget',stop_reason:'Active work budget reached',work_item_id:itemId,error:null,input:'Execution budget UI fixture',output:'Report is ready',parent_id:null,depth:0,connector_state:null};
       const outcome={...source.outcomes[0],work_item_id:itemId,source_task_id:taskId,kind:'report',required:true,revision:1,reason:'',target:{},dependencies:[]};
-      fixture={...source,id:itemId,title:'Paused work layout check',status:'paused_budget',current_task:task,executions:[task],outputs:[],outcomes_version:1,progress:{fulfilled:1,required:2},outcomes:[{...outcome,id:'00000000-0000-4000-8000-000000000963',key:'report',title:'Report',status:'fulfilled',evidence_strength:'model_reported'},{...outcome,id:'00000000-0000-4000-8000-000000000964',key:'delivery',title:'Remaining delivery',status:'pending',evidence_strength:''}]};
+      fixture={...source,id:itemId,conversation_id:direct.id,title:'Paused work layout check',status:'paused_budget',current_task:task,executions:[task],outputs:[],outcomes_version:1,progress:{fulfilled:1,required:2},outcomes:[{...outcome,id:'00000000-0000-4000-8000-000000000963',key:'report',title:'Report',status:'fulfilled',evidence_strength:'model_reported'},{...outcome,id:'00000000-0000-4000-8000-000000000964',key:'delivery',title:'Remaining delivery',status:'pending',evidence_strength:''}]};
     }
     await route.fulfill({response,json:{...state,tasks:[fixture.current_task,...state.tasks],work_items:[fixture,...state.work_items]}});
   });
