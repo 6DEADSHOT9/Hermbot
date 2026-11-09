@@ -7,7 +7,7 @@ import { api, clearMutationKeys, formatFileSize, mutate, requestKey, executionSu
 import { BotEditor, LifecycleDialog, Panel, WorkspaceSettings } from './Management';
 import {Library,type LibraryFile} from './Library';
 import {Knowledge} from './Knowledge';
-import {Computer,TeachingCaptureStatus} from './Computer';
+import {Computer} from './Computer';
 import {Connections} from './Connections';
 import {WorkItems} from './WorkItems';
 import {TaskPreparation} from './Capabilities';
@@ -370,7 +370,6 @@ export function App() {
     <Notifications open={notificationsOpen} onClose={()=>setNotificationsOpen(false)}/>
     <Routines attentionTarget={attentionSettings} open={routinesOpen} onClose={()=>{setRoutinesOpen(false);setAttentionSettings(null);}} state={data} conversationId={active} initialInstructions={draft} onConnections={()=>{setRoutinesOpen(false);setConnectionsOpen(true);}} onNavigate={async(id,threadId)=>{setActive(id);setThread(null);if(threadId){try{const result=await api<Chat>(`/api/v1/conversations/${id}?thread=${threadId}`);const message=result.thread_root||result.messages.find(m=>m.id===threadId);if(message)setThread(message);}catch(err){setError((err as Error).message);}}}}/>
     <Knowledge open={knowledgeOpen} onClose={()=>setKnowledgeOpen(false)} bot={bot} tasks={data?.tasks||[]} initialTask={workflowTask}/>
-    <div className="teaching-capture-notices">{availableBots.map(item=><TeachingCaptureStatus key={item.id} bot={item} hidden={computerOpen} onOpen={()=>{setComputerBotId(item.id);setComputerOpen(true);}}/>)}</div>
     <Computer open={computerOpen} onClose={()=>setComputerOpen(false)} bot={botById(computerBotId||bot?.id||'')}/>
     <Connections initialIdentity={attentionSettings?.kind==='connection'?attentionSettings.id:null} initialTab={connectionsTab} open={connectionsOpen} onClose={()=>{setConnectionsOpen(false);setAttentionSettings(null);}} bots={data?.bots||[]}/>
     <Library open={libraryOpen} onClose={()=>setLibraryOpen(false)} conversations={data?.conversations||[]} conversationId={active} initialFile={libraryInitial} onUse={file=>setLibraryFiles(current=>current.some(f=>f.id===file.id)?current:[...current,file].slice(0,10))} onNavigate={id=>{setActive(id);setThread(null);}}/>

@@ -1,5 +1,7 @@
 # Phase 6.2 implementation and review
 
+**Removed November 10, 2026.** The owner removed demonstration Teaching (code, UI, tables and recordings) to simplify private computer takeover. This document is kept as history; skills Teaching published remain ordinary installed skills.
+
 Updated November 2, 2026. The owner has recorded, saved `hermbot-zenpad-temporary-notes` and run two exact-candidate tests. The latest test entered notes but reported leftover text, then stopped as instructed. This establishes real recording/draft/test usage, not a passing publication or installed-skill cycle. No owner verdict or teaching publication was saved at inspection. The feedback loop and Escape/model-error corrections described below are implemented; full Phase 6.2 acceptance remains incomplete. Phase 6.1 remains on hold.
 
 ## Implemented

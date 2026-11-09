@@ -54,11 +54,6 @@ def manifest(conn, bot_id, task=None, *, peer=False):
             blocked.append(blocker('tool_unavailable', name, reason))
     installed = inventory.get('skills', []) if known else []
     skills = [{**s, 'enabled': True} for s in installed if s['name'] in bot['enabled_skills']]
-    from .teaching import candidate
-    preview = candidate(conn, task) if task and not peer else None
-    if preview:
-        skills = [s for s in skills if s['name'] != preview['name']]
-        skills.append({'name': preview['name'], 'description': 'Task-scoped teaching candidate; consult this exact draft for its test.', 'enabled': True, 'required_tools': [], 'teaching_test_id': preview['teaching_test_id'], 'sha256': preview['sha256']})
     for skill in skills:
         skill['available'] = skill['enabled'] and 'skill_view' in tools
     apps = connections.accessible(conn, bot_id)
@@ -92,7 +87,7 @@ def manifest(conn, bot_id, task=None, *, peer=False):
     available = sorted(tools | {'hermbot_' + name for name in operations})
     facts = {'version': VERSION, 'revision': bot['revision'], 'applied_revision': bot['applied_revision'],
              'running': running, 'human_control': human, 'inventory_known': known,
-             'native_tools': sorted(tools), 'skills': skills, 'teaching_candidate': preview, 'installed_skill_names': [s['name'] for s in installed], 'connections': app_info,
+             'native_tools': sorted(tools), 'skills': skills, 'installed_skill_names': [s['name'] for s in installed], 'connections': app_info,
              'operations': sorted(operations), 'connector_restricted': policy['restricted']}
     facts['action_contract_version'] = 2
     facts['outcomes_version'] = inventory.get('outcomes_version', 0)
@@ -156,7 +151,6 @@ def requirements(view, *, skills=(), tools=(), connectors=()):
 
 
 def prepare(conn, task, args):
-    from .teaching import candidate
     if task['message_intent'] not in WORK:
         raise HTTPException(409, 'Discussion and status turns do not need execution preparation')
     from . import outcomes
@@ -170,9 +164,7 @@ def prepare(conn, task, args):
     if not blocked:
         for name in selected:
             try:
-                skill = candidate(conn, task, consulted=True) if (view.get('teaching_candidate') or {}).get('name') == name else native.request(task['bot_id'], 'GET', '/skills/' + name)
-                if skill and skill.get('teaching_test_id'):
-                    skill = {**skill, 'exists': True}
+                skill = native.request(task['bot_id'], 'GET', '/skills/' + name)
                 if not skill.get('exists') or not skill.get('content'):
                     blocked.append(blocker('skill_missing', name, 'The enabled skill file is missing. Refresh or restore the skill before using it.'))
                 else:

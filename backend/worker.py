@@ -12,7 +12,7 @@ import httpx
 from fastapi import HTTPException
 from psycopg.types.json import Jsonb
 
-from . import teaching, connections, coordination, db, execution_monitor, execution_policy, isolation, knowledge, outcomes, provisioning, registry, routines, triggers, work_controller, work_intake
+from . import connections, coordination, db, execution_monitor, execution_policy, isolation, knowledge, outcomes, provisioning, registry, routines, triggers, work_controller, work_intake
 from .runtime import HermesClient
 from .service import ACTIVE_ATTEMPTS, TERMINAL, cancel, check_grant, digest, locked_task, now
 from .settings import settings
@@ -791,7 +791,6 @@ async def main():
     monitor = asyncio.create_task(execution_monitor.run(STOP))
     intake = asyncio.create_task(work_intake.run(STOP))
     routine_sync = asyncio.create_task(routines.run(STOP))
-    teaching_sync = asyncio.create_task(teaching.run(STOP))
     try:
         while not STOP.is_set():
             await iterate(iteration)
@@ -804,8 +803,7 @@ async def main():
         monitor.cancel()
         intake.cancel()
         routine_sync.cancel()
-        teaching_sync.cancel()
-        await asyncio.gather(monitor, intake, routine_sync, teaching_sync, return_exceptions=True)
+        await asyncio.gather(monitor, intake, routine_sync, return_exceptions=True)
         for stream in STREAMS.values():
             stream.cancel()
         db.pool.close()

@@ -7,7 +7,6 @@ COPY docker/copy_state.py /opt/hermbot/copy_state.py
 COPY docker/write_attachment.py /opt/hermbot/write_attachment.py
 COPY docker/capability_filter.py /opt/hermbot/capability_filter.py
 COPY docker/routine_wakeup.py /opt/hermbot/routine_wakeup.py
-COPY docker/teaching_capture.py /opt/hermbot/teaching_capture.py
 COPY docker/runtime_api.py /opt/hermbot/runtime_api.py
 COPY docker/install_cua.py /opt/hermbot/install_cua.py
 RUN /opt/hermes/.venv/bin/python /opt/hermbot/install_cua.py

@@ -34,7 +34,6 @@ try{
     if(req.method()!=='GET'){writes.push(url.pathname);return route.fulfill({status:403,json:{detail:'Fixture rejects writes'}});}
     let result={};
     if(url.pathname==='/api/v1/state')result=state;
-    else if(url.pathname.includes('/teaching'))result=[];
     else if(url.pathname==='/api/v1/attention')result={unread:0,needs_owner:0,items:[]};
     else if(url.pathname.match(/\/conversations\/[^/]+\/timeline$/)){
       const cid=url.pathname.split('/')[4],all=structuredClone(histories[cid]);

@@ -2,7 +2,6 @@ import {useEffect,useState} from 'react';
 import {useQuery,useQueryClient} from '@tanstack/react-query';
 import {api,mutate,type Bot,type Task} from './api';
 import {Panel} from './Management';
-import {Teaching} from './Teaching';
 import {usePanelScope} from './usePanelScope';
 import {CapabilitySummary,type CapabilityView} from './Capabilities';
 
@@ -16,8 +15,6 @@ const newSkill=(name:string)=>`---\nname: ${name}\ndescription: Describe when to
 
 export function Knowledge({open,onClose,bot,tasks,initialTask}:{open:boolean;onClose:()=>void;bot?:Bot;tasks:Task[];initialTask?:string|null}) {
   const query=useQueryClient();
-  const [teachingDirty,setTeachingDirty]=useState(false),[discardTeaching,setDiscardTeaching]=useState(false);
-  function close(){if(teachingDirty){setDiscardTeaching(true);setError('Save your teaching edits before closing, or explicitly close without saving them.');return;}onClose();}
   const current=usePanelScope(JSON.stringify([open,bot?.id,initialTask]));
   const [draft,setDraft]=useState<Draft|null>(null),[error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[search,setSearch]=useState(''),[taskId,setTaskId]=useState('');
   const data=useQuery({queryKey:['knowledge',bot?.id],queryFn:()=>api<KnowledgeState>(`/api/v1/bots/${bot!.id}/knowledge`),enabled:open&&!!bot&&bot.status==='active',refetchInterval:open?5000:false});
@@ -29,12 +26,10 @@ export function Knowledge({open,onClose,bot,tasks,initialTask}:{open:boolean;onC
   async function save(content?:string){if(!draft||!bot)return;await change(async()=>{await mutate(`/api/v1/bots/${bot.id}/knowledge/${draft.kind}/${draft.name}`,'PUT',{content:content??draft.content,expected_hash:draft.expected_hash,...(draft.kind==='skill'?{enable:content===''?false:draft.enable||false}:{}),...(draft.source_task_id?{source_task_id:draft.source_task_id}:{})});if(!current())return;setDraft(null);setNotice('Saved. The runtime is refreshing so its next run sees the new knowledge.');});}
   async function loadWorkflow(id:string){if(!id)return;await change(async()=>{const result=await api<{name:string;content:string;expected_hash:string;source_task_id:string}>(`/api/v1/tasks/${id}/skill-draft`);if(!current())return;setDraft({kind:'skill',...result,enable:false,editable:true});});}
   async function importSkill(file:File){await change(async()=>{if(file.size>100_000)throw new Error('Imported skill Markdown is limited to 100 KB');let content=await file.text();const existing=content.match(/^name:\s*(.+)$/m)?.[1].trim().replace(/^['"]|['"]$/g,'')||`import-${Date.now().toString(36)}`;const name=existing.startsWith('hermbot-')?existing:`hermbot-${existing.replace(/[^a-z0-9-]/gi,'-').toLowerCase()}`;if(content.startsWith('---\n'))content=content.replace(/^name:\s*.+$/m,`name: ${name}`);else content=newSkill(name)+ '\n'+content;if(!current())return;setDraft({kind:'skill',name,content,expected_hash:emptyHash,enable:false,editable:true});});}
-  return <Panel open={open} onClose={close} title={`${bot?.name||'Teammate'} · Memory & skills`} description="Review native memory, manage skill versions, and turn completed work into a reusable procedure.">
-    {discardTeaching&&<button className="secondary" onClick={()=>{setDiscardTeaching(false);onClose();}}>Close without saving teaching edits</button>}
+  return <Panel open={open} onClose={onClose} title={`${bot?.name||'Teammate'} · Memory & skills`} description="Review native memory, manage skill versions, and turn completed work into a reusable procedure.">
     {error&&<p role="alert" className="error-text">{error}</p>}{notice&&<p role="status">{notice}</p>}{data.error&&<p role="alert" className="error-text">{data.error.message}</p>}
     {!healthy&&<p>{bot?.status==='provisioning'?'The runtime is refreshing. Wait for it to finish before editing knowledge.':'Start this teammate and wait for provisioning to finish before editing knowledge.'}</p>}
     <CapabilitySummary view={capabilities.data}/>
-    {bot&&open&&<Teaching key={bot.id} botId={bot.id} mine={false} onDirty={setTeachingDirty}/>}
     {draft?<div className="knowledge-draft">
       <label>{draft.kind==='skill'?'Skill name':'Memory target'}<input aria-label="Knowledge name" value={draft.name} disabled={draft.kind==='memory'||!draft.editable||draft.expected_hash!==emptyHash} onChange={e=>{const name=e.target.value;setDraft({...draft,name,content:draft.content.replace(/^name:\s*.+$/m,`name: ${name}`)});}}/></label>
       <label>Content<textarea aria-label="Knowledge content" value={draft.content} onChange={e=>setDraft({...draft,content:e.target.value})} readOnly={draft.kind==='skill'&&!draft.editable} rows={14} maxLength={100_000}/></label>

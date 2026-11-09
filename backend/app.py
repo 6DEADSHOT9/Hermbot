@@ -1,5 +1,3 @@
-from .models import StrictModel
-from pydantic import Field
 import asyncio
 from contextlib import asynccontextmanager
 from datetime import timedelta
@@ -18,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from psycopg.types.json import Jsonb
 from pydantic import ValidationError
 
-from . import teaching, auth, capabilities, db, inputs, knowledge, lifecycle, outcomes, registry, routines, service, work_items
+from . import auth, capabilities, db, inputs, knowledge, lifecycle, outcomes, registry, routines, service, work_items
 from .secrets import credential_hash
 from .artifacts import ArtifactStore
 from .models import (ARGUMENT_MODELS, ContextRequest, DecisionRequest, EndRequest, GroupRequest,
@@ -429,24 +427,6 @@ def routine_wake(bot_id: str, generation: UUID, authorization: str | None = Head
     return routines.wake(bot_id, generation, bearer(authorization))
 
 
-class TeachingConsult(StrictModel):
-    session_id: str = Field(min_length=1, max_length=200)
-    sha256: str = Field(pattern='^[0-9a-f]{64}$')
-
-
-@app.post('/internal/teaching/consult')
-def teaching_consult(body: TeachingConsult, bot_id=Depends(bot_identity)):
-    with db.connection() as conn:
-        task = service.active_task(conn, bot_id, body.session_id)
-        item = teaching.candidate(conn, task)
-        if not item or item['sha256'] != body.sha256:
-            raise HTTPException(409, 'This candidate is not assigned to this task')
-        caps = capabilities.manifest(conn, bot_id, task)
-        if 'skill_view' not in caps['allowed_tools']:
-            raise HTTPException(403, 'Skill consultation is unavailable for this task')
-        return teaching.candidate(conn, task, consulted=True)
-
-
 @app.post("/internal/context")
 def context(body: ContextRequest, bot_id=Depends(bot_identity)):
     with db.connection() as conn:
@@ -590,7 +570,6 @@ async def create_routine(body: RoutineDefinition | RoutineRequest, idempotency_k
 
 
 app.include_router(model_auth_routes(owner))
-app.include_router(teaching.routes(owner))
 app.include_router(routes(owner, lambda: artifacts))
 app.include_router(library_routes(owner, lambda: artifacts))
 app.include_router(computer_routes(owner))

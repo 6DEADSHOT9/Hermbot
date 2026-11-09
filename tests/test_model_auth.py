@@ -478,18 +478,6 @@ def test_verified_refresh_with_removed_scope_does_not_authorize_inference(vault,
     asyncio.run(run())
 
 
-def test_provider_errors_have_safe_actionable_teaching_messages():
-    from backend import model_client, teaching
-    response = httpx.Response(503, json={'detail': 'subscription_sharing_usage_limit_exceeded'}, request=httpx.Request('POST', 'http://fixture.invalid'))
-    with pytest.raises(model_client.ModelConnectionError) as caught:
-        model_client.result(response)
-    assert 'Manage usage' in teaching.generation_error(caught.value)
-    poisoned = httpx.Response(503, json={'detail': 'private-token-sentinel'}, request=httpx.Request('POST', 'http://fixture.invalid'))
-    with pytest.raises(model_client.ModelConnectionError) as caught:
-        model_client.result(poisoned)
-    assert 'private-token-sentinel' not in teaching.generation_error(caught.value)
-
-
 def test_stale_quota_error_cannot_block_a_reconnected_account():
     row = oauth_provider()
     with db.connection() as conn:
