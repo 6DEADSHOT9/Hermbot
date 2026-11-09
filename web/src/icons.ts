@@ -10,6 +10,8 @@ export { default as Check } from "lucide-react/dist/esm/icons/check.js";
 // @ts-expect-error The icon entry uses the package root declarations.
 export { default as ChevronDown } from "lucide-react/dist/esm/icons/chevron-down.js";
 // @ts-expect-error The icon entry uses the package root declarations.
+export { default as ChevronLeft } from "lucide-react/dist/esm/icons/chevron-left.js";
+// @ts-expect-error The icon entry uses the package root declarations.
 export { default as ChevronRight } from "lucide-react/dist/esm/icons/chevron-right.js";
 // @ts-expect-error The icon entry uses the package root declarations.
 export { default as Circle } from "lucide-react/dist/esm/icons/circle.js";

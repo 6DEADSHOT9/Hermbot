@@ -67,7 +67,7 @@ await page.setViewportSize({width:390,height:844});
 // The compact layout closes the work panel itself; close it by hand only if it stays open.
 await page.locator('.context-panel').waitFor({state:'detached',timeout:5000}).catch(()=>page.getByRole('button',{name:'Close work panel',exact:true}).click());
 await page.getByRole('button',{name:'Open navigation'}).click();
-await page.getByLabel('Owner menu').click();const settingsPosition=await page.getByRole('button',{name:'Workspace settings',exact:true}).boundingBox();
+await page.getByLabel('Owner menu').click();const settingsPosition=await page.getByRole('button',{name:'Settings',exact:true}).boundingBox();
 assert.ok(settingsPosition&&settingsPosition.y>=0&&settingsPosition.y+settingsPosition.height<=844);
 await page.getByRole('navigation',{name:'Group conversations'}).getByRole('button',{name:proof.title,exact:false}).last().click();
 await page.waitForFunction(()=>document.querySelector('.sidebar').getBoundingClientRect().right<=1);
