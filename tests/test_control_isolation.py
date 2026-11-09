@@ -1,7 +1,9 @@
 """The agent's identity cannot use the runtime's control credentials or reach its control ports."""
+import ast
 import ctypes
 import importlib.util
 import json
+from pathlib import Path
 import sys
 from types import ModuleType
 from uuid import uuid4
@@ -96,6 +98,40 @@ def test_reconcile_refences_only_after_a_restart(supervisor, monkeypatch):
     supervisor.started = "2026-11-09T09:05:00Z"
     containers.reconcile_networks("bot-test")
     assert supervisor.order.count(("fence", "runtime")) == 2
+
+
+def test_root_python_in_a_runtime_never_imports_from_a_working_directory(supervisor, monkeypatch):
+    # The agent owns /workspace; Python run from there as root would import modules planted in it.
+    containers.ensure(spec())
+    runtime = supervisor.created("runtime")
+    assert runtime["WorkingDir"] == "/" and runtime["Healthcheck"]["Test"][1:3] == containers.RUNTIME_PYTHON
+    calls = []
+    monkeypatch.setattr(containers, "docker_request", lambda method, path, **kwargs: (
+        calls.append(kwargs.get("json")), {"Id": "exec"} if path.endswith("/exec") else {"Running": False, "ExitCode": 0})[1])
+    containers.runtime_command("runtime", [*containers.RUNTIME_PYTHON, "-c", "pass"])
+    assert calls[0]["WorkingDir"] == "/" and calls[0]["User"] == "0:0"
+    # New supervisor commands must reuse RUNTIME_PYTHON rather than name the interpreter again.
+    assert Path("backend/containers.py").read_text().count("/opt/hermes/.venv/bin/python") == 1
+
+
+def test_bootstrap_starts_only_the_agent_in_its_workspace():
+    dockerfile = Path("docker/hermes.Dockerfile").read_text()
+    assert "\nWORKDIR /\n" in dockerfile and '"/opt/hermes/.venv/bin/python", "-I", "-u", "/opt/hermbot/bootstrap.py"' in dockerfile
+    tree = ast.parse(Path("docker/hermes_bootstrap.py").read_text())
+    adapter = next(ast.literal_eval(node.value) for node in tree.body if isinstance(node, ast.Assign) and ast.unparse(node.targets[0]) == "ADAPTER")
+    assert adapter[1:3] == ["-I", "-u"] and adapter[adapter.index("--app-dir") + 1] == "/opt/hermbot"
+    starts = {ast.unparse(call.args[0]): next(ast.literal_eval(k.value) for k in call.keywords if k.arg == "cwd")
+              for call in ast.walk(tree) if isinstance(call, ast.Call) and ast.unparse(call.func) == "subprocess.Popen"}
+    assert starts == {"ADAPTER": "/", "['/opt/hermes/.venv/bin/hermes', 'gateway', 'run']": "/workspace"}
+
+
+def test_existing_runtimes_are_recreated_once_per_layout():
+    with db.connection() as conn:
+        before = conn.execute("UPDATE bots SET runtime_layout=0 WHERE id='writer' RETURNING revision").fetchone()["revision"]
+        registry.bootstrap(conn)
+        registry.bootstrap(conn)
+        bot = conn.execute("SELECT revision,runtime_layout FROM bots WHERE id='writer'").fetchone()
+    assert bot["revision"] == before + 1 and bot["runtime_layout"] == registry.RUNTIME_LAYOUT
 
 
 def test_each_bot_gets_its_own_adapter_key_once():

@@ -19,13 +19,17 @@ import time
 
 import yaml
 
+# Isolated mode ignores PYTHONPATH; the Hermbot plugin that Hermes loads below imports from here.
+sys.path.insert(0, "/opt/hermbot")
 os.environ["HOME"] = os.environ.get("HERMES_HOME", "/opt/data")
 if os.getuid() != 0:
     raise SystemExit("The runtime bootstrap must start as root to separate the agent from its controls")
 account = pwd.getpwnam("hermes")
 # Only the adapter receives its credential; no agent process ever inherits it.
 adapter_key = os.environ.pop("HERMBOT_ADAPTER_KEY", "")
-ADAPTER = ["/opt/hermes/.venv/bin/python", "-m", "uvicorn", "runtime_api:app", "--app-dir", "/opt/hermbot",
+# Isolated mode and a root-owned working directory keep agent-planted modules off the adapter's
+# import path; --app-dir supplies its own modules.
+ADAPTER = ["/opt/hermes/.venv/bin/python", "-I", "-u", "-m", "uvicorn", "runtime_api:app", "--app-dir", "/opt/hermbot",
            "--host", "0.0.0.0", "--port", "8643", "--no-access-log"]
 # The gateway and the agent's tools never need these; the adapter needs none of the agent's keys.
 AGENT_ONLY = ("API_SERVER_KEY", "MODEL_API_KEY", "OPENAI_API_KEY", "HERMBOT_BOT_TOKEN")
@@ -129,7 +133,7 @@ def supervise(preparer, reader):
         environment.pop("MODEL_API_KEY", None)
     adapter_environment = {key: value for key, value in environment.items() if key not in AGENT_ONLY}
     adapter_environment["HERMBOT_ADAPTER_KEY"] = adapter_key
-    adapter = subprocess.Popen(ADAPTER, env=adapter_environment, preexec_fn=agent_identity)
+    adapter = subprocess.Popen(ADAPTER, env=adapter_environment, cwd="/", preexec_fn=agent_identity)
     children = [adapter]
     requested = []
 
@@ -156,7 +160,7 @@ def supervise(preparer, reader):
             waiting = True
         time.sleep(1)
     children.append(subprocess.Popen(["/opt/hermes/.venv/bin/hermes", "gateway", "run"],
-                                     env=environment, preexec_fn=agent_identity))
+                                     env=environment, cwd="/workspace", preexec_fn=agent_identity))
     # Either child ending ends the runtime, so a stopped adapter can never be impersonated.
     finished = os.wait()[0]
     for child in children:

@@ -19,6 +19,8 @@ from .model_protocol import BROKERED_AUTH, CODEX_URL
 BOT_COLUMNS = "id,name,role,color,avatar,capabilities,status,desired_state,revision,applied_revision,runtime_error,provider_id,model_name,enabled_tools,enabled_skills,memory_mb,cpus,readiness,checked_at"
 PROVIDER_COLUMNS = "id,name,base_url,models,default_model,revision,from_environment,auth_kind,transport,connection_status,account_label,account_plan,plan_enabled,discovered_models,verified_models"
 CONFIG_FIELDS = ("name", "role", "color", "avatar", "provider_id", "model_name", "capabilities", "enabled_tools", "enabled_skills", "memory_mb", "cpus")
+# Raise when every existing runtime must be recreated (1: runtimes start in `/` with isolated Python).
+RUNTIME_LAYOUT = 1
 
 
 def require_bot(conn, bot_id, *, lock=False, include_deleted=False, nowait=False):
@@ -95,6 +97,8 @@ def bootstrap(conn):
     for bot in conn.execute("SELECT id FROM bots WHERE adapter_key_encrypted IS NULL AND status<>'deleted'").fetchall():
         conn.execute("UPDATE bots SET adapter_key_encrypted=%s,revision=revision+1,adapter_key_revision=revision+1 WHERE id=%s",
                      (encrypt(secrets.token_urlsafe(32)), bot["id"]))
+    conn.execute("UPDATE bots SET runtime_layout=%s,revision=revision+1 WHERE runtime_layout<%s AND status<>'deleted'",
+                 (RUNTIME_LAYOUT, RUNTIME_LAYOUT))
 
 
 def validate_config(conn, value):
@@ -140,7 +144,7 @@ def register(conn, config, bot_id=None):
         raise HTTPException(409, "Workspace teammate limit reached")
     bot_id = bot_id or "bot-" + uuid4().hex[:16]
     token, runtime_key, adapter_key = secrets.token_urlsafe(32), secrets.token_urlsafe(32), secrets.token_urlsafe(32)
-    conn.execute("INSERT INTO bots(id,name,role,color,capabilities,runtime_url,status,bot_token_encrypted,bot_token_hash,runtime_key_encrypted,adapter_key_encrypted) VALUES (%s,%s,%s,%s,%s,%s,'provisioning',%s,%s,%s,%s)", (bot_id, config["name"], config["role"], config["color"], Jsonb(config["capabilities"]), f"http://hermbot-bot-{bot_id}:8642", encrypt(token), credential_hash(token), encrypt(runtime_key), encrypt(adapter_key)))
+    conn.execute("INSERT INTO bots(id,name,role,color,capabilities,runtime_url,status,bot_token_encrypted,bot_token_hash,runtime_key_encrypted,adapter_key_encrypted,runtime_layout) VALUES (%s,%s,%s,%s,%s,%s,'provisioning',%s,%s,%s,%s,%s)", (bot_id, config["name"], config["role"], config["color"], Jsonb(config["capabilities"]), f"http://hermbot-bot-{bot_id}:8642", encrypt(token), credential_hash(token), encrypt(runtime_key), encrypt(adapter_key), RUNTIME_LAYOUT))
     apply_configuration(conn, bot_id, config)
     conversation_id = uuid4()
     conn.execute("INSERT INTO conversations(id,title,kind,bot_id) VALUES (%s,%s,'dm',%s)", (conversation_id, config["name"], bot_id))

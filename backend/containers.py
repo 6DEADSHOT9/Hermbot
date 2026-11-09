@@ -18,6 +18,10 @@ from .models import BotConfiguration, BotId, StrictModel
 from .settings import BOT_IDS, settings
 
 RUNTIME_IMAGE = os.environ.get("HERMBOT_RUNTIME_IMAGE", "hermbot-hermes:phase4")
+# Python the supervisor runs in a runtime runs as root. Isolated mode keeps the working directory,
+# PYTHON* variables and user site-packages off its import path, and runtimes start in `/`, so a
+# module the agent plants in a directory it owns is never imported.
+RUNTIME_PYTHON = ["/opt/hermes/.venv/bin/python", "-I"]
 RUNTIME_SECURITY = {
     'ReadonlyRootfs': True,
     'SecurityOpt': ['no-new-privileges:true'],
@@ -237,7 +241,7 @@ def clone_state(spec, target_volumes):
                 helper = None
         if not helper:
             binds = [f"{source_volumes['data']}:/source-data:ro", f"{source_volumes['workspace']}:/source-workspace:ro", f"{target_volumes['data']}:/target-data:rw", f"{target_volumes['workspace']}:/target-workspace:rw"]
-            helper_id = docker_request("POST", "/containers/create", params={"name": helper_name}, json={"Image": RUNTIME_IMAGE, "User": "0:0", "Entrypoint": ["/opt/hermes/.venv/bin/python", "/opt/hermbot/copy_state.py"], "Cmd": [json.dumps(spec.copy_options)], "Labels": {**LABELS, "com.hermbot.bot-id": spec.bot_id, "com.hermbot.kind": "clone-helper"}, "HostConfig": {"Binds": binds, "NetworkMode": "none", "Memory": 512 * 1024 * 1024, "NanoCpus": 500_000_000}})["Id"]
+            helper_id = docker_request("POST", "/containers/create", params={"name": helper_name}, json={"Image": RUNTIME_IMAGE, "User": "0:0", "WorkingDir": "/", "Entrypoint": [*RUNTIME_PYTHON, "/opt/hermbot/copy_state.py"], "Cmd": [json.dumps(spec.copy_options)], "Labels": {**LABELS, "com.hermbot.bot-id": spec.bot_id, "com.hermbot.kind": "clone-helper"}, "HostConfig": {"Binds": binds, "NetworkMode": "none", "Memory": 512 * 1024 * 1024, "NanoCpus": 500_000_000}})["Id"]
             docker_request("POST", f"/containers/{helper_id}/start")
         else:
             labels = helper.get("Config", {}).get("Labels", {})
@@ -280,12 +284,12 @@ def ensure(spec, clone=False):
         "API_SERVER_KEY": spec.runtime_key, "HERMBOT_ADAPTER_KEY": spec.adapter_key, "HERMBOT_BOT_TOKEN": spec.bot_token, "HERMBOT_API_URL": "http://api:8000", "BOT_ID": spec.bot_id,
         "BOT_ROLE": f"You are {config.name}. {config.role}", "HERMES_ENABLED_TOOLS": json.dumps(config.enabled_tools), "HERMES_ENABLED_SKILLS": json.dumps(config.enabled_skills), "HERMES_TIMEZONE": spec.timezone}
     result = docker_request("POST", "/containers/create", params={"name": f"hermbot-bot-{spec.bot_id}"}, json={"Image": RUNTIME_IMAGE,
-        "Env": [f"{key}={value}" for key, value in environment.items()],
+        "Env": [f"{key}={value}" for key, value in environment.items()], "WorkingDir": "/",
         "Labels": {**LABELS, "com.hermbot.bot-id": spec.bot_id, "com.hermbot.kind": "runtime", "com.hermbot.configuration": fingerprint, "com.hermbot.revision": str(spec.revision)},
         "HostConfig": {**RUNTIME_SECURITY, "Binds": [f"{volumes['data']}:/opt/data", f"{volumes['workspace']}:/workspace", f"{volumes['browser']}:/browser-state"], "Init": True,
             "Memory": config.memory_mb * 1024 * 1024, "NanoCpus": int(config.cpus * 1_000_000_000), "RestartPolicy": {"Name": "unless-stopped"}},
         "NetworkingConfig": {"EndpointsConfig": {network: {"Aliases": [f"hermbot-bot-{spec.bot_id}", f"hermes-{spec.bot_id}"]}}},
-        "Healthcheck": {"Test": ["CMD", "/opt/hermes/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8642/health',timeout=3); urllib.request.urlopen('http://127.0.0.1:8643/health',timeout=3)"], "Interval": 10_000_000_000, "Timeout": 5_000_000_000, "StartPeriod": 40_000_000_000, "Retries": 12}})
+        "Healthcheck": {"Test": ["CMD", *RUNTIME_PYTHON, "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8642/health',timeout=3); urllib.request.urlopen('http://127.0.0.1:8643/health',timeout=3)"], "Interval": 10_000_000_000, "Timeout": 5_000_000_000, "StartPeriod": 40_000_000_000, "Retries": 12}})
     if spec.desired_state == "running":
         docker_request("POST", f"/containers/{result['Id']}/start")
         fence(result["Id"], spec.bot_id)
@@ -410,22 +414,22 @@ def transfer_attachment(body: AttachmentSpec):
     with LOCKS[body.bot_id]:
         # Staging is separate from immutable runtime code, root-only and not
         # writable by the agent. The server owns both commands and directory.
-        runtime_command(container['Id'], ['/opt/hermes/.venv/bin/python', '-c', STAGING_INIT])
+        runtime_command(container['Id'], [*RUNTIME_PYTHON, '-c', STAGING_INIT])
         # Docker's archive API rejects tmpfs destinations with a read-only root.
         # Bounded argv chunks avoid that API and Linux's per-argument size limit.
         # Data is a separate base64 argument, never interpolated into executable code.
         for offset in range(0, len(staging), 60_000):
-            runtime_command(container['Id'], ['/opt/hermes/.venv/bin/python', '-c', STAGING_WRITE,
+            runtime_command(container['Id'], [*RUNTIME_PYTHON, '-c', STAGING_WRITE,
                 staging_name, base64.b64encode(staging[offset:offset + 60_000]).decode(),
                 'first' if offset == 0 else 'append'])
-        runtime_command(container['Id'], ['/opt/hermes/.venv/bin/python', '/opt/hermbot/write_attachment.py',
+        runtime_command(container['Id'], [*RUNTIME_PYTHON, '/opt/hermbot/write_attachment.py',
                                          STAGING_DIRECTORY + '/' + staging_name])
     return {"path": "/workspace/" + relative}
 
 
 def runtime_command(container_id, command):
     execution = docker_request('POST', f'/containers/{container_id}/exec',
-                               json={'User': '0:0', 'Cmd': command})['Id']
+                               json={'User': '0:0', 'WorkingDir': '/', 'Cmd': command})['Id']
     docker_request('POST', f'/exec/{execution}/start', json={'Detach': True, 'Tty': False})
     for _ in range(100):
         receipt = docker_request('GET', f'/exec/{execution}/json')

@@ -47,6 +47,8 @@ def test_attachment_staging_works_outside_read_only_runtime_code(monkeypatch, tm
     staged = bytearray()
     monkeypatch.setattr(containers, 'find_runtime', lambda bot: {'Id': 'runtime'})
     def command(runtime, argv):
+        assert argv[:2] == containers.RUNTIME_PYTHON, 'Root Python in a runtime must run isolated.'
+        argv = argv[1:]
         commands.append(argv)
         if argv[1] == '-c' and argv[2] == containers.STAGING_WRITE:
             assert commands[0][-1] == containers.STAGING_INIT

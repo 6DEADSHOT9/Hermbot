@@ -13,7 +13,8 @@ COPY docker/install_cua.py /opt/hermbot/install_cua.py
 RUN /opt/hermes/.venv/bin/python /opt/hermbot/install_cua.py
 COPY hermbot_runtime_gate.py /opt/hermbot/hermbot_runtime_gate.py
 COPY plugins/hermbot /opt/hermbot/plugin
-WORKDIR /workspace
+# Root processes start in `/`; only the agent's gateway starts in its /workspace.
+WORKDIR /
 ENV HERMES_HOME=/opt/data PYTHONPATH=/opt/hermbot PYTHONUNBUFFERED=1 HERMES_CUA_DRIVER_CMD=/opt/hermbot/cua/cua-driver
 ENV HERMES_WRITE_SAFE_ROOT=/opt/data:/workspace:/browser-state:/tmp
-ENTRYPOINT ["/opt/hermes/.venv/bin/python", "/opt/hermbot/bootstrap.py"]
+ENTRYPOINT ["/opt/hermes/.venv/bin/python", "-I", "-u", "/opt/hermbot/bootstrap.py"]
