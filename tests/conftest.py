@@ -2,10 +2,11 @@ import os
 from dataclasses import replace
 from uuid import uuid4
 
+import httpx
 import pytest
 from psycopg.types.json import Jsonb
 
-from backend import db, service, worker
+from backend import computer, db, service, worker
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -33,6 +34,28 @@ def clean_database(monkeypatch):
         conn.execute("DELETE FROM providers WHERE id<>%s AND NOT EXISTS(SELECT 1 FROM bots WHERE bots.provider_id=providers.id)", (environment["id"],))
         conn.execute("UPDATE bots SET status='active',desired_state='running',applied_revision=revision,enabled_tools='[\"file\",\"terminal\"]',enabled_skills='[]',readiness=%s", (Jsonb({"compatible": True}),))
     monkeypatch.setattr(worker, "settings", replace(worker.settings, provider_configured=True, model_name="test"))
+
+
+@pytest.fixture(autouse=True)
+def owner_sessions(monkeypatch):
+    """Tests never reach the real supervisor: takeover gets an in-memory private session."""
+    class Sessions:
+        calls, finish_cookies, failing = [], [], None
+    sessions = Sessions()
+    sessions.calls = []
+
+    def supervisor(method, path, **kwargs):
+        sessions.calls.append(("supervisor", method, path, kwargs.get("json")))
+        return {"url": "http://hermbot-owner-test:8650", "token": "owner-session-token"} if method == "POST" else {"removed": True}
+
+    def session_request(session, method, path, **kwargs):
+        sessions.calls.append(("session", method, path, kwargs.get("json")))
+        if sessions.failing == path:
+            raise httpx.ConnectError("The private browser is unavailable")
+        return {"/health": {"ready": True}, "/start": {"started": True}, "/finish": {"cookies": sessions.finish_cookies}}[path]
+    monkeypatch.setattr(computer, "supervisor", supervisor)
+    monkeypatch.setattr(computer, "session_request", session_request)
+    return sessions
 
 
 @pytest.fixture
