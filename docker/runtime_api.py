@@ -30,7 +30,6 @@ sys.path.insert(0, str(Path(__file__).parent))
 from fastapi import Depends, FastAPI, Header, HTTPException, WebSocket
 from pydantic import BaseModel, ConfigDict, Field
 
-from teaching_capture import AcceptedRFB, Capture
 
 from hermbot_runtime_gate import DrainTimeout, GateUnavailable, OwnershipChanged, drain
 
@@ -40,7 +39,6 @@ ADAPTER_KEY = os.environ.pop("HERMBOT_ADAPTER_KEY", "")
 HOME = Path(os.environ.get("HERMES_HOME", "/opt/data"))
 WORKSPACE = Path('/workspace')
 app = FastAPI(docs_url=None, redoc_url=None)
-capture = Capture()
 
 
 def authorize(authorization: str = Header(default="")):
@@ -392,7 +390,6 @@ def control(body: Control):
     from tools.bot_desktop import lease
 
     if body.action == "handback":
-        capture.pause('computer handed back')
         state = lease.release(None if body.force else body.viewer_id)
         if state.holder == "human":
             raise HTTPException(
@@ -401,7 +398,6 @@ def control(body: Control):
         return computer()
     # Close admission first; concurrent admitted callbacks retain shared activity locks.
     # Human input becomes ready only after all of them drain and this exact lease still owns control.
-    capture.pause('computer ownership changed')
     state = lease.acquire(body.viewer_id, reason="Owner takeover in Hermbot")
     def owns_control():
         current = lease.get()
@@ -441,52 +437,6 @@ def open_browser(body: dict):
     return {"opened": True}
 
 
-class TeachingControl(Strict):
-    session: str = Field(pattern=r'^[0-9a-f-]{36}$')
-    action: Literal['start', 'pause', 'private', 'resume', 'finish', 'discard']
-    viewer: str = Field(pattern=r'^[0-9a-f]{64}$')
-    epoch: int = Field(ge=0)
-    revision: int = Field(ge=1)
-
-
-@app.post('/teaching/control', dependencies=[Depends(authorize)])
-async def teaching_control(body: TeachingControl):
-    from tools.bot_desktop import lease
-    current = lease.get()
-    if body.action not in ('finish','discard') and (not ready_for_input(body.viewer) or current.epoch != body.epoch):
-        raise HTTPException(409, 'Take over the computer in this session before recording')
-    try:
-        if body.action == 'finish' and capture.session == body.session and capture.state == 'recording':
-            await teaching_frame(capture.generation, capture.geometry)
-        result = capture.control(body.session, body.action, body.viewer, body.epoch, body.revision)
-        if body.action in ('start','resume'):
-            from tools.bot_desktop import runtime
-            await teaching_frame(result['generation'], runtime.status().as_dict().get('geometry',''))
-        return result
-    except ValueError as exc:
-        raise HTTPException(409, str(exc)) from None
-
-
-@app.get('/teaching/batch', dependencies=[Depends(authorize)])
-def teaching_batch(ack: int = 0):
-    return capture.batch(ack)
-
-
-async def teaching_frame(generation, geometry):
-    from tools.bot_desktop.thumbnail import thumbnail_data_url
-    try:
-        await asyncio.sleep(.2)
-        from tools.bot_desktop import runtime
-        geometry = runtime.status().as_dict().get('geometry','')
-        image = await asyncio.to_thread(thumbnail_data_url, (1440, 1000))
-        capture.frame(generation, image, geometry)
-        with capture.lock:
-            if capture.generation == generation and capture.state == 'recording':
-                capture.geometry = geometry
-    except Exception:
-        capture.pause('Screen capture unavailable; retained prefix only')
-
-
 @app.websocket("/computer/ws")
 async def screen(ws: WebSocket):
     try:
@@ -511,14 +461,7 @@ async def screen(ws: WebSocket):
         await ws.close(code=4404)
         return
     await ws.accept()
-    observer = AcceptedRFB()
-    admitted = [None]
-    def allowed():
-        from tools.bot_desktop import lease
-        current = lease.get()
-        admitted[0] = current.epoch if ready_for_input(viewer) else None
-        return admitted[0] is not None
-    gate = RfbClientFilter(allowed)
+    gate = RfbClientFilter(lambda: ready_for_input(viewer))
 
     async def receive():
         while True:
@@ -528,23 +471,13 @@ async def screen(ws: WebSocket):
             data = packet.get("bytes")
             if data is None or len(data) > 1_000_000:
                 return
-            with capture.lock:
-                try:
-                    data = gate.feed(data)
-                except ValueError:
-                    return
-                generation = None
-                try:
-                    events = observer.feed(data)
-                    geometry = capture.geometry
-                    generation = capture.observe(events, viewer, admitted[0], geometry)
-                except ValueError:
-                    capture.pause('unsupported observation; retained prefix only')
+            try:
+                data = gate.feed(data)
+            except ValueError:
+                return
             if data:
                 writer.write(data)
                 await writer.drain()
-            if generation is not None:
-                asyncio.create_task(teaching_frame(generation, geometry))
 
     async def send():
         while True:
@@ -561,7 +494,6 @@ async def screen(ws: WebSocket):
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
     finally:
-        capture.disconnect(viewer)
         writer.close()
         await writer.wait_closed()
         # Only the explicit handback endpoint releases control, including after browser reload.

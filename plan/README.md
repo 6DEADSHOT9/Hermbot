@@ -372,7 +372,9 @@ On hold by the owner, October 27, 2026; proceed with 6.2 first.
 - Live conversation with interruption and durable records.
 - Voice requests can initiate ordinary collaboration and management.
 
-**6.2 — Demonstration teaching**
+**6.2 — Demonstration teaching** (removed November 10, 2026)
+
+**Removed November 10, 2026.** The owner removed demonstration Teaching (code, UI, tables and recordings) to simplify private computer takeover. This document is kept as history; skills Teaching published remain ordinary installed skills.
 
 [Detailed researched implementation plan](PHASE6-TEACHING.md), October 27, 2026. Selected while voice is held. Implementation is built locally; [review, checks and remaining owner acceptance](PHASE6-TEACHING-REVIEW.md) are recorded.
 
@@ -396,7 +398,7 @@ On hold by the owner, October 27, 2026; proceed with 6.2 first.
 - Consistent onboarding, loading, empty, blocked, failed, and offline states.
 - Complete orchestration inspection, management proposals, and cancellation controls.
 
-**Exit gate:** the private-web feature checklist, visual reference reviews, accessibility checks, voice tests, and teaching tests pass.
+**Exit gate:** the private-web feature checklist, visual reference reviews, accessibility checks, and voice tests pass.
 
 ### Phase 6A — Mobile device use
 

@@ -228,7 +228,9 @@ Voice can request collaboration and management through the same authorization pa
 
 **Demonstration:** dictate and edit an instruction, obtain a spoken result, interrupt a live exchange and inspect its durable record. A voice-requested external change follows the same applicable decision process as its typed equivalent.
 
-### 6.2 — Demonstration teaching
+### 6.2 — Demonstration teaching (removed November 10, 2026)
+
+**Removed November 10, 2026.** The owner removed demonstration Teaching (code, UI, tables and recordings) to simplify private computer takeover. This document is kept as history; skills Teaching published remain ordinary installed skills.
 
 [Researched implementation plan](PHASE6-TEACHING.md), October 27, 2026. The owner selected this milestone next while voice is held. The detailed capture, privacy, draft/test/publication, lifecycle and acceptance contracts below that link have a local implementation; [verification and remaining owner acceptance](PHASE6-TEACHING-REVIEW.md) are recorded.
 
@@ -260,7 +262,7 @@ Inspect idle, provisioning, queued, working, waiting, blocked, failed, completed
 
 **Demonstration:** complete ordinary setup, conversation, group, review, file, routine and management workflows using keyboard and compact browser layouts. Resolve an injected loading error without losing an edited draft.
 
-**Exit:** the private-web feature checklist, visual review, accessibility checks and voice/teaching acceptance pass. Agent-operated mobile use follows in the separate Phase 6A.
+**Exit:** the private-web feature checklist, visual review, accessibility checks and voice acceptance pass. Agent-operated mobile use follows in the separate Phase 6A.
 
 ## Phase 6A — Mobile device use
 

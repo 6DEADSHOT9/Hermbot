@@ -94,11 +94,6 @@ def admitted_execution(tool_name, args, next_call, **kwargs):
     handle = correlation.set({**kwargs, 'expected_work_revision': planned_revision})
     try:
         if tool_name == 'skill_view':
-            preview = (capabilities or {}).get('teaching_candidate')
-            if preview and args.get('name') == preview['name']:
-                if args.get('file_path'):
-                    return json.dumps({'error': 'candidate_has_no_files', 'instruction': 'This teaching candidate contains SKILL.md only.'})
-                return json.dumps(post('/internal/teaching/consult', {'session_id': stable_session, 'sha256': preview['sha256']}))
             # Supported execution middleware replaces only this invocation. The upstream
             # wrapper and source remain unchanged; consulting guidance never runs templates.
             from tools.skills_tool import skill_view

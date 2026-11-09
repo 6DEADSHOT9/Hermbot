@@ -43,7 +43,7 @@ def test_codex_internal_completion_routes_tools_without_namespace(owner, monkeyp
     row = connected(owner)
     @asynccontextmanager
     async def request(cid, action, payload, **kwargs):
-        assert str(cid) == str(row['id']) and kwargs == {'auth_kind': 'codex_oauth', 'caller': 'backend:teaching'}
+        assert str(cid) == str(row['id']) and kwargs == {'auth_kind': 'codex_oauth', 'caller': 'backend:assessment'}
         assert payload['tools'][0]['type'] == 'function'
         async def events():
             yield {'event': {'type': 'response.completed', 'response': {'status': 'completed', 'output': [{'type': 'message', 'content': [{'type': 'output_text', 'text': 'fixture'}]}]}}}
@@ -51,7 +51,7 @@ def test_codex_internal_completion_routes_tools_without_namespace(owner, monkeyp
         yield events()
     monkeypatch.setattr(model_auth.relay, 'request', request)
     response = owner.post('/internal/model-completion', headers={'Authorization': 'Bearer ' + settings.internal_token}, json={
-        'provider_id': str(row['id']), 'provider_revision': row['revision'], 'provider_auth_epoch': row['auth_epoch'], 'caller': 'teaching',
+        'provider_id': str(row['id']), 'provider_revision': row['revision'], 'provider_auth_epoch': row['auth_epoch'], 'caller': 'assessment',
         'payload': {'model': 'fixture', 'messages': [{'role': 'user', 'content': 'read'}], 'tools': [{'type': 'function', 'function': {'name': 'read', 'parameters': {'type': 'object'}}}]}})
     assert response.status_code == 200 and response.json()['choices'][0]['message']['content'] == 'fixture'
 

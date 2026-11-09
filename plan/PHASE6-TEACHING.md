@@ -1,5 +1,7 @@
 # Phase 6.2 Demonstration Teaching Plan
 
+**Removed November 10, 2026.** The owner removed demonstration Teaching (code, UI, tables and recordings) to simplify private computer takeover. This document is kept as history; skills Teaching published remain ordinary installed skills.
+
 Recorded October 27, 2026. Implementation authorized and built locally; real owner acceptance remains pending. See [implementation, review and verification](PHASE6-TEACHING-REVIEW.md). The researched scope below remains the acceptance contract. The owner placed Phase 6.1 voice on hold and selected 6.2 next. This proposal preserves Phase 6 numbering, the separate Phase 6A mobile milestone, deferred connected-service coordination, evaluation-before-backlog-fixes ordering, and deferred hosting/VM work.
 
 ## 1. Outcome and scope

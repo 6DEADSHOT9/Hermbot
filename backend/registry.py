@@ -19,8 +19,9 @@ from .model_protocol import BROKERED_AUTH, CODEX_URL
 BOT_COLUMNS = "id,name,role,color,avatar,capabilities,status,desired_state,revision,applied_revision,runtime_error,provider_id,model_name,enabled_tools,enabled_skills,memory_mb,cpus,readiness,checked_at"
 PROVIDER_COLUMNS = "id,name,base_url,models,default_model,revision,from_environment,auth_kind,transport,connection_status,account_label,account_plan,plan_enabled,discovered_models,verified_models"
 CONFIG_FIELDS = ("name", "role", "color", "avatar", "provider_id", "model_name", "capabilities", "enabled_tools", "enabled_skills", "memory_mb", "cpus")
-# Raise when every existing runtime must be recreated (1: runtimes start in `/` with isolated Python).
-RUNTIME_LAYOUT = 1
+# Raise when every existing runtime must be recreated (1: runtimes start in `/` with isolated Python;
+# 2: the adapter no longer records the screen).
+RUNTIME_LAYOUT = 2
 
 
 def require_bot(conn, bot_id, *, lock=False, include_deleted=False, nowait=False):

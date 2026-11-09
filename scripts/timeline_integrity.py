@@ -14,7 +14,7 @@ def snapshot():
     with db.connection() as conn:
         conn.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY')
         result = {}
-        for table in ('conversations', 'bots', 'messages', 'tasks', 'attempts', 'approvals', 'input_requests', 'teaching_sessions', 'events'):
+        for table in ('conversations', 'bots', 'messages', 'tasks', 'attempts', 'approvals', 'input_requests', 'events'):
             rows = conn.execute(f'SELECT * FROM {table} ORDER BY id').fetchall()
             if table == 'input_requests':
                 for row in rows:
