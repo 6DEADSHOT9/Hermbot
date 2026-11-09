@@ -62,9 +62,9 @@ try{
   });
   await page.goto(origin);
   await page.getByLabel('Owner menu').click();
-  await page.getByRole('button',{name:'Workspace settings',exact:true}).click();
-  const dialog=page.getByRole('dialog',{name:'Workspace settings'});
-  await dialog.getByRole('button',{name:'Providers',exact:true}).click();
+  await page.getByRole('button',{name:'Settings',exact:true}).click();
+  const dialog=page.getByRole('dialog',{name:'Settings',exact:true});
+  await dialog.getByRole('tab',{name:'Model providers'}).click();
   const connection=dialog.getByLabel('ChatGPT fixture connection');
   await connection.getByRole('button',{name:'Continue with ChatGPT',exact:true}).click();
   await connection.getByText('Waiting for OpenAI authorization',{exact:false}).waitFor();

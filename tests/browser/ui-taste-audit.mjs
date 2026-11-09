@@ -70,7 +70,7 @@ try {
       results.push({screen:'Owner menu',width,menu});await page.locator('.brand-row').click();assert.equal(await page.locator('.owner-menu').getAttribute('open'),null);
       await nav();await page.getByRole('button',{name:'Create teammate'}).click();await page.getByRole('heading',{name:'Create teammate'}).waitFor();await dialog('Create teammate','create-teammate');
       await nav();await page.getByRole('button',{name:'New group conversation'}).click();await page.getByRole('heading',{name:'Bring your team together'}).waitFor();await dialog('Create group','create-group');
-      await nav();await page.getByLabel('Owner menu').click();await page.getByRole('button',{name:'Workspace settings'}).click();await page.getByRole('heading',{name:'Workspace settings'}).waitFor();await dialog('Workspace settings','workspace-settings');
+      await nav();await page.getByLabel('Owner menu').click();await page.getByRole('button',{name:'Settings',exact:true}).click();await page.getByRole('heading',{name:'Settings',exact:true}).waitFor();await dialog('Settings','workspace-settings');
       await nav();await page.getByLabel('Owner menu').click();await page.getByRole('button',{name:'Connections',exact:true}).click();await page.getByRole('heading',{name:'Connections'}).waitFor();await dialog('Connections','connections');
       await nav();await page.getByLabel('Owner menu').click();await page.getByRole('button',{name:'File library',exact:true}).click();await page.getByRole('heading',{name:'File library'}).waitFor();await dialog('File library','file-library');
     }

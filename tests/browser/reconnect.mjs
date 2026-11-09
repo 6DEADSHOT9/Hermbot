@@ -57,7 +57,7 @@ assert.equal(await page.locator('html').getAttribute('data-theme'),'dark');
 await page.setViewportSize({width:390,height:844});
 if(await page.getByRole('button',{name:'Close work panel',exact:true}).isVisible())await page.getByRole('button',{name:'Close work panel',exact:true}).click();
 await page.getByRole('button',{name:'Open navigation'}).click();
-await page.getByLabel('Owner menu').click();const settingsPosition=await page.getByRole('button',{name:'Workspace settings',exact:true}).boundingBox();
+await page.getByLabel('Owner menu').click();const settingsPosition=await page.getByRole('button',{name:'Settings',exact:true}).boundingBox();
 assert.ok(settingsPosition&&settingsPosition.y>=0&&settingsPosition.y+settingsPosition.height<=844);
 await page.getByRole('navigation',{name:'Group conversations'}).getByRole('button',{name:'Live proof · manager and dependent assignments',exact:false}).last().click();
 await page.waitForFunction(()=>document.querySelector('.sidebar').getBoundingClientRect().right<=1);

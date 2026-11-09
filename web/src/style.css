@@ -384,3 +384,30 @@
 .new-messages{display:flex;margin:0 auto 10px}
 .message-byline{flex-wrap:wrap}
 @media(max-width:650px){.request-state-line button{min-height:44px}.conversation-day{margin-block:20px}.timeline-context{font-size:12px}.composer-area{padding-inline:16px}}
+/* Settings: a centered window with a section sidebar; on phones, a list that opens one section at a time. */
+.modal.settings-window{width:min(980px,calc(100vw - 32px));height:min(720px,calc(100dvh - 32px));max-height:none;padding:0;overflow:hidden;display:flex;flex-direction:column}
+.settings-header{display:flex;align-items:center;min-height:64px;padding:0 64px 0 24px;border-bottom:1px solid var(--line);flex:none}
+.settings-header h2{margin:0;font-size:18px}
+.settings-body{flex:1;min-height:0;display:grid;grid-template-columns:220px minmax(0,1fr)}
+.settings-nav{display:flex;flex-direction:column;gap:2px;padding:12px;border-right:1px solid var(--line);background:var(--side);overflow-y:auto}
+.settings-nav button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:9px 12px;border-radius:8px;font-size:13px;color:var(--muted)}
+.settings-nav button:hover{background:var(--surface);color:var(--text)}
+.settings-nav button[aria-selected=true]{background:var(--surface);color:var(--text);font-weight:600;box-shadow:0 1px 2px #1c241b14}
+.settings-nav button svg{display:none;flex:none}
+.settings-content{min-width:0;overflow-y:auto;padding:24px 28px 32px}
+.settings-section-title{margin:0;font-size:17px}
+.settings-section-description{margin:6px 0 20px;color:var(--muted);font-size:13px}
+.settings-back{display:none}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:650px){
+  .modal.settings-window{width:100vw;height:100dvh;top:0;left:0;transform:none;border:0;border-radius:0}
+  .settings-body{grid-template-columns:minmax(0,1fr)}
+  .settings-nav{border-right:0;background:none;padding:8px 12px}
+  .settings-nav button{min-height:52px;padding:14px 4px;font-size:15px;color:var(--text);border-radius:0;border-bottom:1px solid var(--line)}
+  .settings-nav button[aria-selected=true]{background:none;box-shadow:none;font-weight:inherit}
+  .settings-nav button svg{display:block;color:var(--muted)}
+  .settings-window:not(.showing-section) .settings-content{display:none}
+  .settings-window.showing-section .settings-nav{display:none}
+  .settings-content{padding:12px 16px 28px}
+  .settings-back{display:inline-flex;align-items:center;gap:4px;min-height:44px;margin-bottom:8px;font-size:14px;color:var(--accent)}
+}

@@ -1,7 +1,6 @@
 import {useEffect,useState} from 'react';
 import {useQuery,useQueryClient} from '@tanstack/react-query';
 import {api} from './api';
-import {Panel} from './Management';
 
 type Device={id:string;label:string;enabled:boolean;status:string;current:boolean;expires_at:string};
 type Settings={revision:number;push_enabled:boolean;categories:string[];timezone:string;quiet_enabled:boolean;quiet_start:string;quiet_end:string;worker_error:string|null;worker_healthy:boolean;push:{configured:boolean;public_key:string;key_id:string};devices:Device[]};
@@ -9,11 +8,12 @@ export async function clearBrowserPush() {
   if(!('serviceWorker' in navigator))return;
   try {const registration=await navigator.serviceWorker.getRegistration('/');if(registration){const sub=await registration.pushManager.getSubscription();await sub?.unsubscribe();const shown=await registration.getNotifications();shown.forEach(item=>item.close());}}catch{/* Server revocation already prevents further dispatch. */}
 }
-export function Notifications({open,onClose}:{open:boolean;onClose:()=>void}) {
+// The Notifications section of Settings.
+export function NotificationSettings({active}:{active:boolean}) {
   const query=useQueryClient();
-  const settings=useQuery({queryKey:['notification-settings'],queryFn:()=>api<Settings>('/api/v1/notifications/settings'),enabled:open,refetchInterval:10000});
+  const settings=useQuery({queryKey:['notification-settings'],queryFn:()=>api<Settings>('/api/v1/notifications/settings'),enabled:active,refetchInterval:10000});
   const [form,setForm]=useState<Settings|null>(null),[error,setError]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);
-  useEffect(()=>{if(open){setForm(null);setError('');setMessage('');}},[open]);
+  useEffect(()=>{if(active){setForm(null);setError('');setMessage('');}},[active]);
   const value=form||settings.data;
   function field<K extends keyof Settings>(key:K,next:Settings[K]){if(value)setForm({...value,[key]:next});}
   async function run(work:()=>Promise<void>){setBusy(true);setError('');setMessage('');try{await work();await query.invalidateQueries({queryKey:['notification-settings']});}catch(err){setError((err as Error).message);}finally{setBusy(false);}}
@@ -40,7 +40,7 @@ export function Notifications({open,onClose}:{open:boolean;onClose:()=>void}) {
     if(!value.push_enabled)await save({...value,push_enabled:true});
     setMessage('This browser is enabled. Send a test to check browser and operating-system delivery.');
   }
-  return <Panel open={open} onClose={onClose} title="Notifications" description="Choose when Hermbot can bring you back. In-app attention is always available.">
+  return <>
     {(error||settings.error)&&<p className="task-error" role="alert">{error||settings.error?.message}</p>}{message&&<p role="status" className="form-note">{message}</p>}
     {!value?<p>Loading notification preferences…</p>:<>
       {!value.worker_healthy&&<p className="form-note" role="status">The notification worker has not checked in recently. Saved attention will catch up when it returns.</p>}{value.worker_error&&<p className="form-note">{value.worker_error}</p>}
@@ -53,5 +53,5 @@ export function Notifications({open,onClose}:{open:boolean;onClose:()=>void}) {
       </form>
       <section className="notification-devices"><h3>Registered browsers</h3>{!value.devices.length?<p className="form-note">No browsers registered yet.</p>:value.devices.map(device=><div className="notification-device" key={device.id}><span><strong>{device.label}{device.current?' · current':''}</strong><small>{device.enabled?device.status.replaceAll('_',' '):'Disabled'} · expires {new Date(device.expires_at).toLocaleDateString()}</small></span>{device.enabled&&<button className="secondary" disabled={busy} onClick={()=>void run(async()=>{await api(`/api/v1/notifications/subscriptions/${device.id}`,{method:'DELETE'});if(device.current)await clearBrowserPush();})}>Disable</button>}</div>)}</section>
     </>}
-  </Panel>;
+  </>;
 }

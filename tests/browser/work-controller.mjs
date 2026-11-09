@@ -47,8 +47,9 @@ try{
   await page.getByRole('button',{name:'Retry interpretation',exact:true}).click();
   assert.equal(retried,true);
   await page.getByRole('main').getByText('Understanding your message').waitFor();
-  await page.getByLabel('Owner menu').click();await page.getByRole('button',{name:'Workspace settings',exact:true}).click();
-  const dialog=page.getByRole('dialog',{name:'Workspace settings',exact:true});
+  await page.getByLabel('Owner menu').click();await page.getByRole('button',{name:'Settings',exact:true}).click();
+  const dialog=page.getByRole('dialog',{name:'Settings',exact:true});
+  await dialog.getByRole('tab',{name:'General'}).click();
   await dialog.getByLabel('Connected app actions',{exact:true}).selectOption('review');
   await dialog.getByRole('button',{name:'Save workspace settings',exact:true}).click();
   assert.equal(savedPolicy,'review');

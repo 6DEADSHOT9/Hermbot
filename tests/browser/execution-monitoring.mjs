@@ -63,8 +63,9 @@ try {
   await inspector.getByText('Checking execution · evaluating',{exact:true}).waitFor();
   await inspector.getByText('continue · observed · 95% confidence',{exact:true}).waitFor();
   await inspector.getByRole('button',{name:'Close',exact:true}).click();
-  await page.getByLabel('Owner menu').click();await page.getByRole('button',{name:'Workspace settings',exact:true}).click();
-  const settings=page.getByRole('dialog',{name:'Workspace settings',exact:true});
+  await page.getByLabel('Owner menu').click();await page.getByRole('button',{name:'Settings',exact:true}).click();
+  const settings=page.getByRole('dialog',{name:'Settings',exact:true});
+  await settings.getByRole('tab',{name:'General'}).click();
   await settings.getByLabel('Active work budget',{exact:true}).fill('120');
   const provider=configuration.providers[0];
   await settings.getByLabel('Decision provider',{exact:true}).selectOption(provider.id);
