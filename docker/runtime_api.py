@@ -32,6 +32,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 from hermbot_runtime_gate import DrainTimeout, GateUnavailable, OwnershipChanged, drain
+import browser_control
 
 # Same-user agent processes cannot read a non-dumpable process's environment or memory.
 ctypes.CDLL(None).prctl(4, 0, 0, 0, 0)  # PR_SET_DUMPABLE
@@ -435,6 +436,63 @@ def open_browser(body: dict):
         start_new_session=True,
     )
     return {"opened": True}
+
+
+class BrowserCookies(Strict):
+    set: list[dict] = Field(default_factory=list, max_length=browser_control.MAX_COOKIES)
+    delete: list[dict] = Field(default_factory=list, max_length=browser_control.MAX_COOKIES)
+
+
+def bot_browser():
+    """The bot's running browser over its local debugging port, or None."""
+    from tools.bot_desktop import browser
+
+    port = browser.running_instance_cdp_port(str(browser.profile_dir()))
+    return browser_control.Socket(port) if port else None
+
+
+@app.get("/computer/browser-state", dependencies=[Depends(authorize)])
+def browser_state():
+    # A private takeover session starts from the bot's open pages and cookies.
+    session = bot_browser()
+    if not session:
+        return {"cookies": [], "urls": []}
+    try:
+        return {"cookies": browser_control.cookies(session.call("Storage.getCookies")["cookies"]),
+                "urls": browser_control.pages(session.call("Target.getTargets")["targetInfos"])}
+    finally:
+        session.close()
+
+
+@app.post("/computer/browser-cookies", dependencies=[Depends(authorize)])
+def browser_cookies(body: BrowserCookies):
+    # Logins from a private takeover session; cookies the owner removed are set already expired.
+    from tools.bot_desktop import browser
+
+    changes = browser_control.cookies(body.set) + [{**cookie, "expires": 1} for cookie in browser_control.cookies(body.delete)]
+    if not changes:
+        return {"applied": 0}
+    process, session = None, bot_browser()
+    if not session:
+        executable = browser.executable()
+        if not executable:
+            raise HTTPException(409, "This bot has no browser to receive the session's logins")
+        process, session = browser_control.launch(
+            [executable, f"--user-data-dir={browser.profile_dir()}", "--headless=new", "--no-sandbox",
+             "--disable-dev-shm-usage", "--no-first-run", "about:blank"],
+            {"HOME": str(HOME), "PATH": os.environ.get("PATH", "/usr/bin:/bin")})
+    try:
+        session.call("Storage.setCookies", cookies=changes)
+        if process:
+            session.call("Browser.close")
+    finally:
+        session.close()
+        if process:
+            try:
+                process.wait(timeout=15)
+            except subprocess.TimeoutExpired:
+                process.kill()
+    return {"applied": len(changes)}
 
 
 @app.websocket("/computer/ws")

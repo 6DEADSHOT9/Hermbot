@@ -5,6 +5,7 @@ import hmac
 import json
 import os
 import re
+import secrets
 import threading
 import time
 from pathlib import Path
@@ -323,6 +324,69 @@ def reconcile_networks(bot_id: BotId):
     return {"connected": True}
 
 
+# During a takeover the owner gets a fresh screen and browser in a separate, short-lived
+# container: an unprivileged user, no capabilities, and a network only the API joins. The bot's
+# runtime has no route to it, so what the owner types there never reaches the bot.
+OWNER_SESSION_SECURITY = {
+    'ReadonlyRootfs': True,
+    'SecurityOpt': ['no-new-privileges:true'],
+    'CapDrop': ['ALL'],
+    'Tmpfs': {'/tmp': 'rw,nosuid,nodev,size=768m,mode=1777'},
+    'ShmSize': 256 * 1024 * 1024,
+    'Memory': 1536 * 1024 * 1024,
+    'NanoCpus': 1_500_000_000,
+    'PidsLimit': 512,
+}
+
+
+class OwnerSessionSpec(StrictModel):
+    geometry: str = Field(default="1440x900", pattern=r"^[1-9][0-9]{2,3}x[1-9][0-9]{2,3}$")
+
+
+def owner_session_labels(bot_id):
+    return {**LABELS, "com.hermbot.bot-id": bot_id, "com.hermbot.kind": "owner-session"}
+
+
+def remove_owner_session(bot_id):
+    name = "hermbot-owner-" + bot_id
+    for resource, path in ((optional_get(f"/containers/{name}/json"), "container"), (optional_get(f"/networks/{name}"), "network")):
+        if not resource:
+            continue
+        labels = (resource.get("Config") or resource).get("Labels") or {}
+        if any(labels.get(key) != value for key, value in owner_session_labels(bot_id).items()):
+            raise HTTPException(409, "Refusing to remove an unowned owner-session resource")
+        if path == "container":
+            docker_request("DELETE", f"/containers/{resource['Id']}", params={"force": "true"})
+        else:
+            for endpoint in resource.get("Containers") or {}:
+                docker_request("POST", f"/networks/{name}/disconnect", json={"Container": endpoint, "Force": True})
+            docker_request("DELETE", f"/networks/{name}")
+
+
+@app.post("/owner-sessions/{bot_id}", dependencies=[Depends(authorize)])
+def start_owner_session(bot_id: BotId, spec: OwnerSessionSpec):
+    name, labels, token = "hermbot-owner-" + bot_id, owner_session_labels(bot_id), secrets.token_urlsafe(32)
+    with LOCKS["owner-session:" + bot_id]:
+        remove_owner_session(bot_id)
+        docker_request("POST", "/networks/create", json={"Name": name, "Driver": "bridge", "Labels": labels})
+        for api in filter_containers(["com.docker.compose.project=hermbot", "com.docker.compose.service=api"]):
+            docker_request("POST", f"/networks/{name}/connect", json={"Container": api["Id"]})
+        created = docker_request("POST", "/containers/create", params={"name": name}, json={
+            "Image": RUNTIME_IMAGE, "User": "10001:10001", "WorkingDir": "/",
+            "Entrypoint": [*RUNTIME_PYTHON, "-u", "/opt/hermbot/owner_session.py"],
+            "Env": [f"OWNER_SESSION_TOKEN={token}", f"OWNER_SESSION_GEOMETRY={spec.geometry}"],
+            "Labels": labels, "HostConfig": {**OWNER_SESSION_SECURITY, "NetworkMode": name}})
+        docker_request("POST", f"/containers/{created['Id']}/start")
+    return {"url": f"http://{name}:8650", "token": token}
+
+
+@app.delete("/owner-sessions/{bot_id}", dependencies=[Depends(authorize)])
+def stop_owner_session(bot_id: BotId):
+    with LOCKS["owner-session:" + bot_id]:
+        remove_owner_session(bot_id)
+    return {"removed": True}
+
+
 @app.post("/operations/{action}", dependencies=[Depends(authorize)])
 def operate(action: str, spec: RuntimeSpec):
     if action not in ("create", "configure", "start", "stop", "archive", "restore", "delete", "clone", "ensure"):
@@ -368,6 +432,7 @@ def execute_operation(action, spec):
         container_stop(find_runtime(spec.bot_id, required=False))
         return {"state": "stopped", "revision": spec.revision}
     if action == "delete":
+        remove_owner_session(spec.bot_id)
         remove_container(find_runtime(spec.bot_id, required=False))
         for helper in filter_containers(["com.hermbot.project=hermbot", "com.hermbot.managed=true", f"com.hermbot.bot-id={spec.bot_id}", "com.hermbot.kind=clone-helper"]):
             remove_container(helper)
