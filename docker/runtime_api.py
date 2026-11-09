@@ -467,13 +467,13 @@ def browser_state():
 @app.post("/computer/browser-cookies", dependencies=[Depends(authorize)])
 def browser_cookies(body: BrowserCookies):
     # Logins from a private takeover session; cookies the owner removed are set already expired.
-    from tools.bot_desktop import browser
-
-    changes = browser_control.cookies(body.set) + [{**cookie, "expires": 1} for cookie in browser_control.cookies(body.delete)]
+    changes = browser_control.cookies(body.set) + [{**cookie, "value": "", "expires": 1} for cookie in browser_control.cookies(body.delete)]
     if not changes:
         return {"applied": 0}
     process, session = None, bot_browser()
     if not session:
+        from tools.bot_desktop import browser
+
         executable = browser.executable()
         if not executable:
             raise HTTPException(409, "This bot has no browser to receive the session's logins")

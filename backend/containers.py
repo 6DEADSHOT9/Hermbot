@@ -349,13 +349,15 @@ def owner_session_labels(bot_id):
 
 def remove_owner_session(bot_id):
     name = "hermbot-owner-" + bot_id
-    for resource, path in ((optional_get(f"/containers/{name}/json"), "container"), (optional_get(f"/networks/{name}"), "network")):
+    for kind in ("container", "network"):
+        # Read the network only after its session container is gone, so its members are current.
+        resource = optional_get(f"/containers/{name}/json" if kind == "container" else f"/networks/{name}")
         if not resource:
             continue
         labels = (resource.get("Config") or resource).get("Labels") or {}
         if any(labels.get(key) != value for key, value in owner_session_labels(bot_id).items()):
             raise HTTPException(409, "Refusing to remove an unowned owner-session resource")
-        if path == "container":
+        if kind == "container":
             docker_request("DELETE", f"/containers/{resource['Id']}", params={"force": "true"})
         else:
             for endpoint in resource.get("Containers") or {}:

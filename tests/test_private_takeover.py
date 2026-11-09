@@ -151,6 +151,48 @@ def test_owner_session_removal_refuses_resources_it_does_not_own(monkeypatch):
     assert error.value.status_code == 409
 
 
+def test_owner_session_removal_reads_the_network_after_the_container_is_gone(monkeypatch):
+    labels = containers.owner_session_labels("researcher")
+    resources = {"/containers/hermbot-owner-researcher/json": {"Id": "session", "Config": {"Labels": labels}},
+                 "/networks/hermbot-owner-researcher": {"Labels": labels, "Containers": {"session": {}, "api-1": {}}}}
+    calls = []
+
+    def docker(method, path, **kwargs):
+        calls.append((method, path, (kwargs.get("json") or {}).get("Container")))
+        if path == "/containers/session":  # Deleting the container also removes it from the network.
+            del resources["/networks/hermbot-owner-researcher"]["Containers"]["session"]
+        return {}
+    monkeypatch.setattr(containers, "optional_get", lambda path: resources.get(path))
+    monkeypatch.setattr(containers, "docker_request", docker)
+    containers.remove_owner_session("researcher")
+    assert calls == [("DELETE", "/containers/session", None),
+                     ("POST", "/networks/hermbot-owner-researcher/disconnect", "api-1"),
+                     ("DELETE", "/networks/hermbot-owner-researcher", None)]
+
+
+def test_adapter_carries_cookies_and_expires_deleted_ones_with_valid_parameters(monkeypatch):
+    from .test_control_isolation import load_adapter
+    adapter = load_adapter(monkeypatch, "k" * 32)
+    sent = []
+
+    class Browser:
+        def call(self, method, **params):
+            sent.append((method, params))
+            return {}
+
+        def close(self):
+            pass
+    monkeypatch.setattr(adapter, "bot_browser", lambda: Browser())
+    body = adapter.BrowserCookies(set=[{"name": "sid", "value": "v", "domain": ".example.com", "path": "/", "session": True}],
+                                  delete=[{"name": "old", "domain": ".example.com", "path": "/"}])
+    assert adapter.browser_cookies(body) == {"applied": 2}
+    method, params = sent[0]
+    # Chromium requires a value on every cookie it sets, including the expired ones that delete.
+    assert method == "Storage.setCookies" and all(isinstance(cookie.get("value"), str) for cookie in params["cookies"])
+    assert params["cookies"][1] == {"name": "old", "domain": ".example.com", "path": "/", "value": "", "expires": 1}
+    assert "expires" not in params["cookies"][0]
+
+
 def load_session(monkeypatch):
     monkeypatch.setenv("OWNER_SESSION_TOKEN", "session-token")
     monkeypatch.syspath_prepend("/app/docker")
