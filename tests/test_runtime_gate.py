@@ -215,14 +215,15 @@ def test_competing_viewer_abandons_old_drain_without_granting_input(runtime, mon
 @pytest.mark.parametrize('alteration', [{}, {'no_agent': False}, {'script': 'different.py'}, {'schedule': {'kind': 'interval', 'minutes': 2}}])
 def test_native_routine_wake_accepts_only_fixed_script_and_minute_timer(runtime, monkeypatch, alteration):
     from pathlib import Path
-    from urllib import request
-    from io import BytesIO
     job = {'id': 'managed-job', 'name': 'Hermbot wake 00000000-0000-0000-0000-000000000001', 'no_agent': True,
            'script': 'hermbot_routine_wakeup.py', 'schedule': {'kind': 'interval', 'minutes': 1}, 'enabled': True, **alteration}
     original_read = Path.read_text
     monkeypatch.setattr(Path, 'read_text', lambda path, *a, **kw: '# fixed script' if str(path) == '/opt/hermbot/routine_wakeup.py' else original_read(path, *a, **kw))
-    monkeypatch.setattr(request, 'urlopen', lambda *a, **kw: BytesIO(json.dumps({'jobs': [job]}).encode()))
-    monkeypatch.setenv('API_SERVER_KEY', 'private-native-key')
+    store = ModuleType('cron.jobs')
+    store.list_jobs = lambda include_disabled: [job]
+    store.pause_job = store.resume_job = lambda job_id: pytest.fail('An unchanged wake job must not be toggled')
+    monkeypatch.setitem(sys.modules, 'cron', ModuleType('cron'))
+    monkeypatch.setitem(sys.modules, 'cron.jobs', store)
     monkeypatch.setenv('BOT_ID', 'researcher')
     body = runtime.adapter.RoutineScheduler(generation='00000000-0000-0000-0000-000000000001', token='scoped-wake-token-' * 3, enabled=True)
     if alteration:

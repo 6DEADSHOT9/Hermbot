@@ -19,8 +19,9 @@ node_modules/
 web/dist/
 *.tsbuildinfo
 
-# Raw planning-session transcripts (private)
+# Private planning material (raw transcripts, unreleased security plans)
 plan/archive/
+plan/private/
 
 # Test output
 test-results/

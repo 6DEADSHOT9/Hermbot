@@ -13,8 +13,10 @@ def target(bot_id):
     with db.connection() as conn:
         bot = registry.require_bot(conn, bot_id)
     parsed = urlsplit(bot["runtime_url"])
+    # Until a runtime is reprovisioned with its own adapter key, it still holds the shared one.
+    applied = bot["adapter_key_encrypted"] and bot["applied_revision"] >= bot["adapter_key_revision"]
     return urlunsplit((parsed.scheme, f"{parsed.hostname}:8643", "", "", "")), {
-        "Authorization": "Bearer " + decrypt(bot["runtime_key_encrypted"])
+        "Authorization": "Bearer " + decrypt(bot["adapter_key_encrypted"] if applied else bot["runtime_key_encrypted"])
     }
 
 
