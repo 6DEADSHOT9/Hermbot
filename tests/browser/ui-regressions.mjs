@@ -2,6 +2,8 @@ import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
 
+// Gated requests wait on promises; fail clearly instead of hanging if the app stops making one.
+setTimeout(()=>{console.error('UI regression check timed out after 10 minutes');process.exit(1);},600000).unref();
 const browser=await chromium.launch({headless:true});
 const context=await browser.newContext({baseURL:process.env.HERMBOT_TEST_URL||'http://api:8000',viewport:{width:1440,height:900},reducedMotion:'reduce'});
 const page=await context.newPage(),errors=[],checks=[],measurements=[];
@@ -66,37 +68,40 @@ await page.setViewportSize({width:1440,height:900});await selectBot('Scout');
 const state=await page.evaluate(async()=>{const r=await fetch('/api/v1/state');return r.json();});
 const scout=state.conversations.find(c=>c.bot_id==='researcher'),quill=state.conversations.find(c=>c.bot_id==='writer'),sage=state.conversations.find(c=>c.bot_id==='reviewer');
 assert.ok(scout&&quill&&sage);
+// Conversation history and threads load through /timeline; only its initial, after= and before= requests are held here.
+const timeline=id=>`**/api/v1/conversations/${id}/timeline*`,initial=url=>!url.searchParams.has('after')&&!url.searchParams.has('before');
+// The timeline polls every 5 s and the page cancels requests on reload or navigation; a cancelled request needs no answer.
+async function settle(action){try{await action();}catch(error){if(!String(error).includes('already handled'))throw error;}}
 let releaseLoad,loadSeen;
 const loadGate=new Promise(resolve=>releaseLoad=resolve),loadStarted=new Promise(resolve=>loadSeen=resolve);
-await page.route(`**/api/v1/conversations/${sage.id}`,async route=>{loadSeen();await loadGate;await route.continue();});
+await page.route(timeline(sage.id),async route=>{if(initial(new URL(route.request().url()))){loadSeen();await loadGate;}await settle(()=>route.continue());});
 // Reload clears the query cache so the loading assertion is deterministic even if Sage was initially selected.
 await page.reload();await page.getByRole('navigation',{name:'Team conversations'}).waitFor();
-await selectBot('Sage');await loadStarted;await page.getByText('Loading conversation…',{exact:true}).waitFor();assert.equal(await page.locator('.welcome').count(),0);releaseLoad();await page.getByText('Loading conversation…',{exact:true}).waitFor({state:'hidden'});await page.unroute(`**/api/v1/conversations/${sage.id}`);
+await selectBot('Sage');await loadStarted;await page.getByText('Loading conversation…',{exact:true}).waitFor();assert.equal(await page.locator('.welcome').count(),0);releaseLoad();await page.getByText('Loading conversation…',{exact:true}).waitFor({state:'hidden'});await page.unroute(timeline(sage.id));
 checks.push('Pending conversation loads show a loading notice instead of an empty welcome screen.');
 
 let releaseEarlier,earlierSeen;
 const earlierGate=new Promise(resolve=>releaseEarlier=resolve),earlierStarted=new Promise(resolve=>earlierSeen=resolve);
 const marker='UI_REGRESSION_OLDER_SCOUT_MESSAGE';
-await page.route(`**/api/v1/conversations/${scout.id}*`,async route=>{
+await page.route(timeline(scout.id),async route=>{
   const url=new URL(route.request().url());
   if(url.searchParams.has('before')){
     earlierSeen();await earlierGate;
-    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({...scout,messages:[{id:-10001,role:'user',author:'owner',content:marker,created_at:new Date().toISOString(),attachment_ids:[],mentions:[],reply_count:0,reactions:[]}],artifacts:[],attachments:[],has_earlier:false})});
-  }else{const response=await route.fetch(),body=await response.json();await route.fulfill({response,json:{...body,has_earlier:true}});}
+    const message={id:-10001,source_id:'ui-regression:older',task_id:null,role:'user',author:'owner',content:marker,created_at:new Date().toISOString(),attachment_ids:[],mentions:[],reply_to_message_id:null,reply_count:0,reactions:[]};
+    await settle(()=>route.fulfill({status:200,json:{entries:[{id:'message:-10001',position:Number(url.searchParams.get('before'))-1,revision:1,occurred_at:message.created_at,thread_id:null,message,tasks:[]}],cursor:0,has_earlier:false,has_more:false,artifacts:[],attachments:[]}}));
+  }else await settle(async()=>{const response=await route.fetch(),body=await response.json();await route.fulfill({response,json:{...body,has_earlier:true}});});
 });
-await page.reload();await selectBot('Scout');await section('Load earlier messages').click();await earlierStarted;await selectBot('Quill');releaseEarlier();await page.waitForTimeout(400);assert.equal(await page.getByText(marker,{exact:true}).count(),0);await page.unroute(`**/api/v1/conversations/${scout.id}*`);
+await page.reload();await selectBot('Scout');await section('Load earlier messages').click();await earlierStarted;await selectBot('Quill');releaseEarlier();await page.waitForTimeout(400);assert.equal(await page.getByText(marker,{exact:true}).count(),0);await page.unroute(timeline(scout.id));
 checks.push('Delayed older messages cannot leak into another conversation.');
 
 // Thread pagination must not hide the main conversation's earlier messages.
-const scoutSnapshot=await(await context.request.get(`/api/v1/conversations/${scout.id}`)).json();
-await page.route(`**/api/v1/conversations/${scout.id}*`,async route=>{
+await page.route(timeline(scout.id),async route=>{
   const url=new URL(route.request().url());
-  if(url.searchParams.has('thread')){
-    await route.fulfill({status:200,json:{...scoutSnapshot,messages:scoutSnapshot.messages.slice(0,1),has_earlier:!url.searchParams.has('before')}});
-  }else await route.fulfill({status:200,json:{...scoutSnapshot,has_earlier:true}});
+  // A thread offers one earlier page; the main history always offers earlier messages.
+  await settle(async()=>{const response=await route.fetch(),body=await response.json();await route.fulfill({response,json:{...body,has_earlier:url.searchParams.has('thread')?!url.searchParams.has('before'):true}});});
 });
 await page.reload();await selectBot('Scout');await page.locator('.message-actions').getByRole('button',{name:/^Reply/}).first().click();await section('Close thread').waitFor();
-await section('Load earlier messages').click();await section('Load earlier messages').waitFor({state:'hidden'});await section('Close thread').click();await section('Load earlier messages').waitFor();await page.unroute(`**/api/v1/conversations/${scout.id}*`);
+await section('Load earlier messages').click();await section('Load earlier messages').waitFor({state:'hidden'});await section('Close thread').click();await section('Load earlier messages').waitFor();await page.unroute(timeline(scout.id));
 checks.push('Closing a thread resets its pagination state before returning to main history (controlled GET responses).');
 
 let releaseSend,sendSeen;
