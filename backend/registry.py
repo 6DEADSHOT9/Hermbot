@@ -90,6 +90,11 @@ def bootstrap(conn):
         token = settings.bot_token(bot["id"]) or secrets.token_urlsafe(32)
         key = settings.runtime_key(bot["id"]) or secrets.token_urlsafe(32)
         conn.execute("UPDATE bots SET bot_token_encrypted=%s,bot_token_hash=%s,runtime_key_encrypted=%s WHERE id=%s", (encrypt(token), credential_hash(token), encrypt(key), bot["id"]))
+    # Runtimes once shared one key between the adapter and the Hermes API. Give each bot its own
+    # adapter key once; the revision bump reprovisions the runtime so it starts with that key.
+    for bot in conn.execute("SELECT id FROM bots WHERE adapter_key_encrypted IS NULL AND status<>'deleted'").fetchall():
+        conn.execute("UPDATE bots SET adapter_key_encrypted=%s,revision=revision+1,adapter_key_revision=revision+1 WHERE id=%s",
+                     (encrypt(secrets.token_urlsafe(32)), bot["id"]))
 
 
 def validate_config(conn, value):
@@ -134,8 +139,8 @@ def register(conn, config, bot_id=None):
     if count >= workspace(conn)["max_bots"]:
         raise HTTPException(409, "Workspace teammate limit reached")
     bot_id = bot_id or "bot-" + uuid4().hex[:16]
-    token, runtime_key = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
-    conn.execute("INSERT INTO bots(id,name,role,color,capabilities,runtime_url,status,bot_token_encrypted,bot_token_hash,runtime_key_encrypted) VALUES (%s,%s,%s,%s,%s,%s,'provisioning',%s,%s,%s)", (bot_id, config["name"], config["role"], config["color"], Jsonb(config["capabilities"]), f"http://hermbot-bot-{bot_id}:8642", encrypt(token), credential_hash(token), encrypt(runtime_key)))
+    token, runtime_key, adapter_key = secrets.token_urlsafe(32), secrets.token_urlsafe(32), secrets.token_urlsafe(32)
+    conn.execute("INSERT INTO bots(id,name,role,color,capabilities,runtime_url,status,bot_token_encrypted,bot_token_hash,runtime_key_encrypted,adapter_key_encrypted) VALUES (%s,%s,%s,%s,%s,%s,'provisioning',%s,%s,%s,%s)", (bot_id, config["name"], config["role"], config["color"], Jsonb(config["capabilities"]), f"http://hermbot-bot-{bot_id}:8642", encrypt(token), credential_hash(token), encrypt(runtime_key), encrypt(adapter_key)))
     apply_configuration(conn, bot_id, config)
     conversation_id = uuid4()
     conn.execute("INSERT INTO conversations(id,title,kind,bot_id) VALUES (%s,%s,'dm',%s)", (conversation_id, config["name"], bot_id))
@@ -181,7 +186,8 @@ def enqueue(conn, bot, action, key, payload=None, *, proposal_id=None):
         provider_snapshot = {k: provider[k] for k in ('id', 'base_url', 'default_model', 'revision', 'secret_encrypted')} if provider else None
     payload = {**payload, "configuration": configuration(bot), "revision": bot["revision"], "provider": provider_snapshot,
                "timezone": workspace(conn)["timezone"], "desired_state": bot["desired_state"], "previous_status": bot["status"],
-               "bot_token_encrypted": bot["bot_token_encrypted"], "runtime_key_encrypted": bot["runtime_key_encrypted"]}
+               "bot_token_encrypted": bot["bot_token_encrypted"], "runtime_key_encrypted": bot["runtime_key_encrypted"],
+               "adapter_key_encrypted": bot["adapter_key_encrypted"]}
     operation_id = uuid4()
     conn.execute("INSERT INTO bot_operations(id,bot_id,action,payload,request_key,request_hash,proposal_id) VALUES (%s,%s,%s,%s,%s,%s,%s)", (operation_id, bot["id"], action, Jsonb(db.jsonable_encoder(payload)), key, service.digest({"action": action, "payload": payload}), proposal_id))
     conn.execute("UPDATE bots SET status=%s,runtime_error=NULL,readiness='{}' WHERE id=%s", ("deleting" if action == "delete" else "provisioning", bot["id"]))

@@ -1,11 +1,14 @@
 """Private adapter for pinned Hermes knowledge and Bot Desktop primitives.
 
 Only the product backend holds this adapter's credential. No host ports or Docker socket are exposed.
+Agent processes share this user, so the process is non-dumpable, drops its credential from the
+environment its children inherit, and a network fence keeps agent processes off its port.
 Native RFB parsing and disk-backed control leases are reused; disconnect never releases a lease.
 """
 
 import asyncio
 import base64
+import ctypes
 import fcntl
 import hashlib
 import hmac
@@ -31,6 +34,9 @@ from teaching_capture import AcceptedRFB, Capture
 
 from hermbot_runtime_gate import DrainTimeout, GateUnavailable, OwnershipChanged, drain
 
+# Same-user agent processes cannot read a non-dumpable process's environment or memory.
+ctypes.CDLL(None).prctl(4, 0, 0, 0, 0)  # PR_SET_DUMPABLE
+ADAPTER_KEY = os.environ.pop("HERMBOT_ADAPTER_KEY", "")
 HOME = Path(os.environ.get("HERMES_HOME", "/opt/data"))
 WORKSPACE = Path('/workspace')
 app = FastAPI(docs_url=None, redoc_url=None)
@@ -39,8 +45,7 @@ capture = Capture()
 
 def authorize(authorization: str = Header(default="")):
     supplied = authorization.removeprefix("Bearer ")
-    expected = os.environ.get("HERMBOT_ADAPTER_KEY", "")
-    if not expected or not hmac.compare_digest(supplied, expected):
+    if not ADAPTER_KEY or not hmac.compare_digest(supplied, ADAPTER_KEY):
         raise HTTPException(401, "Private runtime authentication required")
 
 
@@ -574,12 +579,11 @@ class RoutineScheduler(Strict):
 
 @app.put('/routine-scheduler', dependencies=[Depends(authorize)])
 def routine_scheduler(body: RoutineScheduler):
-    """Manage only our fixed no-agent heartbeat through the supported CLI/API."""
-    from urllib import request
+    """Manage only our fixed no-agent heartbeat through the supported CLI and job store."""
+    # The job store is the one the API server uses; the network fence keeps this process off that port.
+    from cron.jobs import list_jobs, pause_job, resume_job
     def jobs():
-        req = request.Request('http://127.0.0.1:8642/api/jobs?include_disabled=true', headers={'Authorization': 'Bearer ' + os.environ['API_SERVER_KEY']})
-        with request.urlopen(req, timeout=5) as response:
-            return json.loads(response.read(1_000_000))['jobs']
+        return list_jobs(include_disabled=True)
     with directory([]) as fd:
         lock_fd = os.open('hermbot-scheduler.lock', os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600, dir_fd=fd)
     try:
@@ -606,10 +610,7 @@ def routine_scheduler(body: RoutineScheduler):
         if not job.get('no_agent') or job.get('script') != 'hermbot_routine_wakeup.py' or schedule.get('kind') != 'interval' or schedule.get('minutes') != 1:
             raise HTTPException(409, 'Native wake definition differs; reconcile before enabling')
         if bool(job.get('enabled')) != body.enabled:
-            action = 'resume' if body.enabled else 'pause'
-            req = request.Request('http://127.0.0.1:8642/api/jobs/' + job['id'] + '/' + action, data=b'{}', method='POST', headers={'Authorization': 'Bearer ' + os.environ['API_SERVER_KEY'], 'Content-Type': 'application/json'})
-            with request.urlopen(req, timeout=5) as response:
-                response.read(10000)
+            (resume_job if body.enabled else pause_job)(job['id'])
         return {'job_id': job['id'], 'enabled': body.enabled}
     except HTTPException:
         raise

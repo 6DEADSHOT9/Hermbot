@@ -22,13 +22,27 @@ RUNTIME_SECURITY = {
     'ReadonlyRootfs': True,
     'SecurityOpt': ['no-new-privileges:true'],
     'CapDrop': ['ALL'],
-    # Bootstrap prepares private volumes and drops to the Hermes UID. No mount,
-    # network-administration or process-inspection capabilities are granted.
-    'CapAdd': ['CHOWN', 'DAC_OVERRIDE', 'FOWNER', 'SETGID', 'SETUID'],
+    # Bootstrap prepares private volumes, starts its children as the Hermes UID and stays
+    # their root parent, so it needs KILL to forward stops; those children hold no capabilities.
+    # No mount, network-administration or process-inspection capabilities are granted.
+    'CapAdd': ['CHOWN', 'DAC_OVERRIDE', 'FOWNER', 'KILL', 'SETGID', 'SETUID'],
     'Tmpfs': {'/tmp': 'rw,nosuid,nodev,size=512m,mode=1777',
               '/run': 'rw,nosuid,nodev,noexec,size=32m,mode=0755',
               '/opt/data/plugins': 'rw,nosuid,nodev,noexec,size=4m,mode=0755'},
 }
+# Agent processes run as `hermes` and must never reach the in-container control ports, even
+# with a leaked key: the gateway's approvals and the adapter's owner operations. Rules live in
+# the runtime's network namespace, so they are installed after every start; its bootstrap
+# refuses to start the agent until this fence refuses its own probe.
+FENCE = """set -eu
+for tool in iptables ip6tables; do
+  if [ "$tool" = ip6tables ] && [ "$(cat /proc/sys/net/ipv6/conf/all/disable_ipv6 2>/dev/null || echo 1)" = 1 ]; then continue; fi
+  $tool -w -N HERMBOT_FENCE 2>/dev/null || $tool -w -F HERMBOT_FENCE
+  $tool -w -A HERMBOT_FENCE -p tcp -m owner --uid-owner hermes -m addrtype --dst-type LOCAL -m multiport --dports 8642,8643 -j REJECT --reject-with tcp-reset
+  $tool -w -C OUTPUT -j HERMBOT_FENCE 2>/dev/null || $tool -w -I OUTPUT 1 -j HERMBOT_FENCE
+done
+"""
+FENCED = {}
 STAGING_DIRECTORY = '/run/hermbot-staging'
 STAGING_INIT = """import os,stat
 parent=os.open('/run',os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
@@ -150,6 +164,7 @@ class RuntimeSpec(StrictModel):
     model_api_key: str
     model_auth_kind: str = Field(default='api_key', pattern=r'^(api_key|chatgpt_oauth|codex_oauth)$')
     runtime_key: str = Field(min_length=32)
+    adapter_key: str = Field(min_length=32)
     bot_token: str = Field(min_length=32)
     timezone: str = "UTC"
     desired_state: str = Field(default="running", pattern=r"^(running|stopped)$")
@@ -167,6 +182,23 @@ def remove_container(container):
     container_stop(container)
     if container:
         docker_request("DELETE", f"/containers/{container['Id']}")
+
+
+def fence(container_id, bot_id):
+    started = docker_request("GET", f"/containers/{container_id}/json")["State"]["StartedAt"]
+    helper = docker_request("POST", "/containers/create", json={
+        "Image": RUNTIME_IMAGE, "User": "0:0", "Entrypoint": ["/bin/sh", "-c", FENCE],
+        "Labels": {**LABELS, "com.hermbot.bot-id": bot_id, "com.hermbot.kind": "fence-helper"},
+        "HostConfig": {"NetworkMode": f"container:{container_id}", "CapDrop": ["ALL"], "CapAdd": ["NET_ADMIN", "NET_RAW"],
+                       "ReadonlyRootfs": True, "SecurityOpt": ["no-new-privileges:true"], "Tmpfs": {"/run": "rw,size=1m"},
+                       "Memory": 64 * 1024 * 1024}})["Id"]
+    try:
+        docker_request("POST", f"/containers/{helper}/start")
+        if docker_request("POST", f"/containers/{helper}/wait", params={"condition": "not-running"})["StatusCode"] != 0:
+            raise HTTPException(502, "The runtime's control-port fence could not be installed; the teammate stays paused")
+    finally:
+        docker_request("DELETE", f"/containers/{helper}", params={"force": "true"})
+    FENCED[container_id] = started
 
 
 def runtime_ready(container_id):
@@ -236,6 +268,7 @@ def ensure(spec, clone=False):
         elif spec.desired_state == "stopped":
             container_stop(container)
         if spec.desired_state == "running":
+            fence(container["Id"], spec.bot_id)
             runtime_ready(container["Id"])
         return {"container_id": container["Id"][:12], "revision": spec.revision, "state": spec.desired_state}
     if clone:
@@ -244,7 +277,7 @@ def ensure(spec, clone=False):
     config = spec.configuration
     environment = {"MODEL_NAME": config.model_name or "unconfigured", "MODEL_BASE_URL": spec.model_base_url, "MODEL_API_KEY": spec.model_api_key,
         "MODEL_AUTH_KIND": spec.model_auth_kind,
-        "API_SERVER_KEY": spec.runtime_key, "HERMBOT_ADAPTER_KEY": spec.runtime_key, "HERMBOT_BOT_TOKEN": spec.bot_token, "HERMBOT_API_URL": "http://api:8000", "BOT_ID": spec.bot_id,
+        "API_SERVER_KEY": spec.runtime_key, "HERMBOT_ADAPTER_KEY": spec.adapter_key, "HERMBOT_BOT_TOKEN": spec.bot_token, "HERMBOT_API_URL": "http://api:8000", "BOT_ID": spec.bot_id,
         "BOT_ROLE": f"You are {config.name}. {config.role}", "HERMES_ENABLED_TOOLS": json.dumps(config.enabled_tools), "HERMES_ENABLED_SKILLS": json.dumps(config.enabled_skills), "HERMES_TIMEZONE": spec.timezone}
     result = docker_request("POST", "/containers/create", params={"name": f"hermbot-bot-{spec.bot_id}"}, json={"Image": RUNTIME_IMAGE,
         "Env": [f"{key}={value}" for key, value in environment.items()],
@@ -255,6 +288,7 @@ def ensure(spec, clone=False):
         "Healthcheck": {"Test": ["CMD", "/opt/hermes/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8642/health',timeout=3); urllib.request.urlopen('http://127.0.0.1:8643/health',timeout=3)"], "Interval": 10_000_000_000, "Timeout": 5_000_000_000, "StartPeriod": 40_000_000_000, "Retries": 12}})
     if spec.desired_state == "running":
         docker_request("POST", f"/containers/{result['Id']}/start")
+        fence(result["Id"], spec.bot_id)
         runtime_ready(result["Id"])
     return {"container_id": result["Id"][:12], "revision": spec.revision, "state": spec.desired_state}
 
@@ -278,6 +312,10 @@ def reconcile_networks(bot_id: BotId):
     ensure_resources(bot_id)
     if runtime["State"] == "exited":
         docker_request("POST", f"/containers/{runtime['Id']}/start")
+    # Docker restarts a crashed runtime in a fresh network namespace without the fence.
+    state = docker_request("GET", f"/containers/{runtime['Id']}/json")["State"]
+    if state["Running"] and FENCED.get(runtime["Id"]) != state["StartedAt"]:
+        fence(runtime["Id"], bot_id)
     return {"connected": True}
 
 

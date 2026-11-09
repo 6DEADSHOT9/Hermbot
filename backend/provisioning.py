@@ -99,7 +99,9 @@ async def drive(operation):
     spec = {"bot_id": current["bot_id"], "operation_id": str(current["id"]), "revision": payload["revision"],
         "configuration": payload["configuration"], "model_base_url": 'http://api:8000/internal/inference/v1' if oauth else provider.get("base_url", "http://127.0.0.1:1/v1"),
         "model_api_key": decrypt(provider.get('inference_key_encrypted') if oauth else provider.get("secret_encrypted")), "model_auth_kind": provider['auth_kind'] if oauth else 'api_key', "bot_token": decrypt(payload["bot_token_encrypted"]),
-        "runtime_key": decrypt(payload["runtime_key_encrypted"]), "timezone": payload["timezone"], "desired_state": payload["desired_state"],
+        "runtime_key": decrypt(payload["runtime_key_encrypted"]),
+        # Operations queued before adapter keys existed keep the key their runtime already has.
+        "adapter_key": decrypt(payload.get("adapter_key_encrypted") or payload["runtime_key_encrypted"]), "timezone": payload["timezone"], "desired_state": payload["desired_state"],
         "source_bot_id": payload.get("source_bot_id"), "source_was_running": payload.get("source_was_running", False), "copy_options": payload.get("copy_options", {})}
     try:
         result = await supervisor("POST", f"/operations/{current['action']}", json=spec)
@@ -122,7 +124,7 @@ async def drive(operation):
             status = "archived"
         conn.execute("UPDATE bots SET status=%s,applied_revision=%s,runtime_error=NULL,readiness='{}' WHERE id=%s", (status, payload["revision"], current["bot_id"]))
         if status == "deleted":
-            conn.execute("UPDATE bots SET bot_token_hash=NULL,bot_token_encrypted=NULL,runtime_key_encrypted=NULL WHERE id=%s", (current["bot_id"],))
+            conn.execute("UPDATE bots SET bot_token_hash=NULL,bot_token_encrypted=NULL,runtime_key_encrypted=NULL,adapter_key_encrypted=NULL WHERE id=%s", (current["bot_id"],))
             conn.execute("DELETE FROM participants WHERE bot_id=%s", (current["bot_id"],))
         if proposal:
             conn.execute("UPDATE lifecycle_proposals SET status='completed' WHERE id=%s", (proposal["id"],))

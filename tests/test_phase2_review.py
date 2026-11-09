@@ -199,7 +199,7 @@ def test_supervisor_receipt_replays_without_repeating_effects(tmp_path, monkeypa
         calls.append(spec.operation_id)
         return {"state": "running", "revision": spec.revision}
     monkeypatch.setattr(containers, "execute_operation", execute)
-    spec = containers.RuntimeSpec(bot_id="bot-test", operation_id=str(uuid4()), revision=1, configuration=config(), model_base_url="https://example.invalid/v1", model_api_key="private-test-key", runtime_key="r" * 32, bot_token="b" * 32)
+    spec = containers.RuntimeSpec(bot_id="bot-test", operation_id=str(uuid4()), revision=1, configuration=config(), model_base_url="https://example.invalid/v1", model_api_key="private-test-key", runtime_key="r" * 32, adapter_key="a" * 32, bot_token="b" * 32)
     first = containers.operate("create", spec)
     assert containers.operate("create", spec) == first and calls == [spec.operation_id]
     assert "private-test-key" not in next((tmp_path / "receipts").glob("*.json")).read_text()

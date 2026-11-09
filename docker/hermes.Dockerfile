@@ -1,6 +1,6 @@
 FROM nousresearch/hermes-agent@sha256:d4da4a40cd7a28aba983775d9fd31d94cbf153eeb0cb9e844d6d0f612b7c24db
 USER root
-RUN apt-get update && apt-get install -y --no-install-recommends tigervnc-standalone-server xfce4-panel xfwm4 xfdesktop4 xfce4-settings xfce4-terminal dbus-x11 x11-xserver-utils x11-utils xauth fonts-dejavu-core chromium xdotool && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends tigervnc-standalone-server xfce4-panel xfwm4 xfdesktop4 xfce4-settings xfce4-terminal dbus-x11 x11-xserver-utils x11-utils xauth fonts-dejavu-core chromium xdotool iptables && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /opt/hermbot /workspace /browser-state && chown hermes:hermes /workspace /browser-state
 COPY docker/hermes_bootstrap.py /opt/hermbot/bootstrap.py
 COPY docker/copy_state.py /opt/hermbot/copy_state.py
