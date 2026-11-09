@@ -11,7 +11,7 @@ from psycopg.types.json import Jsonb
 from . import db, lifecycle, registry, service
 from .models import (AttachmentRequest, BotConfiguration, BotId, BotUpdate, CloneRequest, EditRequest,
                      GrantRequest, GroupRequest, LifecycleRequest, ProposalArgs, ProviderRequest,
-                     ReactionRequest, RetryRequest, WorkspaceRequest)
+                     ReactionRequest, RetryRequest, WorkspaceRequest, AdvancedSettings)
 
 ATTACHMENT_TYPES = {"text/plain", "text/markdown", "text/csv", "application/json", "text/x-python", "application/pdf", "image/png", "image/jpeg", "image/webp"}
 
@@ -29,6 +29,21 @@ def routes(owner, get_store):
     def put_settings(body: WorkspaceRequest):
         with db.connection() as conn:
             return registry.save_workspace(conn, body)
+
+    @router.get("/api/v1/settings/advanced")
+    def get_advanced_settings():
+        with db.connection() as conn:
+            return registry.advanced_settings(conn)
+
+    @router.put("/api/v1/settings/advanced")
+    def put_advanced_settings(body: AdvancedSettings):
+        with db.connection() as conn:
+            return registry.save_advanced_settings(conn, body)
+
+    @router.post("/api/v1/settings/advanced/reset")
+    def reset_advanced_settings():
+        with db.connection() as conn:
+            return registry.save_advanced_settings(conn, AdvancedSettings())
 
     @router.post("/api/v1/providers", status_code=201)
     def create_provider(body: ProviderRequest, key: str = Header(alias="Idempotency-Key")):
