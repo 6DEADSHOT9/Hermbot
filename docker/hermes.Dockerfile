@@ -8,6 +8,8 @@ COPY docker/write_attachment.py /opt/hermbot/write_attachment.py
 COPY docker/capability_filter.py /opt/hermbot/capability_filter.py
 COPY docker/routine_wakeup.py /opt/hermbot/routine_wakeup.py
 COPY docker/runtime_api.py /opt/hermbot/runtime_api.py
+COPY docker/browser_control.py /opt/hermbot/browser_control.py
+COPY docker/owner_session.py /opt/hermbot/owner_session.py
 COPY docker/install_cua.py /opt/hermbot/install_cua.py
 RUN /opt/hermes/.venv/bin/python /opt/hermbot/install_cua.py
 COPY hermbot_runtime_gate.py /opt/hermbot/hermbot_runtime_gate.py
