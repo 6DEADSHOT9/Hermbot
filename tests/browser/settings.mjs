@@ -25,6 +25,9 @@ const settings={workspace:{timezone:'UTC',default_provider_id:'provider',permitt
   providers:[{id:'provider',name:'Fixture provider',base_url:'https://models.invalid/v1',models:['fixture-model'],default_model:'fixture-model',revision:1,key_configured:true,auth_kind:'api_key'}],model_broker_online:false};
 const notifications={revision:1,push_enabled:false,categories:['questions','reviews','results','problems'],timezone:'Asia/Kolkata',quiet_enabled:false,quiet_start:'22:00',quiet_end:'08:00',worker_error:null,worker_healthy:true,push:{configured:false,public_key:'',key_id:''},devices:[]};
 const sections=['General','Model providers','Teammates','Permissions','Notifications'];
+const advancedDefaults={takeover_unpausable:'ask',takeover_reply_wait_seconds:0};
+const advanced={values:{...advancedDefaults},defaults:{...advancedDefaults},history:[]};
+function applyAdvanced(next){for(const [setting,to] of Object.entries(next))if(advanced.values[setting]!==to){advanced.history.unshift({setting,from:advanced.values[setting],to,changed_at:new Date().toISOString()});advanced.values[setting]=to;}return advanced;}
 async function open(width,height){
   const context=await browser.newContext({viewport:{width,height},serviceWorkers:'block',timezoneId:'UTC'});
   await context.addInitScript(()=>{window.EventSource=class extends EventTarget{close(){}};});
@@ -34,6 +37,8 @@ async function open(width,height){
     if(req.method()!=='GET'){
       writes.push(`${req.method()} ${url.pathname} ${req.postData()||''}`);
       if(req.method()==='PUT'&&url.pathname==='/api/v1/settings')return route.fulfill({json:settings.workspace});
+      if(req.method()==='PUT'&&url.pathname==='/api/v1/settings/advanced')return route.fulfill({json:applyAdvanced(JSON.parse(req.postData()))});
+      if(req.method()==='POST'&&url.pathname==='/api/v1/settings/advanced/reset')return route.fulfill({json:applyAdvanced(advancedDefaults)});
       if(req.method()==='PUT'&&url.pathname==='/api/v1/notifications/settings')return route.fulfill({json:{...notifications,...JSON.parse(req.postData()),revision:2}});
       return route.fulfill({status:403,json:{detail:'Fixture rejects writes'}});
     }
@@ -42,6 +47,7 @@ async function open(width,height){
     else if(url.pathname==='/api/v1/attention')result={unread:0,needs_owner:0,items:[]};
     else if(url.pathname.endsWith('/timeline'))result={entries:[],cursor:0,has_more:false,has_earlier:false,artifacts:[],attachments:[]};
     else if(url.pathname==='/api/v1/settings')result=settings;
+    else if(url.pathname==='/api/v1/settings/advanced')result=advanced;
     else if(url.pathname==='/api/v1/notifications/settings')result=notifications;
     await route.fulfill({json:result});
   });
@@ -107,6 +113,45 @@ try{
   const [reopened]=await openSettings(page);
   assert.equal(await reopened.getByRole('tab',{name:'Notifications'}).getAttribute('aria-selected'),'true','Reopens at the last section');
   checks.push('Escape closes Settings, and it reopens at the last section used.');
+  // Advanced: hidden until revealed in General, and the reveal belongs to this browser.
+  await reopened.getByRole('tab',{name:'General'}).click();
+  const reveal=reopened.getByRole('switch',{name:'Show advanced settings'});
+  assert.equal(await reveal.isChecked(),false);assert.deepEqual(await reopened.getByRole('tab').allInnerTexts(),sections);
+  await reveal.check();
+  assert.deepEqual(await reopened.getByRole('tab').allInnerTexts(),[...sections,'Advanced']);
+  await reopened.getByRole('tab',{name:'Advanced'}).click();
+  await reopened.getByText('These change how Hermbot behaves for the whole workspace. The defaults are recommended.').waitFor();
+  await reopened.getByText('These take effect when takeover pausing ships.').waitFor();
+  assert.equal(await reopened.getByRole('radio',{name:/^Ask me · default/}).isChecked(),true);
+  assert.equal(await reopened.getByRole('radio',{name:/^Pause immediately · default/}).isChecked(),true);
+  assert(await reopened.getByRole('button',{name:'Save advanced settings'}).isDisabled(),'Nothing to save yet');
+  assert(await reopened.getByRole('button',{name:'Reset to defaults'}).isDisabled(),'Already at the defaults');
+  await reopened.getByText('No changes yet.').waitFor();
+  checks.push('Advanced is hidden until revealed in General, then appears last with a warning, the pending-effect note and both defaults selected.');
+  await reopened.getByRole('radio',{name:/^Always refuse/}).check();
+  await reopened.getByRole('radio',{name:/^Wait up to 30 seconds/}).check();
+  await reopened.getByRole('button',{name:'Save advanced settings'}).click();
+  await reopened.getByText('Advanced settings saved.').waitFor();
+  const put=writes.find(w=>w.startsWith('PUT /api/v1/settings/advanced '));
+  assert.deepEqual(JSON.parse(put.slice('PUT /api/v1/settings/advanced '.length)),{takeover_unpausable:'refuse',takeover_reply_wait_seconds:30});
+  const recent=await reopened.locator('.advanced-history li').allInnerTexts();
+  assert(recent.length===2&&recent.some(t=>t.includes('Ask me → Always refuse'))&&recent.some(t=>t.includes('Pause immediately → Wait up to 30 seconds')),`Recent changes: ${recent}`);
+  await reopened.getByRole('button',{name:'Reset to defaults'}).click();
+  await reopened.getByText('Advanced settings reset to their defaults.').waitFor();
+  assert.equal(await reopened.getByRole('radio',{name:/^Ask me · default/}).isChecked(),true);
+  assert.equal(await reopened.locator('.advanced-history li').count(),4);
+  checks.push('Saving sends exactly the chosen values, each change appears under Recent changes, and Reset restores the defaults.');
+  await page.keyboard.press('Escape');await reopened.waitFor({state:'hidden'});
+  await page.reload();await page.getByRole('navigation',{name:'Team conversations'}).waitFor();
+  const [remembered]=await openSettings(page);
+  assert.equal(await remembered.getByRole('tab',{name:'Advanced'}).getAttribute('aria-selected'),'true','The reveal and last section survive a reload');
+  await remembered.getByRole('tab',{name:'General'}).click();
+  await remembered.getByRole('switch',{name:'Show advanced settings'}).uncheck();
+  assert.deepEqual(await remembered.getByRole('tab').allInnerTexts(),sections);
+  await page.keyboard.press('Escape');await remembered.waitFor({state:'hidden'});
+  const [hidden]=await openSettings(page);
+  assert.equal(await hidden.getByRole('tab',{name:'General'}).getAttribute('aria-selected'),'true','A hidden Advanced section is never reopened');
+  checks.push('The reveal is remembered in this browser; hiding Advanced removes it and Settings never reopens there.');
   await context.close();
   for(const [width,height] of [[768,1024],[390,844],[320,568]]){
     const [small,phone]=await open(width,height);
@@ -124,12 +169,17 @@ try{
       await settingsWindow.getByRole('button',{name:'All settings'}).click();
       await settingsWindow.getByRole('tab',{name:'General'}).waitFor();
       assert.equal(await settingsWindow.locator('.settings-content').isVisible(),false);
+      await settingsWindow.getByRole('tab',{name:'General'}).click();await settingsWindow.getByRole('switch',{name:'Show advanced settings'}).check();
+      await settingsWindow.getByRole('button',{name:'All settings'}).click();await settingsWindow.getByRole('tab',{name:'Advanced'}).click();
+      await settingsWindow.getByRole('button',{name:'Reset to defaults'}).waitFor();
+      assert(!(await overflow(phone)).document&&!(await overflow(phone)).modal,`No overflow in Advanced at ${width}px`);
+      await phone.screenshot({path:`${out}/settings-advanced-${width}.png`});
     }else await phone.screenshot({path:`${out}/settings-${width}.png`});
     await small.close();
   }
   checks.push('At 768 px the sidebar stays; at 390 and 320 px Settings fills the screen as a list that opens one section, with All settings to go back, and nothing overflows.');
   assert.deepEqual(errors,[]);
-  assert(writes.every(w=>/^PUT \/api\/v1\/(settings|notifications\/settings) /.test(w)),`Unexpected writes: ${writes}`);
+  assert(writes.every(w=>/^(PUT \/api\/v1\/(settings|settings\/advanced|notifications\/settings)|POST \/api\/v1\/settings\/advanced\/reset) /.test(w)),`Unexpected writes: ${writes}`);
 }finally{
   await browser.close();server.close();
   await writeFile(`${out}/report.json`,JSON.stringify({checks,errors,writes:writes.map(w=>w.split(' ').slice(0,2).join(' '))},null,2));

@@ -411,3 +411,14 @@
   .settings-content{padding:12px 16px 28px}
   .settings-back{display:inline-flex;align-items:center;gap:4px;min-height:44px;margin-bottom:8px;font-size:14px;color:var(--accent)}
 }
+/* Advanced settings: hidden until revealed, defaults marked, recent changes listed. */
+.advanced-reveal{margin-top:28px;padding-top:18px;border-top:1px solid var(--line);display:grid;gap:4px}
+.advanced-reveal small{color:var(--muted);font-size:12px}
+.advanced-warning{margin:0 0 18px;padding:12px 14px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;background:var(--side);font-size:13px}
+.advanced-group{margin:6px 0 0;font-size:14px}
+.advanced-choice{align-items:flex-start!important}.advanced-choice input{margin-top:3px}
+.advanced-choice span{display:grid;gap:2px}.advanced-choice small{color:var(--muted);font-size:12px;font-weight:400}
+.advanced-history{margin-top:28px}.advanced-history h4{margin:0 0 10px;font-size:14px}
+.advanced-history ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.advanced-history li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;font-size:13px;overflow-wrap:anywhere}
+.advanced-history li small{color:var(--muted)}

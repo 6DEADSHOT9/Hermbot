@@ -310,6 +310,12 @@ class WorkspaceRequest(StrictModel):
     external_action_mode: Literal['requested', 'review'] | None = None
 
 
+class AdvancedSettings(StrictModel):
+    """Workspace-wide advanced settings. Their defaults are the recommended behaviour."""
+    takeover_unpausable: Literal['ask', 'refuse', 'continue'] = 'ask'
+    takeover_reply_wait_seconds: Literal[0, 15, 30, 60] = 0
+
+
 class GrantRequest(StrictModel):
     manager_id: BotId
     targets: list[BotId] = Field(max_length=20)

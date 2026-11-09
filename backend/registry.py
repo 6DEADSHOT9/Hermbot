@@ -58,6 +58,26 @@ def workspace(conn):
     return conn.execute("SELECT * FROM workspace_settings WHERE singleton=true").fetchone()
 
 
+def advanced_settings(conn):
+    from .models import AdvancedSettings
+    current = workspace(conn)
+    history = conn.execute(
+        "SELECT data,created_at FROM events WHERE kind='settings.advanced_changed' ORDER BY id DESC LIMIT 10").fetchall()
+    return {"values": {name: current[name] for name in AdvancedSettings.model_fields}, "defaults": AdvancedSettings().model_dump(),
+            "history": [{**row["data"], "changed_at": row["created_at"]} for row in history]}
+
+
+def save_advanced_settings(conn, body):
+    """Apply advanced settings, recording each change so the owner can see what changed and when."""
+    conn.execute("SELECT pg_advisory_xact_lock(887832102)")
+    current = workspace(conn)
+    for name, value in body.model_dump().items():
+        if current[name] != value:
+            conn.execute(f"UPDATE workspace_settings SET {name}=%s", (value,))
+            db.event(conn, "settings.advanced_changed", data={"setting": name, "from": current[name], "to": value})
+    return advanced_settings(conn)
+
+
 def provider_name(conn, kind, label='', provider_id=None):
     conn.execute('SELECT pg_advisory_xact_lock(887832103)')
     prefix = 'Codex' if kind == 'codex_oauth' else 'ChatGPT'
