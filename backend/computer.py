@@ -171,7 +171,9 @@ def upstream_view(bot_id, identity):
         # The owner in control types only into the private browser, never onto the bot's screen.
         raise HTTPException(409, "The private browser is still starting")
     url, headers = native.target(bot_id)
-    return url.replace("http://", "ws://").replace("https://", "wss://") + "/computer/ws", {**headers, "X-Hermbot-Viewer": identity}
+    # The bot's own screen is watch-only: this viewer never matches the lease, so the adapter drops all input.
+    watcher = hashlib.sha256(("watch:" + identity).encode()).hexdigest()
+    return url.replace("http://", "ws://").replace("https://", "wss://") + "/computer/ws", {**headers, "X-Hermbot-Viewer": watcher}
 
 
 def routes(owner):
@@ -188,7 +190,11 @@ def routes(owner):
             conn.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s,0))", ("computer:" + bot_id,))
             state = native.request(bot_id, "GET", "/computer")
             if state["lease"]["holder"] == "human":
-                fence(conn, bot_id, "human")
+                # Keep the admission fence without forgetting which owner holds control.
+                conn.execute(
+                    "INSERT INTO computer_controls(bot_id,holder) VALUES(%s,'human') ON CONFLICT(bot_id) DO UPDATE SET holder='human',updated_at=now()",
+                    (bot_id,),
+                )
             blocked = conn.execute(
                 "SELECT holder FROM computer_controls WHERE bot_id=%s", (bot_id,)
             ).fetchone()

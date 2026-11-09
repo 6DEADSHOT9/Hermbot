@@ -22,7 +22,7 @@ const bots=['writer','researcher'].map((id,index)=>({id,name:index?'Scout':'Quil
 const conversations=bots.map((bot,index)=>({id:index?'scout':'quill',title:bot.name,kind:'dm',bot_id:bot.id,bot_ids:[bot.id]}));
 const state={bots,retired_bots:[],conversations,tasks:[],work_items:[],approvals:[],input_requests:[],artifacts:[],grants:[],proposals:[],operations:[],controls:[],workspace:{},provider_configured:true,event_cursor:0};
 const computer={desktop:{installed:true,running:true,geometry:'1280x800',blocker:null,memory_available_mb:4000,browser:'chromium'},lease:{holder:'agent',epoch:1,reason:''},mine:false,input_ready:false,admission_paused:false,private_session:false};
-let releaseSession=null;
+let releaseSession=null,holdStatus=null;
 async function open(width,height){
   const context=await browser.newContext({viewport:{width,height},serviceWorkers:'block',timezoneId:'UTC'});
   await context.addInitScript(()=>{window.EventSource=class extends EventTarget{close(){}};});
@@ -43,7 +43,7 @@ async function open(width,height){
     if(url.pathname==='/api/v1/state')result=state;
     else if(url.pathname==='/api/v1/attention')result={unread:0,needs_owner:0,items:[]};
     else if(url.pathname.endsWith('/timeline'))result={entries:[],cursor:0,has_more:false,has_earlier:false,artifacts:[],attachments:[]};
-    else if(url.pathname==='/api/v1/bots/researcher/computer')result=computer;
+    else if(url.pathname==='/api/v1/bots/researcher/computer'){if(holdStatus)await holdStatus;result=computer;}
     else if(url.pathname.endsWith('/computer/thumbnail'))result={image:null};
     else if(url.pathname.endsWith('/knowledge'))result={memory:[{name:'memory',content:'Prefers short summaries.',sha256:'0'.repeat(64),limit:2200}],skills:[],versions:[]};
     else if(url.pathname.endsWith('/capabilities'))result={inventory_known:true,running:true,human_control:false,native_tools:[],connector_restricted:false,blocked_tools:[],connections:[]};
@@ -60,7 +60,12 @@ const overflow=page=>page.evaluate(()=>document.documentElement.scrollWidth>wind
 try{
   const [context,page]=await open(1440,900);
   await page.getByRole('navigation',{name:'Team conversations'}).getByRole('button',{name:/Scout/}).click();
+  let release;holdStatus=new Promise(r=>release=r);
   await page.getByRole('button',{name:'Open Scout computer'}).click();
+  await page.getByText('Checking the computer…',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('dialog').getByRole('button',{name:/Start computer|Take over/}).count(),0,'No computer action is offered before its state loads');
+  holdStatus=null;release();
+  checks.push('While the computer’s state loads, the pane says so and offers no action.');
   await page.getByText('Bot is in control',{exact:true}).waitFor();
   await page.getByText('Watch this teammate’s desktop, or take over in a private browser and hand it back when you finish.').waitFor();
   assert.equal(await page.getByRole('button',{name:'Open browser'}).count(),0,'The bot’s own browser is not offered to the owner');

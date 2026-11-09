@@ -26,9 +26,9 @@ export function Computer({open,onClose,bot}:{open:boolean;onClose:()=>void;bot?:
     <div className={expanded?'computer-expanded':'computer-preview'}>
       {(error||state.error)&&<p role="alert" className="error-text">{error||state.error?.message}</p>}
       {notice&&<p role="status">{notice}</p>}
-      <div className="computer-control-status"><strong>{busy?'Applying computer action…':state.data?.lease.holder==='human'?(mine?(waiting?'Opening your private browser…':'You are in control · private browser'):state.data.input_ready?'A human session holds control':'Waiting for in-flight work to settle'):'Bot is in control'}</strong>{state.data?.admission_paused&&<small>Bot tools and new dispatch remain paused until handback.</small>}</div>
+      <div className="computer-control-status"><strong>{busy?'Applying computer action…':!state.data?'Checking the computer…':state.data.lease.holder==='human'?(mine?(waiting?'Opening your private browser…':'You are in control · private browser'):state.data.input_ready?'A human session holds control':'Waiting for in-flight work to settle'):'Bot is in control'}</strong>{state.data?.admission_paused&&<small>Bot tools and new dispatch remain paused until handback.</small>}</div>
       <div className="button-row computer-actions">
-        {!state.data?.desktop.running?<button className="primary" disabled={busy||!state.data} onClick={()=>action('start')}>Start computer</button>:<>
+        {!state.data?null:!state.data.desktop.running?<button className="primary" disabled={busy} onClick={()=>action('start')}>Start computer</button>:<>
           <button className="secondary" disabled={busy} onClick={()=>{setExpanded(!expanded);setSecret('');}}>{expanded?'Show preview':'Expand live view'}</button>
           <button className="primary" disabled={busy} onClick={()=>action('control',{action:'takeover'})}>{mine?'Confirm control':state.data.lease.holder==='human'?'Reclaim control':'Take over privately'}</button>
           <button className="secondary" disabled={busy||state.data.lease.holder==='human'} onClick={()=>action('stop')}>Stop computer</button>

@@ -40,8 +40,8 @@ def adapter(monkeypatch):
         calls.append((method, path, kwargs.get("json")))
         if path == "/computer/browser-state":
             return {"cookies": BOT_COOKIES, "urls": ["https://example.com/login", "file:///etc/passwd", "javascript:alert(1)"]}
-        if path == "/computer/control":
-            holder = "agent" if kwargs["json"]["action"] == "handback" else "human"
+        if path in ("/computer", "/computer/control"):
+            holder = "agent" if (kwargs.get("json") or {}).get("action") == "handback" else "human"
             return {"desktop": {"running": True, "geometry": "1280x800"}, "input_ready": True,
                     "lease": {"holder": holder, "epoch": 1, "viewer_hash": hashlib.sha256(identity().encode()).hexdigest()[:12]}}
         return {"applied": 1}
@@ -79,8 +79,20 @@ def test_owner_in_control_only_ever_sees_the_private_session(owner_client, adapt
     takeover(owner_client)
     url, headers = computer.upstream_view("researcher", identity())
     assert url == "ws://hermbot-owner-test:8650/view" and headers == {"Authorization": "Bearer owner-session-token"}
+    assert owner_client.get("/api/v1/bots/researcher/computer").status_code == 200  # The UI polls status throughout.
+    assert computer.upstream_view("researcher", identity())[0] == "ws://hermbot-owner-test:8650/view", "Status polls keep the owner's route"
     url, headers = computer.upstream_view("researcher", "someone-else")
-    assert url.endswith(":8643/computer/ws") and headers["X-Hermbot-Viewer"] == "someone-else"
+    assert url.endswith(":8643/computer/ws") and len(headers["X-Hermbot-Viewer"]) == 64 and headers["X-Hermbot-Viewer"] != "someone-else"
+
+
+def test_the_bots_own_screen_never_accepts_owner_input(owner_client, adapter):
+    # Even the owner in control watches the bot's screen through a viewer the adapter's lease never matches.
+    takeover(owner_client)
+    with db.connection() as conn:
+        conn.execute("UPDATE computer_controls SET session_url=NULL WHERE bot_id='researcher'")
+        conn.execute("UPDATE computer_controls SET holder='agent' WHERE bot_id='researcher'")
+    url, headers = computer.upstream_view("researcher", identity())
+    assert url.endswith(":8643/computer/ws") and headers["X-Hermbot-Viewer"] != identity()
 
 
 def test_handback_carries_cookies_back_and_removes_ones_the_owner_deleted(owner_client, adapter, owner_sessions):

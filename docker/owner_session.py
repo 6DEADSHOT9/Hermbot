@@ -44,7 +44,8 @@ def start_screen():
                    env=ENVIRONMENT, check=True, stderr=subprocess.DEVNULL)
     processes["screen"] = subprocess.Popen(
         ["Xvnc", DISPLAY, "-rfbunixpath", str(SOCKET), "-rfbunixmode", "0600", "-rfbport", "-1", "-SecurityTypes", "None",
-         "-nolisten", "tcp", "-auth", ENVIRONMENT["XAUTHORITY"], "-geometry", GEOMETRY, "-depth", "24", "-AlwaysShared"],
+         "-nolisten", "tcp", "-auth", ENVIRONMENT["XAUTHORITY"], "-geometry", GEOMETRY, "-depth", "24", "-AlwaysShared",
+         "-desktop", "Hermbot private session"],
         env=ENVIRONMENT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     for _ in range(100):
         if SOCKET.exists():
@@ -58,7 +59,7 @@ def launch_browser():
     width, height = GEOMETRY.split("x")
     processes["browser"], pipe = browser_control.launch(
         ["/usr/bin/chromium", f"--user-data-dir={HOME / 'profile'}", "--no-first-run", "--no-default-browser-check",
-         "--password-store=basic", "--disable-sync", "--no-sandbox", "--disable-dev-shm-usage", "--start-maximized",
+         "--password-store=basic", "--disable-sync", "--no-sandbox", "--test-type", "--disable-dev-shm-usage", "--start-maximized",
          f"--window-size={width},{height}", "--window-position=0,0", "about:blank"], ENVIRONMENT)
     return pipe
 
