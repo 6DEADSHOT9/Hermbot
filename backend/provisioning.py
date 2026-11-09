@@ -1,12 +1,13 @@
 """Durable, leased lifecycle operations; exact approved snapshots survive worker restart."""
 import base64
 import logging
+from random import random
 from uuid import uuid4
 
 import httpx
 from psycopg.types.json import Jsonb
 
-from . import db, lifecycle, registry, service
+from . import db, isolation, lifecycle, registry, service
 from .secrets import decrypt
 from .settings import settings
 from .model_protocol import BROKERED_AUTH
@@ -32,7 +33,44 @@ def queue_initial():
 
 def claim():
     with db.connection() as conn:
-        return conn.execute("UPDATE bot_operations SET worker_id=%s,lease_until=now()+interval '120 seconds' WHERE id IN (SELECT id FROM bot_operations WHERE status IN ('queued','applying') AND (worker_id=%s OR lease_until<now() OR lease_until IS NULL) ORDER BY created_at FOR UPDATE SKIP LOCKED) RETURNING *", (WORKER_ID, WORKER_ID)).fetchall()
+        rows = conn.execute("UPDATE bot_operations SET worker_id=%s,lease_until=now()+interval '120 seconds' WHERE id IN (SELECT id FROM bot_operations WHERE status IN ('queued','applying') AND (worker_id=%s OR lease_until<now() OR lease_until IS NULL) ORDER BY created_at FOR UPDATE SKIP LOCKED) RETURNING *,(drive_not_before IS NULL OR drive_not_before<=now()) AS due", (WORKER_ID, WORKER_ID)).fetchall()
+    return [row for row in rows if row["due"]]
+
+
+def fail(operation_id, reason):
+    """Record a failed operation; the owner can retry the same operation explicitly."""
+    with db.connection() as conn:
+        current = conn.execute("SELECT * FROM bot_operations WHERE id=%s FOR UPDATE", (operation_id,)).fetchone()
+        if current["status"] not in ("queued", "applying"):
+            return
+        proposal = conn.execute("SELECT * FROM lifecycle_proposals WHERE id=%s", (current["proposal_id"],)).fetchone() if current["proposal_id"] else None
+        conn.execute("UPDATE bot_operations SET status='failed',error=%s,updated_at=now() WHERE id=%s", (reason, current["id"]))
+        conn.execute("UPDATE bots SET status='error',runtime_error=%s WHERE id=%s", (reason, current["bot_id"]))
+        if proposal:
+            conn.execute("UPDATE lifecycle_proposals SET status='failed' WHERE id=%s", (proposal["id"],))
+            lifecycle.resume(conn, proposal, f"Approved lifecycle operation failed: {reason}. Report the blocker; no successful provisioning is implied.")
+        db.event(conn, "bot.operation.failed", bot_id=current["bot_id"], data={"operation_id": str(current["id"]), "error": reason})
+
+
+async def guarded_drive(operation):
+    try:
+        await drive(operation)
+    except Exception as exc:
+        if isolation.database_lost(exc):
+            raise
+        logger.exception("Lifecycle operation %s failed unexpectedly", operation["id"])
+        counted = not isolation.unavailable(exc)
+        with db.connection() as conn:
+            row = conn.execute(
+                "UPDATE bot_operations SET drive_failures=drive_failures+%s,last_drive_error=%s,drive_not_before=now()+make_interval(secs=>%s) WHERE id=%s RETURNING drive_failures",
+                (int(counted), isolation.diagnostic(exc), isolation.backoff_seconds(operation["drive_failures"]) * (0.5 + random() / 2), operation["id"]),
+            ).fetchone()
+        if counted and row and row["drive_failures"] >= isolation.FAILURE_LIMIT:
+            fail(operation["id"], f"Hermbot could not apply this operation: the same failure repeated {row['drive_failures']} times ({isolation.describe(exc)}). Check the runtime before retrying")
+        return
+    if operation["drive_failures"]:
+        with db.connection() as conn:
+            conn.execute("UPDATE bot_operations SET drive_failures=0,drive_not_before=NULL WHERE id=%s", (operation["id"],))
 
 
 async def drive(operation):
@@ -69,13 +107,7 @@ async def drive(operation):
         # The same operation remains available for explicit retry after deterministic failures.
         detail = exc.response.json().get("detail", "") if exc.response.headers.get("content-type", "").startswith("application/json") else ""
         reason = f"Runtime provisioning failed (HTTP {exc.response.status_code}): " + (detail[:500] if isinstance(detail, str) and detail else "check image availability and Docker resources")
-        with db.connection() as conn:
-            conn.execute("UPDATE bot_operations SET status='failed',error=%s,updated_at=now() WHERE id=%s", (reason, current["id"]))
-            conn.execute("UPDATE bots SET status='error',runtime_error=%s WHERE id=%s", (reason, current["bot_id"]))
-            if proposal:
-                conn.execute("UPDATE lifecycle_proposals SET status='failed' WHERE id=%s", (proposal["id"],))
-                lifecycle.resume(conn, proposal, f"Approved lifecycle operation failed: {reason}. Report the blocker; no successful provisioning is implied.")
-            db.event(conn, "bot.operation.failed", bot_id=current["bot_id"], data={"operation_id": str(current["id"]), "error": reason})
+        fail(current["id"], reason)
         return
     except httpx.HTTPError:
         logger.info("Lifecycle operation %s has no transport receipt; reconcile using the same operation", current["id"])
