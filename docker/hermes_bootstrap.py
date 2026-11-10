@@ -129,8 +129,9 @@ def supervise(preparer, reader):
                         "API_SERVER_HOST": "0.0.0.0", "API_SERVER_PORT": "8642",
                         "AGENT_BROWSER_PROFILE": "/browser-state/profile", "AGENT_BROWSER_EXECUTABLE_PATH": "/usr/bin/chromium"})
     if os.environ.get("MODEL_AUTH_KIND") not in ("chatgpt_oauth", "codex_oauth"):
-        # Hermes reads the provider key from OPENAI_API_KEY, which it strips from tool environments.
+        # Hermes reads the relay token from OPENAI_API_KEY, which it strips from tool environments.
         environment.pop("MODEL_API_KEY", None)
+    environment.pop("MODEL_PROVIDER_URL", None)  # Only preparation needs it, to pick the API style.
     adapter_environment = {key: value for key, value in environment.items() if key not in AGENT_ONLY}
     adapter_environment["HERMBOT_ADAPTER_KEY"] = adapter_key
     adapter = subprocess.Popen(ADAPTER, env=adapter_environment, cwd="/", preexec_fn=agent_identity)
@@ -212,25 +213,50 @@ config["model"] = {
     "provider": "custom",
     "base_url": os.environ.get("MODEL_BASE_URL") or "http://127.0.0.1:1/v1",
 }
-if os.environ.get('MODEL_AUTH_KIND') in ('chatgpt_oauth', 'codex_oauth'):
-    config['model']['provider'] = 'custom:hermbot-chatgpt'
-    config['providers'] = {**config.get('providers', {}), 'hermbot-chatgpt': {
-        'base_url': config['model']['base_url'], 'api_mode': 'codex_responses', 'key_env': 'MODEL_API_KEY',
-    }}
+MODEL_ROUTES = ("hermbot-chatgpt", "hermbot-relay")
+
+
+def apply_model_route(config, route, api_mode, key_env):
+    """Send the main model and every auxiliary task through one Hermbot route, and drop unused routes.
+
+    Every configured provider is reached through Hermbot's relay, which holds the provider's credential;
+    this runtime only ever holds its own relay token. Auxiliary tasks are pinned to the same route and
+    model, so none of them can fall back to another provider or ask the relay for an unassigned model.
+    """
+    for name in MODEL_ROUTES:
+        if name == route:
+            continue
+        config.get('providers', {}).pop(name, None)
+        for task, values in list(config.get('auxiliary', {}).items()):
+            if isinstance(values, dict) and values.get('provider') == 'custom:' + name:
+                config['auxiliary'].pop(task)
+    if not route:
+        return
     from hermes_cli.config_defaults import DEFAULT_CONFIG
+    model = config['model']
+    model['provider'] = 'custom:' + route
+    config['providers'] = {**config.get('providers', {}), route: {
+        'base_url': model['base_url'], 'api_mode': api_mode, 'key_env': key_env,
+    }}
     config['fallback_providers'] = []
     auxiliary = config.setdefault('auxiliary', {})
     for task, defaults in DEFAULT_CONFIG['auxiliary'].items():
         if isinstance(defaults, dict) and 'provider' in defaults:
-            auxiliary[task] = {**auxiliary.get(task, {}), 'provider': 'custom:hermbot-chatgpt',
-                               'model': config['model']['default'], 'base_url': config['model']['base_url'],
-                               'api_mode': 'codex_responses', 'api_key': '', 'fallback_chain': [], 'prefer_fast_model': False}
+            auxiliary[task] = {**auxiliary.get(task, {}), 'provider': 'custom:' + route,
+                               'model': model['default'], 'base_url': model['base_url'],
+                               'api_mode': api_mode, 'api_key': '', 'fallback_chain': [], 'prefer_fast_model': False}
+
+
+if os.environ.get('MODEL_AUTH_KIND') in ('chatgpt_oauth', 'codex_oauth'):
+    apply_model_route(config, 'hermbot-chatgpt', 'codex_responses', 'MODEL_API_KEY')
+elif os.environ.get('MODEL_PROVIDER_URL'):
+    # Speak the API style Hermes itself would choose for the real provider, so routing through the
+    # relay changes nothing the provider sees (official OpenAI hosts need the Responses API).
+    from hermes_cli.runtime_provider import _detect_api_mode_for_url
+    apply_model_route(config, 'hermbot-relay', _detect_api_mode_for_url(os.environ['MODEL_PROVIDER_URL']) or 'chat_completions',
+                      'OPENAI_API_KEY')
 else:
-    # Switching back to an API key must also stop auxiliary requests using the old broker route.
-    config.get('providers', {}).pop('hermbot-chatgpt', None)
-    for task, values in list(config.get('auxiliary', {}).items()):
-        if isinstance(values, dict) and values.get('provider') == 'custom:hermbot-chatgpt':
-            config['auxiliary'].pop(task)
+    apply_model_route(config, None, None, None)
 toolsets = list(
     dict.fromkeys(json.loads(os.environ.get("HERMES_ENABLED_TOOLS", '["file","terminal"]')) + ["hermbot"])
 )

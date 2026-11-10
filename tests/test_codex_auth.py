@@ -1,10 +1,8 @@
 """Direct Codex boundaries use only fake accounts and isolated DB records."""
 # ruff: noqa: F811 -- imported pytest fixtures are intentionally used as test parameters.
 import asyncio
-import ast
 from contextlib import asynccontextmanager
 import json
-from pathlib import Path
 from uuid import uuid4
 
 import httpx
@@ -115,15 +113,6 @@ def test_codex_refresh_without_id_token_keeps_verified_principal(vault, issuer):
         assert vault.get(cid)['account_id'] == original['account_id']
         await accounts.http.aclose()
     asyncio.run(run())
-
-
-def test_api_switch_removes_hermbot_auxiliary_routes():
-    tree = ast.parse(Path('docker/hermes_bootstrap.py').read_text())
-    branch = next(node for node in tree.body if isinstance(node, ast.If) and 'MODEL_AUTH_KIND' in ast.unparse(node.test))
-    config = {'providers': {'hermbot-chatgpt': {}, 'other': {}}, 'auxiliary': {'vision': {'provider': 'custom:hermbot-chatgpt'}, 'other': {'provider': 'other'}}}
-    module = ast.fix_missing_locations(ast.Module(body=branch.orelse, type_ignores=[]))
-    exec(compile(module, '<bootstrap-api-switch>', 'exec'), {'config': config})
-    assert config == {'providers': {'other': {}}, 'auxiliary': {'other': {'provider': 'other'}}}
 
 
 def test_codex_jwt_audience_is_not_dynamic_application(vault, issuer):

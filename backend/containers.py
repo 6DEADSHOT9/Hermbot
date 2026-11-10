@@ -168,6 +168,8 @@ class RuntimeSpec(StrictModel):
     model_base_url: str
     model_api_key: str
     model_auth_kind: str = Field(default='api_key', pattern=r'^(api_key|chatgpt_oauth|codex_oauth)$')
+    # The real provider's URL, never its key: the runtime only uses it to pick Hermes' API style.
+    model_provider_url: str = Field(default='', max_length=2048)
     runtime_key: str = Field(min_length=32)
     adapter_key: str = Field(min_length=32)
     bot_token: str = Field(min_length=32)
@@ -286,7 +288,7 @@ def ensure(spec, clone=False):
     remove_container(container)
     config = spec.configuration
     environment = {"MODEL_NAME": config.model_name or "unconfigured", "MODEL_BASE_URL": spec.model_base_url, "MODEL_API_KEY": spec.model_api_key,
-        "MODEL_AUTH_KIND": spec.model_auth_kind,
+        "MODEL_AUTH_KIND": spec.model_auth_kind, "MODEL_PROVIDER_URL": spec.model_provider_url,
         "API_SERVER_KEY": spec.runtime_key, "HERMBOT_ADAPTER_KEY": spec.adapter_key, "HERMBOT_BOT_TOKEN": spec.bot_token, "HERMBOT_API_URL": "http://api:8000", "BOT_ID": spec.bot_id,
         "BOT_ROLE": f"You are {config.name}. {config.role}", "HERMES_ENABLED_TOOLS": json.dumps(config.enabled_tools), "HERMES_ENABLED_SKILLS": json.dumps(config.enabled_skills), "HERMES_TIMEZONE": spec.timezone}
     result = docker_request("POST", "/containers/create", params={"name": f"hermbot-bot-{spec.bot_id}"}, json={"Image": RUNTIME_IMAGE,

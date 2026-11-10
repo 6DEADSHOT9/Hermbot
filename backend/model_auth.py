@@ -5,13 +5,14 @@ import hmac
 import json
 import os
 from pathlib import Path
+import time
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 from psycopg.types.json import Jsonb
 
-from . import auth, db, registry, service
+from . import auth, db, model_relay, registry, service
 from .model_protocol import BROKERED_AUTH, CODEX_URL, MAX_BODY, MAX_EVENT, PROTOCOL, REAUTH_ERRORS, chat_to_responses, completed_message, responses_request
 from .secrets import credential_hash
 from .settings import settings
@@ -106,6 +107,26 @@ def record_failure(cid, error, epoch=None):
     elif error.code in REAUTH_ERRORS:
         with db.connection() as conn:
             conn.execute("UPDATE providers SET connection_status='reauth_required',plan_enabled=false WHERE id=%s AND auth_kind IN ('chatgpt_oauth','codex_oauth') AND (%s::integer IS NULL OR auth_epoch=%s)", (cid, epoch, epoch))
+
+
+def bearer(authorization):
+    return authorization[7:] if authorization.startswith('Bearer ') else ''
+
+
+def admit_inference(token):
+    """A runtime's relay token is valid only for its bot's current revision, while the bot runs."""
+    with db.connection() as conn:
+        bot = conn.execute("SELECT * FROM bots WHERE inference_key_hash=%s AND inference_revision=revision AND status='active' AND desired_state='running'", (credential_hash(token),)).fetchone() if token else None
+        if not bot:
+            raise HTTPException(401, 'Inference credential expired; apply the current runtime configuration')
+        stopping = conn.execute("SELECT 1 FROM attempts a JOIN tasks t ON t.id=a.task_id WHERE a.bot_id=%s AND a.status=ANY(%s) AND t.status=ANY(%s)",
+                                (bot['id'], list(service.ACTIVE_ATTEMPTS), list(service.TERMINAL | service.STOPPING))).fetchone()
+        if stopping:
+            raise HTTPException(409, 'This execution is stopping; no further inference is admitted')
+        row = conn.execute('SELECT * FROM providers WHERE id=%s', (bot['provider_id'],)).fetchone()
+        if not row:
+            raise HTTPException(409, 'This teammate has no model provider')
+        return bot, row
 
 
 async def body(request):
@@ -294,21 +315,10 @@ def routes(owner):
 
     @router.post('/internal/inference/v1/responses')
     async def inference(request: Request, authorization: str = Header(default='')):
-        token = authorization[7:] if authorization.startswith('Bearer ') else ''
-        def admit():
-            with db.connection() as conn:
-                bot = conn.execute("SELECT * FROM bots WHERE inference_key_hash=%s AND inference_revision=revision AND status='active' AND desired_state='running'", (credential_hash(token),)).fetchone() if token else None
-                if not bot:
-                    raise HTTPException(401, 'Inference credential expired; apply the current runtime configuration')
-                stopping = conn.execute("SELECT 1 FROM attempts a JOIN tasks t ON t.id=a.task_id WHERE a.bot_id=%s AND a.status=ANY(%s) AND t.status=ANY(%s)",
-                                        (bot['id'], list(service.ACTIVE_ATTEMPTS), list(service.TERMINAL | service.STOPPING))).fetchone()
-                if stopping:
-                    raise HTTPException(409, 'This execution is stopping; no further inference is admitted')
-                row = conn.execute('SELECT * FROM providers WHERE id=%s', (bot['provider_id'],)).fetchone()
-                return bot, row
-        bot, row = admit()
+        token = bearer(authorization)
+        bot, row = await asyncio.to_thread(admit_inference, token)
         if row['auth_kind'] not in BROKERED_AUTH:
-            raise HTTPException(403, 'This runtime has no subscription provider')
+            return await model_relay.forward(request, 'responses', token, bot, row, admit_inference)
         try:
             payload = responses_request(await body(request), row['auth_kind'])
         except ValueError:
@@ -316,21 +326,22 @@ def routes(owner):
         ready(row, payload['model'], require_test=True)
         if payload['model'] != bot['model_name']:
             raise HTTPException(403, 'Use this teammate’s assigned model')
-        with db.connection() as conn:
-            task = conn.execute("SELECT t.* FROM tasks t JOIN attempts a ON a.task_id=t.id WHERE a.bot_id=%s AND a.status=ANY(%s) ORDER BY a.created_at DESC LIMIT 1", (bot['id'], list(service.ACTIVE_ATTEMPTS))).fetchone()
+        task = await asyncio.to_thread(model_relay.active_task, bot['id'])
         async def stream():
-            request_id = None
+            request_id, checked = None, time.monotonic()
             try:
                 async with relay.request(row['id'], 'responses', payload, auth_kind=row['auth_kind'], caller='bot:' + bot['id']) as events:
                     async for item in events:
-                        latest_bot, latest = admit()
-                        ready(latest, payload['model'], require_test=True)
-                        if latest_bot['revision'] != bot['revision'] or latest['revision'] != row['revision'] or latest['auth_epoch'] != row['auth_epoch']:
-                            raise BrokerFailure('connection_changed')
+                        # Re-check admission every few seconds off the event loop, not once per streamed event.
+                        if time.monotonic() - checked >= model_relay.ADMISSION_SECONDS:
+                            checked = time.monotonic()
+                            latest_bot, latest = await asyncio.to_thread(admit_inference, token)
+                            ready(latest, payload['model'], require_test=True)
+                            if latest_bot['revision'] != bot['revision'] or latest['revision'] != row['revision'] or latest['auth_epoch'] != row['auth_epoch']:
+                                raise BrokerFailure('connection_changed')
                         if item.get('state') in ('waiting', 'active') and task:
                             request_id = item['id']
-                            with db.connection() as conn:
-                                db.event(conn, 'model.request.' + item['state'], task, data={'request_id': request_id})
+                            await asyncio.to_thread(model_relay.record, task, item['state'], request_id)
                         if 'event' in item:
                             yield 'event: ' + item['event']['type'] + '\ndata: ' + json.dumps(item['event']) + '\n\n'
             except (BrokerFailure, HTTPException, TimeoutError) as error:
@@ -343,5 +354,24 @@ def routes(owner):
                     with db.connection() as conn:
                         db.event(conn, 'model.request.finished', task, data={'request_id': request_id})
         return StreamingResponse(stream(), media_type='text/event-stream')
+
+    async def api_key_only(request, path, authorization):
+        token = bearer(authorization)
+        bot, row = await asyncio.to_thread(admit_inference, token)
+        if row['auth_kind'] in BROKERED_AUTH:
+            raise HTTPException(404, 'Subscription providers use the Responses route only')
+        return await model_relay.forward(request, path, token, bot, row, admit_inference)
+
+    @router.post('/internal/inference/v1/chat/completions')
+    async def chat_completions(request: Request, authorization: str = Header(default='')):
+        return await api_key_only(request, 'chat/completions', authorization)
+
+    @router.post('/internal/inference/v1/messages')
+    async def messages(request: Request, authorization: str = Header(default='')):
+        return await api_key_only(request, 'messages', authorization)
+
+    @router.get('/internal/inference/v1/models')
+    async def models(request: Request, authorization: str = Header(default='')):
+        return await api_key_only(request, 'models', authorization)
 
     return router

@@ -23,6 +23,9 @@ async def supervisor(method, path, **kwargs):
         return result.json()
 
 
+RELAY_URL = "http://api:8000/internal/inference/v1"
+
+
 def queue_initial():
     with db.connection() as conn:
         bots = conn.execute("SELECT * FROM bots WHERE status='active' AND applied_revision<revision ORDER BY id FOR UPDATE SKIP LOCKED").fetchall()
@@ -96,9 +99,15 @@ async def drive(operation):
             conn.execute("UPDATE lifecycle_proposals SET status='applying' WHERE id=%s", (proposal["id"],))
     provider = payload.get("provider") or {}
     oauth = provider.get('auth_kind') in BROKERED_AUTH
+    if provider and not provider.get('inference_key_encrypted'):
+        # Queued before model requests went through the relay: never hand a provider key to a runtime.
+        fail(current["id"], "This operation predates Hermbot's model relay. Apply the teammate's configuration again.")
+        return
+    # Every provider is reached through Hermbot's relay; the runtime holds only its own relay token.
     spec = {"bot_id": current["bot_id"], "operation_id": str(current["id"]), "revision": payload["revision"],
-        "configuration": payload["configuration"], "model_base_url": 'http://api:8000/internal/inference/v1' if oauth else provider.get("base_url", "http://127.0.0.1:1/v1"),
-        "model_api_key": decrypt(provider.get('inference_key_encrypted') if oauth else provider.get("secret_encrypted")), "model_auth_kind": provider['auth_kind'] if oauth else 'api_key', "bot_token": decrypt(payload["bot_token_encrypted"]),
+        "configuration": payload["configuration"], "model_base_url": RELAY_URL if provider else "http://127.0.0.1:1/v1",
+        "model_api_key": decrypt(provider.get('inference_key_encrypted')), "model_auth_kind": provider['auth_kind'] if oauth else 'api_key',
+        "model_provider_url": "" if oauth else provider.get("base_url", ""), "bot_token": decrypt(payload["bot_token_encrypted"]),
         "runtime_key": decrypt(payload["runtime_key_encrypted"]),
         # Operations queued before adapter keys existed keep the key their runtime already has.
         "adapter_key": decrypt(payload.get("adapter_key_encrypted") or payload["runtime_key_encrypted"]), "timezone": payload["timezone"], "desired_state": payload["desired_state"],
