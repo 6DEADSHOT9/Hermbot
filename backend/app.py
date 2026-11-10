@@ -299,10 +299,15 @@ def revoke_grant(grant_id: UUID):
             conn.execute('SELECT id FROM work_items WHERE id=%s FOR UPDATE', (UUID(identity),))
         for task in roots:
             service.locked_task(conn, task['id'])
-        conn.execute("UPDATE grants SET revoked_at=now() WHERE id=%s", (grant_id,))
-        # A retry holding the grant committed while this waited for its locks: stop that run too.
+        # A retry holding the grant may have committed while this waited for those locks. Lock its run too, still
+        # before the grant (the order retry and dispatch use); any later retry must wait for these locks and then
+        # finds the grant revoked. Anything else is stopped by the worker, which never runs a revoked grant's work.
         seen = {task['id'] for task in roots}
-        roots += [task for task in conn.execute("SELECT * FROM tasks WHERE grant_id=%s AND parent_id IS NULL", (grant_id,)).fetchall() if task['id'] not in seen]
+        late = [task for task in conn.execute("SELECT * FROM tasks WHERE grant_id=%s AND parent_id IS NULL ORDER BY id", (grant_id,)).fetchall() if task['id'] not in seen]
+        for task in late:
+            service.locked_task(conn, task['id'])
+        roots += late
+        conn.execute("UPDATE grants SET revoked_at=now() WHERE id=%s", (grant_id,))
         for task in roots:
             service.cancel(conn, service.locked_task(conn, task['id']), "Owner revoked management authority")
         db.event(conn, "grant.revoked", data={"grant_id": str(grant_id)})

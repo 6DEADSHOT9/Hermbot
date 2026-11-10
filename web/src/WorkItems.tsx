@@ -1,29 +1,29 @@
 import {Circle, ChevronRight, Layers3, Square} from 'lucide-react';
-import {api, mutate, settled, statusLabel, taskStatus, type Artifact, type Bot, type Grant, type Task, type WorkItem} from './api';
+import {api, mutate, settled, statusLabel, taskStatus, type ApiError, type Artifact, type Bot, type Task, type WorkItem} from './api';
 import {OutcomeActions} from './OutcomeActions';
 
 type Props = {
-  items:WorkItem[]; botById:(id:string)=>Bot|undefined; grants:Grant[];
+  items:WorkItem[]; botById:(id:string)=>Bot|undefined;
   action:(work:()=>Promise<unknown>)=>Promise<void>; inspect:(task:Task)=>void;
   saveSkill:(task:Task)=>void; edit:(task:Task)=>void; redirect:(task:Task)=>void;
   reviewOutcome:()=>void;
   openOutput:(artifact:Artifact)=>void;
 };
 
-// A retry keeps its work's own management permission. If that has expired or is about to, renewing it is the owner's call.
-const RENEWAL_WINDOW_MS=60*60*1000;
-
-export function WorkItems({items,botById,grants,action,inspect,saveSkill,edit,redirect,reviewOutcome,openOutput}:Props) {
+export function WorkItems({items,botById,action,inspect,saveSkill,edit,redirect,reviewOutcome,openOutput}:Props) {
   const visible=items.filter(w=>!w.hidden_at&&w.current_task);
+  // Retrying team work renews its management permission for 24 hours. The server asks first, in its own words,
+  // and the owner's answer decides; declining sends nothing more.
   function retry(task:Task){
-    const grant=task.grant_id?grants.find(g=>g.id===task.grant_id):undefined;
-    const lapsing=!!grant&&grant.kind==='task'&&grant.manager_id===task.bot_id&&!grant.revoked_at&&new Date(grant.expires_at).getTime()-Date.now()<RENEWAL_WINDOW_MS;
-    if(grant&&lapsing){
-      const manager=botById(task.bot_id)?.name||'This teammate',managed=grant.targets.map(id=>botById(id)?.name||id).join(', ');
-      const when=new Date(grant.expires_at).getTime()<=Date.now()?'has expired':'expires within the hour';
-      if(!window.confirm(`${manager}'s permission to manage ${managed} for this work ${when}. Renew it for 24 hours and retry?`))return;
-    }
-    void action(()=>mutate(`/api/v1/tasks/${task.id}/retry`,'POST',lapsing?{renew_management:true}:{}));
+    const path=`/api/v1/tasks/${task.id}/retry`;
+    void action(async()=>{
+      try{await mutate(path,'POST',{});}
+      catch(err){
+        const failure=err as ApiError;
+        if(failure.code!=='renewal_required')throw err;
+        if(window.confirm(failure.message))await mutate(path,'POST',{renew_management:true});
+      }
+    });
   }
   const active=visible.filter(w=>!['completed','failed','cancelled','interrupted'].includes(w.status));
   const finished=visible.filter(w=>!active.includes(w));

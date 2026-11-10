@@ -79,10 +79,6 @@ def active_grant(conn, grant_id, *, lock=False):
     return grant if grant and not grant["revoked_at"] and grant["expires_at"] > now() else None
 
 
-# A retry may renew its own task grant, on the owner's confirmation, when it has expired or has less than this left.
-RENEWAL_WINDOW = timedelta(hours=1)
-
-
 def check_grant(conn, task, *, target=None, operation=None, manager=None, lock_scope=True):
     from .recurring_management import scope
     frozen = scope(conn, task)
@@ -159,17 +155,16 @@ def create_task(conn, *, bot_id, conversation_id, prompt, request_key, context="
             fail(403, "Mentioned bot is not in this conversation")
     if grant_id or inherited_grant_id:
         # A standing grant is chosen by the owner; a task grant is inherited only by a retry of its own work,
-        # never copied, so revoking it reaches every run of that work and its expiry and limits still apply.
-        # Locked, so a revocation running now either finishes first (and this refuses) or sees this run.
+        # never copied, so revoking it reaches every run of that work and its limits still apply.
         if (grant_id and inherited_grant_id) or managed_bot_ids is not None or management_operations is not None:
             fail(422, "Select a standing grant or create a task grant, not both")
         kind = "standing" if grant_id else "task"
         grant_id = grant_id or inherited_grant_id
-        grant = active_grant(conn, grant_id, lock=True)
+        grant = active_grant(conn, grant_id)
         if not grant or grant["kind"] != kind or grant["manager_id"] != bot_id:
             fail(403, "Choose an active standing grant belonging to this manager" if kind == "standing"
                  else "This work's permission to manage teammates is no longer active")
-        if kind == "task" and any(not conn.execute("SELECT 1 FROM bots WHERE id=%s AND status<>'deleted'", (target,)).fetchone() for target in grant["targets"]):
+        if kind == "task" and conn.execute("SELECT count(*) AS n FROM bots WHERE id=ANY(%s) AND status<>'deleted'", (grant["targets"],)).fetchone()["n"] < len(set(grant["targets"])):
             fail(409, "A teammate this work managed no longer exists. Send the request again with Coordinate team.")
     if management_operations is not None and managed_bot_ids is None:
         fail(422, "Operations must belong to an explicitly scoped management request")
@@ -241,7 +236,9 @@ def delegate(conn, task, bot_id, prompt, depends_on=None, artifact_ids=None, *, 
     grant = check_grant(conn, task)
     used = root["handoffs"]
     if grant and grant["kind"] == "task":
-        # A task grant's handoff budget covers its work, including every retry, not each run afresh.
+        # A task grant's handoff budget covers its work, including every retry, not each run afresh. The grant is
+        # locked (after this task, as everywhere) so two runs delegating at once can't both take the last handoff.
+        conn.execute("SELECT id FROM grants WHERE id=%s FOR UPDATE", (grant["id"],))
         used = conn.execute("SELECT COALESCE(sum(handoffs),0) AS n FROM tasks WHERE grant_id=%s AND parent_id IS NULL", (grant["id"],)).fetchone()["n"]
     if used >= min(settings.max_handoffs, grant["max_handoffs"] if grant else settings.max_handoffs):
         fail(409, "Task handoff budget exhausted")

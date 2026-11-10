@@ -5,8 +5,8 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 
 // Synthetic work cards only: every API request is intercepted and nothing reaches a runtime.
-// Retrying team work keeps its own management permission. When that has expired or expires within the hour,
-// Retry asks the owner before renewing it, and sends nothing if they decline.
+// Retrying team work renews its management permission for 24 hours, but only after the owner says yes: the server
+// asks (409 renewal_required, in its own words), the card shows that question, and declining sends nothing more.
 const root=resolve(process.argv[2]||'test-results/retry-renewal-web');
 const out=resolve(process.argv[3]||'test-results/retry-renewal-ui');await mkdir(out,{recursive:true});
 const server=createServer(async(req,res)=>{try{
@@ -23,11 +23,11 @@ const errors=[],checks=[],retries=[],dialogs=[];
 const bots=['writer','researcher'].map((id,index)=>({id,name:index?'Scout':'Quill',role:'Teammate',color:index?'#cf8d42':'#728eca',avatar:'',capabilities:[],status:'active',desired_state:'running',revision:1,applied_revision:1,readiness:{compatible:true},enabled_tools:[],enabled_skills:[],memory_mb:2048,cpus:1.5}));
 const conversations=bots.map((bot,index)=>({id:index?'scout':'quill',title:bot.name,kind:'dm',bot_id:bot.id,bot_ids:[bot.id]}));
 const hours=h=>new Date(Date.now()+h*3600000).toISOString();
-const grants=[['fresh',20],['lapsing',0.5],['expired',-1]].map(([name,h])=>({id:`grant-${name}`,manager_id:'researcher',targets:['writer'],operations:['delegate','inspect'],kind:'task',expires_at:hours(h),revoked_at:null,max_created_bots:0,created_bots:0,max_memory_mb:2048,max_cpus:1.5}));
-const item=(name,title)=>{const task={id:`task-${name}`,root_id:`task-${name}`,parent_id:null,bot_id:'researcher',conversation_id:'scout',input:title,input_hash:'0'.repeat(64),status:'failed',output:null,error:'Model unavailable',grant_id:`grant-${name}`,depth:0,context:'chat',created_at:hours(-2),deadline:null,attempts:1};
+const QUESTION='Retry and let Scout manage Quill for another 24 hours?';
+const item=(name,title,grant)=>{const task={id:`task-${name}`,root_id:`task-${name}`,parent_id:null,bot_id:'researcher',conversation_id:'scout',input:title,input_hash:'0'.repeat(64),status:'failed',output:null,error:'Model unavailable',grant_id:grant,depth:0,context:'chat',created_at:hours(-2),deadline:null,attempts:1};
   return {id:`item-${name}`,conversation_id:'scout',bot_id:'researcher',title,objective:title,status:'failed',hidden_at:null,legacy:false,outcomes_version:1,outcomes:[],current_task:task,executions:[task],outputs:[],updated_at:hours(-1)};};
-const work_items=[item('fresh','Coordinate the weekly report'),item('lapsing','Coordinate the launch notes'),item('expired','Coordinate the client brief')];
-const state={bots,retired_bots:[],conversations,tasks:work_items.map(w=>w.current_task),work_items,approvals:[],input_requests:[],artifacts:[],grants,proposals:[],operations:[],controls:[],workspace:{},provider_configured:true,protocol_fixture:false,event_cursor:0};
+const work_items=[item('plain','Summarize the notes',null),item('team','Coordinate the launch notes','grant-team')];
+const state={bots,retired_bots:[],conversations,tasks:work_items.map(w=>w.current_task),work_items,approvals:[],input_requests:[],artifacts:[],grants:[],proposals:[],operations:[],controls:[],workspace:{},provider_configured:true,protocol_fixture:false,event_cursor:0};
 try{
   const context=await browser.newContext({viewport:{width:1440,height:900},serviceWorkers:'block',timezoneId:'UTC'});
   await context.addInitScript(()=>{window.EventSource=class extends EventTarget{close(){}};});
@@ -35,7 +35,11 @@ try{
     const req=route.request(),url=new URL(req.url());if(url.origin!==origin)return route.abort();
     if(!url.pathname.startsWith('/api/'))return route.continue();
     const retry=url.pathname.match(/^\/api\/v1\/tasks\/([^/]+)\/retry$/);
-    if(retry&&req.method()==='POST'){retries.push({task:retry[1],body:JSON.parse(req.postData()||'{}')});return route.fulfill({status:202,json:{id:'replacement-'+retry[1]}});}
+    if(retry&&req.method()==='POST'){
+      const body=JSON.parse(req.postData()||'{}');retries.push({task:retry[1],body});
+      if(retry[1]==='task-team'&&!body.renew_management)return route.fulfill({status:409,json:{detail:{code:'renewal_required',message:QUESTION}}});
+      return route.fulfill({status:202,json:{id:'replacement-'+retry[1]}});
+    }
     if(req.method()!=='GET')return route.fulfill({status:403,json:{detail:'Fixture rejects writes'}});
     let result={};
     if(url.pathname==='/api/v1/state')result=state;
@@ -49,36 +53,31 @@ try{
   page.on('dialog',async dialog=>{dialogs.push(dialog.message());await (answer?dialog.accept():dialog.dismiss());});
   await page.goto(origin);
   await page.getByRole('navigation',{name:'Team conversations'}).getByRole('button',{name:/Scout/}).click();
-  const card=name=>page.locator(`[data-work-item-id="item-${name}"]`);
-  const retryButton=name=>card(name).getByRole('button',{name:'Retry task',exact:true});
-  await page.getByText('Finished work (3)',{exact:true}).click();  // Failed work is listed under finished work.
-  await retryButton('fresh').waitFor();
+  const retryButton=name=>page.locator(`[data-work-item-id="item-${name}"]`).getByRole('button',{name:'Retry task',exact:true});
+  await page.getByText('Finished work (2)',{exact:true}).click();  // Failed work is listed under finished work.
+  await retryButton('plain').waitFor();
   await page.screenshot({path:`${out}/work-cards-1440.png`});
 
-  await retryButton('fresh').click();
+  await retryButton('plain').click();
   await page.waitForTimeout(400);
-  assert.equal(dialogs.length,0,'Plenty of time left: no question asked');
-  assert.deepEqual(retries.at(-1),{task:'task-fresh',body:{}});
-  checks.push('A team task with plenty of permission left retries straight away, without renewing anything.');
+  assert.equal(dialogs.length,0,'Work without management is retried without a question');
+  assert.deepEqual(retries,[{task:'task-plain',body:{}}]);
+  checks.push('Work without management retries straight away.');
 
   answer=false;
-  await retryButton('lapsing').click();
-  await page.waitForTimeout(400);
-  assert.equal(dialogs.at(-1),"Scout's permission to manage Quill for this work expires within the hour. Renew it for 24 hours and retry?");
-  assert.equal(retries.length,1,'Declining sends nothing');
-  checks.push('When the permission expires within the hour, Retry asks first, names the teammates, and declining sends nothing.');
+  await retryButton('team').click();
+  await page.waitForTimeout(500);
+  assert.deepEqual(dialogs,[QUESTION],"The card shows the server's own question");
+  assert.deepEqual(retries.slice(1),[{task:'task-team',body:{}}],'Declining sends nothing more');
+  assert.equal(await page.getByText(QUESTION).count(),0,'Declining is not reported as an error');
+  checks.push("A team retry shows the server's question; declining sends nothing more and shows no error.");
 
   answer=true;
-  await retryButton('lapsing').click();
-  await page.waitForTimeout(400);
-  assert.deepEqual(retries.at(-1),{task:'task-lapsing',body:{renew_management:true}});
-  checks.push('Confirming renews the same permission as part of the retry.');
-
-  await retryButton('expired').click();
-  await page.waitForTimeout(400);
-  assert.match(dialogs.at(-1),/^Scout's permission to manage Quill for this work has expired\. Renew it for 24 hours and retry\?$/);
-  assert.deepEqual(retries.at(-1),{task:'task-expired',body:{renew_management:true}});
-  checks.push('An expired permission is also renewed only on confirmation.');
+  await retryButton('team').click();
+  await page.waitForTimeout(500);
+  assert.deepEqual(retries.slice(-2),[{task:'task-team',body:{}},{task:'task-team',body:{renew_management:true}}]);
+  assert.equal(await page.getByText(QUESTION).count(),0,'Nothing is left on screen');
+  checks.push('Confirming resends the retry with the renewal.');
   assert.deepEqual(errors,[]);
   await context.close();
 }finally{
