@@ -121,13 +121,14 @@ try{
   assert.deepEqual(await reopened.getByRole('tab').allInnerTexts(),[...sections,'Advanced']);
   await reopened.getByRole('tab',{name:'Advanced'}).click();
   await reopened.getByText('These change how Hermbot behaves for the whole workspace. The defaults are recommended.').waitFor();
-  await reopened.getByText('These take effect when takeover pausing ships.').waitFor();
+  assert.equal(await reopened.getByText(/takeover pausing ships/).count(),0,'The settings are in effect, so no pending-effect note');
+  await reopened.getByText('Show “Couldn’t pause the bot” with Try again, Take over without pausing, or Cancel.').waitFor();
   assert.equal(await reopened.getByRole('radio',{name:/^Ask me · default/}).isChecked(),true);
   assert.equal(await reopened.getByRole('radio',{name:/^Pause immediately · default/}).isChecked(),true);
   assert(await reopened.getByRole('button',{name:'Save advanced settings'}).isDisabled(),'Nothing to save yet');
   assert(await reopened.getByRole('button',{name:'Reset to defaults'}).isDisabled(),'Already at the defaults');
   await reopened.getByText('No changes yet.').waitFor();
-  checks.push('Advanced is hidden until revealed in General, then appears last with a warning, the pending-effect note and both defaults selected.');
+  checks.push('Advanced is hidden until revealed in General, then appears last with a warning and both defaults selected; the ask option names all three choices.');
   await reopened.getByRole('radio',{name:/^Always refuse/}).check();
   await reopened.getByRole('radio',{name:/^Wait up to 30 seconds/}).check();
   await reopened.getByRole('button',{name:'Save advanced settings'}).click();

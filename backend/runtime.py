@@ -12,6 +12,17 @@ REQUIRED_FEATURES = ("run_submission", "run_status", "run_events_sse", "run_stop
 HERMES_REVISION = "749220ef0007f8d87bd1531f1c24b0fe93816385"
 
 
+class RuntimePaused(Exception):
+    """The bot's container is paused for a takeover. Nothing was sent; retry after handback."""
+
+
+def refuse_paused(bot_id):
+    from .native import PAUSED, paused
+    with db.connection() as conn:
+        if paused(conn, bot_id):
+            raise RuntimePaused(PAUSED)
+
+
 class HermesClient:
     def __init__(self, bot_id, base_url=None):
         self.bot_id = bot_id
@@ -23,6 +34,7 @@ class HermesClient:
         self.headers = {"Authorization": f"Bearer {decrypt(bot['runtime_key_encrypted']) if bot and bot['runtime_key_encrypted'] else settings.runtime_key(bot_id)}"}
 
     async def request(self, method, path, **kwargs):
+        refuse_paused(self.bot_id)
         headers = {**self.headers, **kwargs.pop("headers", {})}
         async with httpx.AsyncClient(timeout=httpx.Timeout(15, connect=4)) as client:
             response = await client.request(method, self.base_url + path, headers=headers, **kwargs)
@@ -90,6 +102,7 @@ class HermesClient:
 
     async def events(self, run_id):
         # Transport reconnection does not imply replay safety; polling and durable product events reconcile state.
+        refuse_paused(self.bot_id)
         async with httpx.AsyncClient(timeout=httpx.Timeout(25, connect=4)) as client:
             async with client.stream("GET", f"{self.base_url}/v1/runs/{run_id}/events", headers=self.headers) as response:
                 response.raise_for_status()

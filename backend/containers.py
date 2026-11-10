@@ -179,7 +179,10 @@ class RuntimeSpec(StrictModel):
 
 
 def container_stop(container):
-    if container and container["State"] in {"running", "restarting"}:
+    if container and container["State"] == "paused":
+        # A frozen container cannot handle its stop signal; thaw it so it shuts down cleanly.
+        docker_request("POST", f"/containers/{container['Id']}/unpause")
+    if container and container["State"] in {"running", "restarting", "paused"}:
         docker_request("POST", f"/containers/{container['Id']}/stop", params={"t": 15})
 
 
@@ -268,7 +271,9 @@ def ensure(spec, clone=False):
                                            'security': RUNTIME_SECURITY}, sort_keys=True).encode()).hexdigest()
     container = find_runtime(spec.bot_id, required=False)
     if container and (container.get("Labels") or {}).get("com.hermbot.configuration") == fingerprint:
-        if spec.desired_state == "running" and container["State"] != "running":
+        if spec.desired_state == "running" and container["State"] == "paused":
+            docker_request("POST", f"/containers/{container['Id']}/unpause")
+        elif spec.desired_state == "running" and container["State"] != "running":
             docker_request("POST", f"/containers/{container['Id']}/start")
         elif spec.desired_state == "stopped":
             container_stop(container)
@@ -387,6 +392,37 @@ def stop_owner_session(bot_id: BotId):
     with LOCKS["owner-session:" + bot_id]:
         remove_owner_session(bot_id)
     return {"removed": True}
+
+
+# While the owner uses a private browser the bot's runtime is frozen: every process in it stops at
+# once, including ones the agent started, and none can run until it is resumed. Only Hermbot's own
+# runtime for this bot can be paused; both calls are idempotent and report the verified state.
+def set_runtime_paused(bot_id, paused):
+    with LOCKS[bot_id]:
+        runtime = find_runtime(bot_id, required=paused)
+        if not runtime:
+            return {"paused": False, "changed": False}
+        state = docker_request("GET", f"/containers/{runtime['Id']}/json")["State"]
+        changed = state["Paused"] != paused
+        if paused and changed:
+            if not state["Running"]:
+                raise HTTPException(409, "The runtime is not running")
+            docker_request("POST", f"/containers/{runtime['Id']}/pause")
+        elif changed:
+            docker_request("POST", f"/containers/{runtime['Id']}/unpause")
+        if docker_request("GET", f"/containers/{runtime['Id']}/json")["State"]["Paused"] != paused:
+            raise HTTPException(502, "The runtime did not " + ("pause" if paused else "resume"))
+    return {"paused": paused, "changed": changed}
+
+
+@app.post("/runtimes/{bot_id}/pause", dependencies=[Depends(authorize)])
+def pause_runtime(bot_id: BotId):
+    return set_runtime_paused(bot_id, True)
+
+
+@app.post("/runtimes/{bot_id}/resume", dependencies=[Depends(authorize)])
+def resume_runtime(bot_id: BotId):
+    return set_runtime_paused(bot_id, False)
 
 
 @app.post("/operations/{action}", dependencies=[Depends(authorize)])

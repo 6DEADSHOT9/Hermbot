@@ -8,10 +8,19 @@ import httpx
 from . import db, registry
 from .secrets import decrypt
 
+PAUSED = "This teammate is paused while the owner uses a private browser"
 
-def target(bot_id):
+
+def paused(conn, bot_id):
+    """While a takeover has the bot's container frozen, nothing may call it: a request would hang."""
+    return bool(conn.execute("SELECT 1 FROM computer_controls WHERE bot_id=%s AND paused_at IS NOT NULL", (bot_id,)).fetchone())
+
+
+def target(bot_id, *, allow_paused=True):
     with db.connection() as conn:
         bot = registry.require_bot(conn, bot_id)
+        if not allow_paused and paused(conn, bot_id):
+            raise HTTPException(409, PAUSED)
     parsed = urlsplit(bot["runtime_url"])
     # Until a runtime is reprovisioned with its own adapter key, it still holds the shared one.
     applied = bot["adapter_key_encrypted"] and bot["applied_revision"] >= bot["adapter_key_revision"]
@@ -20,10 +29,11 @@ def target(bot_id):
     }
 
 
-def request(bot_id, method, path, **kwargs):
-    url, headers = target(bot_id)
+def request(bot_id, method, path, *, allow_paused=False, timeout=80, **kwargs):
+    # Only the takeover and handback flow, which pauses and resumes the bot itself, may pass allow_paused.
+    url, headers = target(bot_id, allow_paused=allow_paused)
     try:
-        with httpx.Client(timeout=httpx.Timeout(80, connect=4)) as client:
+        with httpx.Client(timeout=httpx.Timeout(timeout, connect=4)) as client:
             response = client.request(method, url + path, headers=headers, **kwargs)
         if response.status_code >= 400:
             detail = response.json().get("detail", "Native operation was refused")

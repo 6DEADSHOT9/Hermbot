@@ -13,7 +13,7 @@ from fastapi import HTTPException
 from psycopg.types.json import Jsonb
 
 from . import connections, coordination, db, execution_monitor, execution_policy, isolation, knowledge, outcomes, provisioning, registry, routines, triggers, work_controller, work_intake
-from .runtime import HermesClient
+from .runtime import HermesClient, RuntimePaused
 from .service import ACTIVE_ATTEMPTS, TERMINAL, cancel, check_grant, digest, locked_task, now
 from .settings import settings
 from .policy import NATIVE_INSTRUCTION
@@ -253,6 +253,7 @@ def claim_new():
 def claim_existing():
     # A takeover from another worker process means that process stopped. The first takeover makes
     # every attempt a suspect; a suspect is charged again only if it was being driven at the time.
+    # Attempts of a bot paused for a takeover wait for handback: its runtime cannot answer.
     with db.connection() as conn:
         rows = conn.execute(
             "UPDATE attempts SET worker_id=%s,lease_until=now()+interval '12 seconds',"
@@ -260,6 +261,7 @@ def claim_existing():
             "WHEN drive_started_at IS NOT NULL THEN lease_takeovers+1 ELSE lease_takeovers END,"
             "drive_started_at=CASE WHEN worker_id IS NOT DISTINCT FROM %s THEN drive_started_at END WHERE id IN "
             "(SELECT id FROM attempts WHERE status=ANY(%s) AND (worker_id=%s OR lease_until<now() OR lease_until IS NULL) "
+            "AND bot_id NOT IN (SELECT bot_id FROM computer_controls WHERE paused_at IS NOT NULL) "
             "ORDER BY created_at FOR UPDATE SKIP LOCKED) RETURNING *,(drive_not_before IS NULL OR drive_not_before<=now()) AS due",
             (WORKER_ID, WORKER_ID, WORKER_ID, [status for status in ACTIVE_ATTEMPTS if status != "uncertain"] + ["reserved"], WORKER_ID),
         ).fetchall()
@@ -475,6 +477,8 @@ async def guarded_drive(attempt, suspect=False):
             conn.execute("UPDATE attempts SET drive_started_at=now() WHERE id=%s", (attempt["id"],))
     try:
         await drive(attempt)
+    except RuntimePaused:
+        return  # Paused for a takeover after this attempt was claimed; nothing was sent.
     except Exception as exc:
         if isolation.database_lost(exc):
             raise
@@ -718,6 +722,10 @@ async def deliver_decisions(client, attempt):
         conn.execute("UPDATE controls SET status='dispatching',attempt_id=%s,updated_at=now() WHERE id=%s", (attempt["id"], control["id"]))
     try:
         await client.steer(attempt["runtime_run_id"], control["input"])
+    except RuntimePaused:
+        with db.connection() as conn:
+            conn.execute("UPDATE controls SET status='pending' WHERE id=%s", (control["id"],))  # Never sent.
+        raise
     except httpx.HTTPStatusError as exc:
         if exc.response.status_code == 409:
             with db.connection() as conn:
@@ -738,9 +746,30 @@ async def deliver_decisions(client, attempt):
         db.event(conn, "task.steered", task, data={"control_id": str(control["id"])})
 
 
-async def probe():
+async def resume_orphaned_pauses():
+    """Resume a runtime left paused although no takeover holds it, e.g. after an interrupted handback."""
+    # Docker's state is read before the database's: a takeover records the pause before pausing, and
+    # a handback clears it only after resuming, so a runtime seen paused here with no record is orphaned.
+    runtimes = (await provisioning.supervisor("GET", "/runtimes"))["runtimes"]
+    frozen = [row["bot_id"] for row in runtimes if row["state"] == "paused"]
+    if not frozen:
+        return
     with db.connection() as conn:
-        bots = conn.execute("SELECT id,desired_state,status FROM bots WHERE status NOT IN ('deleted','archived')").fetchall()
+        held = {row["bot_id"] for row in conn.execute("SELECT bot_id FROM computer_controls WHERE paused_at IS NOT NULL AND bot_id=ANY(%s)", (frozen,))}
+    for bot_id in frozen:
+        if bot_id not in held:
+            logger.warning("Resuming runtime %s, which was paused without a takeover", bot_id)
+            await provisioning.supervisor("POST", f"/runtimes/{bot_id}/resume")
+
+
+async def probe():
+    try:
+        await resume_orphaned_pauses()
+    except (httpx.HTTPError, KeyError):
+        logger.info("Could not check for paused runtimes; retrying at the next probe")
+    with db.connection() as conn:
+        bots = conn.execute("SELECT id,desired_state,status FROM bots WHERE status NOT IN ('deleted','archived') "
+                            "AND id NOT IN (SELECT bot_id FROM computer_controls WHERE paused_at IS NOT NULL)").fetchall()
     for bot in bots:
         bot_id = bot["id"]
         if bot["desired_state"] == "stopped" or bot["status"] != "active":

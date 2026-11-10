@@ -22,7 +22,7 @@ from .artifacts import ArtifactStore
 from .models import (ARGUMENT_MODELS, ContextRequest, DecisionRequest, EndRequest, GroupRequest,
                      InboxDeliveryRequest, MessageRequest, ReviewEditRequest, RoutineRequest, SteerRequest, TaskRequest, ToolRequest, ToolVisibilityRequest)
 from .routine_models import RoutineDefinition
-from .runtime import HermesClient
+from .runtime import HermesClient, RuntimePaused
 from .product import routes
 from .library import routes as library_routes
 from .computer import routes as computer_routes
@@ -187,6 +187,8 @@ async def runtime_history(conversation_id: UUID, bot_id: str):
     # Hermes is authoritative for native transcripts, including compacted history.
     try:
         return await HermesClient(bot_id).request("GET", f"/api/sessions/{session['runtime_session_id']}/messages?include_compacted=true&inline_images=false")
+    except RuntimePaused as exc:
+        raise HTTPException(409, str(exc)) from None
     except httpx.HTTPStatusError as exc:
         if exc.response.status_code == 404:
             raise HTTPException(404, 'This native history is not available in the teammate runtime') from None
@@ -326,7 +328,8 @@ def decide(approval_id: UUID, body: DecisionRequest):
         if body.decision == 'once' and item['kind'] == 'input' and item['payload'].get('action', {}).get('input_type') == 'secure':
             from . import native
             destination = item['payload']['action']['bot_id']
-            if native.request(destination, 'GET', '/computer')['lease']['holder'] != 'agent' or conn.execute("SELECT 1 FROM computer_controls WHERE bot_id=%s AND holder='human'", (destination,)).fetchone():
+            # The database answers first, so a computer paused for a takeover is never called.
+            if conn.execute("SELECT 1 FROM computer_controls WHERE bot_id=%s AND holder='human'", (destination,)).fetchone() or native.request(destination, 'GET', '/computer')['lease']['holder'] != 'agent':
                 raise HTTPException(409, 'Finish secure input and hand back this computer before continuing')
         conn.execute("UPDATE approvals SET status='decided',decision=%s,decided_at=now() WHERE id=%s", (body.decision, approval_id))
         if item["kind"] in ('skill', 'memory'):

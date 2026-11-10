@@ -7,6 +7,7 @@ let privateScreenFrames=0;
 const baseURL=process.env.HERMBOT_TEST_URL||'http://api:8000';
 async function session(){const c=await browser.newContext({baseURL,viewport:{width:1440,height:1000}}),p=await c.newPage();p.on('pageerror',e=>errors.push(e.message));p.on('websocket',ws=>{if(ws.url().endsWith('/computer/ws'))ws.on('framereceived',frame=>{if(Buffer.from(frame.payload).toString('latin1').includes('Hermbot private session'))privateScreenFrames++;});});await p.goto('/');await p.getByLabel('Owner token').fill(process.env.OWNER_TOKEN);await p.getByRole('button',{name:'Open workspace'}).click();await p.getByRole('navigation',{name:'Team conversations'}).getByRole('button',{name:/Scout/}).click();return [c,p];}
 const [context,page]=await session();
+try{
 const response=await context.request.get('/api/v1/bots/researcher/computer');assert.equal(response.status(),200);
 await page.getByRole('button',{name:'Open Scout computer'}).click();
 const dialog=page.getByRole('dialog');
@@ -38,11 +39,19 @@ const [other,second]=await session();
 state=await (await other.request.get('/api/v1/bots/researcher/computer')).json();assert.equal(state.mine,false);
 const forbidden=await other.request.post('/api/v1/bots/researcher/computer/control',{data:{action:'handback'}});assert.equal(forbidden.status(),409);
 await second.getByRole('button',{name:'Open Scout computer'}).click();await second.getByRole('button',{name:'Reclaim control',exact:true}).click();await second.getByText('You are in control · private browser',{exact:true}).waitFor();
-state=await (await context.request.get('/api/v1/bots/researcher/computer')).json();assert.equal(state.mine,false);assert.ok(state.lease.epoch>epoch);
+// While the bot is paused the reclaim never calls it: control moves to the new session in the database, which fences
+// the old one. The old session no longer holds control and cannot hand back without forcing.
+state=await (await context.request.get('/api/v1/bots/researcher/computer')).json();assert.equal(state.mine,false);assert.equal(state.takeover?.phase,'paused');
+const stale=await context.request.post('/api/v1/bots/researcher/computer/control',{data:{action:'handback'}});assert.equal(stale.status(),409);
 await second.getByRole('button',{name:'Hand back',exact:true}).click();await second.getByText('Bot is in control',{exact:true}).waitFor();
 state=await (await context.request.get('/api/v1/bots/researcher/computer')).json();assert.equal(state.lease.holder,'agent');assert.equal(state.admission_paused,false);assert.equal(state.private_session,false);
 if(process.env.HERMBOT_PHASE3_EXIT==='1'){await reloaded.getByRole('dialog').getByRole('button',{name:'Close',exact:true}).click();await reloaded.getByRole('navigation',{name:'Team conversations'}).getByRole('button',{name:/Sage/}).click();await reloaded.getByRole('button',{name:'Input completed · continue',exact:true}).click();}
 await second.setViewportSize({width:390,height:844});assert.ok(await second.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await second.screenshot({path:'/output/phase3-computer-mobile.png',fullPage:true});
 assert.deepEqual(errors,[]);
-await writeFile('/output/phase3-computer.json',JSON.stringify({check:'private takeover browser over authenticated WebSocket, owner secure keystrokes, close/reconnect, competing owner sessions, stale handback rejection, explicit reclaim, epoch fencing, handback and mobile view',bot_id:'researcher',old_epoch:epoch,new_epoch:state.lease.epoch,secret_input_added_to_transcript:false,script_errors:errors},null,2));
+await writeFile('/output/phase3-computer.json',JSON.stringify({check:'private takeover browser over authenticated WebSocket, owner secure keystrokes, close/reconnect, competing owner sessions, stale handback rejection, explicit reclaim of a paused takeover, fencing of the old session, handback and mobile view',bot_id:'researcher',old_epoch:epoch,new_epoch:state.lease.epoch,secret_input_added_to_transcript:false,script_errors:errors},null,2));
+}catch(error){
+  // A failed run must not leave Scout taken over, and so paused, until someone notices.
+  await context.request.post('/api/v1/bots/researcher/computer/control',{data:{action:'handback',force:true},timeout:120000}).catch(()=>{});
+  await browser.close();throw error;
+}
 await browser.close();console.log('Phase 3 live computer UI acceptance passed.');
