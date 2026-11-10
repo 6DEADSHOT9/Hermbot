@@ -299,6 +299,8 @@ def revoke_grant(grant_id: UUID):
             conn.execute('SELECT id FROM work_items WHERE id=%s FOR UPDATE', (UUID(identity),))
         for task in roots:
             service.locked_task(conn, task['id'])
+        # A retry that took the grant while this waited for those locks isn't in `roots`. The worker never dispatches
+        # work whose grant is revoked (check_grant at dispatch) and its sweep cancels any such work within a cycle.
         conn.execute("UPDATE grants SET revoked_at=now() WHERE id=%s", (grant_id,))
         for task in roots:
             service.cancel(conn, service.locked_task(conn, task['id']), "Owner revoked management authority")

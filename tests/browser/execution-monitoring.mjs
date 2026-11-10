@@ -56,6 +56,9 @@ try {
   const panel=page.getByRole('complementary',{name:'Work and outputs'});
   const card=panel.locator(`[data-work-item-id="${itemId}"]`);
   await card.getByText('Budget reached',{exact:true}).waitFor();
+  // A teammate rebuilt just before (as phase3-knowledge does to Quill) is ready only after the worker's next probe.
+  // Wait for that in the API, so the presence check below still fails fast if the UI shows the wrong state.
+  for(let i=0;i<60;i++){const s=await (await page.request.get('http://api:8000/api/v1/state')).json();if(s.bots.find(b=>b.id==='writer')?.readiness?.compatible)break;await page.waitForTimeout(1500);}
   await page.locator('.header-presence').getByText('Ready',{exact:true}).waitFor();
   assert.equal(await card.getByRole('button',{name:'Retry task',exact:true}).count(),0);
   assert.equal(await card.getByRole('button',{name:'Redirect',exact:true}).count(),0);

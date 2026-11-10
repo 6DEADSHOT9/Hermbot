@@ -73,6 +73,40 @@ def active_task(conn, bot_id, session_id):
     return task
 
 
+def active_grant(conn, grant_id, *, lock=False):
+    """The grant if it is neither revoked nor expired. A lock holds off a concurrent revocation."""
+    grant = conn.execute("SELECT * FROM grants WHERE id=%s" + (" FOR SHARE" if lock else ""), (grant_id,)).fetchone()
+    return grant if grant and not grant["revoked_at"] and grant["expires_at"] > now() else None
+
+
+def present_bots(conn, bot_ids):
+    """Those of these bots that still exist and are neither archived nor being deleted."""
+    return conn.execute("SELECT id,name FROM bots WHERE id=ANY(%s) AND status NOT IN ('archived','deleting','deleted')", (list(bot_ids),)).fetchall()
+
+
+def handoffs_used(conn, root):
+    """Handoffs used by every run of this work: its first run and each retry of it share one budget."""
+    origin = root.get("retried_from") or root["id"]
+    return conn.execute("SELECT COALESCE(sum(handoffs),0) AS n FROM tasks WHERE (id=%s OR retried_from=%s) AND parent_id IS NULL",
+                        (origin, origin)).fetchone()["n"]
+
+
+def admit_work(conn, bot_id, conversation_id):
+    """Whether this bot can take new work in this conversation now; returns the bot."""
+    from . import registry
+    conversation = conn.execute("SELECT archived_at FROM conversations WHERE id=%s FOR SHARE", (conversation_id,)).fetchone()
+    if not conversation:
+        fail(404, "Conversation not found")
+    if conversation['archived_at']:
+        fail(409, "Restore this conversation before assigning new work")
+    bot = registry.admit_bot(conn, bot_id)
+    if bot["status"] != "active" or bot["desired_state"] != "running":
+        fail(409, "Start this bot and wait for provisioning before assigning work")
+    if not conn.execute("SELECT 1 FROM participants WHERE conversation_id=%s AND bot_id=%s", (conversation_id, bot_id)).fetchone():
+        fail(403, "Bot is not a participant in this conversation")
+    return bot
+
+
 def check_grant(conn, task, *, target=None, operation=None, manager=None, lock_scope=True):
     from .recurring_management import scope
     frozen = scope(conn, task)
@@ -82,8 +116,8 @@ def check_grant(conn, task, *, target=None, operation=None, manager=None, lock_s
         if operation:
             fail(403, "This action requires a user-issued management grant")
         return None
-    grant = conn.execute("SELECT * FROM grants WHERE id=%s" + (' FOR SHARE' if frozen and lock_scope else ''), (task["grant_id"],)).fetchone()
-    if not grant or grant["revoked_at"] or grant["expires_at"] <= now():
+    grant = active_grant(conn, task["grant_id"], lock=bool(frozen and lock_scope))
+    if not grant:
         fail(403, "Management authority has expired or been revoked")
     if frozen:
         if grant['manager_id'] != frozen['manager_id'] or task['bot_id'] not in frozen['targets'] + [frozen['manager_id']] or task['bot_id'] not in grant['targets'] + [grant['manager_id']]:
@@ -99,11 +133,12 @@ def check_grant(conn, task, *, target=None, operation=None, manager=None, lock_s
 
 def create_task(conn, *, bot_id, conversation_id, prompt, request_key, context="chat", managed_bot_ids=None,
                 management_operations=None, grant_id=None, attachment_ids=None, artifact_ids=None, reply_to_message_id=None, skill_refs=None, mention_bot_ids=None,
-                message_intent='assignment', work_item_id=None, deadline=None, orchestration_version=0, owner_message_id=None, coordination_version=0):
+                message_intent='assignment', work_item_id=None, deadline=None, orchestration_version=0, owner_message_id=None, coordination_version=0,
+                inherited_grant_id=None):
     from . import registry
     fingerprint = digest({"bot_id": bot_id, "conversation_id": str(conversation_id), "prompt": prompt,
                           "context": context, "managed_bot_ids": managed_bot_ids, "management_operations": management_operations,
-                          "grant_id": str(grant_id) if grant_id else None, "attachment_ids": list(map(str, attachment_ids or [])),
+                          "grant_id": str(grant_id or inherited_grant_id or "") or None, "attachment_ids": list(map(str, attachment_ids or [])),
                           "reply_to_message_id": reply_to_message_id, "skill_refs": skill_refs or [], "mention_bot_ids": mention_bot_ids or [], "artifact_ids": list(map(str, artifact_ids or []))})
     if message_intent != 'assignment' or work_item_id:
         fingerprint = digest({'submission': fingerprint, 'intent': message_intent, 'work_item_id': str(work_item_id) if work_item_id else None})
@@ -118,16 +153,7 @@ def create_task(conn, *, bot_id, conversation_id, prompt, request_key, context="
         return existing
     if deadline is not None and (deadline.tzinfo is None or deadline <= now()):
         fail(422, 'Use a future owner deadline with a timezone')
-    conversation = conn.execute("SELECT archived_at FROM conversations WHERE id=%s FOR SHARE", (conversation_id,)).fetchone()
-    if not conversation:
-        fail(404, "Conversation not found")
-    if conversation['archived_at']:
-        fail(409, "Restore this conversation before assigning new work")
-    bot = registry.admit_bot(conn, bot_id)
-    if bot["status"] != "active" or bot["desired_state"] != "running":
-        fail(409, "Start this bot and wait for provisioning before assigning work")
-    if not conn.execute("SELECT 1 FROM participants WHERE conversation_id=%s AND bot_id=%s", (conversation_id, bot_id)).fetchone():
-        fail(403, "Bot is not a participant in this conversation")
+    bot = admit_work(conn, bot_id, conversation_id)
     task_id = uuid4()
     from .library import visible_in_conversation
     for artifact_id in artifact_ids or []:
@@ -146,12 +172,19 @@ def create_task(conn, *, bot_id, conversation_id, prompt, request_key, context="
     for mentioned in set(mention_bot_ids or []):
         if not conn.execute("SELECT 1 FROM participants WHERE conversation_id=%s AND bot_id=%s", (conversation_id, mentioned)).fetchone():
             fail(403, "Mentioned bot is not in this conversation")
-    if grant_id:
-        grant = conn.execute("SELECT * FROM grants WHERE id=%s", (grant_id,)).fetchone()
-        if not grant or grant["kind"] != "standing" or grant["manager_id"] != bot_id or grant["revoked_at"] or grant["expires_at"] <= now():
-            fail(403, "Choose an active standing grant belonging to this manager")
-        if managed_bot_ids is not None or management_operations is not None:
+    if grant_id or inherited_grant_id:
+        # A standing grant is chosen by the owner; a task grant is inherited only by a retry of its own work,
+        # never copied, so revoking it reaches every run of that work and its limits still apply.
+        if (grant_id and inherited_grant_id) or managed_bot_ids is not None or management_operations is not None:
             fail(422, "Select a standing grant or create a task grant, not both")
+        kind = "standing" if grant_id else "task"
+        grant_id = grant_id or inherited_grant_id
+        grant = active_grant(conn, grant_id)
+        if not grant or grant["kind"] != kind or grant["manager_id"] != bot_id:
+            fail(403, "Choose an active standing grant belonging to this manager" if kind == "standing"
+                 else "This work's permission to manage teammates is no longer active")
+        if kind == "task" and len(present_bots(conn, grant["targets"])) < len(set(grant["targets"])):
+            fail(409, "A teammate this work managed is archived or no longer exists. Send the request again with Coordinate team.")
     if management_operations is not None and managed_bot_ids is None:
         fail(422, "Operations must belong to an explicitly scoped management request")
     if managed_bot_ids is not None:
@@ -195,7 +228,7 @@ def create_task(conn, *, bot_id, conversation_id, prompt, request_key, context="
         elif work_item_id:
             fail(422, 'Choose update or status when referencing existing work explicitly')
     task = locked_task(conn, task_id)
-    event(conn, "task.queued", task, data={"manager": managed_bot_ids is not None})
+    event(conn, "task.queued", task, data={"manager": managed_bot_ids is not None or inherited_grant_id is not None})
     return task
 
 
@@ -220,7 +253,10 @@ def delegate(conn, task, bot_id, prompt, depends_on=None, artifact_ids=None, *, 
         fail(409, "Delegation would create a circular bot wait")
     root = conn.execute("SELECT * FROM tasks WHERE id=%s", (task["root_id"],)).fetchone()
     grant = check_grant(conn, task)
-    if root["handoffs"] >= min(settings.max_handoffs, grant["max_handoffs"] if grant else settings.max_handoffs):
+    # A task grant's handoff budget covers its work, including every retry of it, not each run afresh. Only one run
+    # of that work is ever active (a retry waits for the old run to settle), and its root is locked, so no extra lock.
+    used = handoffs_used(conn, root) if grant and grant["kind"] == "task" else root["handoffs"]
+    if used >= min(settings.max_handoffs, grant["max_handoffs"] if grant else settings.max_handoffs):
         fail(409, "Task handoff budget exhausted")
     from . import outcomes
     if task.get('orchestration_version') == 2 and not outcome_ids:

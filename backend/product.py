@@ -1,6 +1,7 @@
 """Phase 2 owner APIs; bots reach only the separately authenticated collaboration boundary."""
 import base64
 import binascii
+from datetime import timedelta
 import hashlib
 import re
 from uuid import UUID, uuid4
@@ -9,6 +10,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from psycopg.types.json import Jsonb
 
 from . import db, lifecycle, registry, service
+from .settings import settings
 from .models import (AttachmentRequest, BotConfiguration, BotId, BotUpdate, CloneRequest, EditRequest,
                      GrantRequest, GroupRequest, LifecycleRequest, ProposalArgs, ProviderRequest,
                      ReactionRequest, RetryRequest, WorkspaceRequest, AdvancedSettings)
@@ -301,6 +303,33 @@ def routes(owner, get_store):
             db.event(conn, "task.edited", task)
         return {"id": task_id, "updated": True}
 
+    def retry_management(conn, task, grant, renew):
+        """A retry keeps its work's own grant. A revoked one is never restored; a task grant is renewed for 24 h on every
+        retry, but only once the owner confirms it, so a retry never runs out of permission partway through."""
+        def manager():
+            row = conn.execute("SELECT name FROM bots WHERE id=%s", (task["bot_id"],)).fetchone()
+            return row["name"] if row else "This teammate"
+        if grant["revoked_at"] or (grant["kind"] == "standing" and grant["expires_at"] <= service.now()):
+            lapsed = "was revoked" if grant["revoked_at"] else "has expired"
+            again = "send the request again with Coordinate team" if grant["kind"] == "task" else "choose an active permission or send the request again with Coordinate team"
+            raise HTTPException(409, f"{manager()}'s permission to manage teammates for this work {lapsed}. To grant it again, {again}.")
+        if grant["kind"] != "task":
+            return  # A standing grant keeps the duration the owner chose for it in Settings.
+        if conn.execute("SELECT 1 FROM tasks WHERE root_id=%s AND status<>ALL(%s)", (task["root_id"], list(service.TERMINAL))).fetchone():
+            raise HTTPException(409, "Wait for the entire old operation to settle before retrying")
+        managed = service.present_bots(conn, grant["targets"])
+        if len(managed) < len(set(grant["targets"])):
+            raise HTTPException(409, "A teammate this work managed is archived or no longer exists. Send the request again with Coordinate team.")
+        if service.handoffs_used(conn, task) >= min(settings.max_handoffs, grant["max_handoffs"]):
+            raise HTTPException(409, "This work has used all its handoffs to teammates. To continue, send the request again with Coordinate team.")
+        if not renew:
+            names = ", ".join(sorted(row["name"] for row in managed))
+            raise HTTPException(409, {"code": "renewal_required", "message": f"Retry and let {manager()} manage {names} for another 24 hours?"})
+        expires = service.now() + timedelta(hours=24)
+        conn.execute("UPDATE grants SET expires_at=%s WHERE id=%s", (expires, grant["id"]))
+        db.event(conn, "grant.renewed", task, data={"grant_id": str(grant["id"]), "expires_at": expires.isoformat(),
+                                                     "targets": grant["targets"], "operations": grant["operations"]})
+
     @router.post("/api/v1/tasks/{task_id}/retry", status_code=202)
     def retry_task(task_id: UUID, body: RetryRequest, key: str = Header(alias="Idempotency-Key")):
         with db.connection() as conn:
@@ -317,17 +346,36 @@ def routes(owner, get_store):
                 if conn.execute("SELECT 1 FROM attempts a JOIN tasks t ON t.id=a.task_id WHERE t.root_id=%s AND a.status=ANY(%s)", (task["root_id"], list(service.ACTIVE_ATTEMPTS) + ["reserved"])).fetchone():
                     raise HTTPException(409, "Wait for the entire old operation to settle before retrying")
                 grant = conn.execute("SELECT * FROM grants WHERE id=%s", (task["grant_id"],)).fetchone() if task["grant_id"] else None
+                managing = bool(grant and grant["manager_id"] == task["bot_id"])
+                if managing and grant["kind"] == "task":
+                    # Locked after the work, as revocation locks it, so a retry and a revoke can't interleave.
+                    grant = conn.execute("SELECT * FROM grants WHERE id=%s FOR UPDATE", (grant["id"],)).fetchone()
+                origin = task["retried_from"] or task["id"]
+                # Only the latest run of a piece of work is retried: the checks above looked at this run alone.
+                newer = conn.execute("SELECT status FROM tasks WHERE retried_from=%s AND id<>%s AND created_at>%s ORDER BY created_at DESC LIMIT 1",
+                                     (origin, task["id"], task["created_at"])).fetchone()
+                if newer and newer["status"] in ("pausing_budget", "paused_budget"):
+                    raise HTTPException(409, "A retry of this work is stopped at its budget. Continue it instead.")
+                if newer and newer["status"] not in service.TERMINAL:
+                    raise HTTPException(409, "A retry of this work is already running. Use Redirect on it instead.")
+                if newer:
+                    raise HTTPException(409, "Retry the latest run of this work instead.")
+                service.admit_work(conn, task["bot_id"], task["conversation_id"])  # Before asking the owner to renew anything.
+                if managing:
+                    retry_management(conn, task, grant, body.renew_management)
                 replacement = service.create_task(conn, bot_id=task["bot_id"], conversation_id=task["conversation_id"], prompt=body.prompt or task["input"], request_key=key + ":task", context=task["context"],
-                    managed_bot_ids=grant["targets"] if grant and grant["kind"] == "task" and grant["manager_id"] == task["bot_id"] else None,
-                    management_operations=grant["operations"] if grant and grant["kind"] == "task" and grant["manager_id"] == task["bot_id"] else None,
-                    grant_id=grant["id"] if grant and grant["kind"] == "standing" else None,
+                    inherited_grant_id=grant["id"] if managing and grant["kind"] == "task" else None,
+                    grant_id=grant["id"] if managing and grant["kind"] == "standing" else None,
                     attachment_ids=[UUID(a) for a in task["attachment_ids"]], artifact_ids=[UUID(a) for a in task['library_artifact_ids']], reply_to_message_id=task["reply_to_message_id"], skill_refs=task["skill_refs"],
                     message_intent='auto' if task.get('orchestration_version') == 2 else 'update' if task['work_item_id'] else task['message_intent'],
                     work_item_id=None if task.get('orchestration_version') == 2 else task['work_item_id'], orchestration_version=task.get('orchestration_version', 0), coordination_version=task.get('coordination_version', 0))
                 if task.get('orchestration_version') == 2 and task['work_item_id']:
                     conn.execute('UPDATE tasks SET handoff_context=%s WHERE id=%s', (Jsonb({'owner_work_target': str(task['work_item_id'])}), replacement['id']))
+                conn.execute('UPDATE tasks SET retried_from=%s WHERE id=%s', (origin, replacement['id']))
                 return replacement
-            return registry.mutation(conn, key, {"action": "retry-task", "id": task_id, "body": body.model_dump()}, work)
+            # Without a renewal, the fingerprint is the one used before renewals existed, so earlier receipts still match.
+            request = body.model_dump(exclude=None if body.renew_management else {"renew_management"})
+            return registry.mutation(conn, key, {"action": "retry-task", "id": task_id, "body": request}, work)
 
     @router.post('/api/v1/tasks/{task_id}/continue')
     def continue_task(task_id: UUID, key: str = Header(alias='Idempotency-Key')):

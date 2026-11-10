@@ -25,12 +25,18 @@ export type State = {input_requests?:InputRequest[];work_items:WorkItem[]; bots:
 export type Chat = Conversation & {messages: Message[]; artifacts:Artifact[]; attachments:Attachment[]; has_earlier: boolean;thread_root?:Message|null};
 export type Event = {id: number; kind: string; task_id: string | null; conversation_id: string | null; bot_id: BotId | null; data: Record<string, unknown>;created_at:string};
 
+// A refused request keeps the server's status and, where it gives one, a code naming what it needs.
+export type ApiError = Error & {status?: number; code?: string};
+
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(path, {credentials: 'same-origin', ...init, headers: {'Content-Type': 'application/json', ...init.headers}});
   if (!response.ok) {
     if(response.status===401) window.dispatchEvent(new Event('hermbot-session-expired'));
     const body = await response.json().catch(() => ({}));
-    throw new Error(typeof body.detail === 'string' ? body.detail : body.detail?.message ? `${body.detail.message} ${body.detail.recovery||''}` : `Request failed (${response.status})`);
+    const failure: ApiError = new Error(typeof body.detail === 'string' ? body.detail : body.detail?.message ? `${body.detail.message} ${body.detail.recovery||''}`.trim() : `Request failed (${response.status})`);
+    failure.status = response.status;
+    if (typeof body.detail?.code === 'string') failure.code = body.detail.code;
+    throw failure;
   }
   return response.json();
 }
