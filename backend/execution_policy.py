@@ -46,6 +46,8 @@ def account(conn, attempt_id, *, running=True, at=None):
     attempt = conn.execute('SELECT * FROM attempts WHERE id=%s FOR UPDATE', (attempt_id,)).fetchone()
     if not attempt:
         return
+    if running and conn.execute('SELECT 1 FROM computer_controls WHERE bot_id=%s AND paused_at IS NOT NULL', (attempt['bot_id'],)).fetchone():
+        running = False  # A bot paused for a takeover does no work, so its clock stays stopped until handback.
     # Charge the interval according to the previous observed state. A waiting execution
     # starts charging again only after it is observed running, including after reconnect.
     elapsed = max(0, (at - attempt['accounted_at']).total_seconds()) if attempt['accounted_at'] else 0

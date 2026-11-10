@@ -40,12 +40,23 @@ def clean_database(monkeypatch):
 def owner_sessions(monkeypatch):
     """Tests never reach the real supervisor: takeover gets an in-memory private session."""
     class Sessions:
-        calls, finish_cookies, failing = [], [], None
+        calls, finish_cookies, failing, pause_fails = [], [], None, False
     sessions = Sessions()
-    sessions.calls = []
+    sessions.calls, sessions.paused = [], set()
 
     def supervisor(method, path, **kwargs):
         sessions.calls.append(("supervisor", method, path, kwargs.get("json")))
+        if path.startswith("/runtimes/"):
+            bot_id, action = path.split("/")[2:4]
+            if action == "pause":
+                if sessions.pause_fails:
+                    raise httpx.ConnectError("The runtime could not be paused")
+                changed = bot_id not in sessions.paused
+                sessions.paused.add(bot_id)
+                return {"paused": True, "changed": changed}
+            changed = bot_id in sessions.paused
+            sessions.paused.discard(bot_id)
+            return {"paused": False, "changed": changed}
         return {"url": "http://hermbot-owner-test:8650", "token": "owner-session-token"} if method == "POST" else {"removed": True}
 
     def session_request(session, method, path, **kwargs):

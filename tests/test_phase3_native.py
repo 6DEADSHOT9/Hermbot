@@ -331,7 +331,7 @@ def test_desktop_stop_settles_before_takeover_can_admit_input(owner_client, monk
         finally:
             release.set()
         assert stopped.result().status_code == takeover.result().status_code == 200
-    assert calls == ["/computer/stop", "/computer/control"]
+    assert calls[:2] == ["/computer/stop", "/computer/control"]
 
 
 def test_secure_input_review_records_metadata_only_and_requires_handback(

@@ -7,7 +7,7 @@ type Setting=keyof Values;
 type Advanced={values:Values;defaults:Values;history:{setting:Setting;from:string|number;to:string|number;changed_at:string}[]};
 const SETTINGS:{[K in Setting]:{label:string;choices:[Values[K],string,string][]}}={
   takeover_unpausable:{label:'When the bot can’t be paused for a takeover',choices:[
-    ['ask','Ask me','Show “Couldn’t pause the bot” with Try again or Take over without pausing.'],
+    ['ask','Ask me','Show “Couldn’t pause the bot” with Try again, Take over without pausing, or Cancel.'],
     ['refuse','Always refuse','Give control back to the bot and ask you to try again.'],
     ['continue','Always take over without pausing','Let you in while the bot keeps working. It still can’t see your private browser.']]},
   takeover_reply_wait_seconds:{label:'When the bot is mid-reply at takeover',choices:[
@@ -35,7 +35,6 @@ export function AdvancedSettings({active}:{active:boolean}){
     {error&&<p role="alert" className="error-text">{error}</p>}{message&&<p role="status" className="form-note">{message}</p>}
     <form className="settings-form" onSubmit={save}>
       <h4 className="advanced-group">Computer takeover</h4>
-      <p className="form-note">These take effect when takeover pausing ships.</p>
       {(Object.keys(SETTINGS) as Setting[]).map(key=><fieldset key={key}><legend>{SETTINGS[key].label}</legend>
         {SETTINGS[key].choices.map(([choice,label,note])=><label className="check-row advanced-choice" key={String(choice)}>
           <input type="radio" name={key} checked={values[key]===choice} onChange={()=>setForm({...values,[key]:choice})}/>

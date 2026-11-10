@@ -34,14 +34,16 @@ def identity():
 
 @pytest.fixture
 def adapter(monkeypatch):
-    calls = []
+    calls, lease = [], {"holder": "agent"}
 
     def request(bot_id, method, path, **kwargs):
         calls.append((method, path, kwargs.get("json")))
         if path == "/computer/browser-state":
             return {"cookies": BOT_COOKIES, "urls": ["https://example.com/login", "file:///etc/passwd", "javascript:alert(1)"]}
         if path in ("/computer", "/computer/control"):
-            holder = "agent" if (kwargs.get("json") or {}).get("action") == "handback" else "human"
+            if path == "/computer/control":
+                lease["holder"] = "agent" if kwargs["json"]["action"] == "handback" else "human"
+            holder = lease["holder"]
             return {"desktop": {"running": True, "geometry": "1280x800"}, "input_ready": True,
                     "lease": {"holder": holder, "epoch": 1, "viewer_hash": hashlib.sha256(identity().encode()).hexdigest()[:12]}}
         return {"applied": 1}
@@ -56,7 +58,7 @@ def takeover(owner_client):
 def test_takeover_opens_a_private_session_seeded_only_with_bot_cookies_and_pages(owner_client, adapter, owner_sessions):
     response = takeover(owner_client)
     assert response.status_code == 200 and response.json()["private_session"] is True
-    assert owner_sessions.calls[0] == ("supervisor", "POST", "/owner-sessions/researcher", {"geometry": "1280x800"})
+    assert ("supervisor", "POST", "/owner-sessions/researcher", {"geometry": "1280x800"}) in owner_sessions.calls
     seed = next(body for kind, method, path, body in owner_sessions.calls if path == "/start")
     assert seed["urls"] == ["https://example.com/login"]
     assert seed["cookies"] == [
@@ -81,6 +83,11 @@ def test_owner_in_control_only_ever_sees_the_private_session(owner_client, adapt
     assert url == "ws://hermbot-owner-test:8650/view" and headers == {"Authorization": "Bearer owner-session-token"}
     assert owner_client.get("/api/v1/bots/researcher/computer").status_code == 200  # The UI polls status throughout.
     assert computer.upstream_view("researcher", identity())[0] == "ws://hermbot-owner-test:8650/view", "Status polls keep the owner's route"
+    with pytest.raises(HTTPException) as paused:
+        computer.upstream_view("researcher", "someone-else")
+    assert paused.value.detail == native.PAUSED, "Nobody watches a paused bot"
+    with db.connection() as conn:
+        conn.execute("UPDATE computer_controls SET paused_at=NULL WHERE bot_id='researcher'")
     url, headers = computer.upstream_view("researcher", "someone-else")
     assert url.endswith(":8643/computer/ws") and len(headers["X-Hermbot-Viewer"]) == 64 and headers["X-Hermbot-Viewer"] != "someone-else"
 
@@ -89,7 +96,7 @@ def test_the_bots_own_screen_never_accepts_owner_input(owner_client, adapter):
     # Even the owner in control watches the bot's screen through a viewer the adapter's lease never matches.
     takeover(owner_client)
     with db.connection() as conn:
-        conn.execute("UPDATE computer_controls SET session_url=NULL WHERE bot_id='researcher'")
+        conn.execute("UPDATE computer_controls SET session_url=NULL,paused_at=NULL WHERE bot_id='researcher'")
         conn.execute("UPDATE computer_controls SET holder='agent' WHERE bot_id='researcher'")
     url, headers = computer.upstream_view("researcher", identity())
     assert url.endswith(":8643/computer/ws") and headers["X-Hermbot-Viewer"] != identity()
@@ -104,11 +111,13 @@ def test_handback_carries_cookies_back_and_removes_ones_the_owner_deleted(owner_
     owner_sessions.calls.clear()
     adapter.clear()
     assert owner_client.post("/api/v1/bots/researcher/computer/control", json={"action": "handback"}).status_code == 200
-    assert [call[:3] for call in owner_sessions.calls] == [("session", "POST", "/finish"), ("supervisor", "DELETE", "/owner-sessions/researcher")]
+    assert [call[:3] for call in owner_sessions.calls] == [("supervisor", "POST", "/runtimes/researcher/resume"), ("session", "POST", "/finish"),
+                                                           ("supervisor", "DELETE", "/owner-sessions/researcher")]
     cookies = next(body for method, path, body in adapter if path == "/computer/browser-cookies")
     assert cookies["set"] == owner_sessions.finish_cookies
     assert cookies["delete"] == [{"name": "gone", "domain": "example.com", "path": "/"}]
-    assert [path for method, path, body in adapter] == ["/computer/browser-cookies", "/computer/control"], "Logins arrive before the bot resumes"
+    assert [path for method, path, body in adapter][:3] == ["/health", "/computer/browser-cookies", "/computer/control"], \
+        "The bot is awake to receive the logins, and gets control back only after them"
     with db.connection() as conn:
         row = conn.execute("SELECT * FROM computer_controls WHERE bot_id='researcher'").fetchone()
         event = conn.execute("SELECT data FROM events WHERE kind='computer.control' ORDER BY id DESC LIMIT 1").fetchone()
@@ -121,6 +130,7 @@ def test_failed_private_session_returns_control_to_the_bot(owner_client, adapter
     response = takeover(owner_client)
     assert response.status_code == 502
     assert ("supervisor", "DELETE", "/owner-sessions/researcher", None) in owner_sessions.calls
+    assert ("supervisor", "POST", "/runtimes/researcher/resume", None) in owner_sessions.calls and not owner_sessions.paused
     assert ("POST", "/computer/control", {"action": "handback", "force": True, "viewer_id": identity()}) in adapter
     with db.connection() as conn:
         row = conn.execute("SELECT holder,session_url FROM computer_controls WHERE bot_id='researcher'").fetchone()

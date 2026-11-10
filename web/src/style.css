@@ -422,3 +422,4 @@
 .advanced-history ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .advanced-history li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;font-size:13px;overflow-wrap:anywhere}
 .advanced-history li small{color:var(--muted)}
+.computer-warning{margin:0 0 14px;padding:11px 13px;border-radius:8px;background:#f3ecd8;color:#897246;font-size:12px;line-height:1.7}[data-theme=dark] .computer-warning{background:#3a3425;color:#c3ad77}

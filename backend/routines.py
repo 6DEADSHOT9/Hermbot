@@ -331,7 +331,9 @@ def control(conn, identity, action, expected_revision, key):
 
 async def reconcile_schedulers():
     with db.connection() as conn:
-        rows = conn.execute("SELECT s.*,b.status,b.desired_state FROM routine_schedulers s JOIN bots b ON b.id=s.bot_id WHERE s.checked_at IS NULL OR s.checked_at<now()-interval '60 seconds'").fetchall()
+        # A bot paused for a takeover is checked again after handback.
+        rows = conn.execute("SELECT s.*,b.status,b.desired_state FROM routine_schedulers s JOIN bots b ON b.id=s.bot_id WHERE (s.checked_at IS NULL OR s.checked_at<now()-interval '60 seconds') "
+                            "AND s.bot_id NOT IN (SELECT bot_id FROM computer_controls WHERE paused_at IS NOT NULL)").fetchall()
     for binding in rows:
         with db.connection() as conn:
             wanted = bool(conn.execute("SELECT 1 FROM routine_definitions WHERE bot_id=%s AND state='active'", (binding['bot_id'],)).fetchone())

@@ -33,8 +33,8 @@ async function open(width,height){
       writes.push(`${req.method()} ${url.pathname}`);
       if(url.pathname==='/api/v1/bots/researcher/computer/control'){
         const body=JSON.parse(req.postData()||'{}');
-        if(body.action==='takeover'){Object.assign(computer,{lease:{holder:'human',epoch:2,reason:'Owner takeover'},mine:true,input_ready:true,admission_paused:true});releaseSession=()=>{computer.private_session=true;};}
-        else Object.assign(computer,{lease:{holder:'agent',epoch:3,reason:''},mine:false,input_ready:false,admission_paused:false,private_session:false});
+        if(body.action==='takeover'){Object.assign(computer,{lease:{holder:'human',epoch:2,reason:'Owner takeover'},mine:true,input_ready:true,admission_paused:true,takeover:{phase:'paused'}});releaseSession=()=>{computer.private_session=true;};}
+        else Object.assign(computer,{lease:{holder:'agent',epoch:3,reason:''},mine:false,input_ready:false,admission_paused:false,private_session:false,takeover:null});
         return route.fulfill({json:computer});
       }
       return route.fulfill({status:403,json:{detail:'Fixture rejects writes'}});
@@ -94,7 +94,7 @@ try{
   assert.equal(await page.getByText(/teaching|recording|demonstrat/i).count(),0,'The knowledge pane has no Teaching section');
   checks.push('The memory and skills pane opens without any Teaching section.');
   await context.close();
-  Object.assign(computer,{lease:{holder:'human',epoch:4,reason:'Owner takeover'},mine:true,input_ready:true,admission_paused:true,private_session:true});
+  Object.assign(computer,{lease:{holder:'human',epoch:4,reason:'Owner takeover'},mine:true,input_ready:true,admission_paused:true,private_session:true,takeover:{phase:'paused'}});
   for(const [width,height] of [[390,844],[768,1024]]){
     const [mobile,small]=await open(width,height);
     await small.getByRole('button',{name:'Open navigation'}).click().catch(()=>{});
