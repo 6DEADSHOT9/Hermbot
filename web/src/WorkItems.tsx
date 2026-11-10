@@ -1,17 +1,30 @@
 import {Circle, ChevronRight, Layers3, Square} from 'lucide-react';
-import {api, mutate, settled, statusLabel, taskStatus, type Artifact, type Bot, type Task, type WorkItem} from './api';
+import {api, mutate, settled, statusLabel, taskStatus, type Artifact, type Bot, type Grant, type Task, type WorkItem} from './api';
 import {OutcomeActions} from './OutcomeActions';
 
 type Props = {
-  items:WorkItem[]; botById:(id:string)=>Bot|undefined;
+  items:WorkItem[]; botById:(id:string)=>Bot|undefined; grants:Grant[];
   action:(work:()=>Promise<unknown>)=>Promise<void>; inspect:(task:Task)=>void;
   saveSkill:(task:Task)=>void; edit:(task:Task)=>void; redirect:(task:Task)=>void;
   reviewOutcome:()=>void;
   openOutput:(artifact:Artifact)=>void;
 };
 
-export function WorkItems({items,botById,action,inspect,saveSkill,edit,redirect,reviewOutcome,openOutput}:Props) {
+// A retry keeps its work's own management permission. If that has expired or is about to, renewing it is the owner's call.
+const RENEWAL_WINDOW_MS=60*60*1000;
+
+export function WorkItems({items,botById,grants,action,inspect,saveSkill,edit,redirect,reviewOutcome,openOutput}:Props) {
   const visible=items.filter(w=>!w.hidden_at&&w.current_task);
+  function retry(task:Task){
+    const grant=task.grant_id?grants.find(g=>g.id===task.grant_id):undefined;
+    const lapsing=!!grant&&grant.kind==='task'&&grant.manager_id===task.bot_id&&!grant.revoked_at&&new Date(grant.expires_at).getTime()-Date.now()<RENEWAL_WINDOW_MS;
+    if(grant&&lapsing){
+      const manager=botById(task.bot_id)?.name||'This teammate',managed=grant.targets.map(id=>botById(id)?.name||id).join(', ');
+      const when=new Date(grant.expires_at).getTime()<=Date.now()?'has expired':'expires within the hour';
+      if(!window.confirm(`${manager}'s permission to manage ${managed} for this work ${when}. Renew it for 24 hours and retry?`))return;
+    }
+    void action(()=>mutate(`/api/v1/tasks/${task.id}/retry`,'POST',lapsing?{renew_management:true}:{}));
+  }
   const active=visible.filter(w=>!['completed','failed','cancelled','interrupted'].includes(w.status));
   const finished=visible.filter(w=>!active.includes(w));
   const hidden=items.filter(w=>w.hidden_at&&w.current_task);
@@ -33,7 +46,7 @@ export function WorkItems({items,botById,action,inspect,saveSkill,edit,redirect,
       {!!item.outputs?.length&&<div className="work-outputs" aria-label="Work item outputs">{item.outputs.slice(0,3).map(output=><button className="inspect-work" key={output.id} onClick={()=>openOutput(output)}>{output.name}</button>)}</div>}
       {task.error&&(item.status==='completed'?<details className="work-execution-note"><summary>Execution note</summary><p className="form-note">All required results are ready. The latest execution also reported:</p><p className="task-error">{task.error}</p></details>:<p className="task-error">{task.error}</p>)}
       {unknown&&<><p className="task-error">Check the previous application outcome before continuing this work.</p><button className="secondary" onClick={reviewOutcome}>Review application outcome</button></>}
-      {item.status!=='completed'&&['failed','interrupted','cancelled'].includes(task.status)&&<button className="secondary" disabled={unknown} onClick={()=>action(()=>mutate(`/api/v1/tasks/${task.id}/retry`,'POST',{}))}>Retry task</button>}
+      {item.status!=='completed'&&['failed','interrupted','cancelled'].includes(task.status)&&<button className="secondary" disabled={unknown} onClick={()=>retry(task)}>Retry task</button>}
       {task.status==='paused_budget'&&task.stop_kind==='budget'&&item.status!=='completed'&&<><p className="form-note">The active work budget was reached. Completed results are preserved.</p><button className="secondary" disabled={unknown} onClick={()=>action(()=>mutate(`/api/v1/tasks/${task.id}/continue`,'POST',{}))}>Continue</button></>}
       {unsettled.map(run=><div key={run.id} className="task-controls">{run.attempts===0&&['queued','blocked'].includes(run.status)&&<button onClick={()=>edit(run)}>Edit instructions</button>}{!['paused_budget','pausing_budget'].includes(run.status)&&<button onClick={()=>redirect(run)}>Redirect</button>}<button onClick={()=>action(()=>api(`/api/v1/tasks/${run.id}/stop`,{method:'POST'}))}><Square size={11}/>Stop {run.grant_id?'team task':'task'}</button>{run.grant_id&&<button onClick={()=>action(()=>api(`/api/v1/grants/${run.grant_id}/revoke`,{method:'POST'}))}>Revoke management authority</button>}</div>)}
     </section>;

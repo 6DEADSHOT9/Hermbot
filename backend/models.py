@@ -345,6 +345,8 @@ class EditRequest(StrictModel):
 
 class RetryRequest(StrictModel):
     prompt: str | None = Field(default=None, min_length=1, max_length=50_000)
+    # The owner confirmed renewing this work's expired (or nearly expired) management permission for 24 h.
+    renew_management: bool = False
 
 
 class AttachmentRequest(StrictModel):

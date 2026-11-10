@@ -300,6 +300,9 @@ def revoke_grant(grant_id: UUID):
         for task in roots:
             service.locked_task(conn, task['id'])
         conn.execute("UPDATE grants SET revoked_at=now() WHERE id=%s", (grant_id,))
+        # A retry holding the grant committed while this waited for its locks: stop that run too.
+        seen = {task['id'] for task in roots}
+        roots += [task for task in conn.execute("SELECT * FROM tasks WHERE grant_id=%s AND parent_id IS NULL", (grant_id,)).fetchall() if task['id'] not in seen]
         for task in roots:
             service.cancel(conn, service.locked_task(conn, task['id']), "Owner revoked management authority")
         db.event(conn, "grant.revoked", data={"grant_id": str(grant_id)})

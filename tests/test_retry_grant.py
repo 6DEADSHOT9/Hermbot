@@ -34,8 +34,13 @@ def settle(task_id, status="failed"):
         conn.execute("UPDATE tasks SET status=%s WHERE id=%s", (status, task_id))
 
 
-def retry(owner, task):
-    return owner.post(f"/api/v1/tasks/{task['id']}/retry", json={}, headers={"Idempotency-Key": str(uuid4())})
+def retry(owner, task, **body):
+    return owner.post(f"/api/v1/tasks/{task['id']}/retry", json=body, headers={"Idempotency-Key": str(uuid4())})
+
+
+def expire(grant_id, interval):
+    with db.connection() as conn:
+        conn.execute("UPDATE grants SET expires_at=now()+%s::interval WHERE id=%s", (interval, grant_id))
 
 
 def grant_count():
@@ -62,15 +67,76 @@ def test_retrying_work_whose_grant_was_revoked_is_refused_with_the_reason(owner)
     assert grant_count() == before, "No new grant is issued"
 
 
-def test_retrying_work_whose_grant_expired_is_refused(owner):
+def test_an_expired_grant_is_renewed_only_when_the_owner_confirms(owner):
     task, grant = manager_task()
-    with db.connection() as conn:
-        conn.execute("UPDATE grants SET expires_at=now()-interval '1 hour' WHERE id=%s", (grant["id"],))
+    expire(grant["id"], "-1 hour")
     settle(task["id"])
     before = grant_count()
+    refused = retry(owner, task)
+    assert refused.status_code == 409 and "has expired. Confirm renewing it for 24 hours to retry." in refused.json()["detail"]
+    renewed = retry(owner, task, renew_management=True)
+    assert renewed.status_code == 202, renewed.text
+    replacement = task_row(renewed.json()["id"])
+    with db.connection() as conn:
+        current = conn.execute("SELECT expires_at FROM grants WHERE id=%s", (grant["id"],)).fetchone()["expires_at"]
+        event = conn.execute("SELECT data FROM events WHERE kind='grant.renewed' AND task_id=%s", (task["id"],)).fetchone()
+    assert replacement["grant_id"] == grant["id"] and grant_count() == before, "The same grant is renewed, never copied"
+    assert 23.9 < (current - service.now()).total_seconds() / 3600 <= 24
+    assert event and event["data"]["grant_id"] == str(grant["id"]) and event["data"]["targets"] == ["writer"]
+
+
+def test_a_grant_about_to_expire_also_asks_first(owner):
+    task, grant = manager_task()
+    expire(grant["id"], "30 minutes")
+    settle(task["id"])
+    refused = retry(owner, task)
+    assert refused.status_code == 409 and "expires in" in refused.json()["detail"] and "minutes" in refused.json()["detail"]
+    assert retry(owner, task, renew_management=True).status_code == 202
+
+
+def test_a_revoked_grant_is_never_renewed(owner):
+    task, grant = manager_task()
+    owner.post(f"/api/v1/grants/{grant['id']}/revoke")
+    response = retry(owner, task, renew_management=True)
+    assert response.status_code == 409 and "was revoked" in response.json()["detail"]
+
+
+def test_a_second_retry_is_refused_while_the_first_is_running(owner):
+    task, grant = manager_task()
+    settle(task["id"])
+    first = retry(owner, task)
+    assert first.status_code == 202
+    second = retry(owner, task)
+    assert second.status_code == 409 and second.json()["detail"] == "A retry of this work is already running. Use Redirect on it instead."
+
+
+def test_a_task_grant_shares_its_handoff_budget_across_retries(owner):
+    task, grant = manager_task()
+    with db.connection() as conn:
+        conn.execute("UPDATE tasks SET handoffs=%s,status='failed' WHERE id=%s", (grant["max_handoffs"], task["id"]))
+    replacement = task_row(retry(owner, task).json()["id"])
+    with db.connection() as conn:
+        with pytest.raises(HTTPException) as exhausted:
+            service.delegate(conn, service.locked_task(conn, replacement["id"]), "writer", "Draft the report section")
+    assert exhausted.value.status_code == 409 and exhausted.value.detail == "Task handoff budget exhausted"
+
+
+def test_a_retry_notices_a_managed_teammate_was_deleted(owner):
+    task, grant = manager_task()
+    settle(task["id"])
+    with db.connection() as conn:
+        conn.execute("UPDATE grants SET targets=targets||'[\"gone-teammate\"]'::jsonb WHERE id=%s", (grant["id"],))
     response = retry(owner, task)
-    assert response.status_code == 409 and "has expired" in response.json()["detail"]
-    assert grant_count() == before
+    assert response.status_code == 409 and "no longer exists" in response.json()["detail"]
+
+
+def test_a_retried_manager_task_is_recorded_as_managed(owner):
+    task, grant = manager_task()
+    settle(task["id"])
+    replacement = retry(owner, task).json()
+    with db.connection() as conn:
+        event = conn.execute("SELECT data FROM events WHERE kind='task.queued' AND task_id=%s", (replacement["id"],)).fetchone()
+    assert event["data"]["manager"] is True
 
 
 def test_a_retry_keeps_the_original_grant_and_its_expiry(owner):
@@ -114,7 +180,7 @@ def test_a_revoked_standing_grant_is_still_refused(owner):
                                    request_key=str(uuid4()), grant_id=standing["id"])
     owner.post(f"/api/v1/grants/{standing['id']}/revoke")
     response = retry(owner, task)
-    assert response.status_code == 409 and "an active permission or Coordinate team" in response.json()["detail"]
+    assert response.status_code == 409 and "choose an active permission or send the request again with Coordinate team" in response.json()["detail"]
 
 
 def test_an_active_standing_grant_is_kept_on_retry(owner):
@@ -155,4 +221,4 @@ def test_only_a_retry_can_inherit_a_task_grant(owner):
         assert borrowed.value.status_code == 403, "A new message can choose standing grants only"
         with pytest.raises(HTTPException) as other_manager:
             service.create_task(conn, bot_id="writer", conversation_id=conversation(conn, "writer"), prompt="Not yours", request_key=str(uuid4()), inherited_grant_id=grant["id"])
-        assert other_manager.value.status_code == 409
+        assert other_manager.value.status_code == 403
