@@ -387,7 +387,7 @@ def apply(conn, task_id, interpretation, *, expected_message_hash=None, expected
             if proposal['routine_id']:
                 conn.execute('UPDATE routine_definitions SET replaces_id=%s,replaces_revision=%s WHERE id=%s', (proposal['routine_id'], proposal['definition']['expected_revision'], saved['id']))
             work_items.route(conn, current, {'intent': 'discussion'}, intake=True)
-            conn.execute('UPDATE tasks SET continuation=%s WHERE id=%s', ('A routine draft is ready in Routines. Tell the owner to inspect and save it; it is not active. Draft identity: ' + str(saved['id']), current['id']))
+            conn.execute(f'UPDATE tasks SET {service.APPEND_CONTINUATION} WHERE id=%s', ('A routine draft is ready in Routines. Tell the owner to inspect and save it; it is not active. Draft identity: ' + str(saved['id']), current['id']))
         elif intent == 'cancel':
             if not identity:
                 raise HTTPException(422, 'Cancellation requires an identified work item')
@@ -423,7 +423,7 @@ def apply(conn, task_id, interpretation, *, expected_message_hash=None, expected
     conn.execute("UPDATE tasks SET intake_status='applied',intake_result=%s,intake_lease_until=NULL WHERE id=%s",
                  (Jsonb(interpretation.model_dump(mode='json')), task_id))
     if interpretation.clarification:
-        conn.execute("UPDATE tasks SET continuation=%s,status=CASE WHEN status='completed' AND message_intent='answer' THEN 'queued' ELSE status END,message_intent=CASE WHEN status='completed' AND message_intent='answer' THEN 'discussion' ELSE message_intent END WHERE id=%s", ('Ask the owner this clarification and answer any discussion: ' + interpretation.clarification, task_id))
+        conn.execute(f"UPDATE tasks SET {service.APPEND_CONTINUATION},status=CASE WHEN status='completed' AND message_intent='answer' THEN 'queued' ELSE status END,message_intent=CASE WHEN status='completed' AND message_intent='answer' THEN 'discussion' ELSE message_intent END WHERE id=%s", ('Ask the owner this clarification and answer any discussion: ' + interpretation.clarification, task_id))
     db.event(conn, 'message.interpreted', task, data={'operations': [o.intent for o in interpretation.operations]})
 
 

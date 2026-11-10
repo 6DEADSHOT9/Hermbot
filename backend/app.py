@@ -345,7 +345,7 @@ def decide(approval_id: UUID, body: DecisionRequest):
             guidance = f"Owner review decision: {body.decision}. Proposed payload: {json.dumps(item['payload'])}. Denial or cancellation prohibits performing the action. Secure input acknowledgment contains no secret value."
             if body.decision == 'once' and item['kind'] == 'input' and item['payload'].get('action', {}).get('input_type') == 'secure':
                 guidance = 'The owner explicitly confirms the requested secure input is COMPLETED and the computer is handed back to the bot. Continue the original task from the current browser state. Do not inspect or repeat the secret. Input destination metadata: ' + json.dumps(item['payload']['action'])
-            conn.execute("UPDATE tasks SET continuation=%s WHERE id=%s", (guidance, task["id"]))
+            service.add_continuation(conn, task["id"], guidance)
             if not conn.execute("SELECT 1 FROM attempts WHERE task_id=%s AND status=ANY(%s)", (task["id"], list(service.ACTIVE_ATTEMPTS))).fetchone():
                 conn.execute("UPDATE tasks SET status='queued' WHERE id=%s", (task["id"],))
         db.event(conn, "approval.decided", task, data={"approval_id": str(approval_id), "decision": body.decision})

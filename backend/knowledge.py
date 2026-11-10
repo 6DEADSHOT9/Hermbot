@@ -173,7 +173,7 @@ def decide(conn, approval, task, decision):
 
 
 def resume(conn, task, guidance):
-    conn.execute("UPDATE tasks SET continuation=%s WHERE id=%s", (guidance, task["id"]))
+    service.add_continuation(conn, task["id"], guidance)
     if not conn.execute(
         "SELECT 1 FROM attempts WHERE task_id=%s AND status=ANY(%s)",
         (task["id"], list(service.ACTIVE_ATTEMPTS)),

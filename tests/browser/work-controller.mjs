@@ -55,7 +55,9 @@ try{
   await page.setViewportSize({width:1440,height:1000});
   mode='interpretation';await page.reload();
   await page.getByRole('navigation',{name:'Team conversations'}).getByRole('button',{name:/Scout/}).click();
-  await page.getByRole('button',{name:'Retry interpretation',exact:true}).click();
+  // The fixture's entry sits at the newest position, so its button is the last one; a real message whose
+  // interpretation failed may also be waiting in the conversation, and must not be retried by this test.
+  await page.getByRole('button',{name:'Retry interpretation',exact:true}).last().click();
   assert.equal(retried,true);
   await page.getByRole('main').getByText('Understanding your message').first().waitFor();
   await page.getByLabel('Owner menu').click();await page.getByRole('button',{name:'Settings',exact:true}).click();
