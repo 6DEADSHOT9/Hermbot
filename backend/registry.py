@@ -20,8 +20,9 @@ BOT_COLUMNS = "id,name,role,color,avatar,capabilities,status,desired_state,revis
 PROVIDER_COLUMNS = "id,name,base_url,models,default_model,revision,from_environment,auth_kind,transport,connection_status,account_label,account_plan,plan_enabled,discovered_models,verified_models"
 CONFIG_FIELDS = ("name", "role", "color", "avatar", "provider_id", "model_name", "capabilities", "enabled_tools", "enabled_skills", "memory_mb", "cpus")
 # Raise when every existing runtime must be recreated (1: runtimes start in `/` with isolated Python;
-# 2: the adapter no longer records the screen; 3: the adapter exchanges cookies with private takeover sessions).
-RUNTIME_LAYOUT = 3
+# 2: the adapter no longer records the screen; 3: the adapter exchanges cookies with private takeover sessions;
+# 4: every provider is reached through the model relay, so no runtime holds a provider key).
+RUNTIME_LAYOUT = 4
 
 
 def require_bot(conn, bot_id, *, lock=False, include_deleted=False, nowait=False):
@@ -200,7 +201,9 @@ def pending_operation(conn, bot_id):
 def enqueue(conn, bot, action, key, payload=None, *, proposal_id=None):
     payload = payload or {}
     provider = conn.execute("SELECT * FROM providers WHERE id=%s", (bot["provider_id"],)).fetchone()
-    if provider and provider['auth_kind'] in BROKERED_AUTH:
+    if provider:
+        # Every runtime reaches its provider through Hermbot's relay with a token of its own, valid only
+        # for this revision; the provider's key stays here and never enters the runtime or this payload.
         inference_key = secrets.token_urlsafe(48)
         conn.execute('UPDATE bots SET inference_key_encrypted=%s,inference_key_hash=%s,inference_revision=revision WHERE id=%s',
                      (encrypt(inference_key), credential_hash(inference_key), bot['id']))
@@ -208,7 +211,7 @@ def enqueue(conn, bot, action, key, payload=None, *, proposal_id=None):
         provider_snapshot['inference_key_encrypted'] = encrypt(inference_key)
     else:
         conn.execute('UPDATE bots SET inference_key_encrypted=NULL,inference_key_hash=NULL,inference_revision=NULL WHERE id=%s', (bot['id'],))
-        provider_snapshot = {k: provider[k] for k in ('id', 'base_url', 'default_model', 'revision', 'secret_encrypted')} if provider else None
+        provider_snapshot = None
     payload = {**payload, "configuration": configuration(bot), "revision": bot["revision"], "provider": provider_snapshot,
                "timezone": workspace(conn)["timezone"], "desired_state": bot["desired_state"], "previous_status": bot["status"],
                "bot_token_encrypted": bot["bot_token_encrypted"], "runtime_key_encrypted": bot["runtime_key_encrypted"],
