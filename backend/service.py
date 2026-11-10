@@ -99,11 +99,12 @@ def check_grant(conn, task, *, target=None, operation=None, manager=None, lock_s
 
 def create_task(conn, *, bot_id, conversation_id, prompt, request_key, context="chat", managed_bot_ids=None,
                 management_operations=None, grant_id=None, attachment_ids=None, artifact_ids=None, reply_to_message_id=None, skill_refs=None, mention_bot_ids=None,
-                message_intent='assignment', work_item_id=None, deadline=None, orchestration_version=0, owner_message_id=None, coordination_version=0):
+                message_intent='assignment', work_item_id=None, deadline=None, orchestration_version=0, owner_message_id=None, coordination_version=0,
+                inherited_grant_id=None):
     from . import registry
     fingerprint = digest({"bot_id": bot_id, "conversation_id": str(conversation_id), "prompt": prompt,
                           "context": context, "managed_bot_ids": managed_bot_ids, "management_operations": management_operations,
-                          "grant_id": str(grant_id) if grant_id else None, "attachment_ids": list(map(str, attachment_ids or [])),
+                          "grant_id": str(grant_id or inherited_grant_id) if grant_id or inherited_grant_id else None, "attachment_ids": list(map(str, attachment_ids or [])),
                           "reply_to_message_id": reply_to_message_id, "skill_refs": skill_refs or [], "mention_bot_ids": mention_bot_ids or [], "artifact_ids": list(map(str, artifact_ids or []))})
     if message_intent != 'assignment' or work_item_id:
         fingerprint = digest({'submission': fingerprint, 'intent': message_intent, 'work_item_id': str(work_item_id) if work_item_id else None})
@@ -152,6 +153,15 @@ def create_task(conn, *, bot_id, conversation_id, prompt, request_key, context="
             fail(403, "Choose an active standing grant belonging to this manager")
         if managed_bot_ids is not None or management_operations is not None:
             fail(422, "Select a standing grant or create a task grant, not both")
+    if inherited_grant_id:
+        # A retry keeps the original work's own task grant, never a copy: revoking it then reaches every run
+        # of that work, its expiry still applies, and its one-time allowances aren't handed out again.
+        if grant_id or managed_bot_ids is not None or management_operations is not None:
+            fail(422, "A retry keeps its original management permission only")
+        grant = conn.execute("SELECT * FROM grants WHERE id=%s", (inherited_grant_id,)).fetchone()
+        if not grant or grant["kind"] != "task" or grant["manager_id"] != bot_id or grant["revoked_at"] or grant["expires_at"] <= now():
+            fail(409, "This work's permission to manage teammates is no longer active")
+        grant_id = inherited_grant_id
     if management_operations is not None and managed_bot_ids is None:
         fail(422, "Operations must belong to an explicitly scoped management request")
     if managed_bot_ids is not None:

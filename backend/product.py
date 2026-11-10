@@ -317,10 +317,16 @@ def routes(owner, get_store):
                 if conn.execute("SELECT 1 FROM attempts a JOIN tasks t ON t.id=a.task_id WHERE t.root_id=%s AND a.status=ANY(%s)", (task["root_id"], list(service.ACTIVE_ATTEMPTS) + ["reserved"])).fetchone():
                     raise HTTPException(409, "Wait for the entire old operation to settle before retrying")
                 grant = conn.execute("SELECT * FROM grants WHERE id=%s", (task["grant_id"],)).fetchone() if task["grant_id"] else None
+                managing = bool(grant and grant["manager_id"] == task["bot_id"])
+                if managing and (grant["revoked_at"] or grant["expires_at"] <= service.now()):
+                    # Retrying never restores authority the owner took away or let lapse; granting it again is explicit.
+                    name = registry.require_bot(conn, task["bot_id"])["name"]
+                    lapsed = "was revoked" if grant["revoked_at"] else "has expired"
+                    again = "send the request again with Coordinate team" if grant["kind"] == "task" else "send the request again with an active permission or Coordinate team"
+                    raise HTTPException(409, f"{name}'s permission to manage teammates for this work {lapsed}. To grant it again, {again}.")
                 replacement = service.create_task(conn, bot_id=task["bot_id"], conversation_id=task["conversation_id"], prompt=body.prompt or task["input"], request_key=key + ":task", context=task["context"],
-                    managed_bot_ids=grant["targets"] if grant and grant["kind"] == "task" and grant["manager_id"] == task["bot_id"] else None,
-                    management_operations=grant["operations"] if grant and grant["kind"] == "task" and grant["manager_id"] == task["bot_id"] else None,
-                    grant_id=grant["id"] if grant and grant["kind"] == "standing" else None,
+                    inherited_grant_id=grant["id"] if managing and grant["kind"] == "task" else None,
+                    grant_id=grant["id"] if managing and grant["kind"] == "standing" else None,
                     attachment_ids=[UUID(a) for a in task["attachment_ids"]], artifact_ids=[UUID(a) for a in task['library_artifact_ids']], reply_to_message_id=task["reply_to_message_id"], skill_refs=task["skill_refs"],
                     message_intent='auto' if task.get('orchestration_version') == 2 else 'update' if task['work_item_id'] else task['message_intent'],
                     work_item_id=None if task.get('orchestration_version') == 2 else task['work_item_id'], orchestration_version=task.get('orchestration_version', 0), coordination_version=task.get('coordination_version', 0))

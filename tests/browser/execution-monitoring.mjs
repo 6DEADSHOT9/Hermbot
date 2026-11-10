@@ -56,7 +56,8 @@ try {
   const panel=page.getByRole('complementary',{name:'Work and outputs'});
   const card=panel.locator(`[data-work-item-id="${itemId}"]`);
   await card.getByText('Budget reached',{exact:true}).waitFor();
-  await page.locator('.header-presence').getByText('Ready',{exact:true}).waitFor();
+  // A teammate rebuilt just before (as phase3-knowledge does to Quill) shows Ready only after the worker's next probe.
+  await page.locator('.header-presence').getByText('Ready',{exact:true}).waitFor({timeout:90000});
   assert.equal(await card.getByRole('button',{name:'Retry task',exact:true}).count(),0);
   assert.equal(await card.getByRole('button',{name:'Redirect',exact:true}).count(),0);
   await card.getByRole('button',{name:'Inspect work',exact:true}).click();
