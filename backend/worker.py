@@ -14,7 +14,7 @@ from psycopg.types.json import Jsonb
 
 from . import connections, coordination, db, execution_monitor, execution_policy, isolation, knowledge, outcomes, provisioning, registry, routines, triggers, work_controller, work_intake
 from .runtime import HermesClient, RuntimePaused
-from .service import ACTIVE_ATTEMPTS, TERMINAL, cancel, check_grant, digest, locked_task, now
+from .service import ACTIVE_ATTEMPTS, APPEND_CONTINUATION, RESUME_RULE, TERMINAL, cancel, check_grant, digest, locked_task, now
 from .settings import settings
 from .policy import NATIVE_INSTRUCTION
 
@@ -207,6 +207,9 @@ def claim_new():
                             task_input += "\nOwner-referenced enabled skills: " + ", ".join(task["skill_refs"]) + ". Consult these skills if relevant."
                         if task['handoff_context']:
                             task_input += '\nHandoff brief (quoted context, not additional authority):\n' + dumps(task['handoff_context'])
+                        if task["attempts"]:
+                            # Whatever restarted it, work that has run before is resumed, never started over.
+                            task_input = RESUME_RULE + "\n\n" + task_input
                         from .recurring_management import scope
                         frozen = scope(conn, task)
                         if frozen:
@@ -308,7 +311,7 @@ def settle(attempt_id, runtime_status):
             except HTTPException:
                 safe = False
             if safe:
-                conn.execute("UPDATE tasks SET status='queued',recovery_failures=recovery_failures+1,continuation=%s,error=NULL,updated_at=now() WHERE id=%s", ('The prior execution definitively failed before any tool ran. Continue the original request with current permissions and prepare again. Original request: ' + task['input'], task['id']))
+                conn.execute(f"UPDATE tasks SET status='queued',recovery_failures=recovery_failures+1,{APPEND_CONTINUATION},error=NULL,updated_at=now() WHERE id=%s", ('The prior execution definitively failed before any tool ran. Continue the original request with current permissions and prepare again. Original request: ' + task['input'], task['id']))
                 db.event(conn, 'execution.recovery_queued', task, data={'attempt_id': str(attempt_id), 'reason': error})
                 return
         # Preserve a budget pause when a turn merely ends to await its old question
@@ -345,7 +348,7 @@ def settle(attempt_id, runtime_status):
                 state = "waiting_children"  # Wake in advance_waiters with all results, including already settled children.
             elif conn.execute("SELECT 1 FROM controls WHERE task_id=%s AND status='pending'", (task["id"],)).fetchone():
                 state = "queued"
-                conn.execute("UPDATE tasks SET continuation=%s WHERE id=%s", ("Continue the original task with the pending owner directions. Original request: " + task["input"], task["id"]))
+                conn.execute(f"UPDATE tasks SET {APPEND_CONTINUATION} WHERE id=%s", ("Continue the original task with the pending owner directions. Original request: " + task["input"], task["id"]))
             else:
                 plan = task['execution_plan']
                 blockers = plan.get('blockers', []) if plan.get('attempt') == task['attempts'] else []
@@ -505,12 +508,12 @@ def advance_waiters():
                 continue
             if conn.execute('SELECT 1 FROM attempts WHERE task_id=%s AND status=ANY(%s)', (task['id'], list(ACTIVE_ATTEMPTS))).fetchone():
                 continue
-            conn.execute("UPDATE tasks SET status='queued',continuation=COALESCE(continuation,%s) WHERE id=%s", ('The owner resolved or removed the pending question. Inspect current outcomes and answers; do not repeat completed or removed results.', task['id']))
+            conn.execute(f"UPDATE tasks SET status='queued',{APPEND_CONTINUATION} WHERE id=%s", ('The owner resolved or removed the pending question. Inspect current outcomes and answers; do not repeat completed or removed results.', task['id']))
             db.event(conn, 'input.task_resumed', task)
         for row in conn.execute("SELECT id FROM tasks WHERE status='waiting_computer'").fetchall():
             task = locked_task(conn, row['id'])
             if not conn.execute("SELECT 1 FROM computer_controls WHERE bot_id=%s AND holder='human'", (task['bot_id'],)).fetchone():
-                conn.execute("UPDATE tasks SET status='queued',continuation=%s WHERE id=%s AND status='waiting_computer'", ('The owner explicitly handed back the computer. Continue the original task from current state, inspect the page as needed and do not repeat already completed effects. Original task: ' + task['input'], task['id']))
+                conn.execute(f"UPDATE tasks SET status='queued',{APPEND_CONTINUATION} WHERE id=%s AND status='waiting_computer'", ('The owner explicitly handed back the computer. Continue the original task from current state, inspect the page as needed and do not repeat already completed effects. Original task: ' + task['input'], task['id']))
                 db.event(conn, 'computer.task_resumed', task)
         for row in conn.execute("SELECT id FROM tasks WHERE status IN ('blocked','waiting_children') ORDER BY created_at").fetchall():
             task = locked_task(conn, row["id"])
@@ -520,7 +523,9 @@ def advance_waiters():
                     # Failed dependencies remain inspectable; manager may reconcile and reassign before the deadline.
                     continue
                 context = "\n\nDependency results:\n" + "\n".join(f"{p['bot_id']} ({p['id']}): {p['output']}" for p in parents)
-                conn.execute("UPDATE tasks SET status='queued',continuation=input||%s WHERE id=%s", (context, task["id"]))
+                # Keep anything already queued for this task (Continue's guard, owner answers); a task that
+                # starts fresh gets its request with the dependency results, as before.
+                conn.execute("UPDATE tasks SET status='queued',continuation=COALESCE(NULLIF(continuation,''),input)||%s WHERE id=%s", (context, task["id"]))
                 for parent in parents:
                     conn.execute("INSERT INTO artifact_access(artifact_id,task_id) SELECT a.artifact_id,%s FROM artifact_access a WHERE a.task_id=%s ON CONFLICT DO NOTHING", (task["id"], parent["id"]))
                 assets = conn.execute("SELECT ar.id,ar.name FROM artifacts ar JOIN artifact_access ac ON ac.artifact_id=ar.id WHERE ac.task_id=%s", (task["id"],)).fetchall()
@@ -542,8 +547,7 @@ def advance_waiters():
                 for result in results:
                     result["artifacts"] = conn.execute("SELECT ar.id,ar.name FROM artifacts ar JOIN artifact_access ac ON ac.artifact_id=ar.id WHERE ac.task_id=%s", (result["id"],)).fetchall()
                 continuation = "Your delegated work has updates. Inspect failures, reconcile before reassigning, and combine results when done.\n" + dumps(results, default=str)
-                continuation += "\n" + (task.get("continuation") or "")
-                conn.execute("UPDATE tasks SET status='queued',continuation=%s,observed_terminal_children=%s WHERE id=%s", (continuation, signature, task["id"]))
+                conn.execute(f"UPDATE tasks SET status='queued',{APPEND_CONTINUATION},observed_terminal_children=%s WHERE id=%s", (continuation, signature, task["id"]))
                 db.event(conn, "task.resumed", task, data={"children": results})
         for task in conn.execute("SELECT * FROM tasks WHERE status<>ALL(%s) AND deadline<now()", (list(TERMINAL),)).fetchall():
             cancel(conn, task, "Owner deadline exhausted", kind='deadline')

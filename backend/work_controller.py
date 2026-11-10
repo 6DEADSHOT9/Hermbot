@@ -159,7 +159,7 @@ def reconcile(conn, item_id):
                 continue  # The manager replans; a correction does not manufacture missing inputs.
         # An owner correction can change a plan while a prior action is unresolved;
         # the affected action itself remains fenced by its receipt state.
-        conn.execute("UPDATE tasks SET status='queued',continuation=%s,updated_at=now() WHERE id=%s",
+        conn.execute(f"UPDATE tasks SET status='queued',{service.APPEND_CONTINUATION},updated_at=now() WHERE id=%s",
                      ('Apply the pending owner directions to the current work. Preserve completed results and inspect outstanding external receipts before acting.', row['id']))
         db.event(conn, 'work.direction_ready', row)
     cursor = conn.execute('SELECT COALESCE(max(e.id),0) AS id FROM events e JOIN tasks t ON t.id=e.task_id WHERE t.work_item_id=%s', (item_id,)).fetchone()['id']

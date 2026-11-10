@@ -70,7 +70,7 @@ def resume(conn, proposal, text):
     task = service.locked_task(conn, proposal["task_id"])
     if task["status"] in service.TERMINAL | service.STOPPING:
         return
-    conn.execute("UPDATE tasks SET continuation=COALESCE(continuation,'')||%s WHERE id=%s", ("\n" + text, task["id"]))
+    service.add_continuation(conn, task["id"], text)
     if not conn.execute("SELECT 1 FROM attempts WHERE task_id=%s AND status=ANY(%s)", (task["id"], list(service.ACTIVE_ATTEMPTS))).fetchone():
         conn.execute("UPDATE tasks SET status='queued' WHERE id=%s", (task["id"],))
 

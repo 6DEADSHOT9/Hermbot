@@ -84,6 +84,7 @@ def settle_pause(conn, task, attempt, output):
 
 
 def continue_work(conn, task):
+    from .coordination import dependency_ready
     from .recurring_management import scope, tasks as occurrence_tasks
     task = service.locked_task(conn, task['root_id'])
     if task['status'] != 'paused_budget' or task['stop_kind'] != 'budget':
@@ -116,8 +117,9 @@ def continue_work(conn, task):
             state = 'waiting_input'
         elif conn.execute("SELECT 1 FROM approvals WHERE task_id=%s AND status='pending' UNION ALL SELECT 1 FROM connector_operations WHERE task_id=%s AND status IN ('pending','queued','dispatching','uncertain')", (target['id'], target['id'])).fetchone():
             state = 'waiting_approval'
-        elif conn.execute('SELECT 1 FROM dependencies WHERE task_id=%s', (target['id'],)).fetchone():
-            state = 'blocked'
+        elif any(not dependency_ready(conn, parent) for parent in conn.execute(
+                'SELECT t.* FROM dependencies d JOIN tasks t ON t.id=d.depends_on WHERE d.task_id=%s', (target['id'],)).fetchall()):
+            state = 'blocked'  # Only a dependency still unfinished blocks: their rows outlive them.
         elif target.get('coordination_version') == 1 and conn.execute('SELECT 1 FROM coordination_waits WHERE task_id=%s', (target['id'],)).fetchone():
             state = 'waiting_results'
         elif target.get('coordination_version') != 1 and conn.execute('SELECT 1 FROM tasks WHERE parent_id=%s AND status<>ALL(%s)', (target['id'], list(service.TERMINAL))).fetchone():

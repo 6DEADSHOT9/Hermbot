@@ -28,6 +28,19 @@ def fail(status, detail):
     raise HTTPException(status, detail)
 
 
+# A task's next run reads `continuation` once, then dispatch clears it. Everything queued for that run
+# is only ever added, never replaced, so a later message (an approval, a release by dependencies, a
+# handback) can't erase an earlier one, such as Continue's instruction never to repeat an external effect.
+APPEND_CONTINUATION = "continuation=concat_ws(E'\\n',NULLIF(continuation,''),%s::text)"
+# Every run of work that has run before starts with this, whatever restarted it.
+RESUME_RULE = ("This task has run before in this conversation. Before acting, check your session history and the current results. "
+               "Continue only what is unfinished, and never repeat an external action that already succeeded or whose outcome is uncertain.")
+
+
+def add_continuation(conn, task_id, text):
+    conn.execute(f"UPDATE tasks SET {APPEND_CONTINUATION} WHERE id=%s", (text, task_id))
+
+
 def locked_task(conn, task_id):
     row = conn.execute("SELECT root_id,COALESCE(management_work_item_id,work_item_id) AS work_item_id FROM tasks WHERE id=%s", (task_id,)).fetchone()
     if not row:
