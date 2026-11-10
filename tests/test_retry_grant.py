@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from psycopg.types.json import Jsonb
 import pytest
 
 from backend import app as application, db, service
@@ -175,6 +176,71 @@ def test_a_task_grant_shares_its_handoff_budget_across_retries(owner):
         with pytest.raises(HTTPException) as exhausted:
             service.delegate(conn, service.locked_task(conn, replacement["id"]), "writer", "Draft the report section")
     assert exhausted.value.status_code == 409 and exhausted.value.detail == "Task handoff budget exhausted"
+
+
+@pytest.fixture
+def bot_changed():
+    """Changes a seeded bot for one test and puts it back afterwards (bots outlive each test's cleanup)."""
+    saved = []
+    def change(bot_id, column, value):
+        with db.connection() as conn:
+            saved.append((bot_id, column, conn.execute(f"SELECT {column} FROM bots WHERE id=%s", (bot_id,)).fetchone()[column]))
+            conn.execute(f"UPDATE bots SET {column}=%s WHERE id=%s", (value, bot_id))
+    yield change
+    with db.connection() as conn:
+        for bot_id, column, value in reversed(saved):
+            conn.execute(f"UPDATE bots SET {column}=%s WHERE id=%s", (value, bot_id))
+
+
+def test_only_the_latest_run_of_the_work_is_retried(owner, make_task):
+    task = make_task(prompt="Summarize the notes")
+    settle(task["id"])
+    first = retry(owner, task).json()
+    settle(first["id"])
+    older = retry(owner, task)
+    assert older.status_code == 409 and older.json()["detail"] == "Retry the latest run of this work instead."
+    assert retry(owner, task_row(first["id"])).status_code == 202
+
+
+def test_other_pieces_of_one_message_keep_their_own_handoff_budgets(owner):
+    task, grant = manager_task()
+    with db.connection() as conn:
+        sibling = service.create_task(conn, bot_id="researcher", conversation_id=conversation(conn), prompt="The other piece of the message",
+                                      request_key=str(uuid4()))
+        conn.execute("UPDATE tasks SET grant_id=%s,handoffs=%s,status='completed' WHERE id=%s", (grant["id"], grant["max_handoffs"], sibling["id"]))
+    settle(task["id"])
+    replacement = confirmed(owner, task)
+    assert replacement.status_code == 202, "The other piece's handoffs are not this work's"
+    with db.connection() as conn:
+        assert service.handoffs_used(conn, task_row(replacement.json()["id"])) == 0
+
+
+def test_an_archived_teammate_counts_as_gone(owner, bot_changed):
+    task, grant = manager_task()
+    settle(task["id"])
+    bot_changed("writer", "status", "archived")
+    response = retry(owner, task, renew_management=True)
+    assert response.status_code == 409 and "is archived or no longer exists" in response.json()["detail"]
+    assert grant_row(grant["id"])["expires_at"] == grant["expires_at"], "Nothing was renewed"
+
+
+def test_a_stopped_bot_is_reported_before_any_renewal_question(owner, bot_changed):
+    task, grant = manager_task()
+    settle(task["id"])
+    bot_changed("researcher", "desired_state", "stopped")
+    response = retry(owner, task)
+    assert response.status_code == 409 and response.json()["detail"] == "Start this bot and wait for provisioning before assigning work"
+
+
+def test_a_retry_receipt_from_before_renewals_still_matches(owner, make_task):
+    task = make_task(prompt="Summarize the notes")
+    settle(task["id"])
+    key = str(uuid4())
+    with db.connection() as conn:  # The fingerprint a retry had before the renewal flag existed.
+        conn.execute("INSERT INTO owner_receipts VALUES (%s,%s,%s,now())",
+                     (key, service.digest({"action": "retry-task", "id": task["id"], "body": {"prompt": None}}), Jsonb({"id": "earlier"})))
+    response = owner.post(f"/api/v1/tasks/{task['id']}/retry", json={}, headers={"Idempotency-Key": key})
+    assert response.status_code == 202 and response.json() == {"id": "earlier"}
 
 
 def test_a_retry_notices_a_managed_teammate_was_deleted(owner):

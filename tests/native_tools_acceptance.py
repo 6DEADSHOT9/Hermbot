@@ -85,7 +85,8 @@ def run():
                                      'execution_statuses': [e['status'] for e in old['executions']],
                                      'cause': 'Readonly code directory and Docker archive admission prevented attachment staging; the execution budget expired before native continuation.'})
         save()
-        task = call('POST', '/api/v1/tasks/' + old['id'] + '/retry', {'prompt': case['retry_prompt']}, case['retry_key'])
+        # This work manages teammates: running this mode is the owner confirming its renewal for another 24 hours.
+        task = call('POST', '/api/v1/tasks/' + old['id'] + '/retry', {'prompt': case['retry_prompt'], 'renew_management': True}, case['retry_key'])
         case.update(previous_task_ids=[old['id']], task_id=task['id'], status=task['status'])
         save()
         mode = 'continue'

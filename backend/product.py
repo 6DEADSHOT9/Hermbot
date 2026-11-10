@@ -303,29 +303,24 @@ def routes(owner, get_store):
             db.event(conn, "task.edited", task)
         return {"id": task_id, "updated": True}
 
-    def retry_management(conn, task, grant, renew, origin):
+    def retry_management(conn, task, grant, renew):
         """A retry keeps its work's own grant. A revoked one is never restored; a task grant is renewed for 24 h on every
         retry, but only once the owner confirms it, so a retry never runs out of permission partway through."""
         def manager():
-            return registry.require_bot(conn, task["bot_id"])["name"]
+            row = conn.execute("SELECT name FROM bots WHERE id=%s", (task["bot_id"],)).fetchone()
+            return row["name"] if row else "This teammate"
         if grant["revoked_at"] or (grant["kind"] == "standing" and grant["expires_at"] <= service.now()):
             lapsed = "was revoked" if grant["revoked_at"] else "has expired"
             again = "send the request again with Coordinate team" if grant["kind"] == "task" else "choose an active permission or send the request again with Coordinate team"
             raise HTTPException(409, f"{manager()}'s permission to manage teammates for this work {lapsed}. To grant it again, {again}.")
         if grant["kind"] != "task":
             return  # A standing grant keeps the duration the owner chose for it in Settings.
-        running = conn.execute("SELECT status FROM tasks WHERE (id=%s OR retried_from=%s) AND id<>%s AND parent_id IS NULL AND status<>ALL(%s) LIMIT 1",
-                               (origin, origin, task["id"], list(service.TERMINAL))).fetchone()
-        if running:
-            paused = running["status"] in ("pausing_budget", "paused_budget")
-            raise HTTPException(409, "A retry of this work is " + ("stopped at its budget. Continue it instead." if paused else "already running. Use Redirect on it instead."))
         if conn.execute("SELECT 1 FROM tasks WHERE root_id=%s AND status<>ALL(%s)", (task["root_id"], list(service.TERMINAL))).fetchone():
             raise HTTPException(409, "Wait for the entire old operation to settle before retrying")
-        managed = conn.execute("SELECT id,name FROM bots WHERE id=ANY(%s) AND status<>'deleted'", (grant["targets"],)).fetchall()
+        managed = service.present_bots(conn, grant["targets"])
         if len(managed) < len(set(grant["targets"])):
-            raise HTTPException(409, "A teammate this work managed no longer exists. Send the request again with Coordinate team.")
-        used = conn.execute("SELECT COALESCE(sum(handoffs),0) AS n FROM tasks WHERE grant_id=%s AND parent_id IS NULL", (grant["id"],)).fetchone()["n"]
-        if used >= min(settings.max_handoffs, grant["max_handoffs"]):
+            raise HTTPException(409, "A teammate this work managed is archived or no longer exists. Send the request again with Coordinate team.")
+        if service.handoffs_used(conn, task) >= min(settings.max_handoffs, grant["max_handoffs"]):
             raise HTTPException(409, "This work has used all its handoffs to teammates. To continue, send the request again with Coordinate team.")
         if not renew:
             names = ", ".join(sorted(row["name"] for row in managed))
@@ -356,8 +351,18 @@ def routes(owner, get_store):
                     # Locked after the work, as revocation locks it, so a retry and a revoke can't interleave.
                     grant = conn.execute("SELECT * FROM grants WHERE id=%s FOR UPDATE", (grant["id"],)).fetchone()
                 origin = task["retried_from"] or task["id"]
+                # Only the latest run of a piece of work is retried: the checks above looked at this run alone.
+                newer = conn.execute("SELECT status FROM tasks WHERE retried_from=%s AND id<>%s AND created_at>%s ORDER BY created_at DESC LIMIT 1",
+                                     (origin, task["id"], task["created_at"])).fetchone()
+                if newer and newer["status"] in ("pausing_budget", "paused_budget"):
+                    raise HTTPException(409, "A retry of this work is stopped at its budget. Continue it instead.")
+                if newer and newer["status"] not in service.TERMINAL:
+                    raise HTTPException(409, "A retry of this work is already running. Use Redirect on it instead.")
+                if newer:
+                    raise HTTPException(409, "Retry the latest run of this work instead.")
+                service.admit_work(conn, task["bot_id"], task["conversation_id"])  # Before asking the owner to renew anything.
                 if managing:
-                    retry_management(conn, task, grant, body.renew_management, origin)
+                    retry_management(conn, task, grant, body.renew_management)
                 replacement = service.create_task(conn, bot_id=task["bot_id"], conversation_id=task["conversation_id"], prompt=body.prompt or task["input"], request_key=key + ":task", context=task["context"],
                     inherited_grant_id=grant["id"] if managing and grant["kind"] == "task" else None,
                     grant_id=grant["id"] if managing and grant["kind"] == "standing" else None,
@@ -368,7 +373,9 @@ def routes(owner, get_store):
                     conn.execute('UPDATE tasks SET handoff_context=%s WHERE id=%s', (Jsonb({'owner_work_target': str(task['work_item_id'])}), replacement['id']))
                 conn.execute('UPDATE tasks SET retried_from=%s WHERE id=%s', (origin, replacement['id']))
                 return replacement
-            return registry.mutation(conn, key, {"action": "retry-task", "id": task_id, "body": body.model_dump()}, work)
+            # Without a renewal, the fingerprint is the one used before renewals existed, so earlier receipts still match.
+            request = body.model_dump(exclude=None if body.renew_management else {"renew_management"})
+            return registry.mutation(conn, key, {"action": "retry-task", "id": task_id, "body": request}, work)
 
     @router.post('/api/v1/tasks/{task_id}/continue')
     def continue_task(task_id: UUID, key: str = Header(alias='Idempotency-Key')):

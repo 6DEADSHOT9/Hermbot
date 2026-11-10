@@ -58,23 +58,23 @@ try{
   await retryButton('plain').waitFor();
   await page.screenshot({path:`${out}/work-cards-1440.png`});
 
-  await retryButton('plain').click();
-  await page.waitForTimeout(400);
+  // The app refetches the timeline (it never polls it) only once a retry action has finished, so by then every
+  // question it asked and every request it sent has been recorded.
+  const finished=async click=>{const done=page.waitForRequest(r=>new URL(r.url()).pathname.endsWith('/timeline'));await click();await done;};
+  await finished(()=>retryButton('plain').click());
   assert.equal(dialogs.length,0,'Work without management is retried without a question');
   assert.deepEqual(retries,[{task:'task-plain',body:{}}]);
   checks.push('Work without management retries straight away.');
 
   answer=false;
-  await retryButton('team').click();
-  await page.waitForTimeout(500);
+  await finished(()=>retryButton('team').click());
   assert.deepEqual(dialogs,[QUESTION],"The card shows the server's own question");
   assert.deepEqual(retries.slice(1),[{task:'task-team',body:{}}],'Declining sends nothing more');
   assert.equal(await page.getByText(QUESTION).count(),0,'Declining is not reported as an error');
   checks.push("A team retry shows the server's question; declining sends nothing more and shows no error.");
 
   answer=true;
-  await retryButton('team').click();
-  await page.waitForTimeout(500);
+  await finished(()=>retryButton('team').click());
   assert.deepEqual(retries.slice(-2),[{task:'task-team',body:{}},{task:'task-team',body:{renew_management:true}}]);
   assert.equal(await page.getByText(QUESTION).count(),0,'Nothing is left on screen');
   checks.push('Confirming resends the retry with the renewal.');
