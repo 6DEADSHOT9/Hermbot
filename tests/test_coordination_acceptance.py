@@ -678,7 +678,7 @@ def test_the_alert_leaves_needs_you_once_its_work_is_handled(work, monkeypatch):
         attention.project(conn, 'task', work['id'])
     item = alert(message)
     assert item['active'] and not item['needs_owner'] and counts() == 0, 'It moved to updates on its own'
-    assert "work has since finished" in item['summary']
+    assert "The sender's work has finished, so a resent message wouldn't reach it. This is for your information." in item['summary']
     refused = resolve(message, 'resend')
     assert refused.status_code == 409 and 'Choose Done instead' in refused.json()['detail']
     with db.connection() as conn:
@@ -700,3 +700,77 @@ def test_resend_is_refused_when_the_recipient_is_gone(work, monkeypatch):
     refused = resolve(message, 'resend')
     assert refused.status_code == 409 and refused.json()['detail'] == f"{name('writer')} was deleted, so the message can't be resent. Choose Done instead."
     assert resolve(message, 'done').status_code == 200
+
+
+# One delivery rule for the scheduler, Resend and the alert; drops record their reason; a lost resend is reported.
+
+def helper_message(work):
+    child = delegate(work)
+    helper = next(a for a in worker.claim_new() if a['bot_id'] == 'writer')
+    sent = invoke(helper, 'message', {'bot_id': 'reviewer', 'prompt': 'Can you check this?'})
+    return child, helper, UUID(sent['message_id'])
+
+
+def stop(child, helper):
+    with db.connection() as conn:  # The owner stops the helper; its manager keeps running.
+        service.cancel(conn, service.locked_task(conn, child), 'Stopped by owner')
+    worker.settle(helper['id'], {'status': 'cancelled', 'output': ''})
+
+
+def fail_three_times(work_task, message, monkeypatch):
+    expired = coordination.execution_policy.expired
+    monkeypatch.setattr(coordination.execution_policy, 'expired',
+                        lambda task: (_ for _ in ()).throw(RuntimeError('x')) if task['id'] == work_task else expired(task))
+    for _ in range(3):
+        with db.connection() as conn:
+            conn.execute("UPDATE teammate_messages SET not_before=NULL WHERE id=%s", (message,))
+        worker.claim_new()
+    monkeypatch.undo()
+
+
+def test_a_message_from_a_stopped_task_is_dropped_with_the_reason(work):
+    child, helper, message = helper_message(work)
+    stop(child, helper)
+    worker.claim_new()
+    dropped = message_row(message)
+    reason = f"{name('writer')}'s task was stopped"
+    assert (dropped['status'], dropped['released'], dropped['reason']) == ('cancelled', 'dropped', reason)
+    assert [e['data']['reason'] for e in events('teammate.message_dropped')] == [reason]
+    assert alert(message) is None, 'An ordinary drop is recorded, not raised to the owner'
+
+
+def test_resend_is_refused_with_the_reason_once_the_sending_task_is_stopped(work, monkeypatch):
+    from backend import attention
+    child, helper, message = helper_message(work)
+    fail_three_times(child, message, monkeypatch)
+    assert alert(message)['needs_owner'], 'While the helper runs, Resend can work'
+    stop(child, helper)
+    assert row(work['id'])['status'] not in service.TERMINAL, 'The manager is still running'
+    with db.connection() as conn:
+        attention.project(conn, 'task', child)
+    item = alert(message)
+    reason = f"{name('writer')}'s task was stopped, so the message can't be resent"
+    assert item['active'] and not item['needs_owner'] and f'{reason}. This is for your information.' in item['summary']
+    refused = resolve(message, 'resend')
+    assert refused.status_code == 409 and refused.json()['detail'] == f'{reason}. Choose Done instead.'
+    assert message_row(message)['status'] == 'cancelled', 'Nothing was re-queued'
+    assert resolve(message, 'done').status_code == 200 and not alert(message)['active']
+
+
+def test_a_resend_that_cannot_go_through_is_reported_to_the_owner(work, monkeypatch):
+    child, helper, message = helper_message(work)
+    fail_three_times(child, message, monkeypatch)
+    assert alert(message)['needs_owner'], 'The owner sees it in "Needs you"'
+    assert resolve(message, 'resend').status_code == 200
+    assert not alert(message)['active']
+    stop(child, helper)  # Stopped in the moment after Resend was accepted.
+    worker.claim_new()
+    lost = message_row(message)
+    assert (lost['status'], lost['released'], lost['owner_action']) == ('cancelled', 'dropped', 'resend')
+    item = alert(message)
+    assert item['active'] and not item['needs_owner'] and item['read_version'] < item['version'], 'An unread update'
+    assert item['title'] == f"Your resent message from {name('writer')} to {name('reviewer')} couldn't be delivered"
+    assert item['summary'] == f"{name('writer')}'s task was stopped. This is for your information."
+    assert resolve(message, 'resend').status_code == 409
+    assert resolve(message, 'done').status_code == 200 and not alert(message)['active']
+    assert resolve(message, 'done').status_code == 409

@@ -6,7 +6,8 @@ ALTER TABLE teammate_messages ADD COLUMN IF NOT EXISTS last_error text;
 ALTER TABLE teammate_messages ADD COLUMN IF NOT EXISTS last_error_at timestamptz;
 ALTER TABLE teammate_messages ADD COLUMN IF NOT EXISTS not_before timestamptz;
 ALTER TABLE teammate_messages ADD COLUMN IF NOT EXISTS reason text;
--- 'bounced' (the recipient was deleted or archived) or 'failed' (it kept failing and was given up).
+-- 'bounced' (the recipient was deleted or archived), 'dropped' (its sending task or conversation can no longer
+-- use an answer) or 'failed' (it kept failing and was given up).
 ALTER TABLE teammate_messages ADD COLUMN IF NOT EXISTS released text;
 -- The owner's answer to a given-up message: 'resend' (back in the queue) or 'done' (the owner handles it).
 ALTER TABLE teammate_messages ADD COLUMN IF NOT EXISTS owner_action text;

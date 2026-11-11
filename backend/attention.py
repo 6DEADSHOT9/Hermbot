@@ -230,13 +230,15 @@ def task_projection(conn, identity, *, initial=False):
                 fingerprint={"output": service.digest(task.get("output") or "")},
                 initial=initial,
             )
-    if task["id"] == task["root_id"]:
-        # A message given up by this work stops needing the owner once the work is handled.
-        for message in conn.execute(
-            "SELECT m.id FROM teammate_messages m JOIN tasks t ON t.id=m.source_task_id WHERE t.root_id=%s AND m.released='failed' AND m.owner_action IS NULL",
-            (identity,),
-        ).fetchall():
-            project(conn, "message", message["id"])
+    # A given-up message stops needing the owner once Resend can no longer work: its sending task or its work
+    # was stopped, finished or expired.
+    for message in conn.execute(
+        "SELECT id FROM teammate_messages WHERE source_task_id=%s AND released='failed' AND owner_action IS NULL "
+        "UNION SELECT m.id FROM teammate_messages m JOIN tasks t ON t.id=m.source_task_id "
+        "WHERE t.root_id=%s AND m.released='failed' AND m.owner_action IS NULL",
+        (identity, identity),
+    ).fetchall():
+        project(conn, "message", message["id"])
     close_missing(conn, "task", identity, current)
 
 
@@ -415,15 +417,18 @@ def source_projection(conn, kind, identity, *, initial=False):
 
 
 def message_projection(conn, identity, *, initial=False):
-    """A teammate message given up after repeated failures is reported once, with fixed text (no error content)."""
-    message = conn.execute("SELECT * FROM teammate_messages WHERE id=%s", (identity,)).fetchone()
-    current = []
-    if message and message["status"] == "cancelled" and message["released"] == "failed" and not message["owner_action"]:
-        from .coordination import sender_work_open
+    """A teammate message the owner should hear about, with fixed text (no error content): one given up after
+    repeated failures, or one the owner resent that was released anyway before it could be delivered."""
+    from .coordination import awaiting_owner, resend_refusal
 
-        # "Needs you" only while the sender's work is in progress and resending can still help; once that work
-        # finishes or is stopped, it is an update the owner can read or dismiss.
-        actionable = sender_work_open(conn, message)
+    message = conn.execute("SELECT * FROM teammate_messages WHERE id=%s", (identity,)).fetchone()
+    kind = awaiting_owner(message)
+    current = []
+    if kind:
+        # "Needs you" only while Resend can still work (the same rule Resend enforces); otherwise it is an update
+        # the owner can read or dismiss.
+        refusal = resend_refusal(conn, message) if kind == "failed" else None
+        actionable = kind == "failed" and refusal is None
         old = conn.execute(
             "SELECT active,needs_owner FROM attention_items WHERE subject_type='message' AND subject_id=%s AND purpose='undeliverable'",
             (identity,),
@@ -436,6 +441,14 @@ def message_projection(conn, identity, *, initial=False):
             ).fetchall()
         }
         sender, recipient = names.get(message["sender"], "A teammate"), names.get(message["recipient"], "a teammate")
+        if kind == "resend_lost":
+            title = f"Your resent message from {sender} to {recipient} couldn't be delivered"
+            summary = f"{message['reason']}. This is for your information."
+        else:
+            title = f"A message from {sender} to {recipient} couldn't be delivered"
+            summary = f"It failed {message['attempts']} times and was dropped. If {sender} was waiting for the answer, it was told. " + (
+                "Resend it, or choose Done if you'll handle it yourself." if actionable else f"{refusal}. This is for your information."
+            )
         current.append("undeliverable")
         materialize(
             conn,
@@ -443,11 +456,8 @@ def message_projection(conn, identity, *, initial=False):
             identity,
             "undeliverable",
             category="problems",
-            title=f"A message from {sender} to {recipient} couldn't be delivered",
-            summary=(
-                f"It failed {message['attempts']} times and was dropped. If {sender} was waiting for the answer, it was told. "
-                + ("Resend it, or choose Done if you'll handle it yourself." if actionable else f"{sender}'s work has since finished, so this is for your information.")
-            ),
+            title=title,
+            summary=summary,
             status="failed",
             needs_owner=actionable,
             refs={
@@ -458,9 +468,9 @@ def message_projection(conn, identity, *, initial=False):
                 "bot_name": sender,
                 "message_id": str(identity),
             },
-            # Moving out of "Needs you" because the work is handled sends no second notification.
+            # Moving out of "Needs you" because Resend can no longer work sends no second notification.
             initial=initial or demoted,
-            fingerprint={"released": "failed", "since": str(message["last_error_at"]), "needs_owner": actionable},
+            fingerprint={"kind": kind, "since": str(message["last_error_at"]), "reason": message["reason"], "needs_owner": actionable},
         )
     close_missing(conn, "message", identity, current)
 

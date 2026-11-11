@@ -82,13 +82,20 @@ def recipient_gone(bot):
 
 
 def release(conn, message, reason, released):
-    """Settle an unanswerable message with its reason; a sender waiting on it is woken with that reason."""
-    if not conn.execute("UPDATE teammate_messages SET status='cancelled',reason=%s,released=%s,not_before=NULL,owner_action=NULL,owner_action_at=NULL "
-                        "WHERE id=%s AND status IN ('pending','delivered') RETURNING id", (reason, released, message['id'])).fetchone():
+    """Settle an unanswerable message with its reason; a sender waiting on it is woken with that reason.
+    released is 'failed' (given up after repeated errors), 'bounced' (recipient gone) or 'dropped' (its sending
+    task or conversation can no longer use an answer). A new failure clears the owner's earlier answer so it
+    alerts again; any other release keeps it, so a resend that couldn't go through is reported to the owner."""
+    row = conn.execute("UPDATE teammate_messages SET status='cancelled',reason=%s,released=%s,not_before=NULL,"
+                       "owner_action=CASE WHEN %s='failed' THEN NULL ELSE owner_action END,"
+                       "owner_action_at=CASE WHEN %s='failed' THEN NULL ELSE owner_action_at END "
+                       "WHERE id=%s AND status IN ('pending','delivered') RETURNING owner_action",
+                       (reason, released, released, released, message['id'])).fetchone()
+    if not row:
         return
     db.event(conn, 'teammate.message_' + released, conversation_id=message['conversation_id'], bot_id=message['sender'],
              data={'message_id': str(message['id']), 'recipient': message['recipient'], 'reason': reason})
-    if released == 'failed':
+    if released == 'failed' or row['owner_action'] == 'resend':
         from . import attention
         attention.dirty(conn, 'message', message['id'])
 
@@ -112,20 +119,74 @@ def sender_work_open(conn, message):
     return bool(root) and root['status'] not in service.TERMINAL | {'cancelling'}
 
 
+def delivery_blocker(conn, message, source):
+    """Why this message can never be delivered, as (kind, reason), or None: the one rule shared by the scheduler,
+    Resend and the owner's alert, so none of them can promise what another will refuse. kind is 'bounced' when
+    the recipient is gone and 'dropped' when the sending task or conversation can no longer use an answer."""
+    gone = recipient_gone(conn.execute('SELECT name,status FROM bots WHERE id=%s', (message['recipient'],)).fetchone())
+    if gone:
+        return 'bounced', gone
+    if not source:
+        return 'dropped', 'The sending task no longer exists'
+    sender = (conn.execute('SELECT name FROM bots WHERE id=%s', (source['bot_id'],)).fetchone() or {'name': 'The sender'})['name']
+    if conn.execute('SELECT archived_at FROM conversations WHERE id=%s', (message['conversation_id'],)).fetchone()['archived_at']:
+        return 'dropped', 'The conversation was archived'
+    if source['status'] in ('cancelled', 'cancelling'):
+        return 'dropped', f"{sender}'s task was stopped"
+    if source['status'] == 'interrupted':
+        return 'dropped', f"{sender}'s task was interrupted"
+    if execution_policy.expired(source):
+        return 'dropped', f"{sender}'s task passed its deadline"
+    from .recurring_management import scope
+    if scope(conn, source):
+        try:
+            service.check_grant(conn, source)
+        except HTTPException:
+            return 'dropped', f"{sender}'s permission to manage this work ended"
+    return None
+
+
+def resend_refusal(conn, message):
+    """Why Resend can't help now, or None. Resend is offered only while it can work.
+    If the delivery rule itself fails on this message (it may be what made the message fail), Resend is allowed:
+    the message goes back through the normal path, and fails visibly again if it must."""
+    if not sender_work_open(conn, message):
+        return "The sender's work has finished, so a resent message wouldn't reach it"
+    try:
+        with conn.transaction():
+            blocked = delivery_blocker(conn, message, conn.execute('SELECT * FROM tasks WHERE id=%s', (message['source_task_id'],)).fetchone())
+    except Exception as exc:
+        if isolation.database_lost(exc):
+            raise
+        logger.warning('Delivery rule failed for teammate message %s (%s)', message['id'], isolation.describe(exc))
+        return None
+    return blocked[1] + ", so the message can't be resent" if blocked else None
+
+
+def awaiting_owner(message):
+    """A message the owner should hear about: given up after repeated failures, or resent by the owner and then
+    released anyway before it could be delivered."""
+    if not message or message['status'] != 'cancelled':
+        return None
+    if message['released'] == 'failed' and not message['owner_action']:
+        return 'failed'
+    if message['released'] in ('dropped', 'bounced') and message['owner_action'] == 'resend':
+        return 'resend_lost'
+    return None
+
+
 def resolve_failed(conn, identity, action):
     """The owner's answer to a message that was given up: resend it (back in the queue with a fresh count, as a
     dead-letter redrive) or mark it done (the owner handles it). Either closes the attention item."""
     message = conn.execute('SELECT * FROM teammate_messages WHERE id=%s FOR UPDATE', (identity,)).fetchone()
     if not message:
         raise HTTPException(404, 'Message not found')
-    if message['status'] != 'cancelled' or message['released'] != 'failed' or message['owner_action']:
+    if not awaiting_owner(message):
         raise HTTPException(409, 'This message was already handled')
     if action == 'resend':
-        if not sender_work_open(conn, message):
-            raise HTTPException(409, "The sender's work has finished, so a resent message wouldn't reach it. Choose Done instead.")
-        gone = recipient_gone(conn.execute('SELECT name,status FROM bots WHERE id=%s', (message['recipient'],)).fetchone())
-        if gone:
-            raise HTTPException(409, f"{gone}, so the message can't be resent. Choose Done instead.")
+        refusal = resend_refusal(conn, message)
+        if refusal:
+            raise HTTPException(409, f'{refusal}. Choose Done instead.')
         conn.execute("UPDATE teammate_messages SET status='pending',attempts=0,not_before=NULL,reason=NULL,released=NULL,"
                      "owner_action='resend',owner_action_at=now() WHERE id=%s", (identity,))
     else:
@@ -161,7 +222,7 @@ def schedule_inbox(conn, entry):
         return
     source = conn.execute('SELECT * FROM tasks WHERE id=%s', (entry['source_task_id'],)).fetchone()
     from .recurring_management import scope, inherit
-    frozen = scope(conn, source)
+    frozen = scope(conn, source) if source else None
     if frozen:
         identity = source.get('management_work_item_id') or source['work_item_id']
         if not conn.execute('SELECT id FROM work_items WHERE id=%s FOR UPDATE SKIP LOCKED', (identity,)).fetchone():
@@ -169,14 +230,9 @@ def schedule_inbox(conn, entry):
         if not conn.execute('SELECT id FROM tasks WHERE id=%s FOR UPDATE SKIP LOCKED', (source['root_id'],)).fetchone():
             return
         source = service.locked_task(conn, source['id'])
-        try:
-            service.check_grant(conn, source)
-        except HTTPException:
-            conn.execute("UPDATE teammate_messages SET status='cancelled' WHERE id=%s", (entry['id'],))
-            return
-    archived = conn.execute('SELECT archived_at FROM conversations WHERE id=%s', (entry['conversation_id'],)).fetchone()['archived_at']
-    if archived or source['status'] in {'cancelled', 'cancelling', 'interrupted'} or execution_policy.expired(source):
-        conn.execute("UPDATE teammate_messages SET status='cancelled' WHERE id=%s", (entry['id'],))
+    blocked = delivery_blocker(conn, entry, source)
+    if blocked:
+        release(conn, entry, blocked[1], blocked[0])
         return
     if bot['status'] != 'active' or bot['desired_state'] != 'running':
         return
