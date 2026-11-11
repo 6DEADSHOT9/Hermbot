@@ -42,31 +42,17 @@ def inbox(conn, task):
     """Messages for this task's bot in its conversation and work. Whether a pending message is runnable now (past its
     retry pause) is decided in SQL before the LIMIT, as pgmq and River select only runnable rows, so paused messages
     can't crowd eligible ones out. A pending message that can never be delivered is released with its reason in the
-    same pass, so it stops matching; anything else that fails the shared check is not shown. A cancelled message is
-    never shown again, even one linked to this task or read by it earlier: it was dropped, so it must not be answered."""
+    same pass, so it stops matching, and one whose check fails is counted and paused like any other failure (checked).
+    A cancelled message is never shown again, even one linked to this task or read by it earlier: it was dropped, so
+    it must not be answered."""
     rows = conn.execute("SELECT * FROM teammate_messages WHERE recipient=%s AND conversation_id=%s AND (work_item_id IS NULL OR work_item_id=%s) "
                         "AND status<>'cancelled' "
                         "AND (status='pending' OR response_task_id=%s OR delivered_attempt_id IN (SELECT id FROM attempts WHERE task_id=%s)) "
                         "AND (status<>'pending' OR not_before IS NULL OR not_before<=now()) "
                         "ORDER BY (status='pending') DESC,created_at DESC LIMIT 30",
                         (task['bot_id'], task['conversation_id'], task['work_item_id'], task['id'], task['id'])).fetchall()
-    shown = []
-    for row in rows:
-        if row['status'] == 'pending':
-            try:
-                with conn.transaction():
-                    check = delivery_check(conn, row)
-                    if check not in (None, 'wait'):
-                        release(conn, row, check[1], check[0])
-            except Exception as exc:
-                if isolation.database_lost(exc):
-                    raise
-                logger.warning('Teammate message %s could not be checked for an inbox (%s)', row['id'], isolation.describe(exc))
-                continue
-            if check is not None:
-                continue
-        shown.append({key: row[key] for key in ('id', 'sender', 'recipient', 'content', 'reply_to', 'status')})
-    return shown
+    return [{key: row[key] for key in ('id', 'sender', 'recipient', 'content', 'reply_to', 'status')}
+            for row in rows if row['status'] != 'pending' or checked(conn, row) == 'ready']
 
 
 def delivered(conn, task, identities):
@@ -85,15 +71,36 @@ def schedule_inboxes(conn):
     # The scheduler already has a global claim lock. Never add a second execution to a busy bot.
     rows = conn.execute("SELECT DISTINCT ON(m.recipient,m.conversation_id,m.work_item_id) m.* FROM teammate_messages m WHERE m.status IN ('pending','delivered') AND m.reply_to IS NULL AND m.response_task_id IS NULL AND (m.not_before IS NULL OR m.not_before<=now()) AND NOT EXISTS(SELECT 1 FROM teammate_messages reply WHERE reply.reply_to=m.id) AND (m.status='pending' OR EXISTS(SELECT 1 FROM attempts a JOIN tasks t ON t.id=a.task_id WHERE a.id=m.delivered_attempt_id AND t.status=ANY(%s))) ORDER BY m.recipient,m.conversation_id,m.work_item_id,m.created_at", (list(service.TERMINAL),)).fetchall()
     for entry in rows:
-        # This runs first in every dispatch pass, so one message must never stop dispatch for every bot:
-        # each message is scheduled in its own savepoint, and a failure is counted against that message.
-        try:
-            with conn.transaction():
-                schedule_inbox(conn, entry)
-        except Exception as exc:
-            if isolation.database_lost(exc):
-                raise
-            record_failure(conn, entry, exc)
+        # This runs first in every dispatch pass, so one message must never stop dispatch for every bot.
+        isolated(conn, entry, lambda: schedule_inbox(conn, entry))
+
+
+def isolated(conn, message, step):
+    """The only way a message is checked or scheduled: the step runs in its own savepoint, and an error is counted
+    against that message alone (record_failure: backoff, then give-up with an owner alert). Every reader goes through
+    here, so none can skip the counting, as a queue keeps one delivery count whichever consumer failed. A lost
+    database connection is not the message's fault and propagates."""
+    try:
+        with conn.transaction():
+            return step()
+    except Exception as exc:
+        if isolation.database_lost(exc):
+            raise
+        record_failure(conn, message, exc)
+        return 'failed'
+
+
+def checked(conn, message):
+    """Check one message before a bot may see it: 'ready' when it may go now, 'wait' while it is in its retry pause,
+    'released' when it can never be delivered (cancelled here, with its reason), or 'failed' when the check itself
+    raised (counted and paused by isolated)."""
+    def step():
+        check = delivery_check(conn, message)
+        if check in (None, 'wait'):
+            return check or 'ready'
+        release(conn, message, check[1], check[0])
+        return 'released'
+    return isolated(conn, message, step)
 
 
 def recipient_gone(bot):
@@ -130,7 +137,7 @@ def record_failure(conn, entry, exc):
     """A message that keeps failing backs off and keeps its last error; after a few failures it is given up.
     Outages back off without counting against the message, as for run attempts (worker.record_drive_failure)."""
     counted = not isolation.unavailable(exc)
-    logger.warning('Teammate message %s could not be scheduled (%s)', entry['id'], isolation.describe(exc))
+    logger.warning('Teammate message %s could not be checked or scheduled (%s)', entry['id'], isolation.describe(exc))
     row = conn.execute("UPDATE teammate_messages SET attempts=attempts+%s,last_error=%s,last_error_at=now(),"
                        "not_before=now()+make_interval(secs=>%s) WHERE id=%s AND status IN ('pending','delivered') RETURNING attempts",
                        (int(counted), isolation.diagnostic(exc), isolation.backoff_seconds(entry['attempts']) * (0.5 + random() / 2), entry['id'])).fetchone()
@@ -167,8 +174,8 @@ def delivery_blocker(conn, message, source):
 
 def delivery_check(conn, message):
     """The one check before a message is handed to its recipient: None when it may go now, 'wait' while it is in its
-    retry pause, or (kind, reason) when it can never be delivered. Every message the scheduler attaches to a reply
-    task, and every pending message an inbox shows, goes through this."""
+    retry pause, or (kind, reason) when it can never be delivered. Called only by checked(), which every message the
+    scheduler attaches to a reply task, and every pending message an inbox shows, goes through."""
     # A message that can never be delivered is released at once, even during its retry pause (as Oban and River cancel
     # a scheduled or retrying job immediately); only a deliverable message waits out its pause.
     blocked = delivery_blocker(conn, message, conn.execute('SELECT * FROM tasks WHERE id=%s', (message['source_task_id'],)).fetchone())
@@ -178,9 +185,6 @@ def delivery_check(conn, message):
         return 'wait'
     return None
 
-
-def ready_now(conn, message):
-    return delivery_check(conn, message) is None
 
 
 def awaiting_owner(message):
@@ -298,18 +302,8 @@ def schedule_inbox(conn, entry):
                               "AND status IN ('pending','delivered') AND reply_to IS NULL AND response_task_id IS NULL AND id<>%s "
                               "AND NOT EXISTS(SELECT 1 FROM teammate_messages reply WHERE reply.reply_to=m.id) ORDER BY created_at FOR UPDATE SKIP LOCKED",
                               (entry['recipient'], entry['conversation_id'], entry['work_item_id'], entry['id'])).fetchall():
-        # Isolated like every other message: one that can't be checked is counted against itself, not the batch.
-        try:
-            with conn.transaction():
-                check = delivery_check(conn, other)
-                if check is None:
-                    attach.append(other['id'])
-                elif check != 'wait':
-                    release(conn, other, check[1], check[0])
-        except Exception as exc:
-            if isolation.database_lost(exc):
-                raise
-            record_failure(conn, other, exc)
+        if checked(conn, other) == 'ready':  # One that can't be checked is counted against itself, not the batch.
+            attach.append(other['id'])
     conn.execute('UPDATE teammate_messages SET response_task_id=%s WHERE id=ANY(%s)', (identity, attach))
     db.event(conn, 'teammate.response_queued', conversation_id=entry['conversation_id'], bot_id=entry['recipient'], data={'task_id': str(identity), 'message_id': str(entry['id'])})
 

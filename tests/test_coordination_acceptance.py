@@ -1066,6 +1066,112 @@ def test_the_same_failure_after_a_resend_is_a_new_alert(work, monkeypatch):
     assert again['version'] > first['version'] and again['read_version'] < again['version'], 'It comes back as new, unread'
 
 
+# A message whose inbox check fails is counted, paused and given up like any other failure, and can't hide a healthy one.
+
+def fail_checks_for(monkeypatch, ids):
+    blocker = coordination.delivery_blocker
+
+    def broken(conn, message, source):
+        if message['id'] in ids:
+            raise RuntimeError('a stored row this code cannot read')
+        return blocker(conn, message, source)
+    monkeypatch.setattr(coordination, 'delivery_blocker', broken)
+
+
+def read_inbox(task):
+    with db.connection() as conn:
+        return [m['id'] for m in coordination.inbox(conn, service.locked_task(conn, task))]
+
+
+def clear_pauses(message):
+    with db.connection() as conn:
+        conn.execute('UPDATE teammate_messages SET not_before=NULL WHERE id=%s', (message,))
+
+
+def test_failing_inbox_checks_are_counted_and_cannot_hide_a_healthy_message(work, monkeypatch):
+    child = delegate(work)
+    manager = next(a for a in worker.claim_new() if a['bot_id'] == 'researcher')
+    healthy = UUID(invoke(manager, 'message', {'bot_id': 'writer', 'prompt': 'The healthy one'})['message_id'])
+    with db.connection() as conn:  # It is the oldest; 32 newer copies all fail their check.
+        conn.execute("UPDATE teammate_messages SET created_at=now()-interval '1 hour' WHERE id=%s", (healthy,))
+        columns = [r['column_name'] for r in conn.execute("SELECT column_name FROM information_schema.columns WHERE table_name='teammate_messages' "
+                                                          "AND column_name NOT IN ('id','created_at','not_before','attempts')").fetchall()]
+        listed = ','.join(columns)
+        failing = {r['id'] for r in conn.execute(f"INSERT INTO teammate_messages(id,created_at,not_before,attempts,{listed}) "
+                                                 f"SELECT gen_random_uuid(),now()-make_interval(secs=>n),NULL,0,{listed} FROM teammate_messages, generate_series(1,32) n WHERE id=%s "
+                                                 "RETURNING id", (healthy,)).fetchall()}
+    fail_checks_for(monkeypatch, failing)
+
+    def failing_rows():
+        return [message_row(identity) for identity in failing]
+    assert read_inbox(child) == [], 'Nothing is shown while the newest 30 fail'
+    counted = [m for m in failing_rows() if m['attempts'] == 1]
+    assert len(counted) == 30, 'Every check that failed is counted against its message'
+    assert all(m['not_before'] > service.now() and m['last_error'] for m in counted), 'Each is paused and keeps its error'
+    assert read_inbox(child) == [healthy], 'The healthy message is no longer hidden'
+    assert [m['attempts'] for m in failing_rows()] == [1] * 32, 'The other two failed once, and the paused ones were left alone'
+
+
+def test_three_failed_inbox_checks_give_the_message_up_and_alert_the_owner(work, monkeypatch):
+    child = delegate(work)
+    manager = next(a for a in worker.claim_new() if a['bot_id'] == 'researcher')
+    message = UUID(invoke(manager, 'message', {'bot_id': 'writer', 'prompt': 'This one cannot be checked'})['message_id'])
+    fail_checks_for(monkeypatch, {message})
+    for _ in range(3):
+        clear_pauses(message)
+        read_inbox(child)
+    given_up = message_row(message)
+    assert (given_up['status'], given_up['released']) == ('cancelled', 'failed')
+    assert given_up['reason'].startswith('Could not be delivered after 3 attempts'), given_up['reason']
+    assert len(events('teammate.message_failed')) == 1, 'The owner is told once'
+    item = alert(message)
+    assert item['active'] and item['needs_owner'], 'The alert is in "Needs you"'
+
+
+def test_an_outage_during_an_inbox_check_pauses_without_counting(work, monkeypatch):
+    from psycopg import errors
+    child = delegate(work)
+    manager = next(a for a in worker.claim_new() if a['bot_id'] == 'researcher')
+    message = UUID(invoke(manager, 'message', {'bot_id': 'writer', 'prompt': 'During an outage'})['message_id'])
+    blocker = coordination.delivery_blocker
+
+    def busy(conn, other, source):
+        if other['id'] == message:
+            raise errors.LockNotAvailable('another transaction holds the row')
+        return blocker(conn, other, source)
+    monkeypatch.setattr(coordination, 'delivery_blocker', busy)
+    assert read_inbox(child) == []
+    held = message_row(message)
+    assert (held['status'], held['attempts']) == ('pending', 0) and held['not_before'] is not None and held['not_before'] > service.now(), 'Paused, not counted'
+
+
+def test_a_failing_message_linked_to_the_running_reply_is_given_up_and_its_sender_told(work, monkeypatch):
+    message = waiting_on_writer(work)
+    reply = next(a for a in worker.claim_new() if a['bot_id'] == 'writer')
+    assert message_row(message)['response_task_id'] == reply['task_id']
+    fail_checks_for(monkeypatch, {message})
+    for _ in range(3):
+        clear_pauses(message)
+        read_inbox(reply['task_id'])
+    assert message_row(message)['released'] == 'failed', 'Given up even though a reply task is already linked to it'
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued' and 'Could not be delivered after 3 attempts' in row(work['id'])['continuation']
+
+
+def test_every_reader_goes_through_the_shared_check_and_the_counting():
+    import ast
+    from pathlib import Path
+    tree = ast.parse(Path(coordination.__file__).read_text())
+    found = {'delivery_check': set(), 'record_failure': set()}
+    for top in tree.body:
+        if isinstance(top, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            for node in ast.walk(top):
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in found:
+                    found[node.func.id].add(top.name)
+    assert found['delivery_check'] == {'checked'}, f"Every reader must go through checked/isolated; delivery_check is called from {found['delivery_check']}"
+    assert found['record_failure'] == {'isolated'}, f"Every reader must go through checked/isolated; record_failure is called from {found['record_failure']}"
+
+
 # Random sequences of everything that can happen to a message, with the rules checked after every step.
 
 STOPPED = {'cancelled', 'cancelling', 'interrupted'}
@@ -1081,11 +1187,12 @@ def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed
     attempts = worker.claim_new()
     senders = {'manager': next(a for a in attempts if a['bot_id'] == 'researcher'), 'helper': next(a for a in attempts if a['bot_id'] == 'reviewer')}
     sources = {'manager': work['id'], 'helper': child}
-    broken, sent, log = set(), [], []
+    broken, raised, sent, log = set(), set(), [], []
     blocker = coordination.delivery_blocker
 
     def flaky(conn, message, source):
         if message['source_task_id'] in broken:
+            raised.add(message['id'])
             raise RuntimeError('injected failure')
         return blocker(conn, message, source)
     monkeypatch.setattr(coordination, 'delivery_blocker', flaky)
@@ -1099,9 +1206,10 @@ def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed
             return conn.execute("SELECT status FROM bots WHERE id='writer'").fetchone()['status']
 
     def step():
+        raised.clear()
         live = [k for k in senders if row(sources[k])['status'] not in STOPPED | set(service.TERMINAL)]
         # Weighted so sequences reach the hard states: three failures in a row, giving up, resends and bounces.
-        choices = ['schedule'] * 4 + ['finish_reply'] * 2 + ['toggle_failure', 'archive', 'restore'] + ['resolve'] * 3
+        choices = ['schedule'] * 4 + ['finish_reply'] * 2 + ['toggle_failure', 'archive', 'restore'] + ['resolve'] * 3 + ['inbox_read'] * 2
         choices += ['send'] * 3 if live and writer_status() == 'active' else []  # Sending to an archived bot is refused at send time.
         choices += ['stop_helper'] if 'helper' in live else []
         action = rng.choice(choices)
@@ -1126,6 +1234,12 @@ def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed
                 running = conn.execute("SELECT id FROM attempts WHERE bot_id='writer' AND status=ANY(%s)", (list(service.ACTIVE_ATTEMPTS),)).fetchall()
             for attempt in running:
                 worker.settle(attempt['id'], {'status': 'completed', 'output': 'Answered'})
+        elif action == 'inbox_read':
+            with db.connection() as conn:
+                running = conn.execute("SELECT task_id FROM attempts WHERE bot_id='writer' AND status=ANY(%s)", (list(service.ACTIVE_ATTEMPTS),)).fetchall()
+            for attempt in running:
+                with db.connection() as conn:
+                    coordination.inbox(conn, service.locked_task(conn, attempt['task_id']))
         elif action == 'toggle_failure':
             broken.symmetric_difference_update({sources[rng.choice(list(sources))]})
         elif action in ('archive', 'restore'):
@@ -1149,7 +1263,10 @@ def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed
                 assert after['delivery_revision'] == current + (not stale and after['owner_action'] == 'resend'), f'{log}: revision moved wrongly'
 
     def check():
+        now = service.now()
         for identity, r in rows().items():
+            if identity in raised:
+                assert r['status'] == 'cancelled' or (r['not_before'] and r['not_before'] > now), f'{log}: a failed check was not counted'
             if r['status'] == 'cancelled':
                 assert r['released'] in ('failed', 'bounced', 'dropped') and r['reason'], f'{log}: cancelled without a reason'
             if coordination.awaiting_owner(r):
