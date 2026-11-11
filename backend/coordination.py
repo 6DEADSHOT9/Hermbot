@@ -39,8 +39,12 @@ def send(conn, task, args):
 
 
 def inbox(conn, task):
-    return conn.execute("SELECT id,sender,recipient,content,reply_to,status FROM teammate_messages WHERE recipient=%s AND conversation_id=%s AND (work_item_id IS NULL OR work_item_id=%s) AND (status='pending' OR response_task_id=%s OR delivered_attempt_id IN (SELECT id FROM attempts WHERE task_id=%s)) ORDER BY (status='pending') DESC,created_at DESC LIMIT 30",
+    """Messages for this task's bot in its conversation and work. A pending message is shown only if it may be
+    handed over now (ready_now), the same check the scheduler applies to every message it attaches."""
+    rows = conn.execute("SELECT id,sender,recipient,content,reply_to,status,not_before,conversation_id,work_item_id,source_task_id FROM teammate_messages WHERE recipient=%s AND conversation_id=%s AND (work_item_id IS NULL OR work_item_id=%s) AND (status='pending' OR response_task_id=%s OR delivered_attempt_id IN (SELECT id FROM attempts WHERE task_id=%s)) ORDER BY (status='pending') DESC,created_at DESC LIMIT 30",
                         (task['bot_id'], task['conversation_id'], task['work_item_id'], task['id'], task['id'])).fetchall()
+    return [{key: row[key] for key in ('id', 'sender', 'recipient', 'content', 'reply_to', 'status')}
+            for row in rows if row['status'] != 'pending' or ready_now(conn, row)]
 
 
 def delivered(conn, task, identities):
@@ -112,13 +116,6 @@ def record_failure(conn, entry, exc):
         release(conn, entry, f"Could not be delivered after {row['attempts']} attempts ({isolation.describe(exc)})", 'failed')
 
 
-def sender_work_open(conn, message):
-    """Whether the work that sent this message is still in progress, so the owner can still act on it.
-    Work paused at its budget counts as in progress: the owner can continue it."""
-    root = conn.execute("SELECT r.status FROM tasks t JOIN tasks r ON r.id=t.root_id WHERE t.id=%s", (message['source_task_id'],)).fetchone()
-    return bool(root) and root['status'] not in service.TERMINAL | {'cancelling'}
-
-
 def delivery_blocker(conn, message, source):
     """Why this message can never be delivered, as (kind, reason), or None: the one rule shared by the scheduler,
     Resend and the owner's alert, so none of them can promise what another will refuse. kind is 'bounced' when
@@ -146,21 +143,17 @@ def delivery_blocker(conn, message, source):
     return None
 
 
-def resend_refusal(conn, message):
-    """Why Resend can't help now, or None. Resend is offered only while it can work.
-    If the delivery rule itself fails on this message (it may be what made the message fail), Resend is allowed:
-    the message goes back through the normal path, and fails visibly again if it must."""
-    if not sender_work_open(conn, message):
-        return "The sender's work has finished, so a resent message wouldn't reach it"
-    try:
-        with conn.transaction():
-            blocked = delivery_blocker(conn, message, conn.execute('SELECT * FROM tasks WHERE id=%s', (message['source_task_id'],)).fetchone())
-    except Exception as exc:
-        if isolation.database_lost(exc):
-            raise
-        logger.warning('Delivery rule failed for teammate message %s (%s)', message['id'], isolation.describe(exc))
-        return None
-    return blocked[1] + ", so the message can't be resent" if blocked else None
+def delivery_check(conn, message):
+    """The one check before a message is handed to its recipient: None when it may go now, 'wait' while it is in its
+    retry pause, or (kind, reason) when it can never be delivered. Every message the scheduler attaches to a reply
+    task, and every pending message an inbox shows, goes through this."""
+    if message['not_before'] and message['not_before'] > service.now():
+        return 'wait'
+    return delivery_blocker(conn, message, conn.execute('SELECT * FROM tasks WHERE id=%s', (message['source_task_id'],)).fetchone())
+
+
+def ready_now(conn, message):
+    return delivery_check(conn, message) is None
 
 
 def awaiting_owner(message):
@@ -192,17 +185,16 @@ def requeue(conn, identity):
 
 
 def resolve_failed(conn, identity, action):
-    """The owner's answer to a message that was given up: resend it (back in the queue with a fresh count, as a
-    dead-letter redrive) or mark it done (the owner handles it). Either closes the attention item."""
+    """The owner's answer to a message that couldn't be delivered: resend it (back in the queue with a fresh count,
+    as a dead-letter redrive) or mark it done (the owner handles it). Either closes the attention item."""
     message = conn.execute('SELECT * FROM teammate_messages WHERE id=%s FOR UPDATE', (identity,)).fetchone()
     if not message:
         raise HTTPException(404, 'Message not found')
     if not awaiting_owner(message):
         raise HTTPException(409, 'This message was already handled')
     if action == 'resend':
-        refusal = resend_refusal(conn, message)
-        if refusal:
-            raise HTTPException(409, f'{refusal}. Choose Done instead.')
+        # No prediction of whether it will work: the scheduler alone decides, and a resend that can't be delivered
+        # comes straight back with its reason (as a retried job does in Procrastinate, Oban or Sidekiq).
         requeue(conn, identity)
         conn.execute("UPDATE teammate_messages SET owner_action='resend',owner_action_at=now() WHERE id=%s", (identity,))
     else:
@@ -266,7 +258,26 @@ def schedule_inbox(conn, entry):
     if frozen:
         conn.execute('UPDATE tasks SET reply_to_message_id=%s WHERE id=%s', (source['reply_to_message_id'], identity))
         inherit(conn, conn.execute('SELECT * FROM tasks WHERE id=%s', (identity,)).fetchone())
-    conn.execute("UPDATE teammate_messages SET response_task_id=%s WHERE recipient=%s AND conversation_id=%s AND work_item_id IS NOT DISTINCT FROM %s AND status IN ('pending','delivered') AND reply_to IS NULL AND response_task_id IS NULL AND NOT EXISTS(SELECT 1 FROM teammate_messages reply WHERE reply.reply_to=teammate_messages.id)", (identity, entry['recipient'], entry['conversation_id'], entry['work_item_id']))
+    # The reply task answers the group's other waiting messages too, but each is checked on its own first: one still
+    # in its retry pause waits, and one that can never be delivered is released with its reason.
+    attach = [entry['id']]
+    for other in conn.execute("SELECT * FROM teammate_messages m WHERE recipient=%s AND conversation_id=%s AND work_item_id IS NOT DISTINCT FROM %s "
+                              "AND status IN ('pending','delivered') AND reply_to IS NULL AND response_task_id IS NULL AND id<>%s "
+                              "AND NOT EXISTS(SELECT 1 FROM teammate_messages reply WHERE reply.reply_to=m.id) ORDER BY created_at FOR UPDATE SKIP LOCKED",
+                              (entry['recipient'], entry['conversation_id'], entry['work_item_id'], entry['id'])).fetchall():
+        # Isolated like every other message: one that can't be checked is counted against itself, not the batch.
+        try:
+            with conn.transaction():
+                check = delivery_check(conn, other)
+                if check is None:
+                    attach.append(other['id'])
+                elif check != 'wait':
+                    release(conn, other, check[1], check[0])
+        except Exception as exc:
+            if isolation.database_lost(exc):
+                raise
+            record_failure(conn, other, exc)
+    conn.execute('UPDATE teammate_messages SET response_task_id=%s WHERE id=ANY(%s)', (identity, attach))
     db.event(conn, 'teammate.response_queued', conversation_id=entry['conversation_id'], bot_id=entry['recipient'], data={'task_id': str(identity), 'message_id': str(entry['id'])})
 
 

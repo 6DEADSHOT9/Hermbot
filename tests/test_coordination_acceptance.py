@@ -666,39 +666,41 @@ def test_resend_puts_the_message_back_and_a_new_failure_alerts_again(work, monke
     assert again['active'] and again['needs_owner'] and again['version'] > first['version'], 'A new failure is a new alert'
 
 
-def test_the_alert_leaves_needs_you_once_its_work_is_handled(work, monkeypatch):
-    from types import SimpleNamespace
-    from backend import attention
+def test_an_open_alert_always_offers_resend_and_a_doomed_resend_comes_back_with_the_reason(work, monkeypatch):
     message = give_up(work, monkeypatch)
     worker.advance_waiters()
-    assert alert(message)['needs_owner'] and counts() == 1
     with db.connection() as conn:  # The owner stops the sender's work.
         service.cancel(conn, service.locked_task(conn, work['id']), 'Stopped by owner')
-    with db.connection() as conn:
-        attention.project(conn, 'task', work['id'])
     item = alert(message)
-    assert item['active'] and not item['needs_owner'] and counts() == 0, 'It moved to updates on its own'
-    assert "The sender's work has finished, so a resent message wouldn't reach it. This is for your information." in item['summary']
-    refused = resolve(message, 'resend')
-    assert refused.status_code == 409 and 'Choose Done instead' in refused.json()['detail']
-    with db.connection() as conn:
-        attention.acknowledge(conn, [SimpleNamespace(id=item['id'], version=item['version'])], 'dismiss')
-        assert conn.execute('SELECT dismissed_version FROM attention_items WHERE id=%s', (item['id'],)).fetchone()['dismissed_version'] == item['version'], 'and can be dismissed'
+    assert item['active'] and item['needs_owner'] and counts() == 1, 'Nothing predicts whether Resend will work'
+    assert resolve(message, 'resend').status_code == 200, 'Resend is accepted; the scheduler is the only judge'
+    assert not alert(message)['active']
+    worker.claim_new()
+    reason = f"{name('researcher')}'s task was stopped"
+    back = message_row(message)
+    assert (back['status'], back['released'], back['reason'], back['owner_action']) == ('cancelled', 'dropped', reason, 'resend')
+    item = alert(message)
+    assert item['active'] and item['needs_owner'] and item['summary'] == f"{reason}. Resend it, or choose Done if you'll handle it yourself.", 'It comes back with the reason'
+    assert resolve(message, 'done').status_code == 200 and not alert(message)['active'] and counts() == 0
 
 
-def test_a_message_given_up_after_its_work_finished_is_an_update_from_the_start(work, monkeypatch):
+def test_a_message_given_up_after_its_work_finished_still_offers_both_actions(work, monkeypatch):
     message = give_up(work, monkeypatch, wait=False)
     assert row(work['id'])['status'] == 'completed'
     item = alert(message)
-    assert item['active'] and not item['needs_owner'] and item['read_version'] < item['version'], 'Unread, in updates, not "Needs you"'
+    assert item['active'] and item['needs_owner'] and item['summary'].endswith("Resend it, or choose Done if you'll handle it yourself.")
 
 
-def test_resend_is_refused_when_the_recipient_is_gone(work, monkeypatch):
+def test_a_resend_to_a_deleted_teammate_comes_back_with_the_reason(work, monkeypatch):
     message = give_up(work, monkeypatch)
     worker.advance_waiters()
+    alert(message)
     set_writer('deleted')
-    refused = resolve(message, 'resend')
-    assert refused.status_code == 409 and refused.json()['detail'] == f"{name('writer')} was deleted, so the message can't be resent. Choose Done instead."
+    assert resolve(message, 'resend').status_code == 200
+    worker.claim_new()
+    reason = f"{name('writer')} was deleted"
+    assert (message_row(message)['released'], message_row(message)['reason']) == ('bounced', reason)
+    assert alert(message)['summary'] == f"{reason}. Resend it, or choose Done if you'll handle it yourself."
     assert resolve(message, 'done').status_code == 200
 
 
@@ -739,25 +741,21 @@ def test_a_message_from_a_stopped_task_is_dropped_with_the_reason(work):
     assert alert(message) is None, 'An ordinary drop is recorded, not raised to the owner'
 
 
-def test_resend_is_refused_with_the_reason_once_the_sending_task_is_stopped(work, monkeypatch):
-    from backend import attention
+def test_a_resend_from_a_stopped_helper_comes_back_with_the_reason(work, monkeypatch):
     child, helper, message = helper_message(work)
     fail_three_times(child, message, monkeypatch)
-    assert alert(message)['needs_owner'], 'While the helper runs, Resend can work'
     stop(child, helper)
     assert row(work['id'])['status'] not in service.TERMINAL, 'The manager is still running'
-    with db.connection() as conn:
-        attention.project(conn, 'task', child)
+    assert alert(message)['needs_owner'], 'Still offered: nothing predicts the outcome'
+    assert resolve(message, 'resend').status_code == 200
+    worker.claim_new()
+    reason = f"{name('writer')}'s task was stopped"
     item = alert(message)
-    reason = f"{name('writer')}'s task was stopped, so the message can't be resent"
-    assert item['active'] and not item['needs_owner'] and f'{reason}. This is for your information.' in item['summary']
-    refused = resolve(message, 'resend')
-    assert refused.status_code == 409 and refused.json()['detail'] == f'{reason}. Choose Done instead.'
-    assert message_row(message)['status'] == 'cancelled', 'Nothing was re-queued'
-    assert resolve(message, 'done').status_code == 200 and not alert(message)['active']
+    assert item['active'] and item['needs_owner'] and item['summary'] == f"{reason}. Resend it, or choose Done if you'll handle it yourself."
+    assert item['title'] == f"Your resent message from {name('writer')} to {name('reviewer')} couldn't be delivered"
 
 
-def test_a_resend_that_cannot_go_through_is_reported_to_the_owner(work, monkeypatch):
+def test_a_resend_that_cannot_go_through_is_reported_and_can_be_resent_again(work, monkeypatch):
     child, helper, message = helper_message(work)
     fail_three_times(child, message, monkeypatch)
     assert alert(message)['needs_owner'], 'The owner sees it in "Needs you"'
@@ -768,10 +766,10 @@ def test_a_resend_that_cannot_go_through_is_reported_to_the_owner(work, monkeypa
     lost = message_row(message)
     assert (lost['status'], lost['released'], lost['owner_action']) == ('cancelled', 'dropped', 'resend')
     item = alert(message)
-    assert item['active'] and not item['needs_owner'] and item['read_version'] < item['version'], 'An unread update'
-    assert item['title'] == f"Your resent message from {name('writer')} to {name('reviewer')} couldn't be delivered"
-    assert item['summary'] == f"{name('writer')}'s task was stopped. This is for your information."
-    assert resolve(message, 'resend').status_code == 409
+    assert item['active'] and item['needs_owner'] and item['read_version'] < item['version'], 'Back in "Needs you", unread'
+    assert resolve(message, 'resend').status_code == 200, 'Resend stays available'
+    worker.claim_new()
+    assert alert(message)['active'], 'and comes back again while it still cannot be delivered'
     assert resolve(message, 'done').status_code == 200 and not alert(message)['active']
     assert resolve(message, 'done').status_code == 409
 
@@ -799,7 +797,7 @@ def test_stopping_managed_recurring_work_drops_its_messages_with_the_reason():
     reason = 'The recurring work it belonged to was stopped: Owner revoked management authority'
     assert (dropped['status'], dropped['released'], dropped['reason'], dropped['owner_action']) == ('cancelled', 'dropped', reason, 'resend')
     item = alert(message)
-    assert item['active'] and not item['needs_owner'] and item['summary'] == f'{reason}. This is for your information.', 'The lost resend is reported'
+    assert item['active'] and item['needs_owner'] and item['summary'] == f"{reason}. Resend it, or choose Done if you'll handle it yourself.", 'The lost resend is reported'
 
 
 def test_a_message_alert_opens_the_sending_tasks_thread(work, monkeypatch):
@@ -874,7 +872,163 @@ def test_a_second_resend_after_archive_and_restore_is_delivered(work, monkeypatc
     operate('restore', monkeypatch)
     with db.connection() as conn:  # The worker's probe marks the restored runtime ready.
         conn.execute("UPDATE bots SET readiness='{\"compatible\": true}' WHERE id='writer'")
+    item = alert(message)
+    assert item['active'] and item['needs_owner'], 'After the restore, the alert still offers Resend'
     assert resolve(message, 'resend').status_code == 200
     second = next(a for a in worker.claim_new() if a['bot_id'] == 'writer')
     resent = message_row(message)
     assert resent['response_task_id'] == second['task_id'] != first['task_id'], 'A new reply task answers the second resend'
+
+
+# Every message is checked on its own before a bot sees it, whether it starts a reply task, joins one, or is listed.
+
+def test_a_batch_attaches_only_messages_that_pass_their_own_check(work):
+    child = delegate(work, bot='reviewer')
+    attempts = worker.claim_new()
+    manager = next(a for a in attempts if a['bot_id'] == 'researcher')
+    helper = next(a for a in attempts if a['bot_id'] == 'reviewer')
+    stopped = UUID(invoke(helper, 'message', {'bot_id': 'writer', 'prompt': 'From the helper'})['message_id'])
+    with db.connection() as conn:
+        service.cancel(conn, service.locked_task(conn, child), 'Stopped by owner')
+    worker.settle(helper['id'], {'status': 'cancelled', 'output': ''})
+    paused = UUID(invoke(manager, 'message', {'bot_id': 'writer', 'prompt': 'Still in its retry pause'})['message_id'])
+    live = UUID(invoke(manager, 'message', {'bot_id': 'writer', 'prompt': 'From the manager'})['message_id'])
+    with db.connection() as conn:
+        conn.execute("UPDATE teammate_messages SET not_before=now()+interval '1 hour',attempts=1 WHERE id=%s", (paused,))
+        conn.execute("UPDATE teammate_messages SET created_at=now()-interval '1 minute' WHERE id=%s", (live,))  # The live one leads the group.
+    reply = next(a for a in worker.claim_new() if a['bot_id'] == 'writer')
+    assert message_row(live)['response_task_id'] == reply['task_id']
+    dropped = message_row(stopped)
+    assert (dropped['status'], dropped['released'], dropped['reason']) == ('cancelled', 'dropped', f"{name('reviewer')}'s task was stopped")
+    waiting = message_row(paused)
+    assert (waiting['status'], waiting['response_task_id']) == ('pending', None), 'It waits out its pause'
+    with db.connection() as conn:
+        shown = [m['content'] for m in coordination.inbox(conn, service.locked_task(conn, reply['task_id']))]
+    assert shown == ['From the manager']
+
+
+def test_a_busy_bots_inbox_lists_only_messages_that_may_go_now(work):
+    child = delegate(work)
+    manager = next(a for a in worker.claim_new() if a['bot_id'] == 'researcher')
+    message = UUID(invoke(manager, 'message', {'bot_id': 'writer', 'prompt': 'Please share your coverage'})['message_id'])
+
+    def listed():
+        with db.connection() as conn:
+            return [m['id'] for m in coordination.inbox(conn, service.locked_task(conn, child))]
+    assert listed() == [message]
+    with db.connection() as conn:
+        conn.execute("UPDATE teammate_messages SET not_before=now()+interval '1 hour' WHERE id=%s", (message,))
+    assert listed() == [], 'Hidden during its retry pause'
+    with db.connection() as conn:
+        conn.execute("UPDATE teammate_messages SET not_before=NULL WHERE id=%s", (message,))
+    assert listed() == [message]
+
+
+def test_one_message_that_cannot_be_checked_does_not_fail_its_batch(work, monkeypatch):
+    manager = worker.claim_new()[0]
+    first = UUID(invoke(manager, 'message', {'bot_id': 'writer', 'prompt': 'First'})['message_id'])
+    second = UUID(invoke(manager, 'message', {'bot_id': 'writer', 'prompt': 'Second'})['message_id'])
+    blocker = coordination.delivery_blocker
+
+    def broken(conn, message, source):
+        if message['id'] == second:
+            raise RuntimeError('a stored row this code cannot read')
+        return blocker(conn, message, source)
+    monkeypatch.setattr(coordination, 'delivery_blocker', broken)
+    reply = next(a for a in worker.claim_new() if a['bot_id'] == 'writer')
+    assert message_row(first)['response_task_id'] == reply['task_id'] and message_row(first)['attempts'] == 0
+    bad = message_row(second)
+    assert (bad['status'], bad['attempts'], bad['response_task_id']) == ('pending', 1, None), 'Counted against itself only'
+
+
+# Random sequences of everything that can happen to a message, with the rules checked after every step.
+
+STOPPED = {'cancelled', 'cancelling', 'interrupted'}
+
+
+@pytest.mark.parametrize('seed', range(60))
+def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed):
+    import random
+    import psycopg
+    from backend import attention
+    rng = random.Random(seed)
+    child = delegate(work, bot='reviewer')
+    attempts = worker.claim_new()
+    senders = {'manager': next(a for a in attempts if a['bot_id'] == 'researcher'), 'helper': next(a for a in attempts if a['bot_id'] == 'reviewer')}
+    sources = {'manager': work['id'], 'helper': child}
+    broken, sent, log = set(), [], []
+    blocker = coordination.delivery_blocker
+
+    def flaky(conn, message, source):
+        if message['source_task_id'] in broken:
+            raise RuntimeError('injected failure')
+        return blocker(conn, message, source)
+    monkeypatch.setattr(coordination, 'delivery_blocker', flaky)
+
+    def rows():
+        with db.connection() as conn:
+            return {r['id']: r for r in conn.execute('SELECT m.*, t.status AS source_status FROM teammate_messages m JOIN tasks t ON t.id=m.source_task_id').fetchall()}
+
+    def writer_status():
+        with db.connection() as conn:
+            return conn.execute("SELECT status FROM bots WHERE id='writer'").fetchone()['status']
+
+    def step():
+        live = [k for k in senders if row(sources[k])['status'] not in STOPPED | set(service.TERMINAL)]
+        # Weighted so sequences reach the hard states: three failures in a row, giving up, resends and bounces.
+        choices = ['schedule'] * 4 + ['finish_reply'] * 2 + ['toggle_failure', 'archive', 'restore'] + ['resolve'] * 3
+        choices += ['send'] * 3 if live and writer_status() == 'active' else []  # Sending to an archived bot is refused at send time.
+        choices += ['stop_helper'] if 'helper' in live else []
+        action = rng.choice(choices)
+        log.append(action)
+        if action == 'send':
+            who = rng.choice(live)
+            sent.append(UUID(invoke(senders[who], 'message', {'bot_id': 'writer', 'prompt': f'message {len(sent)}'})['message_id']))
+        elif action == 'schedule':  # Retry pauses run out, then a scheduler pass.
+            with db.connection() as conn:
+                conn.execute('UPDATE teammate_messages SET not_before=NULL WHERE not_before>now()')
+            before, status, now = rows(), writer_status(), service.now()
+            worker.claim_new()
+            for identity, after in rows().items():
+                old = before.get(identity)
+                if old and old['response_task_id'] is None and after['response_task_id'] is not None:  # Attached in this pass.
+                    assert not (old['not_before'] and old['not_before'] > now), f'{log}: attached during its retry pause'
+                    assert old['source_status'] not in STOPPED, f'{log}: attached from a stopped sender'
+                    assert old['source_task_id'] not in broken, f'{log}: attached without passing its check'
+                    assert status == 'active', f'{log}: attached while the recipient was {status}'
+        elif action == 'finish_reply':
+            with db.connection() as conn:
+                running = conn.execute("SELECT id FROM attempts WHERE bot_id='writer' AND status=ANY(%s)", (list(service.ACTIVE_ATTEMPTS),)).fetchall()
+            for attempt in running:
+                worker.settle(attempt['id'], {'status': 'completed', 'output': 'Answered'})
+        elif action == 'toggle_failure':
+            broken.symmetric_difference_update({sources[rng.choice(list(sources))]})
+        elif action in ('archive', 'restore'):
+            set_writer('archived' if action == 'archive' else 'active')
+        elif action == 'stop_helper':
+            stop(child, senders['helper'])
+        elif action == 'resolve':
+            open_alerts = [i for i, r in rows().items() if coordination.awaiting_owner(r)]
+            if open_alerts:
+                with db.connection() as conn:
+                    coordination.resolve_failed(conn, rng.choice(open_alerts), rng.choice(['resend', 'done']))
+
+    def check():
+        for identity, r in rows().items():
+            if r['status'] == 'cancelled':
+                assert r['released'] in ('failed', 'bounced', 'dropped') and r['reason'], f'{log}: cancelled without a reason'
+            if coordination.awaiting_owner(r):
+                with db.connection() as conn:
+                    attention.project(conn, 'message', identity)
+                    item = conn.execute("SELECT active,needs_owner FROM attention_items WHERE subject_type='message' AND subject_id=%s", (identity,)).fetchone()
+                assert item and item['active'] and item['needs_owner'], f'{log}: an open alert is not in "Needs you"'
+                for action in ('resend', 'done'):  # Every button an open alert shows is accepted.
+                    with db.connection() as conn:
+                        with conn.transaction():
+                            coordination.resolve_failed(conn, identity, action)
+                            raise psycopg.Rollback()
+        assert len(rows()) == len(sent), f'{log}: a message went missing'
+
+    for _ in range(40):
+        step()
+        check()

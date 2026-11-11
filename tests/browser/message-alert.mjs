@@ -5,8 +5,9 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 
 // Synthetic attention items only: every API request is intercepted and nothing reaches a runtime.
-// A teammate message given up after repeated failures always has a way out: Resend (while its work is
-// in progress) or Done. Either closes the item, and a refused action shows the server's reason.
+// A teammate message that couldn't be delivered always offers Resend and Done while its alert is open. Nothing
+// predicts whether Resend will work: a resend that can't be delivered comes back with its reason and both actions,
+// and a refused action (already handled) shows the server's reason.
 const root=resolve(process.argv[2]||'test-results/message-alert-web');
 const out=resolve(process.argv[3]||'test-results/message-alert-ui');await mkdir(out,{recursive:true});
 const server=createServer(async(req,res)=>{try{
@@ -24,11 +25,12 @@ const bots=['writer','researcher'].map((id,index)=>({id,name:index?'Scout':'Quil
 const conversations=bots.map((bot,index)=>({id:index?'scout':'quill',title:bot.name,kind:'dm',bot_id:bot.id,bot_ids:[bot.id]}));
 const state={bots,retired_bots:[],conversations,tasks:[],work_items:[],approvals:[],input_requests:[],artifacts:[],grants:[],proposals:[],operations:[],controls:[],workspace:{},provider_configured:true,protocol_fixture:false,event_cursor:0};
 const TITLE='A message from Scout to Quill couldn’t be delivered';
+const RESENT_TITLE='Your resent message from Scout to Quill couldn’t be delivered';
 async function open(scenario){
-  // scenario: {needsOwner, refuse}. After a successful resolution the item reads as resolved.
-  let resolved=false;
-  const item=()=>({id:'item-msg',version:resolved?2:1,title:TITLE,summary:scenario.needsOwner?'It failed 3 times and was dropped. If Scout was waiting for the answer, it was told. Resend it, or choose Done if you’ll handle it yourself.':'It failed 3 times and was dropped. Scout’s work has since finished, so this is for your information.',
-    source_status:'failed',active:!resolved,needs_owner:scenario.needsOwner&&!resolved,unread:!resolved,updated_at:new Date().toISOString(),refs:{bot_id:'researcher',bot_name:'Scout',message_id:'msg-1',task_id:'task-1',conversation_id:'scout'}});
+  // scenario: {comesBack, refuse}. After a resolution the item reads as resolved, unless the resend came back.
+  let resolved=false,back=false;
+  const item=()=>({id:'item-msg',version:back?3:resolved?2:1,title:back?RESENT_TITLE:TITLE,summary:back?'Quill is archived. Resend it, or choose Done if you’ll handle it yourself.':'It failed 3 times and was dropped. If Scout was waiting for the answer, it was told. Resend it, or choose Done if you’ll handle it yourself.',
+    source_status:'failed',active:!resolved||back,needs_owner:!resolved||back,unread:!resolved||back,updated_at:new Date().toISOString(),refs:{bot_id:'researcher',bot_name:'Scout',message_id:'msg-1',task_id:'task-1',conversation_id:'scout'}});
   const context=await browser.newContext({viewport:{width:1440,height:900},serviceWorkers:'block',timezoneId:'UTC'});
   await context.addInitScript(()=>{window.EventSource=class extends EventTarget{close(){}};});
   await context.route('**/*',async route=>{
@@ -37,7 +39,8 @@ async function open(scenario){
     if(req.method()==='POST'&&url.pathname==='/api/v1/teammate-messages/msg-1/resolve'){
       const body=JSON.parse(req.postData()||'{}');resolutions.push(body);
       if(scenario.refuse)return route.fulfill({status:409,json:{detail:scenario.refuse}});
-      resolved=true;return route.fulfill({json:{id:'msg-1',action:body.action}});
+      resolved=true;if(scenario.comesBack&&body.action==='resend')back=true;  // The scheduler released it again within a second.
+      return route.fulfill({json:{id:'msg-1',action:body.action}});
     }
     if(req.method()==='POST'&&url.pathname==='/api/v1/attention/read'){reads.push(JSON.parse(req.postData()||'{}'));return route.fulfill({json:{status:'recorded'}});}
     if(req.method()!=='GET')return route.fulfill({status:403,json:{detail:'Fixture rejects writes'}});
@@ -50,44 +53,46 @@ async function open(scenario){
   });
   const page=await context.newPage();page.on('pageerror',error=>{errors.push(error.message);console.error(error.message);});
   await page.goto(origin+'/?attention=item-msg');
-  await page.getByRole('heading',{name:TITLE}).waitFor();
+  await page.getByRole('heading',{name:scenario.startBack?RESENT_TITLE:TITLE}).waitFor();
   return {page,context};
 }
 try{
   const resend=page=>page.getByRole('button',{name:'Resend message',exact:true});
   const done=page=>page.getByRole('button',{name:'Done',exact:true});
 
-  let {page,context}=await open({needsOwner:true});
+  let {page,context}=await open({});
   await resend(page).waitFor();await done(page).waitFor();
-  await page.screenshot({path:`${out}/needs-you-1440.png`});
+  await page.screenshot({path:`${out}/open-alert-1440.png`});
   await Promise.all([page.waitForRequest(r=>r.url().endsWith('/api/v1/attention/read')),done(page).click()]);
   await page.getByText('This request is resolved or no longer actionable.').waitFor();
   assert.deepEqual(resolutions,[{action:'done'}]);
   assert.equal(await resend(page).count(),0,'No actions remain once it is resolved');
   assert.equal(reads.at(-1).action,'read');
-  checks.push('While its work is in progress the item offers Resend and Done; Done closes it.');
+  checks.push('An open alert offers Resend and Done; Done closes it.');
   await context.close();
 
-  ({page,context}=await open({needsOwner:true}));
+  ({page,context}=await open({}));
   await Promise.all([page.waitForRequest(r=>r.url().endsWith('/api/v1/attention/read')),resend(page).click()]);
   await page.getByText('This request is resolved or no longer actionable.').waitFor();
   assert.deepEqual(resolutions.at(-1),{action:'resend'});
-  checks.push('Resend sends the message back and closes the item.');
+  checks.push('Resend sends the message back and closes the alert.');
   await context.close();
 
-  ({page,context}=await open({needsOwner:false}));
-  await done(page).waitFor();
-  assert.equal(await resend(page).count(),0,'Once the work is handled, only Done is offered');
-  await page.screenshot({path:`${out}/update-1440.png`});
-  checks.push('Once its work is handled the item offers only Done.');
+  ({page,context}=await open({comesBack:true}));
+  await Promise.all([page.waitForRequest(r=>r.url().endsWith('/api/v1/attention/read')),resend(page).click()]);
+  await page.getByRole('heading',{name:RESENT_TITLE}).waitFor();
+  await page.getByText('Quill is archived. Resend it, or choose Done if you’ll handle it yourself.').waitFor();
+  await resend(page).waitFor();await done(page).waitFor();
+  await page.screenshot({path:`${out}/came-back-1440.png`});
+  checks.push('A resend that can’t be delivered comes back with its reason, and both actions are offered again.');
   await context.close();
 
-  const REASON="The sender's work has finished, so a resent message wouldn't reach it. Choose Done instead.";
-  ({page,context}=await open({needsOwner:true,refuse:REASON}));
+  const REASON='This message was already handled';
+  ({page,context}=await open({refuse:REASON}));
   await resend(page).click();
   await page.getByRole('alert').filter({hasText:REASON}).waitFor();
   await done(page).waitFor();
-  checks.push("A refused action shows the server's reason and leaves the item open.");
+  checks.push("A refused action shows the server's reason and leaves the alert open.");
   await context.close();
   assert.deepEqual(errors,[]);
 }finally{
