@@ -461,3 +461,49 @@ def test_running_contribution_cannot_be_replaced(work):
     worker.claim_new()
     with pytest.raises(HTTPException):
         delegate(work, replaces_task_id=original)
+
+
+def other_work(work, bot='reviewer'):
+    with db.connection() as conn:
+        return service.create_task(conn, bot_id=bot, conversation_id=work['conversation_id'], prompt='Unrelated work for another teammate', request_key=str(uuid4()))
+
+
+def test_a_message_to_a_deleted_teammate_is_cancelled_and_dispatch_continues(work):
+    parent = worker.claim_new()[0]
+    message = invoke(parent, 'message', {'bot_id': 'writer', 'prompt': 'Which topic?'})
+    invoke(parent, 'wait', {'message_ids': [UUID(message['message_id'])]})
+    complete(parent)
+    assert row(work['id'])['status'] == 'waiting_results'
+    with db.connection() as conn:  # The owner deletes the recipient before it answers (the test baseline restores it).
+        conn.execute("UPDATE bots SET status='deleted' WHERE id='writer'")
+    unrelated = other_work(work)
+    claimed = worker.claim_new()
+    assert [a['task_id'] for a in claimed] == [unrelated['id']], 'Another bot still gets its work'
+    with db.connection() as conn:
+        assert conn.execute('SELECT status FROM teammate_messages WHERE id=%s', (UUID(message['message_id']),)).fetchone()['status'] == 'cancelled'
+        event = conn.execute("SELECT data FROM events WHERE kind='teammate.message_cancelled'").fetchone()
+    assert event['data']['recipient'] == 'writer'
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued', 'The waiting sender is woken with the failure'
+
+
+def test_one_message_that_cannot_be_scheduled_does_not_stop_dispatch(work, monkeypatch):
+    parent = worker.claim_new()[0]
+    message = invoke(parent, 'message', {'bot_id': 'writer', 'prompt': 'Which topic?'})
+    complete(parent)
+    unrelated = other_work(work)
+
+    expired = coordination.execution_policy.expired
+
+    def broken(task):  # Fails only for the message's source task, as a stored row the code can't read would.
+        if task['id'] == work['id']:
+            raise RuntimeError('a stored row this code cannot read')
+        return expired(task)
+    monkeypatch.setattr(coordination.execution_policy, 'expired', broken)
+    claimed = worker.claim_new()
+    assert [a['task_id'] for a in claimed] == [unrelated['id']]
+    with db.connection() as conn:
+        assert conn.execute('SELECT status FROM teammate_messages WHERE id=%s', (UUID(message['message_id']),)).fetchone()['status'] == 'pending', 'Kept for a later pass, not lost'
+    monkeypatch.undo()
+    complete(claimed[0])
+    assert any(a['bot_id'] == 'writer' for a in worker.claim_new()), 'Scheduled once the row can be read'
