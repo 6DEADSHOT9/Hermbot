@@ -984,6 +984,30 @@ def test_a_paused_message_from_a_stopped_sender_is_released_at_once(work):
         'It can never be delivered, so it is not left waiting out its pause')
 
 
+def test_a_dropped_message_is_never_shown_again(work):
+    child = delegate(work, bot='reviewer')
+    helper = next(a for a in worker.claim_new() if a['bot_id'] == 'reviewer')
+    unread = UUID(invoke(helper, 'message', {'bot_id': 'writer', 'prompt': 'Not read before the drop'})['message_id'])
+    reply = next(a for a in worker.claim_new() if a['bot_id'] == 'writer')  # A reply task is linked to it.
+    assert message_row(unread)['response_task_id'] == reply['task_id']
+    read = UUID(invoke(helper, 'message', {'bot_id': 'writer', 'prompt': 'Read before the drop'})['message_id'])
+
+    def shown():
+        with db.connection() as conn:
+            return [m['content'] for m in coordination.inbox(conn, service.locked_task(conn, reply['task_id']))]
+    assert shown() == ['Read before the drop', 'Not read before the drop']
+    with db.connection() as conn:
+        coordination.delivered(conn, service.locked_task(conn, reply['task_id']), [read])
+    with db.connection() as conn:  # The owner stops the helper while its messages are still open.
+        service.cancel(conn, service.locked_task(conn, child), 'Stopped by owner')
+    worker.settle(helper['id'], {'status': 'cancelled', 'output': ''})
+    assert shown() == ['Read before the drop'], 'The first read releases the unread one with its reason; the read one stays as history'
+    assert (message_row(unread)['status'], message_row(unread)['released']) == ('cancelled', 'dropped')
+    with db.connection() as conn:  # The read one is dropped too (here by the release every stop path uses).
+        coordination.release(conn, message_row(read), f"{name('reviewer')}'s task was stopped", 'dropped')
+    assert shown() == [], 'Neither comes back on later reads'
+
+
 def test_each_delivery_of_a_message_records_its_own_event(work):
     child = delegate(work)
     attempts = worker.claim_new()

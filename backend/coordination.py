@@ -42,8 +42,10 @@ def inbox(conn, task):
     """Messages for this task's bot in its conversation and work. Whether a pending message is runnable now (past its
     retry pause) is decided in SQL before the LIMIT, as pgmq and River select only runnable rows, so paused messages
     can't crowd eligible ones out. A pending message that can never be delivered is released with its reason in the
-    same pass, so it stops matching; anything else that fails the shared check is not shown."""
+    same pass, so it stops matching; anything else that fails the shared check is not shown. A cancelled message is
+    never shown again, even one linked to this task or read by it earlier: it was dropped, so it must not be answered."""
     rows = conn.execute("SELECT * FROM teammate_messages WHERE recipient=%s AND conversation_id=%s AND (work_item_id IS NULL OR work_item_id=%s) "
+                        "AND status<>'cancelled' "
                         "AND (status='pending' OR response_task_id=%s OR delivered_attempt_id IN (SELECT id FROM attempts WHERE task_id=%s)) "
                         "AND (status<>'pending' OR not_before IS NULL OR not_before<=now()) "
                         "ORDER BY (status='pending') DESC,created_at DESC LIMIT 30",
