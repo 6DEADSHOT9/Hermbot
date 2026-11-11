@@ -819,3 +819,62 @@ def test_a_message_alert_opens_the_sending_tasks_thread(work, monkeypatch):
     finally:
         client.close()
     assert detail['thread']['id'] == thread, 'Open work goes to the thread, not the conversation root'
+
+
+# A resend is exactly a fresh send: every per-delivery field is reset in one place, checked against the real columns.
+
+def test_every_message_column_is_either_reset_on_resend_or_deliberately_kept():
+    with db.connection() as conn:
+        columns = {r['column_name'] for r in conn.execute("SELECT column_name FROM information_schema.columns WHERE table_name='teammate_messages'").fetchall()}
+    assert not set(coordination.REQUEUE) & coordination.KEPT
+    assert columns == set(coordination.REQUEUE) | coordination.KEPT, (
+        'Classify every teammate_messages column in coordination.REQUEUE (reset on resend) or coordination.KEPT: '
+        f'unclassified {sorted(columns - set(coordination.REQUEUE) - coordination.KEPT)}, gone {sorted(set(coordination.REQUEUE) | coordination.KEPT - columns)}')
+
+
+def test_a_resent_message_matches_a_freshly_sent_one_on_every_delivery_field(work, monkeypatch):
+    message = give_up(work, monkeypatch)
+    with db.connection() as conn:  # Leave stale links from an earlier delivery on it.
+        stale = conn.execute("SELECT id FROM tasks WHERE id=%s", (work['id'],)).fetchone()['id']
+        conn.execute("UPDATE teammate_messages SET response_task_id=%s,delivered_at=now() WHERE id=%s", (stale, message))
+        coordination.requeue(conn, message)
+        fresh = coordination.send(conn, service.locked_task(conn, work['id']), {'bot_id': 'writer', 'prompt': 'A fresh message'})
+        rows = {r['id']: r for r in conn.execute('SELECT * FROM teammate_messages WHERE id=ANY(%s)', ([message, UUID(fresh['message_id'])],)).fetchall()}
+    resent, new = rows[message], rows[UUID(fresh['message_id'])]
+    assert {c: resent[c] for c in coordination.REQUEUE} == {c: new[c] for c in coordination.REQUEUE}
+    assert resent['last_error'] and resent['content'] == 'Which topic?', 'History and content are kept'
+
+
+def operate(action, monkeypatch, settle_first=None):
+    import asyncio
+    from backend import provisioning, registry
+    from backend.models import LifecycleRequest
+    with db.connection() as conn:
+        writer = registry.require_bot(conn, 'writer')
+        operation = registry.owner_operation(conn, 'writer', action, str(uuid4()), LifecycleRequest(expected_revision=writer['revision'], interrupt=True))
+    if settle_first:
+        worker.settle(settle_first['id'], {'status': 'cancelled', 'output': ''})
+
+    async def done(*args, **kwargs):
+        return {'state': 'stopped' if action == 'archive' else 'running'}
+    monkeypatch.setattr(provisioning, 'supervisor', done)
+    asyncio.run(provisioning.drive(operation))
+    monkeypatch.undo()
+
+
+def test_a_second_resend_after_archive_and_restore_is_delivered(work, monkeypatch):
+    message = give_up(work, monkeypatch)
+    worker.advance_waiters()
+    alert(message)
+    assert resolve(message, 'resend').status_code == 200
+    first = next(a for a in worker.claim_new() if a['bot_id'] == 'writer')  # The resend gets a reply task.
+    operate('archive', monkeypatch, settle_first=first)
+    bounced = message_row(message)
+    assert (bounced['released'], bounced['owner_action']) == ('bounced', 'resend') and alert(message)['active']
+    operate('restore', monkeypatch)
+    with db.connection() as conn:  # The worker's probe marks the restored runtime ready.
+        conn.execute("UPDATE bots SET readiness='{\"compatible\": true}' WHERE id='writer'")
+    assert resolve(message, 'resend').status_code == 200
+    second = next(a for a in worker.claim_new() if a['bot_id'] == 'writer')
+    resent = message_row(message)
+    assert resent['response_task_id'] == second['task_id'] != first['task_id'], 'A new reply task answers the second resend'

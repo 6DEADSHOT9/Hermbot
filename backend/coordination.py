@@ -175,6 +175,22 @@ def awaiting_owner(message):
     return None
 
 
+# A resend puts a message back exactly as if it were freshly sent. These are its per-delivery fields, each reset to
+# its fresh value in one place (as Oban and River reset a retried job in one UPDATE). Every other column is the
+# message itself or its history, and is kept. A test checks these two lists against the table's actual columns,
+# so a new column can't be left unclassified: a forgotten reset here once left a stale response_task_id, which the
+# scheduler reads as "already answered", and the message never went out.
+REQUEUE = {'status': "'pending'", 'attempts': '0', 'not_before': 'NULL', 'reason': 'NULL', 'released': 'NULL',
+           'response_task_id': 'NULL', 'delivered_attempt_id': 'NULL', 'delivered_at': 'NULL'}
+KEPT = {'id', 'conversation_id', 'work_item_id', 'source_task_id', 'sender', 'recipient', 'content', 'reply_to', 'created_at',
+        'last_error', 'last_error_at', 'owner_action', 'owner_action_at'}
+
+
+def requeue(conn, identity):
+    """Put a message back as if freshly sent, keeping its content and history."""
+    conn.execute('UPDATE teammate_messages SET ' + ','.join(f'{column}={value}' for column, value in REQUEUE.items()) + ' WHERE id=%s', (identity,))
+
+
 def resolve_failed(conn, identity, action):
     """The owner's answer to a message that was given up: resend it (back in the queue with a fresh count, as a
     dead-letter redrive) or mark it done (the owner handles it). Either closes the attention item."""
@@ -187,8 +203,8 @@ def resolve_failed(conn, identity, action):
         refusal = resend_refusal(conn, message)
         if refusal:
             raise HTTPException(409, f'{refusal}. Choose Done instead.')
-        conn.execute("UPDATE teammate_messages SET status='pending',attempts=0,not_before=NULL,reason=NULL,released=NULL,"
-                     "owner_action='resend',owner_action_at=now() WHERE id=%s", (identity,))
+        requeue(conn, identity)
+        conn.execute("UPDATE teammate_messages SET owner_action='resend',owner_action_at=now() WHERE id=%s", (identity,))
     else:
         conn.execute("UPDATE teammate_messages SET owner_action='done',owner_action_at=now() WHERE id=%s", (identity,))
     db.event(conn, 'teammate.message_' + ('resent' if action == 'resend' else 'handled'), conversation_id=message['conversation_id'],
