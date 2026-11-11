@@ -378,6 +378,8 @@ def test_response_failure_wakes_required_reply_waiter(work):
     invoke(parent, 'wait', {'message_ids': [UUID(message['message_id'])]})
     complete(parent)
     response = next(a for a in worker.claim_new() if a['bot_id'] == 'writer')
+    with db.connection() as conn:  # The writer read the message, then its reply failed. (An unread one is retried.)
+        coordination.delivered(conn, service.locked_task(conn, response['task_id']), [UUID(message['message_id'])])
     worker.settle(response['id'], {'status': 'failed', 'error': 'Cannot answer'})
     worker.advance_waiters()
     assert row(work['id'])['status'] == 'queued'
@@ -1172,6 +1174,158 @@ def test_every_reader_goes_through_the_shared_check_and_the_counting():
     assert found['record_failure'] == {'isolated'}, f"Every reader must go through checked/isolated; record_failure is called from {found['record_failure']}"
 
 
+# A link to a reply task is a claim that ends with the task; a waiting task resumes whenever nothing it names is pending.
+
+def reply_attempt():
+    attempt = next((a for a in worker.claim_new() if a['bot_id'] == 'writer'), None)
+    assert attempt, 'The message gets a reply task'
+    return attempt
+
+
+def stop_reply(attempt):
+    with db.connection() as conn:
+        service.cancel(conn, service.locked_task(conn, attempt['task_id']), 'Stopped by owner')
+    worker.settle(attempt['id'], {'status': 'cancelled', 'output': ''})
+
+
+def writer_attempts():
+    with db.connection() as conn:
+        return conn.execute("SELECT task_id FROM attempts WHERE bot_id='writer' ORDER BY created_at").fetchall()
+
+
+def test_a_linked_message_its_reply_task_missed_gets_a_new_reply_task(work, monkeypatch):
+    message = waiting_on_writer(work)
+    first = reply_attempt()
+    fail_checks_for(monkeypatch, {message})
+    read_inbox(first['task_id'])
+    monkeypatch.undo()
+    complete(first)  # The reply finished without reading the message.
+    clear_pauses(message)
+    worker.claim_new()
+    held = message_row(message)
+    assert (held['status'], held['response_task_id'], held['attempts']) == ('pending', None, 2), 'The missed message is unlinked and counted'
+    assert held['not_before'] is not None and held['not_before'] > service.now(), 'It waits out a pause'
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'waiting_results', 'The sender is not told "without a reply" for a message nobody read'
+    clear_pauses(message)
+    worker.claim_new()
+    again = message_row(message)
+    assert again['response_task_id'] and again['response_task_id'] != first['task_id'], 'A new reply task has the message'
+    assert len(writer_attempts()) == 2
+
+
+def test_a_reply_task_that_keeps_failing_before_reading_gives_the_message_up(work):
+    message = waiting_on_writer(work)
+    tasks = []
+    for _ in range(3):
+        clear_pauses(message)
+        reply = reply_attempt()
+        tasks.append(reply['task_id'])
+        worker.settle(reply['id'], {'status': 'failed', 'error': 'Cannot start'})
+        clear_pauses(message)
+        worker.claim_new()  # Reclaims the message from the failed reply task.
+    given_up = message_row(message)
+    assert (given_up['status'], given_up['released']) == ('cancelled', 'failed')
+    assert given_up['reason'] == f"Could not be delivered after 3 attempts ({name('writer')}'s reply ended before reading it)"
+    assert len(set(tasks)) == 3, 'Each try had its own reply task'
+    item = alert(message)
+    assert item and item['active'] and item['needs_owner'], 'The owner is told'
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued' and given_up['reason'] in row(work['id'])['continuation']
+
+
+def test_a_reply_the_owner_stopped_is_not_restarted(work):
+    message = waiting_on_writer(work)
+    reply = reply_attempt()
+    stop_reply(reply)
+    worker.claim_new()
+    dropped = message_row(message)
+    assert (dropped['status'], dropped['released']) == ('cancelled', 'dropped')
+    assert dropped['reason'] == f"{name('writer')}'s reply was stopped"
+    clear_pauses(message)
+    worker.claim_new()
+    assert len(writer_attempts()) == 1, 'No new reply task for a stopped reply'
+    assert alert(message) is None, 'A stop is not a failure to report'
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued' and dropped['reason'] in row(work['id'])['continuation']
+
+
+def woken_by_failure(work, monkeypatch, *, extra=False):
+    """The sender sends to the writer (and waits on a child that never finishes if asked), the message fails and wakes
+    the sender, who is claimed again. Returns the message, the new attempt and the wait arguments."""
+    child = delegate(work, bot='reviewer') if extra else None
+    parent = next(a for a in worker.claim_new() if a['task_id'] == work['id'])
+    message = UUID(invoke(parent, 'message', {'bot_id': 'writer', 'prompt': 'Which topic?'})['message_id'])
+    args = {'message_ids': [message], **({'task_ids': [child]} if extra else {})}
+    invoke(parent, 'wait', args)
+    complete(parent)
+    fail_three_times(work['id'], message, monkeypatch)
+    assert message_row(message)['released'] == 'failed'
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued'
+    return message, next(a for a in worker.claim_new() if a['task_id'] == work['id']), args
+
+
+def test_the_same_failure_after_a_resend_wakes_the_sender_again(work, monkeypatch):
+    message, sender, args = woken_by_failure(work, monkeypatch)
+    assert resolve(message, 'resend').status_code == 200
+    invoke(sender, 'wait', args)
+    complete(sender)
+    assert row(work['id'])['status'] == 'waiting_results'
+    fail_three_times(work['id'], message, monkeypatch)
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued', 'The second failure of the same message is news to the sender'
+
+
+def test_the_same_failure_after_a_resend_wakes_the_sender_while_another_wait_is_pending(work, monkeypatch):
+    message, sender, args = woken_by_failure(work, monkeypatch, extra=True)
+    assert resolve(message, 'resend').status_code == 200
+    invoke(sender, 'wait', args)
+    complete(sender)
+    fail_three_times(work['id'], message, monkeypatch)
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued', 'The resend failed again, so the sender hears it even though the child is still running'
+
+
+def test_waiting_on_a_message_that_already_failed_resumes_at_once(work, monkeypatch):
+    message, sender, args = woken_by_failure(work, monkeypatch)
+    invoke(sender, 'wait', args)
+    complete(sender)
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued', 'Nothing is left to wait for'
+
+
+def test_waiting_on_a_task_that_already_failed_resumes_at_once(work):
+    child = delegate(work)
+    attempts = worker.claim_new()
+    parent = next(a for a in attempts if a['task_id'] == work['id'])
+    invoke(parent, 'wait', {'task_ids': [child]})
+    complete(parent)
+    worker.settle(next(a for a in attempts if a['task_id'] == child)['id'], {'status': 'failed', 'error': 'Source unavailable'})
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued'
+    again = next(a for a in worker.claim_new() if a['task_id'] == work['id'])
+    invoke(again, 'wait', {'task_ids': [child]})
+    complete(again)
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued', 'The child already failed, so waiting on it returns at once'
+
+
+def test_a_task_parked_without_naming_anything_is_woken_only_once_per_change(work):
+    child = delegate(work)
+    attempts = worker.claim_new()
+    complete(next(a for a in attempts if a['task_id'] == work['id']))  # Parked for its required result, no wait rows.
+    worker.settle(next(a for a in attempts if a['task_id'] == child)['id'], {'status': 'failed', 'error': 'Source unavailable'})
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued'
+    complete(next(a for a in worker.claim_new() if a['task_id'] == work['id']))  # It ends its turn without repairing anything.
+    with db.connection() as conn:
+        assert conn.execute('SELECT count(*) AS n FROM coordination_waits WHERE task_id=%s', (work['id'],)).fetchone()['n'] == 0
+    for _ in range(2):
+        worker.advance_waiters()
+        assert row(work['id'])['status'] == 'waiting_results', 'Nothing changed since it last looked, so it stays parked'
+
+
 # Random sequences of everything that can happen to a message, with the rules checked after every step.
 
 STOPPED = {'cancelled', 'cancelling', 'interrupted'}
@@ -1199,7 +1353,7 @@ def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed
 
     def rows():
         with db.connection() as conn:
-            return {r['id']: r for r in conn.execute('SELECT m.*, t.status AS source_status FROM teammate_messages m JOIN tasks t ON t.id=m.source_task_id').fetchall()}
+            return {r['id']: r for r in conn.execute('SELECT m.*, t.status AS source_status, r.status AS reply_status FROM teammate_messages m JOIN tasks t ON t.id=m.source_task_id LEFT JOIN tasks r ON r.id=m.response_task_id').fetchall()}
 
     def writer_status():
         with db.connection() as conn:
@@ -1229,11 +1383,13 @@ def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed
                     assert old['source_status'] not in STOPPED, f'{log}: attached from a stopped sender'
                     assert old['source_task_id'] not in broken, f'{log}: attached without passing its check'
                     assert status == 'active', f'{log}: attached while the recipient was {status}'
+            for identity, after in rows().items():  # A message a failed check kept (and paused) is still counted as one that failed.
+                assert not (after['status'] == 'pending' and after['reply_status'] in service.TERMINAL and identity not in raised), f'{log}: a message stayed claimed by a reply task that ended'
         elif action == 'finish_reply':
             with db.connection() as conn:
                 running = conn.execute("SELECT id FROM attempts WHERE bot_id='writer' AND status=ANY(%s)", (list(service.ACTIVE_ATTEMPTS),)).fetchall()
             for attempt in running:
-                worker.settle(attempt['id'], {'status': 'completed', 'output': 'Answered'})
+                worker.settle(attempt['id'], rng.choice([{'status': 'completed', 'output': 'Answered'}, {'status': 'failed', 'error': 'Cannot answer'}]))  # Neither reads the message.
         elif action == 'inbox_read':
             with db.connection() as conn:
                 running = conn.execute("SELECT task_id FROM attempts WHERE bot_id='writer' AND status=ANY(%s)", (list(service.ACTIVE_ATTEMPTS),)).fetchall()
@@ -1280,6 +1436,87 @@ def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed
                             coordination.resolve_failed(conn, identity, action, r['delivery_revision'])
                             raise psycopg.Rollback()
         assert len(rows()) == len(sent), f'{log}: a message went missing'
+
+    for _ in range(40):
+        step()
+        check()
+
+
+# Whatever happens to the messages a task waits on, it never stays parked once nothing it named can still arrive.
+
+@pytest.mark.parametrize('seed', range(30))
+def test_random_waits_always_resume(work, monkeypatch, seed):
+    import random
+    rng = random.Random(seed)
+    sender = work['id']
+    mine = {'attempt': worker.claim_new()[0]}  # None while the sender is parked or queued.
+    sent, log, broken = [], [], [False]
+    blocker = coordination.delivery_blocker
+
+    def flaky(conn, message, source):
+        if broken[0] and message['source_task_id'] == sender:
+            raise RuntimeError('injected failure')
+        return blocker(conn, message, source)
+    monkeypatch.setattr(coordination, 'delivery_blocker', flaky)
+
+    def writers():
+        with db.connection() as conn:
+            return conn.execute("SELECT id,task_id FROM attempts WHERE bot_id='writer' AND status=ANY(%s)", (list(service.ACTIVE_ATTEMPTS),)).fetchall()
+
+    def step():
+        with db.connection() as conn:
+            open_alerts = [r['id'] for r in conn.execute('SELECT * FROM teammate_messages').fetchall() if coordination.awaiting_owner(r)]
+        choices = ['schedule'] * 3 + ['reply'] * 3 + ['toggle_failure', 'advance'] * 2 + ['resolve'] * 2 * bool(open_alerts)
+        choices += ['send_wait'] * 3 if mine['attempt'] else []
+        choices += ['wait_again'] * 2 if mine['attempt'] and sent else []  # Waits on messages already sent, nothing new.
+        action = rng.choice(choices)
+        log.append(action)
+        if action == 'send_wait':
+            attempt = mine['attempt']
+            sent.append(UUID(invoke(attempt, 'message', {'bot_id': 'writer', 'prompt': f'message {len(sent)}'})['message_id']))
+            waited = {sent[-1]} | ({rng.choice(sent[:-1])} if len(sent) > 1 and rng.random() < 0.5 else set())
+            invoke(attempt, 'wait', {'message_ids': sorted(waited)})
+            complete(attempt)
+            mine['attempt'] = None
+        elif action == 'wait_again':
+            invoke(mine['attempt'], 'wait', {'message_ids': rng.sample(sent, rng.randint(1, min(2, len(sent))))})
+            complete(mine['attempt'])
+            mine['attempt'] = None
+        elif action == 'schedule':
+            with db.connection() as conn:
+                conn.execute('UPDATE teammate_messages SET not_before=NULL')
+            mine['attempt'] = next((a for a in worker.claim_new() if a['task_id'] == sender), mine['attempt'])
+        elif action == 'reply':
+            for attempt in writers():
+                kind = rng.choice(['unread', 'failed', 'read'])
+                if kind == 'read':
+                    with db.connection() as conn:
+                        task = service.locked_task(conn, attempt['task_id'])
+                        coordination.delivered(conn, task, [m['id'] for m in coordination.inbox(conn, task) if m['status'] == 'pending'])
+                worker.settle(attempt['id'], {'status': 'failed', 'error': 'Cannot answer'} if kind == 'failed' else {'status': 'completed', 'output': 'Read, no reply'})
+        elif action == 'toggle_failure':
+            broken[0] = not broken[0]
+        elif action == 'resolve':
+            identity = rng.choice(open_alerts)
+            with db.connection() as conn:
+                coordination.resolve_failed(conn, identity, rng.choice(['resend', 'done']), message_row(identity)['delivery_revision'])
+        else:
+            worker.advance_waiters()
+
+    def unsettled(identity):  # Written out here, not through the product's helpers.
+        with db.connection() as conn:
+            r = conn.execute('SELECT m.status,t.status AS reply_status,(SELECT count(*) FROM teammate_messages x WHERE x.reply_to=m.id) AS replies '
+                             'FROM teammate_messages m LEFT JOIN tasks t ON t.id=m.response_task_id WHERE m.id=%s', (identity,)).fetchone()
+        return r['replies'] == 0 and (r['status'] == 'pending' or (r['status'] == 'delivered' and (r['reply_status'] is None or r['reply_status'] not in service.TERMINAL)))
+
+    def check():
+        with db.connection() as conn:
+            for r in conn.execute("SELECT id,released,reason FROM teammate_messages WHERE status='cancelled'").fetchall():
+                assert r['released'] and r['reason'], f'{log}: cancelled without a reason'
+        if log[-1] == 'advance' and row(sender)['status'] == 'waiting_results':
+            with db.connection() as conn:
+                waits = [w['message_id'] for w in conn.execute('SELECT message_id FROM coordination_waits WHERE task_id=%s AND message_id IS NOT NULL', (sender,)).fetchall()]
+            assert any(unsettled(w) for w in waits), f'{log}: parked with nothing left to wait for'
 
     for _ in range(40):
         step()
