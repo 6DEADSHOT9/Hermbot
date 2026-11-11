@@ -446,9 +446,11 @@ def message_projection(conn, identity, *, initial=False):
             summary=summary,
             status="failed",
             needs_owner=True,
-            refs={**task_refs(conn, conn.execute("SELECT * FROM tasks WHERE id=%s", (message["source_task_id"],)).fetchone()), "message_id": str(identity)},
+            refs={**task_refs(conn, conn.execute("SELECT * FROM tasks WHERE id=%s", (message["source_task_id"],)).fetchone()),
+                  "message_id": str(identity), "delivery_revision": message["delivery_revision"]},
             initial=initial,
-            fingerprint={"kind": kind, "since": str(message["last_error_at"]), "reason": message["reason"]},
+            # The revision makes each failure after a resend its own episode, even with identical wording.
+            fingerprint={"kind": kind, "revision": message["delivery_revision"], "since": str(message["last_error_at"]), "reason": message["reason"]},
         )
     close_missing(conn, "message", identity, current)
 

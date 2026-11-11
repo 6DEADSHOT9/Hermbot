@@ -624,10 +624,12 @@ def counts():
         return attention.page(conn, 'needs')['needs_owner']
 
 
-def resolve(message, action):
+def resolve(message, action, revision=None):
+    """Answer an alert as the owner would, for the delivery the alert shows unless another revision is given."""
+    revision = message_row(message)['delivery_revision'] if revision is None else revision
     client = TestClient(application.app, headers={'Authorization': 'Bearer ' + settings.owner_token})  # Not a context manager: that would run shutdown.
     try:
-        return client.post(f'/api/v1/teammate-messages/{message}/resolve', json={'action': action}, headers={'Idempotency-Key': str(uuid4())})
+        return client.post(f'/api/v1/teammate-messages/{message}/resolve', json={'action': action, 'expected_revision': revision}, headers={'Idempotency-Key': str(uuid4())})
     finally:
         client.close()
 
@@ -809,7 +811,7 @@ def test_a_message_alert_opens_the_sending_tasks_thread(work, monkeypatch):
     item = alert(message)
     with db.connection() as conn:
         expected = attention.task_refs(conn, conn.execute('SELECT * FROM tasks WHERE id=%s', (work['id'],)).fetchone())
-    assert item['refs'] == {**{k: v for k, v in expected.items()}, 'message_id': str(message)}
+    assert item['refs'] == {**{k: v for k, v in expected.items()}, 'message_id': str(message), 'delivery_revision': 1}
     assert item['refs']['thread_id'] == thread
     client = TestClient(application.app, headers={'Authorization': 'Bearer ' + settings.owner_token})
     try:
@@ -824,10 +826,12 @@ def test_a_message_alert_opens_the_sending_tasks_thread(work, monkeypatch):
 def test_every_message_column_is_either_reset_on_resend_or_deliberately_kept():
     with db.connection() as conn:
         columns = {r['column_name'] for r in conn.execute("SELECT column_name FROM information_schema.columns WHERE table_name='teammate_messages'").fetchall()}
-    assert not set(coordination.REQUEUE) & coordination.KEPT
-    assert columns == set(coordination.REQUEUE) | coordination.KEPT, (
-        'Classify every teammate_messages column in coordination.REQUEUE (reset on resend) or coordination.KEPT: '
-        f'unclassified {sorted(columns - set(coordination.REQUEUE) - coordination.KEPT)}, gone {sorted(set(coordination.REQUEUE) | coordination.KEPT - columns)}')
+    groups = [set(coordination.REQUEUE), set(coordination.ADVANCE), coordination.KEPT]
+    assert sum(map(len, groups)) == len(set().union(*groups)), 'A column is in more than one group'
+    classified = set().union(*groups)
+    assert columns == classified, (
+        'Classify every teammate_messages column in coordination.REQUEUE (reset on resend), coordination.ADVANCE '
+        f'(advanced on resend) or coordination.KEPT: unclassified {sorted(columns - classified)}, gone {sorted(classified - columns)}')
 
 
 def test_a_resent_message_matches_a_freshly_sent_one_on_every_delivery_field(work, monkeypatch):
@@ -835,12 +839,14 @@ def test_a_resent_message_matches_a_freshly_sent_one_on_every_delivery_field(wor
     with db.connection() as conn:  # Leave stale links from an earlier delivery on it.
         stale = conn.execute("SELECT id FROM tasks WHERE id=%s", (work['id'],)).fetchone()['id']
         conn.execute("UPDATE teammate_messages SET response_task_id=%s,delivered_at=now() WHERE id=%s", (stale, message))
+        before = conn.execute('SELECT delivery_revision FROM teammate_messages WHERE id=%s', (message,)).fetchone()['delivery_revision']
         coordination.requeue(conn, message)
         fresh = coordination.send(conn, service.locked_task(conn, work['id']), {'bot_id': 'writer', 'prompt': 'A fresh message'})
         rows = {r['id']: r for r in conn.execute('SELECT * FROM teammate_messages WHERE id=ANY(%s)', ([message, UUID(fresh['message_id'])],)).fetchall()}
     resent, new = rows[message], rows[UUID(fresh['message_id'])]
     assert {c: resent[c] for c in coordination.REQUEUE} == {c: new[c] for c in coordination.REQUEUE}
     assert resent['last_error'] and resent['content'] == 'Which topic?', 'History and content are kept'
+    assert (resent['delivery_revision'], new['delivery_revision']) == (before + 1, 1), 'A resend is a new delivery of the same message'
 
 
 def operate(action, monkeypatch, settle_first=None):
@@ -941,6 +947,101 @@ def test_one_message_that_cannot_be_checked_does_not_fail_its_batch(work, monkey
     assert (bad['status'], bad['attempts'], bad['response_task_id']) == ('pending', 1, None), 'Counted against itself only'
 
 
+# Paused messages can't crowd eligible ones out of an inbox; a message that can never go is released even while
+# paused; each delivery gets its own event; an action from an older view of an alert is refused.
+
+def test_paused_messages_cannot_hide_an_eligible_one_from_the_inbox(work):
+    child = delegate(work)
+    manager = next(a for a in worker.claim_new() if a['bot_id'] == 'researcher')
+    eligible = UUID(invoke(manager, 'message', {'bot_id': 'writer', 'prompt': 'The one that may go now'})['message_id'])
+    with db.connection() as conn:  # It is the oldest; 35 newer ones are all in their retry pause.
+        conn.execute("UPDATE teammate_messages SET created_at=now()-interval '1 hour' WHERE id=%s", (eligible,))
+        columns = [r['column_name'] for r in conn.execute("SELECT column_name FROM information_schema.columns WHERE table_name='teammate_messages' "
+                                                          "AND column_name NOT IN ('id','created_at','not_before','attempts')").fetchall()]
+        listed = ','.join(columns)
+        conn.execute(f"INSERT INTO teammate_messages(id,created_at,not_before,attempts,{listed}) "
+                     f"SELECT gen_random_uuid(),now()-make_interval(secs=>n),now()+interval '1 hour',1,{listed} FROM teammate_messages, generate_series(1,35) n WHERE id=%s",
+                     (eligible,))
+        shown = [m['id'] for m in coordination.inbox(conn, service.locked_task(conn, child))]
+    assert shown == [eligible]
+
+
+def test_a_paused_message_from_a_stopped_sender_is_released_at_once(work):
+    child = delegate(work, bot='reviewer')
+    attempts = worker.claim_new()
+    manager = next(a for a in attempts if a['bot_id'] == 'researcher')
+    helper = next(a for a in attempts if a['bot_id'] == 'reviewer')
+    stopped = UUID(invoke(helper, 'message', {'bot_id': 'writer', 'prompt': 'From the helper'})['message_id'])
+    with db.connection() as conn:  # It failed once and is in its retry pause when its sender is stopped.
+        conn.execute("UPDATE teammate_messages SET not_before=now()+interval '1 hour',attempts=1 WHERE id=%s", (stopped,))
+        service.cancel(conn, service.locked_task(conn, child), 'Stopped by owner')
+    worker.settle(helper['id'], {'status': 'cancelled', 'output': ''})
+    live = UUID(invoke(manager, 'message', {'bot_id': 'writer', 'prompt': 'From the manager'})['message_id'])
+    reply = next(a for a in worker.claim_new() if a['bot_id'] == 'writer')
+    assert message_row(live)['response_task_id'] == reply['task_id']
+    dropped = message_row(stopped)
+    assert (dropped['status'], dropped['released'], dropped['reason']) == ('cancelled', 'dropped', f"{name('reviewer')}'s task was stopped"), (
+        'It can never be delivered, so it is not left waiting out its pause')
+
+
+def test_each_delivery_of_a_message_records_its_own_event(work):
+    child = delegate(work)
+    attempts = worker.claim_new()
+    manager = next(a for a in attempts if a['bot_id'] == 'researcher')
+    message = UUID(invoke(manager, 'message', {'bot_id': 'writer', 'prompt': 'Please share your coverage'})['message_id'])
+    with db.connection() as conn:
+        coordination.delivered(conn, service.locked_task(conn, child), [message])
+    with db.connection() as conn:  # The same attempt acknowledges again (a retried request).
+        coordination.delivered(conn, service.locked_task(conn, child), [message])
+    assert len(events('teammate.message_delivered')) == 1, 'A repeated acknowledgement is one delivery'
+    with db.connection() as conn:  # The owner resends it, and a new attempt of the same task receives it.
+        coordination.requeue(conn, message)
+        conn.execute("UPDATE attempts SET status='failed' WHERE task_id=%s AND number=1", (child,))
+        conn.execute("INSERT INTO attempts(id,task_id,bot_id,number,session_id,status,idempotency_key,input,response) "
+                     "SELECT gen_random_uuid(),task_id,bot_id,number+1,session_id,'running',gen_random_uuid()::text,input,response FROM attempts WHERE task_id=%s AND number=1", (child,))
+        conn.execute('UPDATE tasks SET attempts=2 WHERE id=%s', (child,))
+    with db.connection() as conn:
+        coordination.delivered(conn, service.locked_task(conn, child), [message])
+    assert len(events('teammate.message_delivered')) == 2, 'The second delivery is recorded too'
+
+
+def test_an_action_from_an_older_view_of_the_alert_is_refused(work, monkeypatch):
+    message = give_up(work, monkeypatch)
+    assert alert(message)['refs']['delivery_revision'] == 1
+    assert resolve(message, 'resend', revision=1).status_code == 200
+    fail_three_times(work['id'], message, monkeypatch)
+    item = alert(message)
+    assert item['active'] and item['refs']['delivery_revision'] == 2
+    stale = resolve(message, 'done', revision=1)  # A second tab still shows the first failure.
+    assert stale.status_code == 409 and stale.json()['detail'] == 'This alert changed since you opened it. Check the latest failure, then choose again.'
+    assert message_row(message)['owner_action'] is None and alert(message)['active'], 'Nothing changed'
+    assert resolve(message, 'done', revision=2).status_code == 200 and not alert(message)['active']
+
+
+def attention_module():
+    from backend import attention
+    return attention
+
+
+def test_the_same_failure_after_a_resend_is_a_new_alert(work, monkeypatch):
+    message = give_up(work, monkeypatch)
+    worker.advance_waiters()
+    set_writer('deleted')
+    assert resolve(message, 'resend').status_code == 200
+    worker.claim_new()
+    first = alert(message)
+    assert first['active'] and first['summary'].startswith(f"{name('writer')} was deleted")
+    with db.connection() as conn:  # Resent while another process held the alert's projection lock, so it is next projected
+        # only after the next failure, which has the same recipient, reason and last error.
+        monkeypatch.setattr(attention_module(), 'project', lambda *args, **kwargs: None)
+        coordination.resolve_failed(conn, message, 'resend', message_row(message)['delivery_revision'])
+        monkeypatch.undo()
+    worker.claim_new()
+    again = alert(message)
+    assert again['active'] and again['summary'] == first['summary']
+    assert again['version'] > first['version'] and again['read_version'] < again['version'], 'It comes back as new, unread'
+
+
 # Random sequences of everything that can happen to a message, with the rules checked after every step.
 
 STOPPED = {'cancelled', 'cancelling', 'interrupted'}
@@ -1010,8 +1111,18 @@ def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed
         elif action == 'resolve':
             open_alerts = [i for i, r in rows().items() if coordination.awaiting_owner(r)]
             if open_alerts:
+                identity = rng.choice(open_alerts)
+                current = rows()[identity]['delivery_revision']
+                stale = current > 1 and rng.random() < 0.3  # Sometimes from a tab that still shows an earlier delivery.
                 with db.connection() as conn:
-                    coordination.resolve_failed(conn, rng.choice(open_alerts), rng.choice(['resend', 'done']))
+                    if stale:
+                        with pytest.raises(HTTPException) as refused:
+                            coordination.resolve_failed(conn, identity, rng.choice(['resend', 'done']), rng.randrange(1, current))
+                        assert refused.value.status_code == 409, f'{log}: a stale action was not refused'
+                    else:
+                        coordination.resolve_failed(conn, identity, rng.choice(['resend', 'done']), current)
+                after = rows()[identity]
+                assert after['delivery_revision'] == current + (not stale and after['owner_action'] == 'resend'), f'{log}: revision moved wrongly'
 
     def check():
         for identity, r in rows().items():
@@ -1025,7 +1136,7 @@ def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed
                 for action in ('resend', 'done'):  # Every button an open alert shows is accepted.
                     with db.connection() as conn:
                         with conn.transaction():
-                            coordination.resolve_failed(conn, identity, action)
+                            coordination.resolve_failed(conn, identity, action, r['delivery_revision'])
                             raise psycopg.Rollback()
         assert len(rows()) == len(sent), f'{log}: a message went missing'
 

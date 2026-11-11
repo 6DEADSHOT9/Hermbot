@@ -344,8 +344,9 @@ class EditRequest(StrictModel):
 
 
 class MessageResolution(StrictModel):
-    # The owner's answer to a teammate message that was given up after repeated failures.
+    # The owner's answer to a teammate message that couldn't be delivered, for the delivery revision the alert showed.
     action: Literal['resend', 'done']
+    expected_revision: int = Field(ge=1)
 
 
 class RetryRequest(StrictModel):

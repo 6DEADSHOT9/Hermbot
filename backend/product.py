@@ -382,7 +382,7 @@ def routes(owner, get_store):
         from . import coordination
         with db.connection() as conn:
             return registry.mutation(conn, key, {'action': 'resolve-message', 'id': message_id, 'body': body.model_dump()},
-                                     lambda: coordination.resolve_failed(conn, message_id, body.action))
+                                     lambda: coordination.resolve_failed(conn, message_id, body.action, body.expected_revision))
 
     @router.post('/api/v1/tasks/{task_id}/continue')
     def continue_task(task_id: UUID, key: str = Header(alias='Idempotency-Key')):

@@ -39,12 +39,32 @@ def send(conn, task, args):
 
 
 def inbox(conn, task):
-    """Messages for this task's bot in its conversation and work. A pending message is shown only if it may be
-    handed over now (ready_now), the same check the scheduler applies to every message it attaches."""
-    rows = conn.execute("SELECT id,sender,recipient,content,reply_to,status,not_before,conversation_id,work_item_id,source_task_id FROM teammate_messages WHERE recipient=%s AND conversation_id=%s AND (work_item_id IS NULL OR work_item_id=%s) AND (status='pending' OR response_task_id=%s OR delivered_attempt_id IN (SELECT id FROM attempts WHERE task_id=%s)) ORDER BY (status='pending') DESC,created_at DESC LIMIT 30",
+    """Messages for this task's bot in its conversation and work. Whether a pending message is runnable now (past its
+    retry pause) is decided in SQL before the LIMIT, as pgmq and River select only runnable rows, so paused messages
+    can't crowd eligible ones out. A pending message that can never be delivered is released with its reason in the
+    same pass, so it stops matching; anything else that fails the shared check is not shown."""
+    rows = conn.execute("SELECT * FROM teammate_messages WHERE recipient=%s AND conversation_id=%s AND (work_item_id IS NULL OR work_item_id=%s) "
+                        "AND (status='pending' OR response_task_id=%s OR delivered_attempt_id IN (SELECT id FROM attempts WHERE task_id=%s)) "
+                        "AND (status<>'pending' OR not_before IS NULL OR not_before<=now()) "
+                        "ORDER BY (status='pending') DESC,created_at DESC LIMIT 30",
                         (task['bot_id'], task['conversation_id'], task['work_item_id'], task['id'], task['id'])).fetchall()
-    return [{key: row[key] for key in ('id', 'sender', 'recipient', 'content', 'reply_to', 'status')}
-            for row in rows if row['status'] != 'pending' or ready_now(conn, row)]
+    shown = []
+    for row in rows:
+        if row['status'] == 'pending':
+            try:
+                with conn.transaction():
+                    check = delivery_check(conn, row)
+                    if check not in (None, 'wait'):
+                        release(conn, row, check[1], check[0])
+            except Exception as exc:
+                if isolation.database_lost(exc):
+                    raise
+                logger.warning('Teammate message %s could not be checked for an inbox (%s)', row['id'], isolation.describe(exc))
+                continue
+            if check is not None:
+                continue
+        shown.append({key: row[key] for key in ('id', 'sender', 'recipient', 'content', 'reply_to', 'status')})
+    return shown
 
 
 def delivered(conn, task, identities):
@@ -56,7 +76,7 @@ def delivered(conn, task, identities):
         raise HTTPException(403, 'Only messages included in this execution context can be acknowledged')
     for identity in identities:
         conn.execute("UPDATE teammate_messages SET status='delivered',delivered_attempt_id=%s,delivered_at=now() WHERE id=%s AND status='pending'", (attempt['id'], identity))
-        db.event(conn, 'teammate.message_delivered', task, data={'message_id': str(identity)}, source_id='teammate-delivery:' + str(identity))
+        db.event(conn, 'teammate.message_delivered', task, data={'message_id': str(identity)}, source_id=f"teammate-delivery:{identity}:{attempt['id']}")  # One event per delivery, as a delivery tag per channel.
 
 
 def schedule_inboxes(conn):
@@ -147,9 +167,14 @@ def delivery_check(conn, message):
     """The one check before a message is handed to its recipient: None when it may go now, 'wait' while it is in its
     retry pause, or (kind, reason) when it can never be delivered. Every message the scheduler attaches to a reply
     task, and every pending message an inbox shows, goes through this."""
+    # A message that can never be delivered is released at once, even during its retry pause (as Oban and River cancel
+    # a scheduled or retrying job immediately); only a deliverable message waits out its pause.
+    blocked = delivery_blocker(conn, message, conn.execute('SELECT * FROM tasks WHERE id=%s', (message['source_task_id'],)).fetchone())
+    if blocked:
+        return blocked
     if message['not_before'] and message['not_before'] > service.now():
         return 'wait'
-    return delivery_blocker(conn, message, conn.execute('SELECT * FROM tasks WHERE id=%s', (message['source_task_id'],)).fetchone())
+    return None
 
 
 def ready_now(conn, message):
@@ -177,19 +202,25 @@ REQUEUE = {'status': "'pending'", 'attempts': '0', 'not_before': 'NULL', 'reason
            'response_task_id': 'NULL', 'delivered_attempt_id': 'NULL', 'delivered_at': 'NULL'}
 KEPT = {'id', 'conversation_id', 'work_item_id', 'source_task_id', 'sender', 'recipient', 'content', 'reply_to', 'created_at',
         'last_error', 'last_error_at', 'owner_action', 'owner_action_at'}
+# Advanced, not reset: each resend is a new delivery of the same message.
+ADVANCE = {'delivery_revision': 'delivery_revision+1'}
 
 
 def requeue(conn, identity):
-    """Put a message back as if freshly sent, keeping its content and history."""
-    conn.execute('UPDATE teammate_messages SET ' + ','.join(f'{column}={value}' for column, value in REQUEUE.items()) + ' WHERE id=%s', (identity,))
+    """Put a message back as if freshly sent, keeping its content and history, as a new delivery."""
+    changes = {**REQUEUE, **ADVANCE}
+    conn.execute('UPDATE teammate_messages SET ' + ','.join(f'{column}={value}' for column, value in changes.items()) + ' WHERE id=%s', (identity,))
 
 
-def resolve_failed(conn, identity, action):
+def resolve_failed(conn, identity, action, expected_revision):
     """The owner's answer to a message that couldn't be delivered: resend it (back in the queue with a fresh count,
-    as a dead-letter redrive) or mark it done (the owner handles it). Either closes the attention item."""
+    as a dead-letter redrive) or mark it done (the owner handles it). Either closes the attention item. The action
+    carries the delivery revision the owner saw, so an older view can't resolve a newer failure."""
     message = conn.execute('SELECT * FROM teammate_messages WHERE id=%s FOR UPDATE', (identity,)).fetchone()
     if not message:
         raise HTTPException(404, 'Message not found')
+    if message['delivery_revision'] != expected_revision:
+        raise HTTPException(409, 'This alert changed since you opened it. Check the latest failure, then choose again.')
     if not awaiting_owner(message):
         raise HTTPException(409, 'This message was already handled')
     if action == 'resend':
