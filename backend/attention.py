@@ -407,12 +407,50 @@ def source_projection(conn, kind, identity, *, initial=False):
     close_missing(conn, kind, identity, current)
 
 
+def message_projection(conn, identity, *, initial=False):
+    """A teammate message given up after repeated failures is reported once, with fixed text (no error content)."""
+    message = conn.execute("SELECT * FROM teammate_messages WHERE id=%s", (identity,)).fetchone()
+    current = []
+    if message and message["status"] == "cancelled" and message["released"] == "failed":
+        names = {
+            row["id"]: row["name"]
+            for row in conn.execute(
+                "SELECT id,name FROM bots WHERE id=ANY(%s)", ([message["sender"], message["recipient"]],)
+            ).fetchall()
+        }
+        sender, recipient = names.get(message["sender"], "A teammate"), names.get(message["recipient"], "a teammate")
+        current.append("undeliverable")
+        materialize(
+            conn,
+            "message",
+            identity,
+            "undeliverable",
+            category="problems",
+            title=f"A message from {sender} to {recipient} couldn't be delivered",
+            summary=f"It failed {message['attempts']} times and was dropped. If {sender} was waiting for the answer, it was told. Open the work to decide what to do next.",
+            status="failed",
+            needs_owner=True,
+            refs={
+                "task_id": str(message["source_task_id"]),
+                "conversation_id": str(message["conversation_id"]),
+                "work_item_id": str(message["work_item_id"]) if message["work_item_id"] else None,
+                "bot_id": message["sender"],
+                "bot_name": sender,
+            },
+            initial=initial,
+            fingerprint={"released": "failed", "attempts": message["attempts"]},
+        )
+    close_missing(conn, "message", identity, current)
+
+
 def project(conn, kind, identity):
     pref = conn.execute("SELECT initialized_at FROM notification_preferences WHERE owner='owner'").fetchone()
     if kind == "task":
         row = conn.execute("SELECT created_at FROM tasks WHERE id=%s", (identity,)).fetchone()
     elif kind == "work":
         row = conn.execute("SELECT created_at FROM work_items WHERE id=%s", (identity,)).fetchone()
+    elif kind == "message":
+        row = conn.execute("SELECT created_at FROM teammate_messages WHERE id=%s", (identity,)).fetchone()
     else:
         row = conn.execute(
             f"SELECT created_at FROM {SOURCE_TABLES[kind]} WHERE id=%s", (identity,)
@@ -428,6 +466,8 @@ def project(conn, kind, identity):
         task_projection(conn, identity, initial=initial)
     elif kind == "work":
         work_projection(conn, identity, initial=initial)
+    elif kind == "message":
+        message_projection(conn, identity, initial=initial)
     else:
         source_projection(conn, kind, identity, initial=initial)
 

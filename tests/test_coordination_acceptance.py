@@ -461,3 +461,126 @@ def test_running_contribution_cannot_be_replaced(work):
     worker.claim_new()
     with pytest.raises(HTTPException):
         delegate(work, replaces_task_id=original)
+
+
+# A message nobody can ever answer is released with its reason; one that keeps failing is given up and reported.
+
+def other_work(work, bot='reviewer'):
+    with db.connection() as conn:
+        return service.create_task(conn, bot_id=bot, conversation_id=work['conversation_id'], prompt='Unrelated work for another teammate', request_key=str(uuid4()))
+
+
+def waiting_on_writer(work):
+    parent = worker.claim_new()[0]
+    message = invoke(parent, 'message', {'bot_id': 'writer', 'prompt': 'Which topic?'})
+    invoke(parent, 'wait', {'message_ids': [UUID(message['message_id'])]})
+    complete(parent)
+    assert row(work['id'])['status'] == 'waiting_results'
+    return UUID(message['message_id'])
+
+
+def message_row(identity):
+    with db.connection() as conn:
+        return conn.execute('SELECT * FROM teammate_messages WHERE id=%s', (identity,)).fetchone()
+
+
+def events(kind):
+    with db.connection() as conn:
+        return conn.execute('SELECT data FROM events WHERE kind=%s ORDER BY id', (kind,)).fetchall()
+
+
+def set_writer(status):  # The test baseline restores every seeded bot before the next test.
+    with db.connection() as conn:
+        conn.execute('UPDATE bots SET status=%s WHERE id=%s', (status, 'writer'))
+
+
+def name(bot):
+    with db.connection() as conn:
+        return conn.execute('SELECT name FROM bots WHERE id=%s', (bot,)).fetchone()['name']
+
+
+@pytest.mark.parametrize('status,reason', [('deleted', '{} was deleted'), ('archived', '{} is archived')])
+def test_a_message_to_a_teammate_who_is_gone_bounces_and_dispatch_continues(work, status, reason):
+    message = waiting_on_writer(work)
+    set_writer(status)
+    unrelated = other_work(work)
+    assert [a['task_id'] for a in worker.claim_new()] == [unrelated['id']], 'Another bot still gets its work'
+    expected = reason.format(name('writer'))
+    bounced = message_row(message)
+    assert (bounced['status'], bounced['released'], bounced['reason'], bounced['attempts']) == ('cancelled', 'bounced', expected, 0)
+    assert [e['data']['reason'] for e in events('teammate.message_bounced')] == [expected]
+    assert events('teammate.message_failed') == []
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued', 'The waiting sender is woken'
+    assert expected in row(work['id'])['continuation'], 'and told the real reason'
+
+
+def test_archiving_a_teammate_bounces_its_messages_at_that_moment(work, monkeypatch):
+    from backend import provisioning, registry
+    from backend.models import LifecycleRequest
+    message = waiting_on_writer(work)
+    with db.connection() as conn:
+        writer = registry.require_bot(conn, 'writer')
+        operation = registry.owner_operation(conn, 'writer', 'archive', str(uuid4()), LifecycleRequest(expected_revision=writer['revision']))
+
+    async def archived(*args, **kwargs):
+        return {'state': 'stopped'}
+    monkeypatch.setattr(provisioning, 'supervisor', archived)
+    import asyncio
+    asyncio.run(provisioning.drive(operation))
+    bounced = message_row(message)
+    assert (bounced['status'], bounced['released'], bounced['reason']) == ('cancelled', 'bounced', f"{name('writer')} is archived")
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued', 'The waiting sender is released without waiting for a dispatch pass'
+
+
+def test_a_message_that_keeps_failing_backs_off_then_is_given_up_and_reported(work, monkeypatch):
+    from backend import attention
+    message = waiting_on_writer(work)
+    expired = coordination.execution_policy.expired
+
+    def broken(task):  # Fails only for this message's source task, as a stored row the code can't read would.
+        if task['id'] == work['id']:
+            raise RuntimeError('a stored row this code cannot read')
+        return expired(task)
+    monkeypatch.setattr(coordination.execution_policy, 'expired', broken)
+    unrelated = other_work(work)
+    assert [a['task_id'] for a in worker.claim_new()] == [unrelated['id']], 'One bad message never stops dispatch'
+    first = message_row(message)
+    assert (first['status'], first['attempts']) == ('pending', 1)
+    assert first['last_error'].startswith('RuntimeError') and first['not_before'] > service.now()
+    worker.claim_new()
+    assert message_row(message)['attempts'] == 1, 'It waits out its backoff'
+    for _ in range(2):
+        with db.connection() as conn:
+            conn.execute("UPDATE teammate_messages SET not_before=now()-interval '1 second' WHERE id=%s", (message,))
+        worker.claim_new()
+    given_up = message_row(message)
+    assert (given_up['status'], given_up['released'], given_up['attempts']) == ('cancelled', 'failed', 3)
+    assert given_up['reason'] == 'Could not be delivered after 3 attempts (RuntimeError)'
+    assert len(events('teammate.message_failed')) == 1
+    with db.connection() as conn:
+        attention.project(conn, 'message', message)
+        item = conn.execute("SELECT * FROM attention_items WHERE subject_type='message' AND subject_id=%s", (message,)).fetchone()
+    assert item and item['active'] and item['needs_owner'] and item['category'] == 'problems'
+    assert item['title'] == f"A message from {name('researcher')} to {name('writer')} couldn't be delivered"
+    assert 'stored row' not in item['summary'], 'Error text stays out of the owner preview'
+    assert item['refs']['task_id'] == str(work['id']) and item['refs']['conversation_id'] == str(work['conversation_id'])
+    monkeypatch.undo()
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued' and 'Could not be delivered after 3 attempts' in row(work['id'])['continuation']
+
+
+def test_an_outage_backs_off_without_counting_against_the_message(work, monkeypatch):
+    from psycopg import errors
+    message = waiting_on_writer(work)
+    expired = coordination.execution_policy.expired
+
+    def busy(task):
+        if task['id'] == work['id']:
+            raise errors.LockNotAvailable('another transaction holds the row')
+        return expired(task)
+    monkeypatch.setattr(coordination.execution_policy, 'expired', busy)
+    worker.claim_new()
+    held = message_row(message)
+    assert (held['status'], held['attempts']) == ('pending', 0) and held['not_before'] > service.now()

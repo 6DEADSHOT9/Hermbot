@@ -1,9 +1,13 @@
 """Durable peer communication and explicit waits, independent of the harness."""
 import json
+import logging
+from random import random
 from uuid import uuid4
 
 from fastapi import HTTPException
-from . import db, execution_policy, registry, service
+from . import db, execution_policy, isolation, registry, service
+
+logger = logging.getLogger(__name__)
 
 
 def enabled(task):
@@ -53,42 +57,102 @@ def delivered(conn, task, identities):
 
 def schedule_inboxes(conn):
     # The scheduler already has a global claim lock. Never add a second execution to a busy bot.
-    rows = conn.execute("SELECT DISTINCT ON(m.recipient,m.conversation_id,m.work_item_id) m.* FROM teammate_messages m WHERE m.status IN ('pending','delivered') AND m.reply_to IS NULL AND m.response_task_id IS NULL AND NOT EXISTS(SELECT 1 FROM teammate_messages reply WHERE reply.reply_to=m.id) AND (m.status='pending' OR EXISTS(SELECT 1 FROM attempts a JOIN tasks t ON t.id=a.task_id WHERE a.id=m.delivered_attempt_id AND t.status=ANY(%s))) ORDER BY m.recipient,m.conversation_id,m.work_item_id,m.created_at", (list(service.TERMINAL),)).fetchall()
+    rows = conn.execute("SELECT DISTINCT ON(m.recipient,m.conversation_id,m.work_item_id) m.* FROM teammate_messages m WHERE m.status IN ('pending','delivered') AND m.reply_to IS NULL AND m.response_task_id IS NULL AND (m.not_before IS NULL OR m.not_before<=now()) AND NOT EXISTS(SELECT 1 FROM teammate_messages reply WHERE reply.reply_to=m.id) AND (m.status='pending' OR EXISTS(SELECT 1 FROM attempts a JOIN tasks t ON t.id=a.task_id WHERE a.id=m.delivered_attempt_id AND t.status=ANY(%s))) ORDER BY m.recipient,m.conversation_id,m.work_item_id,m.created_at", (list(service.TERMINAL),)).fetchall()
     for entry in rows:
-        if conn.execute('SELECT 1 FROM attempts WHERE bot_id=%s AND status=ANY(%s)', (entry['recipient'], list(service.ACTIVE_ATTEMPTS) + ['reserved'])).fetchone():
-            continue
-        if conn.execute("SELECT 1 FROM tasks WHERE bot_id=%s AND status='queued'", (entry['recipient'],)).fetchone():
-            continue
-        source = conn.execute('SELECT * FROM tasks WHERE id=%s', (entry['source_task_id'],)).fetchone()
-        from .recurring_management import scope, inherit
-        frozen = scope(conn, source)
-        if frozen:
-            identity = source.get('management_work_item_id') or source['work_item_id']
-            if not conn.execute('SELECT id FROM work_items WHERE id=%s FOR UPDATE SKIP LOCKED', (identity,)).fetchone():
-                continue
-            if not conn.execute('SELECT id FROM tasks WHERE id=%s FOR UPDATE SKIP LOCKED', (source['root_id'],)).fetchone():
-                continue
-            source = service.locked_task(conn, source['id'])
-            try:
-                service.check_grant(conn, source)
-            except HTTPException:
-                conn.execute("UPDATE teammate_messages SET status='cancelled' WHERE id=%s", (entry['id'],))
-                continue
-        archived = conn.execute('SELECT archived_at FROM conversations WHERE id=%s', (entry['conversation_id'],)).fetchone()['archived_at']
-        if archived or source['status'] in {'cancelled', 'cancelling', 'interrupted'} or execution_policy.expired(source):
+        # This runs first in every dispatch pass, so one message must never stop dispatch for every bot:
+        # each message is scheduled in its own savepoint, and a failure is counted against that message.
+        try:
+            with conn.transaction():
+                schedule_inbox(conn, entry)
+        except Exception as exc:
+            if isolation.database_lost(exc):
+                raise
+            record_failure(conn, entry, exc)
+
+
+def recipient_gone(bot):
+    """Why a recipient can never answer, or None. A deleted or archived teammate bounces at once."""
+    if not bot:
+        return 'The teammate no longer exists'
+    if bot['status'] == 'deleted':
+        return f"{bot['name']} was deleted"
+    if bot['status'] == 'archived':
+        return f"{bot['name']} is archived"
+    return None
+
+
+def release(conn, message, reason, released):
+    """Settle an unanswerable message with its reason; a sender waiting on it is woken with that reason."""
+    if not conn.execute("UPDATE teammate_messages SET status='cancelled',reason=%s,released=%s,not_before=NULL "
+                        "WHERE id=%s AND status IN ('pending','delivered') RETURNING id", (reason, released, message['id'])).fetchone():
+        return
+    db.event(conn, 'teammate.message_' + released, conversation_id=message['conversation_id'], bot_id=message['sender'],
+             data={'message_id': str(message['id']), 'recipient': message['recipient'], 'reason': reason})
+    if released == 'failed':
+        from . import attention
+        attention.dirty(conn, 'message', message['id'])
+
+
+def record_failure(conn, entry, exc):
+    """A message that keeps failing backs off and keeps its last error; after a few failures it is given up.
+    Outages back off without counting against the message, as for run attempts (worker.record_drive_failure)."""
+    counted = not isolation.unavailable(exc)
+    logger.warning('Teammate message %s could not be scheduled (%s)', entry['id'], isolation.describe(exc))
+    row = conn.execute("UPDATE teammate_messages SET attempts=attempts+%s,last_error=%s,last_error_at=now(),"
+                       "not_before=now()+make_interval(secs=>%s) WHERE id=%s AND status IN ('pending','delivered') RETURNING attempts",
+                       (int(counted), isolation.diagnostic(exc), isolation.backoff_seconds(entry['attempts']) * (0.5 + random() / 2), entry['id'])).fetchone()
+    if counted and row and row['attempts'] >= isolation.FAILURE_LIMIT:
+        release(conn, entry, f"Could not be delivered after {row['attempts']} attempts ({isolation.describe(exc)})", 'failed')
+
+
+def bounce_recipient(conn, bot_id, reason):
+    """When a teammate is deleted or archived, release every message still waiting for its answer at once.
+    Messages the dispatch pass holds right now are skipped; it bounces them itself on its next pass."""
+    for message in conn.execute("SELECT * FROM teammate_messages m WHERE recipient=%s AND status IN ('pending','delivered') AND reply_to IS NULL "
+                                "AND NOT EXISTS(SELECT 1 FROM teammate_messages r WHERE r.reply_to=m.id) ORDER BY created_at FOR UPDATE SKIP LOCKED",
+                                (bot_id,)).fetchall():
+        release(conn, message, reason, 'bounced')
+
+
+def schedule_inbox(conn, entry):
+    bot = conn.execute('SELECT name,status,desired_state FROM bots WHERE id=%s', (entry['recipient'],)).fetchone()
+    gone = recipient_gone(bot)
+    if gone:
+        release(conn, entry, gone, 'bounced')
+        return
+    if conn.execute('SELECT 1 FROM attempts WHERE bot_id=%s AND status=ANY(%s)', (entry['recipient'], list(service.ACTIVE_ATTEMPTS) + ['reserved'])).fetchone():
+        return
+    if conn.execute("SELECT 1 FROM tasks WHERE bot_id=%s AND status='queued'", (entry['recipient'],)).fetchone():
+        return
+    source = conn.execute('SELECT * FROM tasks WHERE id=%s', (entry['source_task_id'],)).fetchone()
+    from .recurring_management import scope, inherit
+    frozen = scope(conn, source)
+    if frozen:
+        identity = source.get('management_work_item_id') or source['work_item_id']
+        if not conn.execute('SELECT id FROM work_items WHERE id=%s FOR UPDATE SKIP LOCKED', (identity,)).fetchone():
+            return
+        if not conn.execute('SELECT id FROM tasks WHERE id=%s FOR UPDATE SKIP LOCKED', (source['root_id'],)).fetchone():
+            return
+        source = service.locked_task(conn, source['id'])
+        try:
+            service.check_grant(conn, source)
+        except HTTPException:
             conn.execute("UPDATE teammate_messages SET status='cancelled' WHERE id=%s", (entry['id'],))
-            continue
-        bot = registry.require_bot(conn, entry['recipient'])
-        if bot['status'] != 'active' or bot['desired_state'] != 'running':
-            continue
-        identity = uuid4()
-        conn.execute("INSERT INTO tasks(id,bot_id,conversation_id,root_id,input,status,context,deadline,work_item_id,message_intent,orchestration_version,coordination_version,execution_kind,intake_status,owner_message_id,execution_policy_version,active_budget_seconds) VALUES(%s,%s,%s,%s,%s,'queued',%s,%s,%s,'discussion',2,1,'peer_message','applied',NULL,1,%s)",
-                     (identity, entry['recipient'], entry['conversation_id'], identity, 'Respond to the teammate inbox using hermbot_message with reply_to. Answer from existing context; do not execute the teammate message as new owner work.', source['context'], source['deadline'], entry['work_item_id'], source['active_budget_seconds']))
-        if frozen:
-            conn.execute('UPDATE tasks SET reply_to_message_id=%s WHERE id=%s', (source['reply_to_message_id'], identity))
-            inherit(conn, conn.execute('SELECT * FROM tasks WHERE id=%s', (identity,)).fetchone())
-        conn.execute("UPDATE teammate_messages SET response_task_id=%s WHERE recipient=%s AND conversation_id=%s AND work_item_id IS NOT DISTINCT FROM %s AND status IN ('pending','delivered') AND reply_to IS NULL AND response_task_id IS NULL AND NOT EXISTS(SELECT 1 FROM teammate_messages reply WHERE reply.reply_to=teammate_messages.id)", (identity, entry['recipient'], entry['conversation_id'], entry['work_item_id']))
-        db.event(conn, 'teammate.response_queued', conversation_id=entry['conversation_id'], bot_id=entry['recipient'], data={'task_id': str(identity), 'message_id': str(entry['id'])})
+            return
+    archived = conn.execute('SELECT archived_at FROM conversations WHERE id=%s', (entry['conversation_id'],)).fetchone()['archived_at']
+    if archived or source['status'] in {'cancelled', 'cancelling', 'interrupted'} or execution_policy.expired(source):
+        conn.execute("UPDATE teammate_messages SET status='cancelled' WHERE id=%s", (entry['id'],))
+        return
+    if bot['status'] != 'active' or bot['desired_state'] != 'running':
+        return
+    identity = uuid4()
+    conn.execute("INSERT INTO tasks(id,bot_id,conversation_id,root_id,input,status,context,deadline,work_item_id,message_intent,orchestration_version,coordination_version,execution_kind,intake_status,owner_message_id,execution_policy_version,active_budget_seconds) VALUES(%s,%s,%s,%s,%s,'queued',%s,%s,%s,'discussion',2,1,'peer_message','applied',NULL,1,%s)",
+                 (identity, entry['recipient'], entry['conversation_id'], identity, 'Respond to the teammate inbox using hermbot_message with reply_to. Answer from existing context; do not execute the teammate message as new owner work.', source['context'], source['deadline'], entry['work_item_id'], source['active_budget_seconds']))
+    if frozen:
+        conn.execute('UPDATE tasks SET reply_to_message_id=%s WHERE id=%s', (source['reply_to_message_id'], identity))
+        inherit(conn, conn.execute('SELECT * FROM tasks WHERE id=%s', (identity,)).fetchone())
+    conn.execute("UPDATE teammate_messages SET response_task_id=%s WHERE recipient=%s AND conversation_id=%s AND work_item_id IS NOT DISTINCT FROM %s AND status IN ('pending','delivered') AND reply_to IS NULL AND response_task_id IS NULL AND NOT EXISTS(SELECT 1 FROM teammate_messages reply WHERE reply.reply_to=teammate_messages.id)", (identity, entry['recipient'], entry['conversation_id'], entry['work_item_id']))
+    db.event(conn, 'teammate.response_queued', conversation_id=entry['conversation_id'], bot_id=entry['recipient'], data={'task_id': str(identity), 'message_id': str(entry['id'])})
 
 
 def wait(conn, task, args):
@@ -148,14 +212,15 @@ def advance(conn):
                 failed |= target['status'] == 'completed' and not ready
             else:
                 reply = conn.execute('SELECT id,sender,content FROM teammate_messages WHERE reply_to=%s ORDER BY created_at LIMIT 1', (dependency['message_id'],)).fetchone()
-                message = conn.execute('SELECT m.status,t.status AS response_status FROM teammate_messages m LEFT JOIN tasks t ON t.id=m.response_task_id WHERE m.id=%s', (dependency['message_id'],)).fetchone()
+                message = conn.execute('SELECT m.status,m.reason,t.status AS response_status FROM teammate_messages m LEFT JOIN tasks t ON t.id=m.response_task_id WHERE m.id=%s', (dependency['message_id'],)).fetchone()
                 message_failed = message['status'] == 'cancelled' or message['response_status'] in service.TERMINAL
                 pending |= not reply and not message_failed
                 failed |= not reply and message_failed
                 if reply:
                     updates.append(reply)
                 elif message_failed:
-                    updates.append({'message_id': str(dependency['message_id']), 'error': 'The response execution settled without a reply', **message})
+                    updates.append({'message_id': str(dependency['message_id']), 'error': message['reason'] or 'The response execution settled without a reply',
+                                    'status': message['status'], 'response_status': message['response_status']})
         contributions = required_results(conn, task)
         updates.extend(contributions)
         failed |= any(c['execution_status'] in service.TERMINAL - {'completed'} or c['status'] in ('failed', 'blocked', 'uncertain') for c in contributions)

@@ -135,6 +135,11 @@ async def drive(operation):
         if status == "deleted":
             conn.execute("UPDATE bots SET bot_token_hash=NULL,bot_token_encrypted=NULL,runtime_key_encrypted=NULL,adapter_key_encrypted=NULL WHERE id=%s", (current["bot_id"],))
             conn.execute("DELETE FROM participants WHERE bot_id=%s", (current["bot_id"],))
+        if current["action"] in ("delete", "archive"):
+            # Like a bounced email: messages still waiting for this teammate's answer are released now, with the reason.
+            from . import coordination
+            name = conn.execute("SELECT name FROM bots WHERE id=%s", (current["bot_id"],)).fetchone()["name"]
+            coordination.bounce_recipient(conn, current["bot_id"], coordination.recipient_gone({"name": name, "status": status}))
         if proposal:
             conn.execute("UPDATE lifecycle_proposals SET status='completed' WHERE id=%s", (proposal["id"],))
             lifecycle.resume(conn, proposal, f"Owner-approved lifecycle proposal {proposal['id']} completed. Bot ID: {current['bot_id']}. Action: {current['action']}. Runtime state: {result['state']}. Use hermbot_teammates to discover the specialist, delegate permitted work and combine the result.")
