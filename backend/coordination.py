@@ -83,7 +83,7 @@ def recipient_gone(bot):
 
 def release(conn, message, reason, released):
     """Settle an unanswerable message with its reason; a sender waiting on it is woken with that reason."""
-    if not conn.execute("UPDATE teammate_messages SET status='cancelled',reason=%s,released=%s,not_before=NULL "
+    if not conn.execute("UPDATE teammate_messages SET status='cancelled',reason=%s,released=%s,not_before=NULL,owner_action=NULL,owner_action_at=NULL "
                         "WHERE id=%s AND status IN ('pending','delivered') RETURNING id", (reason, released, message['id'])).fetchone():
         return
     db.event(conn, 'teammate.message_' + released, conversation_id=message['conversation_id'], bot_id=message['sender'],
@@ -103,6 +103,41 @@ def record_failure(conn, entry, exc):
                        (int(counted), isolation.diagnostic(exc), isolation.backoff_seconds(entry['attempts']) * (0.5 + random() / 2), entry['id'])).fetchone()
     if counted and row and row['attempts'] >= isolation.FAILURE_LIMIT:
         release(conn, entry, f"Could not be delivered after {row['attempts']} attempts ({isolation.describe(exc)})", 'failed')
+
+
+def sender_work_open(conn, message):
+    """Whether the work that sent this message is still in progress, so the owner can still act on it.
+    Work paused at its budget counts as in progress: the owner can continue it."""
+    root = conn.execute("SELECT r.status FROM tasks t JOIN tasks r ON r.id=t.root_id WHERE t.id=%s", (message['source_task_id'],)).fetchone()
+    return bool(root) and root['status'] not in service.TERMINAL | {'cancelling'}
+
+
+def resolve_failed(conn, identity, action):
+    """The owner's answer to a message that was given up: resend it (back in the queue with a fresh count, as a
+    dead-letter redrive) or mark it done (the owner handles it). Either closes the attention item."""
+    message = conn.execute('SELECT * FROM teammate_messages WHERE id=%s FOR UPDATE', (identity,)).fetchone()
+    if not message:
+        raise HTTPException(404, 'Message not found')
+    if message['status'] != 'cancelled' or message['released'] != 'failed' or message['owner_action']:
+        raise HTTPException(409, 'This message was already handled')
+    if action == 'resend':
+        if not sender_work_open(conn, message):
+            raise HTTPException(409, "The sender's work has finished, so a resent message wouldn't reach it. Choose Done instead.")
+        gone = recipient_gone(conn.execute('SELECT name,status FROM bots WHERE id=%s', (message['recipient'],)).fetchone())
+        if gone:
+            raise HTTPException(409, f"{gone}, so the message can't be resent. Choose Done instead.")
+        conn.execute("UPDATE teammate_messages SET status='pending',attempts=0,not_before=NULL,reason=NULL,released=NULL,"
+                     "owner_action='resend',owner_action_at=now() WHERE id=%s", (identity,))
+    else:
+        conn.execute("UPDATE teammate_messages SET owner_action='done',owner_action_at=now() WHERE id=%s", (identity,))
+    db.event(conn, 'teammate.message_' + ('resent' if action == 'resend' else 'handled'), conversation_id=message['conversation_id'],
+             bot_id=message['sender'], data={'message_id': str(identity), 'recipient': message['recipient']})
+    from . import attention
+    attention.dirty(conn, 'message', identity)
+    # Close the item now when no projector is running; otherwise the queued refresh does it within a second.
+    if conn.execute('SELECT pg_try_advisory_xact_lock(887832154)').fetchone()['pg_try_advisory_xact_lock']:
+        attention.project(conn, 'message', identity)
+    return {'id': str(identity), 'action': action}
 
 
 def bounce_recipient(conn, bot_id, reason):

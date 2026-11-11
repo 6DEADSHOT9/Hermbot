@@ -13,7 +13,7 @@ from . import db, lifecycle, registry, service
 from .settings import settings
 from .models import (AttachmentRequest, BotConfiguration, BotId, BotUpdate, CloneRequest, EditRequest,
                      GrantRequest, GroupRequest, LifecycleRequest, ProposalArgs, ProviderRequest,
-                     ReactionRequest, RetryRequest, WorkspaceRequest, AdvancedSettings)
+                     ReactionRequest, RetryRequest, WorkspaceRequest, AdvancedSettings, MessageResolution)
 
 ATTACHMENT_TYPES = {"text/plain", "text/markdown", "text/csv", "application/json", "text/x-python", "application/pdf", "image/png", "image/jpeg", "image/webp"}
 
@@ -376,6 +376,13 @@ def routes(owner, get_store):
             # Without a renewal, the fingerprint is the one used before renewals existed, so earlier receipts still match.
             request = body.model_dump(exclude=None if body.renew_management else {"renew_management"})
             return registry.mutation(conn, key, {"action": "retry-task", "id": task_id, "body": request}, work)
+
+    @router.post('/api/v1/teammate-messages/{message_id}/resolve')
+    def resolve_message(message_id: UUID, body: MessageResolution, key: str = Header(alias='Idempotency-Key')):
+        from . import coordination
+        with db.connection() as conn:
+            return registry.mutation(conn, key, {'action': 'resolve-message', 'id': message_id, 'body': body.model_dump()},
+                                     lambda: coordination.resolve_failed(conn, message_id, body.action))
 
     @router.post('/api/v1/tasks/{task_id}/continue')
     def continue_task(task_id: UUID, key: str = Header(alias='Idempotency-Key')):

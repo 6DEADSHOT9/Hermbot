@@ -584,3 +584,119 @@ def test_an_outage_backs_off_without_counting_against_the_message(work, monkeypa
     worker.claim_new()
     held = message_row(message)
     assert (held['status'], held['attempts']) == ('pending', 0) and held['not_before'] > service.now()
+
+
+# A given-up message's alert always has a way out: Resend or Done, and it leaves "Needs you" once its work is handled.
+
+def give_up(work, monkeypatch, *, wait=True):
+    parent = worker.claim_new()[0]
+    sent = invoke(parent, 'message', {'bot_id': 'writer', 'prompt': 'Which topic?'})
+    message = UUID(sent['message_id'])
+    if wait:
+        invoke(parent, 'wait', {'message_ids': [message]})
+    complete(parent)
+    expired = coordination.execution_policy.expired
+
+    def broken(task):
+        if task['id'] == work['id']:
+            raise RuntimeError('a stored row this code cannot read')
+        return expired(task)
+    monkeypatch.setattr(coordination.execution_policy, 'expired', broken)
+    for _ in range(3):
+        with db.connection() as conn:
+            conn.execute("UPDATE teammate_messages SET not_before=NULL WHERE id=%s", (message,))
+        worker.claim_new()
+    monkeypatch.undo()
+    assert message_row(message)['released'] == 'failed'
+    return message
+
+
+def alert(message):
+    from backend import attention
+    with db.connection() as conn:
+        attention.project(conn, 'message', message)
+        return conn.execute("SELECT * FROM attention_items WHERE subject_type='message' AND subject_id=%s", (message,)).fetchone()
+
+
+def counts():
+    from backend import attention
+    with db.connection() as conn:
+        return attention.page(conn, 'needs')['needs_owner']
+
+
+def resolve(message, action):
+    client = TestClient(application.app, headers={'Authorization': 'Bearer ' + settings.owner_token})  # Not a context manager: that would run shutdown.
+    try:
+        return client.post(f'/api/v1/teammate-messages/{message}/resolve', json={'action': action}, headers={'Idempotency-Key': str(uuid4())})
+    finally:
+        client.close()
+
+
+def test_done_closes_the_alert_and_cannot_be_repeated(work, monkeypatch):
+    message = give_up(work, monkeypatch)
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued', 'The waiting sender is woken and its work goes on'
+    item = alert(message)
+    assert item['active'] and item['needs_owner'] and item['refs']['message_id'] == str(message)
+    assert 'Resend it, or choose Done' in item['summary'] and counts() == 1
+    response = resolve(message, 'done')
+    assert response.status_code == 200 and response.json() == {'id': str(message), 'action': 'done'}
+    assert not alert(message)['active'] and counts() == 0, 'Done closes the item'
+    assert message_row(message)['owner_action'] == 'done'
+    again = resolve(message, 'done')
+    assert again.status_code == 409 and again.json()['detail'] == 'This message was already handled'
+
+
+def test_resend_puts_the_message_back_and_a_new_failure_alerts_again(work, monkeypatch):
+    message = give_up(work, monkeypatch)
+    first = alert(message)
+    assert resolve(message, 'resend').status_code == 200
+    resent = message_row(message)
+    assert (resent['status'], resent['attempts'], resent['released'], resent['reason'], resent['owner_action']) == ('pending', 0, None, None, 'resend')
+    assert not alert(message)['active'] and counts() == 0
+    expired = coordination.execution_policy.expired
+    monkeypatch.setattr(coordination.execution_policy, 'expired', lambda task: (_ for _ in ()).throw(RuntimeError('again')) if task['id'] == work['id'] else expired(task))
+    for _ in range(3):
+        with db.connection() as conn:
+            conn.execute("UPDATE teammate_messages SET not_before=NULL WHERE id=%s", (message,))
+        worker.claim_new()
+    monkeypatch.undo()
+    again = alert(message)
+    assert message_row(message)['owner_action'] is None
+    assert again['active'] and again['needs_owner'] and again['version'] > first['version'], 'A new failure is a new alert'
+
+
+def test_the_alert_leaves_needs_you_once_its_work_is_handled(work, monkeypatch):
+    from types import SimpleNamespace
+    from backend import attention
+    message = give_up(work, monkeypatch)
+    worker.advance_waiters()
+    assert alert(message)['needs_owner'] and counts() == 1
+    with db.connection() as conn:  # The owner stops the sender's work.
+        service.cancel(conn, service.locked_task(conn, work['id']), 'Stopped by owner')
+    with db.connection() as conn:
+        attention.project(conn, 'task', work['id'])
+    item = alert(message)
+    assert item['active'] and not item['needs_owner'] and counts() == 0, 'It moved to updates on its own'
+    assert "work has since finished" in item['summary']
+    refused = resolve(message, 'resend')
+    assert refused.status_code == 409 and 'Choose Done instead' in refused.json()['detail']
+    with db.connection() as conn:
+        attention.acknowledge(conn, [SimpleNamespace(id=item['id'], version=item['version'])], 'dismiss')
+        assert conn.execute('SELECT dismissed_version FROM attention_items WHERE id=%s', (item['id'],)).fetchone()['dismissed_version'] == item['version'], 'and can be dismissed'
+
+
+def test_a_message_given_up_after_its_work_finished_is_an_update_from_the_start(work, monkeypatch):
+    message = give_up(work, monkeypatch, wait=False)
+    assert row(work['id'])['status'] == 'completed'
+    item = alert(message)
+    assert item['active'] and not item['needs_owner'] and item['read_version'] < item['version'], 'Unread, in updates, not "Needs you"'
+
+
+def test_resend_is_refused_when_the_recipient_is_gone(work, monkeypatch):
+    message = give_up(work, monkeypatch)
+    worker.advance_waiters()
+    set_writer('deleted')
+    refused = resolve(message, 'resend')
+    assert refused.status_code == 409 and refused.json()['detail'] == f"{name('writer')} was deleted, so the message can't be resent. Choose Done instead."
+    assert resolve(message, 'done').status_code == 200

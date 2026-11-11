@@ -343,6 +343,11 @@ class EditRequest(StrictModel):
     expected_input_hash: str = Field(min_length=64, max_length=64)
 
 
+class MessageResolution(StrictModel):
+    # The owner's answer to a teammate message that was given up after repeated failures.
+    action: Literal['resend', 'done']
+
+
 class RetryRequest(StrictModel):
     prompt: str | None = Field(default=None, min_length=1, max_length=50_000)
     # The owner confirmed renewing this work's expired (or nearly expired) management permission for 24 h.

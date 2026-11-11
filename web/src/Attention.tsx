@@ -1,13 +1,13 @@
 import {useEffect,useState,type ReactNode} from 'react';
 import {useQuery,useQueryClient} from '@tanstack/react-query';
-import {api,type Approval,type InputRequest,type Artifact,type Conversation,type Message,type Task,type WorkItem} from './api';
+import {api,mutate,type Approval,type InputRequest,type Artifact,type Conversation,type Message,type Task,type WorkItem} from './api';
 import Markdown from 'react-markdown';
 import {Panel} from './Management';
 import {InputCard} from './InputCard';
 import {statusLabel} from './api';
 import './Attention.css';
 
-type Item={id:string;version:number;title:string;summary:string;source_status:string;active:boolean;needs_owner:boolean;unread:boolean;updated_at:string;refs:{bot_id?:string;bot_name?:string;settings?:string;source_id?:string;source_type?:string}};
+type Item={id:string;version:number;title:string;summary:string;source_status:string;active:boolean;needs_owner:boolean;unread:boolean;updated_at:string;refs:{bot_id?:string;bot_name?:string;settings?:string;source_id?:string;source_type?:string;message_id?:string}};
 export type AttentionTarget=Item&{work:WorkItem|null;task:Task|null;conversation:Conversation|null;thread:Message|null;request?:InputRequest|Approval|null};
 export type Inbox={items:Item[];unread:number;needs_owner:number;next:string|null};
 export function Attention({open,onClose,initial,onNavigate,onSettings,renderReview,onArtifact}:{open:boolean;onClose:()=>void;initial:string|null;onNavigate:(value:AttentionTarget)=>Promise<void>;onSettings:(section:string,identity?:string,kind?:string)=>void;renderReview:(review:Approval,onError:(message:string)=>void)=>ReactNode;onArtifact:(artifact:Artifact)=>void}) {
@@ -21,6 +21,12 @@ export function Attention({open,onClose,initial,onNavigate,onSettings,renderRevi
     try {await api('/api/v1/attention/read',{method:'POST',body:JSON.stringify({items:items.map(({id,version})=>({id,version})),action})});await query.invalidateQueries({queryKey:['attention']});await query.invalidateQueries({queryKey:['attention-counts']});}
     catch(err){setError((err as Error).message);}finally{setBusy(false);}
   }
+  // A teammate message given up after repeated failures: resend it, or mark it done. Either one closes the item.
+  async function resolveMessage(target:AttentionTarget,action:'resend'|'done') {
+    setError('');setBusy(true);
+    try {await mutate(`/api/v1/teammate-messages/${target.refs.message_id}/resolve`,'POST',{action});await change([target],'read');await query.invalidateQueries({queryKey:['attention-detail']});}
+    catch(err){setError((err as Error).message);}finally{setBusy(false);}
+  }
   const value=detail.data;
   return <Panel open={open} onClose={onClose} title="Attention" description="Questions, reviews and results from your teammates.">
     <div className="attention-toolbar"><div className="attention-tabs" role="group" aria-label="Attention view">{[['needs','Needs you'],['updates','Updates'],['history','History']].map(([key,label])=><button key={key} aria-pressed={view===key} onClick={()=>{setView(key);setBefore(null);setSelected(null);}}>{label}</button>)}</div><button className="secondary" disabled={busy||!!selected||!inbox.data?.items.length} onClick={()=>void change(inbox.data!.items,'read')}>Mark visible read</button></div>
@@ -32,6 +38,7 @@ export function Attention({open,onClose,initial,onNavigate,onSettings,renderRevi
       {value.work&&<p>{value.work.title} · {value.work.progress?.fulfilled??0} of {value.work.progress?.required??0} required results ready</p>}
       {!value.request&&value.task?.output&&<div className="prose attention-report"><Markdown>{value.task.output}</Markdown></div>}
       {!!value.work?.outputs.length&&<div className="attention-outputs">{value.work.outputs.map(artifact=><button key={artifact.id} className="secondary" onClick={()=>onArtifact(artifact)}>{artifact.name}</button>)}</div>}
+      {value.active&&value.refs.message_id&&<div className="button-row">{value.needs_owner&&<button className="primary" disabled={busy} onClick={()=>void resolveMessage(value,'resend')}>Resend message</button>}<button className="secondary" disabled={busy} onClick={()=>void resolveMessage(value,'done')}>Done</button></div>}
       <div className="button-row"><button className="primary" disabled={busy} onClick={async()=>{setBusy(true);try{if(value.refs.settings)onSettings(value.refs.settings,value.refs.source_id,value.refs.source_type);else await onNavigate(value);await change([value],'read');onClose();}catch(err){setError((err as Error).message);}finally{setBusy(false);}}}>{value.refs.settings?'Open settings':'Open work'}</button><button className="secondary" disabled={busy} onClick={()=>void change([value],'read')}>Mark read</button></div>
     </>}</section>:<div className="attention-list">
       {inbox.isPending?<p className="form-note">Loading attention…</p>:!inbox.data?.items.length?<p className="attention-empty">{view==='needs'?'Nothing needs your response.':view==='updates'?'You’re up to date.':'No saved updates in this view.'}</p>:inbox.data.items.map(item=><article className="attention-row" key={item.id}>
