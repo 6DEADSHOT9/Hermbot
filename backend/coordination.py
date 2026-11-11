@@ -201,6 +201,14 @@ def resolve_failed(conn, identity, action):
     return {'id': str(identity), 'action': action}
 
 
+def drop_pending(conn, work_item_id, reason):
+    """Release a stopped piece of work's pending messages, with the reason. Messages the dispatch pass holds right
+    now are skipped; it drops them itself, with a reason, through delivery_blocker on its next pass."""
+    for message in conn.execute("SELECT * FROM teammate_messages WHERE work_item_id=%s AND status='pending' ORDER BY created_at FOR UPDATE SKIP LOCKED",
+                                (work_item_id,)).fetchall():
+        release(conn, message, reason, 'dropped')
+
+
 def bounce_recipient(conn, bot_id, reason):
     """When a teammate is deleted or archived, release every message still waiting for its answer at once.
     Messages the dispatch pass holds right now are skipped; it bounces them itself on its next pass."""

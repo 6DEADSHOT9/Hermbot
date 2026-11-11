@@ -131,21 +131,26 @@ def close_missing(conn, kind, identity, purposes):
         db.event(conn, "attention.changed", data={"resolved": len(rows)})
 
 
+def task_refs(conn, task):
+    """Where an alert about this task opens: its conversation, thread, work and bot. Every alert about a task
+    builds its links here, so none can open a different place (for example the conversation root, not the thread)."""
+    work = task.get("management_work_item_id") or task["work_item_id"]
+    return {
+        "task_id": str(task["id"]),
+        "conversation_id": str(task["conversation_id"]),
+        "work_item_id": str(work) if work else None,
+        "thread_id": task["reply_to_message_id"],
+        "bot_id": task["bot_id"],
+        "bot_name": conn.execute("SELECT name FROM bots WHERE id=%s", (task["bot_id"],)).fetchone()["name"],
+    }
+
+
 def task_projection(conn, identity, *, initial=False):
     task = conn.execute("SELECT * FROM tasks WHERE id=%s", (identity,)).fetchone()
     if not task:
         close_missing(conn, "task", identity, [])
         return
-    refs = {
-        "task_id": str(identity),
-        "conversation_id": str(task["conversation_id"]),
-        "work_item_id": str(task.get("management_work_item_id") or task["work_item_id"])
-        if task.get("management_work_item_id") or task["work_item_id"]
-        else None,
-        "thread_id": task["reply_to_message_id"],
-        "bot_id": task["bot_id"],
-        "bot_name": conn.execute("SELECT name FROM bots WHERE id=%s", (task["bot_id"],)).fetchone()["name"],
-    }
+    refs = task_refs(conn, task)
     current = []
     for table, category, name in [
         ("input_requests", "questions", "Question"),
@@ -252,16 +257,14 @@ def work_projection(conn, identity, *, initial=False):
         ).fetchone()
         task = item["current_task"]
         if chat and not chat["archived_at"] and not item["hidden_at"] and task:
+            # The work item's own conversation and bot, with the current task's links (its thread included).
             refs = {
+                **task_refs(conn, conn.execute("SELECT * FROM tasks WHERE id=%s", (task["id"],)).fetchone()),
                 "work_item_id": str(identity),
                 "conversation_id": str(item["conversation_id"]),
-                "task_id": str(task["id"]),
                 "bot_id": item["bot_id"],
-                "thread_id": task["reply_to_message_id"],
+                "bot_name": conn.execute("SELECT name FROM bots WHERE id=%s", (item["bot_id"],)).fetchone()["name"],
             }
-            refs["bot_name"] = conn.execute(
-                "SELECT name FROM bots WHERE id=%s", (item["bot_id"],)
-            ).fetchone()["name"]
             state = item["status"]
             if task["status"] not in service.TERMINAL:
                 from fastapi import HTTPException
@@ -460,14 +463,7 @@ def message_projection(conn, identity, *, initial=False):
             summary=summary,
             status="failed",
             needs_owner=actionable,
-            refs={
-                "task_id": str(message["source_task_id"]),
-                "conversation_id": str(message["conversation_id"]),
-                "work_item_id": str(message["work_item_id"]) if message["work_item_id"] else None,
-                "bot_id": message["sender"],
-                "bot_name": sender,
-                "message_id": str(identity),
-            },
+            refs={**task_refs(conn, conn.execute("SELECT * FROM tasks WHERE id=%s", (message["source_task_id"],)).fetchone()), "message_id": str(identity)},
             # Moving out of "Needs you" because Resend can no longer work sends no second notification.
             initial=initial or demoted,
             fingerprint={"kind": kind, "since": str(message["last_error_at"]), "reason": message["reason"], "needs_owner": actionable},

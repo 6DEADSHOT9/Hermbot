@@ -774,3 +774,48 @@ def test_a_resend_that_cannot_go_through_is_reported_to_the_owner(work, monkeypa
     assert resolve(message, 'resend').status_code == 409
     assert resolve(message, 'done').status_code == 200 and not alert(message)['active']
     assert resolve(message, 'done').status_code == 409
+
+
+# A cancelled message always carries its reason (enforced by the database); alerts open the sending task's thread.
+
+def test_the_database_refuses_a_cancelled_message_without_a_reason(work):
+    from psycopg import errors
+    _, _, message = helper_message(work)
+    with pytest.raises(errors.CheckViolation):
+        with db.connection() as conn:
+            conn.execute("UPDATE teammate_messages SET status='cancelled' WHERE id=%s", (message,))
+    assert message_row(message)['status'] == 'pending'
+
+
+def test_stopping_managed_recurring_work_drops_its_messages_with_the_reason():
+    from tests.test_recurring_management import managed
+    authority, _, _, task = managed()
+    with db.connection() as conn:
+        sent = coordination.send(conn, task, {'bot_id': 'writer', 'prompt': 'Explain the existing evidence only.'})
+        message = UUID(sent['message_id'])
+        conn.execute("UPDATE teammate_messages SET owner_action='resend',owner_action_at=now() WHERE id=%s", (message,))  # The owner resent it.
+    application.revoke_grant(authority['id'])
+    dropped = message_row(message)
+    reason = 'The recurring work it belonged to was stopped: Owner revoked management authority'
+    assert (dropped['status'], dropped['released'], dropped['reason'], dropped['owner_action']) == ('cancelled', 'dropped', reason, 'resend')
+    item = alert(message)
+    assert item['active'] and not item['needs_owner'] and item['summary'] == f'{reason}. This is for your information.', 'The lost resend is reported'
+
+
+def test_a_message_alert_opens_the_sending_tasks_thread(work, monkeypatch):
+    from backend import attention
+    with db.connection() as conn:  # The work runs in a thread of the conversation.
+        thread = conn.execute("SELECT id FROM messages WHERE task_id=%s", (work['id'],)).fetchone()['id']
+        conn.execute('UPDATE tasks SET reply_to_message_id=%s WHERE id=%s', (thread, work['id']))
+    message = give_up(work, monkeypatch)
+    item = alert(message)
+    with db.connection() as conn:
+        expected = attention.task_refs(conn, conn.execute('SELECT * FROM tasks WHERE id=%s', (work['id'],)).fetchone())
+    assert item['refs'] == {**{k: v for k, v in expected.items()}, 'message_id': str(message)}
+    assert item['refs']['thread_id'] == thread
+    client = TestClient(application.app, headers={'Authorization': 'Bearer ' + settings.owner_token})
+    try:
+        detail = client.get(f"/api/v1/attention/{item['id']}").json()
+    finally:
+        client.close()
+    assert detail['thread']['id'] == thread, 'Open work goes to the thread, not the conversation root'

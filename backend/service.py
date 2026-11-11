@@ -436,7 +436,8 @@ def cancel(conn, task, reason="Stopped by owner", *, kind=None):
     frozen = scope(conn, task)
     if frozen and task['id'] == task['root_id'] and task['bot_id'] == frozen['manager_id']:
         descendants = occurrence_tasks(conn, task)
-        conn.execute("UPDATE teammate_messages SET status='cancelled' WHERE work_item_id=%s AND status='pending'", (task.get('management_work_item_id') or task['work_item_id'],))
+        from .coordination import drop_pending
+        drop_pending(conn, task.get('management_work_item_id') or task['work_item_id'], f'The recurring work it belonged to was stopped: {reason}')
     for row in descendants:
         target = conn.execute("SELECT * FROM tasks WHERE id=%s", (row["id"],)).fetchone()
         if target["status"] in TERMINAL and target["status"] != "uncertain":
