@@ -3,6 +3,7 @@ from uuid import UUID, uuid4
 
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+import psycopg
 import pytest
 
 from backend import app as application, connections, coordination, db, outcomes, service, worker, work_controller
@@ -123,9 +124,9 @@ def test_forged_reply_and_delivery_are_rejected(work):
     message = invoke(parent, 'message', {'bot_id': 'writer', 'prompt': 'Question'})
     with pytest.raises(HTTPException):
         invoke(parent, 'message', {'bot_id': 'reviewer', 'prompt': 'Forged', 'reply_to': UUID(message['message_id'])})
-    with pytest.raises(HTTPException):
-        with db.connection() as conn:
-            coordination.delivered(conn, row(work['id']), [UUID(message['message_id'])])
+    with db.connection() as conn:  # The sender can't acknowledge a message addressed to another bot: it is skipped.
+        assert coordination.delivered(conn, row(work['id']), [UUID(message['message_id'])]) == []
+    assert message_row(UUID(message['message_id']))['status'] == 'pending'
 
 
 def test_contribution_cannot_complete_shared_report(work):
@@ -997,7 +998,7 @@ def test_a_dropped_message_is_never_shown_again(work):
     def shown():
         with db.connection() as conn:
             return [m['content'] for m in coordination.inbox(conn, service.locked_task(conn, reply['task_id']))]
-    assert shown() == ['Read before the drop', 'Not read before the drop']
+    assert shown() == ['Not read before the drop', 'Read before the drop'], 'The message this reply task was started for comes first'
     with db.connection() as conn:
         coordination.delivered(conn, service.locked_task(conn, reply['task_id']), [read])
     with db.connection() as conn:  # The owner stops the helper while its messages are still open.
@@ -1416,6 +1417,564 @@ def test_a_reply_the_owner_did_not_resend_is_left_alone(work, monkeypatch):
     assert not alert(reply) or not alert(reply)['active'], 'Nothing is raised for a reply nobody resent'
 
 
+# Every state a message can be in behaves as the lifecycle map says, cell by cell: one case per row of its tables, one
+# check per column (each rebuilds its own state, so a scheduler pass or a wake-up never disturbs another column).
+
+def reader_task(work):  # A task of the recipient that gets a teammate inbox, in the message's work; finished, so it is only read from.
+    with db.connection() as conn:
+        task = service.create_task(conn, bot_id='writer', conversation_id=work['conversation_id'], prompt='Read the teammate inbox', request_key=str(uuid4()),
+                                   orchestration_version=2, coordination_version=1)
+        conn.execute("UPDATE tasks SET work_item_id=%s,status='completed' WHERE id=%s", (work['work_item_id'], task['id']))
+    return task['id']
+
+
+def task_without_inbox(work, bot='researcher'):  # An unfinished task that never gets a teammate inbox (coordination_version 0).
+    with db.connection() as conn:
+        task = service.create_task(conn, bot_id=bot, conversation_id=work['conversation_id'], prompt='Work that reads no teammate inbox', request_key=str(uuid4()))
+        conn.execute('UPDATE tasks SET work_item_id=%s WHERE id=%s', (work['work_item_id'], task['id']))
+    return task['id']
+
+
+def read_by(attempt, *messages):
+    with db.connection() as conn:
+        return coordination.delivered(conn, service.locked_task(conn, attempt['task_id']), list(messages))
+
+
+def task_count():
+    with db.connection() as conn:
+        return conn.execute('SELECT count(*) AS n FROM tasks').fetchone()['n']
+
+
+def asked_and_answered(work, *, text='Writing and synthesis', wait=True, finish=True):
+    """The researcher asks the writer (and parks waiting for the answer), the writer reads the question and replies."""
+    asker = worker.claim_new()[0]
+    question = UUID(invoke(asker, 'message', {'bot_id': 'writer', 'prompt': 'What is your expertise?'})['message_id'])
+    if wait:
+        invoke(asker, 'wait', {'message_ids': [question]})
+        complete(asker)
+    answerer = reply_attempt()
+    read_by(answerer, question)
+    reply = UUID(invoke(answerer, 'message', {'bot_id': 'researcher', 'prompt': text, 'reply_to': question})['message_id'])
+    if finish:
+        complete(answerer)
+    return {'message': reply, 'question': question, 'asker': asker, 'answerer': answerer, 'text': text, 'reader': work['id']}
+
+
+def fail_reply_checks(work, monkeypatch, reply):
+    fail_checks_for(monkeypatch, {reply})
+    for _ in range(3):
+        clear_pauses(reply)
+        read_inbox(work['id'])
+    monkeypatch.undo()
+    assert message_row(reply)['released'] == 'failed', 'Three failed checks give the reply up'
+
+
+def original_pending(work, monkeypatch):
+    return {'message': waiting_on_writer(work)}
+
+
+def original_paused(work, monkeypatch):
+    message = waiting_on_writer(work)
+    with db.connection() as conn:
+        conn.execute("UPDATE teammate_messages SET not_before=now()+interval '1 hour',attempts=1 WHERE id=%s", (message,))
+    return {'message': message}
+
+
+def original_linked_live(work, monkeypatch):
+    message = waiting_on_writer(work)
+    return {'message': message, 'reader': reply_attempt()['task_id']}
+
+
+def original_linked_ended(work, monkeypatch, *, stopped=False):
+    message = waiting_on_writer(work)
+    reply = reply_attempt()
+    (stop_reply if stopped else complete)(reply)
+    return {'message': message, 'reader': reply['task_id']}
+
+
+def original_resent(work, monkeypatch):
+    message = give_up(work, monkeypatch)
+    assert resolve(message, 'resend').status_code == 200
+    return {'message': message}
+
+
+def original_delivered(work, monkeypatch):
+    message = waiting_on_writer(work)
+    reply = reply_attempt()
+    read_by(reply, message)
+    return {'message': message, 'reader': reply['task_id'], 'reply_attempt': reply}
+
+
+def original_read_but_unanswered(work, monkeypatch):
+    info = original_delivered(work, monkeypatch)
+    complete(info['reply_attempt'])
+    return info
+
+
+def original_answered(work, monkeypatch):
+    info = original_delivered(work, monkeypatch)
+    invoke(info['reply_attempt'], 'message', {'bot_id': 'researcher', 'prompt': 'Topic A', 'reply_to': info['message']})
+    return {**info, 'text': 'Topic A'}
+
+
+def original_given_up(work, monkeypatch):
+    return {'message': give_up(work, monkeypatch)}
+
+
+def original_bounced(work, monkeypatch):
+    message, reader = waiting_on_writer(work), reader_task(work)
+    set_writer('archived')
+    worker.claim_new()
+    return {'message': message, 'reader': reader}
+
+
+def original_dropped(work, monkeypatch):
+    message, reader = waiting_on_writer(work), reader_task(work)
+    with db.connection() as conn:
+        conn.execute('UPDATE conversations SET archived_at=now() WHERE id=%s', (work['conversation_id'],))
+    worker.claim_new()
+    return {'message': message, 'reader': reader}
+
+
+def original_lost_after_resend(work, monkeypatch):
+    message = give_up(work, monkeypatch)
+    assert resolve(message, 'resend').status_code == 200
+    reader = reader_task(work)
+    set_writer('archived')
+    worker.claim_new()
+    return {'message': message, 'reader': reader}
+
+
+def original_done(work, monkeypatch):
+    message = give_up(work, monkeypatch)
+    assert alert(message)['active'], 'The owner saw the alert'
+    assert resolve(message, 'done').status_code == 200
+    return {'message': message}
+
+
+def reply_pending(work, monkeypatch):
+    return asked_and_answered(work)
+
+
+def reply_paused(work, monkeypatch):
+    info = asked_and_answered(work)
+    with db.connection() as conn:
+        conn.execute("UPDATE teammate_messages SET not_before=now()+interval '1 hour',attempts=1 WHERE id=%s", (info['message'],))
+    return info
+
+
+def reply_resent_with_a_reader(work, monkeypatch):
+    info = asked_and_answered(work)  # The researcher is parked: an unfinished task that gets an inbox.
+    fail_reply_checks(work, monkeypatch, info['message'])
+    assert resolve(info['message'], 'resend').status_code == 200
+    return info
+
+
+def reply_resent_without_a_reader(work, monkeypatch, *, other_task=False):
+    info = asked_and_answered(work, wait=False)
+    fail_reply_checks(work, monkeypatch, info['message'])
+    assert resolve(info['message'], 'resend').status_code == 200
+    finish_sender(work, info['asker'])
+    if other_task:
+        task_without_inbox(work)
+    return {**info, 'settle': worker.claim_new}  # The owner's actions exist once the scheduler has dropped it.
+
+
+def reply_delivered(work, monkeypatch):
+    info = asked_and_answered(work)
+    with db.connection() as conn:
+        coordination.delivered(conn, service.locked_task(conn, work['id']), [info['message']])
+    return info
+
+
+def reply_given_up(work, monkeypatch):
+    info = asked_and_answered(work)
+    fail_reply_checks(work, monkeypatch, info['message'])
+    return info
+
+
+def reply_dropped(work, monkeypatch):
+    info = asked_and_answered(work)
+    with db.connection() as conn:
+        conn.execute('UPDATE conversations SET archived_at=now() WHERE id=%s', (work['conversation_id'],))
+    read_inbox(work['id'])
+    assert message_row(info['message'])['released'] == 'dropped'
+    return info
+
+
+def reply_done(work, monkeypatch):
+    info = reply_given_up(work, monkeypatch)
+    assert alert(info['message'])['active'], 'The owner saw the alert'
+    assert resolve(info['message'], 'done').status_code == 200
+    return info
+
+
+def archived_reason():
+    return f"{name('writer')} is archived"
+
+
+def given_up_reason():
+    return 'Could not be delivered after 3 attempts (RuntimeError)'
+
+
+def stopped_reply_reason():
+    return f"{name('writer')}'s reply was stopped"
+
+
+def conversation_reason():
+    return 'The conversation was archived'
+
+
+# Cells: inbox shown|hidden; scheduler untouched|reply-task|reclaimed|dropped; waiter waits|told-reason|told-no-reply|handed|told-lost;
+# owner accepted|refused (Resend and Done); alert open|open-resent|closed|none (none: no open alert); open_work yes|no (originals only).
+# A cell that is not applicable, or can't be built honestly, is left out.
+CASES = {
+    'original-1-pending': (original_pending, dict(inbox='shown', scheduler='reply-task', waiter='waits', owner='refused', alert='none', open_work=True)),
+    'original-2-paused': (original_paused, dict(inbox='hidden', scheduler='untouched', waiter='waits', owner='refused', alert='none', open_work=True)),
+    'original-3-linked-to-live-reply-task': (original_linked_live, dict(inbox='shown', scheduler='untouched', waiter='waits', owner='refused', alert='none', open_work=False)),
+    'original-4-linked-to-ended-reply-task': (original_linked_ended, dict(inbox='shown', scheduler='reclaimed', waiter='waits', owner='refused', alert='none', open_work=True)),
+    'original-4-linked-to-stopped-reply-task': (lambda work, monkeypatch: original_linked_ended(work, monkeypatch, stopped=True),
+                                                dict(inbox='shown', scheduler='dropped', waiter='waits', owner='refused', alert='none', open_work=True, reason=stopped_reply_reason)),
+    'original-5-resent': (original_resent, dict(inbox='shown', scheduler='reply-task', waiter='waits', owner='refused', alert='none', open_work=True)),
+    'original-6-delivered': (original_delivered, dict(inbox='shown', scheduler='untouched', waiter='waits', owner='refused', alert='none', open_work=False)),
+    'original-7-read-but-unanswered': (original_read_but_unanswered, dict(scheduler='untouched', waiter='told-no-reply', owner='refused', alert='none', open_work=False)),
+    'original-8-answered': (original_answered, dict(inbox='shown', scheduler='untouched', waiter='handed', owner='refused', alert='none', open_work=False)),
+    'original-9-given-up': (original_given_up, dict(inbox='hidden', scheduler='untouched', waiter='told-reason', owner='accepted', alert='open', open_work=False, reason=given_up_reason)),
+    'original-10-bounced': (original_bounced, dict(inbox='hidden', scheduler='untouched', waiter='told-reason', owner='refused', alert='none', open_work=False, reason=archived_reason)),
+    'original-10-dropped': (original_dropped, dict(inbox='hidden', scheduler='untouched', waiter='told-reason', owner='refused', alert='none', open_work=False, reason=conversation_reason)),
+    'original-11-lost-after-resend': (original_lost_after_resend, dict(inbox='hidden', scheduler='untouched', waiter='told-reason', owner='accepted', alert='open-resent', open_work=False, reason=archived_reason)),
+    'original-12-done': (original_done, dict(inbox='hidden', scheduler='untouched', waiter='told-reason', owner='refused', alert='closed', open_work=False, reason=given_up_reason)),
+    'reply-1-pending': (reply_pending, dict(inbox='shown', scheduler='untouched', waiter='handed', owner='refused', alert='none')),
+    'reply-2-paused': (reply_paused, dict(inbox='hidden', scheduler='untouched', waiter='waits', owner='refused', alert='none')),
+    'reply-5-resent-reader-unfinished': (reply_resent_with_a_reader, dict(inbox='shown', scheduler='untouched', waiter='handed', owner='refused', alert='none')),
+    'reply-5-resent-no-task': (reply_resent_without_a_reader, dict(scheduler='dropped', owner='accepted', alert='open-resent', reason=no_work_reason)),
+    'reply-5-resent-only-tasks-without-an-inbox': (lambda work, monkeypatch: reply_resent_without_a_reader(work, monkeypatch, other_task=True),
+                                                   dict(scheduler='dropped', owner='accepted', alert='open-resent', reason=no_work_reason)),
+    'reply-6-delivered': (reply_delivered, dict(inbox='shown', scheduler='untouched', waiter='handed', owner='refused', alert='none')),
+    'reply-9-given-up': (reply_given_up, dict(inbox='hidden', scheduler='untouched', waiter='told-lost', owner='accepted', alert='open')),
+    'reply-10-dropped': (reply_dropped, dict(inbox='hidden', scheduler='untouched', waiter='told-lost', owner='refused', alert='none')),
+    'reply-12-done': (reply_done, dict(inbox='hidden', scheduler='untouched', waiter='told-lost', owner='refused', alert='closed')),
+}
+COLUMNS = ('inbox', 'scheduler', 'waiter', 'owner', 'alert', 'open_work')
+CELLS = [pytest.param(case, column, id=f'{case}-{column}') for case, (_, cells) in CASES.items() for column in COLUMNS if column in cells]
+
+
+def settled(info):
+    if info.get('settle'):
+        info['settle']()
+
+
+def check_inbox(work, info, expected):
+    listed = read_inbox(info.get('reader') or reader_task(work))
+    assert (info['message'] in listed) == (expected == 'shown'), f"The inbox should have {expected} the message, it lists {listed}"
+
+
+def check_scheduler(work, info, expected, reason):
+    identity = info['message']
+    before, tasks = message_row(identity), task_count()
+    worker.claim_new()
+    after = message_row(identity)
+    if expected == 'untouched':
+        keys = ('status', 'response_task_id', 'attempts', 'not_before', 'released', 'reason')
+        assert [after[k] for k in keys] == [before[k] for k in keys], 'The scheduler leaves it as it was'
+        assert task_count() == tasks, 'and starts nothing'
+    elif expected == 'reply-task':
+        assert after['status'] == 'pending' and after['response_task_id'], 'A reply task is linked to it'
+        assert after['attempts'] == 0 and task_count() == tasks + 1
+        assert row(after['response_task_id'])['execution_kind'] == 'peer_message'
+    elif expected == 'reclaimed':
+        assert (after['status'], after['response_task_id'], after['attempts']) == ('pending', None, before['attempts'] + 1), 'It is unlinked and counted'
+        assert after['not_before'] and after['not_before'] > service.now(), 'and paused'
+        assert task_count() == tasks
+    elif expected == 'dropped':
+        assert (after['status'], after['released'], after['reason']) == ('cancelled', 'dropped', reason()), f"It is dropped with its reason, not {after['status']} {after['reason']}"
+
+
+def check_waiter(work, info, expected, reason):
+    assert row(work['id'])['status'] == 'waiting_results', 'The sender starts out parked'
+    worker.advance_waiters()
+    after = row(work['id'])
+    if expected == 'waits':
+        assert after['status'] == 'waiting_results', 'It keeps waiting'
+        return
+    assert after['status'] == 'queued', f"It should be resumed with {expected}, it is {after['status']}"
+    told = after['continuation']
+    if expected == 'told-reason':
+        assert reason() in told, 'It is told the real reason'
+    elif expected == 'told-no-reply':
+        assert 'without a reply' in told
+    elif expected == 'handed':
+        assert info['text'] in told, 'It is handed the reply'
+    elif expected == 'told-lost':
+        assert "answer couldn't be delivered" in told and message_row(info['message'])['reason'] in told, 'It is told why the answer was lost'
+        assert info['text'] not in told, 'and is not handed the text'
+
+
+def check_owner(info, expected):
+    settled(info)
+    identity = info['message']
+    current = message_row(identity)
+    assert bool(coordination.awaiting_owner(current)) == (expected == 'accepted'), 'The message awaits the owner exactly when its actions are offered'
+    for action in ('resend', 'done'):
+        with db.connection() as conn:
+            with conn.transaction():
+                try:
+                    coordination.resolve_failed(conn, identity, action, current['delivery_revision'])
+                    outcome = 'accepted'
+                except HTTPException as refusal:
+                    assert refusal.status_code == 409
+                    outcome = 'refused'
+                raise psycopg.Rollback()
+        assert outcome == expected, f'{action} was {outcome}, it should be {expected}'
+
+
+def check_alert(info, expected):
+    settled(info)
+    item = alert(info['message'])
+    if expected == 'none':
+        assert not (item and item['active']), 'No alert is open'
+    elif expected == 'closed':
+        assert item and not item['active'], 'The alert exists and is closed'
+    else:
+        assert item and item['active'] and item['needs_owner'], 'The alert is open in "Needs you"'
+        assert item['title'].startswith('Your resent message') == (expected == 'open-resent')
+
+
+def check_open_work(info, expected):
+    with db.connection() as conn:
+        found = conn.execute('SELECT 1 FROM teammate_messages m WHERE m.id=%s AND ' + service.OPEN_TEAMMATE_MESSAGE, (info['message'],)).fetchone()
+    assert bool(found) == expected, 'It is counted as open work' if expected else 'It is not counted as open work'
+
+
+@pytest.mark.parametrize('case,column', CELLS)
+def test_every_message_state_behaves_as_the_map_says(work, monkeypatch, case, column):
+    build, cells = CASES[case]
+    info = build(work, monkeypatch)
+    expected, reason = cells[column], cells.get('reason')
+    if column == 'inbox':
+        check_inbox(work, info, expected)
+    elif column == 'scheduler':
+        check_scheduler(work, info, expected, reason)
+    elif column == 'waiter':
+        check_waiter(work, info, expected, reason)
+    elif column == 'owner':
+        check_owner(info, expected)
+    elif column == 'alert':
+        check_alert(info, expected)
+    else:
+        check_open_work(info, expected)
+
+
+# Each fix has its own test.
+
+@pytest.mark.parametrize('breaks', ['release', 'dirty'])
+def test_a_failure_that_cannot_be_recorded_never_stops_the_dispatch_pass(work, monkeypatch, breaks):
+    from backend import attention
+    parent = worker.claim_new()[0]
+    failing = UUID(invoke(parent, 'message', {'bot_id': 'reviewer', 'prompt': 'Cannot be checked'})['message_id'])  # Sorts first in the pass.
+    healthy = UUID(invoke(parent, 'message', {'bot_id': 'writer', 'prompt': 'Healthy'})['message_id'])
+    with db.connection() as conn:
+        conn.execute('UPDATE teammate_messages SET attempts=2 WHERE id=%s', (failing,))  # Its next failure is its third.
+    fail_checks_for(monkeypatch, {failing})
+    release, dirty = coordination.release, attention.dirty
+
+    def cannot_release(conn, message, *rest):
+        if message['id'] == failing:
+            raise RuntimeError('the give-up cannot be recorded')
+        return release(conn, message, *rest)
+
+    def cannot_alert(conn, kind, identity):
+        if identity == failing:
+            raise RuntimeError('the alert cannot be recorded')
+        return dirty(conn, kind, identity)
+    if breaks == 'release':
+        monkeypatch.setattr(coordination, 'release', cannot_release)
+    else:
+        monkeypatch.setattr(attention, 'dirty', cannot_alert)
+    try:
+        claimed = worker.claim_new()
+    except Exception as exc:
+        pytest.fail(f'One message that cannot record its failure stopped the dispatch pass: {exc!r}')
+    assert [a['bot_id'] for a in claimed] == ['writer'], 'The healthy message to another bot gets its reply task in the same pass'
+    assert message_row(healthy)['response_task_id'] == claimed[0]['task_id']
+    held = message_row(failing)
+    assert (held['status'], held['attempts']) == ('pending', 2), 'Nothing of the failed recording was kept'
+    wait = (held['not_before'] - service.now()).total_seconds()
+    assert coordination.RECORDING_PAUSE - 10 < wait <= coordination.RECORDING_PAUSE, f'It is paused about {coordination.RECORDING_PAUSE} seconds, not {wait}'
+
+
+def test_a_waiter_whose_only_answer_was_given_up_and_marked_done_is_told_it_was_lost(work, monkeypatch):
+    info = asked_and_answered(work, text='The answer text')
+    fail_reply_checks(work, monkeypatch, info['message'])
+    assert resolve(info['message'], 'done').status_code == 200
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued'
+    told = row(work['id'])['continuation']
+    assert f"{name('writer')}'s answer couldn't be delivered" in told and given_up_reason() in told
+    assert 'The answer text' not in told, 'It is not handed the text of an answer it may not see'
+
+
+def test_a_waiter_whose_answer_is_paused_keeps_waiting_and_gets_the_text_when_the_pause_ends(work):
+    info = asked_and_answered(work, text='The answer text')
+    with db.connection() as conn:
+        conn.execute("UPDATE teammate_messages SET not_before=now()+interval '1 hour',attempts=1 WHERE id=%s", (info['message'],))
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'waiting_results', 'The answer is still in its retry pause'
+    clear_pauses(info['message'])
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued' and 'The answer text' in row(work['id'])['continuation']
+
+
+def test_a_waiter_is_given_the_second_answer_when_the_first_was_cancelled(work, monkeypatch):
+    info = asked_and_answered(work, text='First answer')
+    fail_reply_checks(work, monkeypatch, info['message'])
+    with db.connection() as conn:
+        coordination.send(conn, service.locked_task(conn, info['answerer']['task_id']), {'bot_id': 'researcher', 'prompt': 'Second answer', 'reply_to': info['question']})
+    worker.advance_waiters()
+    assert row(work['id'])['status'] == 'queued'
+    told = row(work['id'])['continuation']
+    assert 'Second answer' in told and 'First answer' not in told
+
+
+def test_a_resent_reply_is_not_kept_for_a_recipient_whose_only_task_gets_no_inbox(work, monkeypatch):
+    info = reply_resent_without_a_reader(work, monkeypatch, other_task=True)
+    worker.claim_new()
+    assert_dropped_again(info['message'])
+
+
+def test_work_counts_as_unfinished_while_its_message_is_unlinked_or_its_reply_task_ended_but_not_while_one_is_live():
+    from backend import recurring_management
+    from tests.test_recurring_management import managed
+    _, _, _, task = managed()
+    with db.connection() as conn:
+        coordination.send(conn, task, {'bot_id': 'writer', 'prompt': 'Explain the existing evidence only.'})
+        message = conn.execute('SELECT id FROM teammate_messages').fetchone()['id']
+
+    def pending():
+        with db.connection() as conn:
+            return recurring_management.pending_messages(conn, task['work_item_id'])
+    assert pending(), 'Unlinked: still open'
+    with db.connection() as conn:
+        coordination.schedule_inboxes(conn)
+        linked = conn.execute('SELECT response_task_id FROM teammate_messages WHERE id=%s', (message,)).fetchone()['response_task_id']
+    assert linked and not pending(), 'Linked to a live reply task: that task counts instead'
+    with db.connection() as conn:
+        conn.execute("UPDATE tasks SET status='failed' WHERE id=%s", (linked,))
+    assert pending(), 'Linked to a reply task that ended, before the scheduler has reclaimed it: still open'
+
+
+def test_a_reply_is_still_shown_when_the_task_that_wrote_it_was_stopped_afterwards(work):
+    info = asked_and_answered(work, finish=False)
+    stop_reply(info['answerer'])
+    assert info['message'] in read_inbox(work['id']), 'The answer was already written'
+    assert message_row(info['message'])['status'] == 'pending'
+
+
+def test_a_reply_is_still_shown_when_the_task_that_wrote_it_is_past_its_deadline(work):
+    info = asked_and_answered(work)
+    with db.connection() as conn:
+        conn.execute("UPDATE tasks SET deadline=now()-interval '1 hour' WHERE id=%s", (info['answerer']['task_id'],))
+    assert info['message'] in read_inbox(work['id'])
+    assert message_row(info['message'])['status'] == 'pending'
+
+
+def test_an_original_message_from_a_stopped_sender_is_still_dropped(work):
+    child, helper, message = helper_message(work)
+    stop(child, helper)
+    worker.claim_new()
+    assert message_row(message)['status'] == 'cancelled' and message_row(message)['reason'] == f"{name('writer')}'s task was stopped"
+
+
+@pytest.mark.parametrize('stale', ['cancelled', 'another-bot'])
+def test_acknowledging_skips_a_stale_id_and_records_the_rest_without_counting(work, stale):
+    parent = worker.claim_new()[0]
+    valid = UUID(invoke(parent, 'message', {'bot_id': 'writer', 'prompt': 'Valid'})['message_id'])
+    reply = reply_attempt()
+    other = UUID(invoke(parent, 'message', {'bot_id': 'writer' if stale == 'cancelled' else 'reviewer', 'prompt': 'Stale'})['message_id'])
+    if stale == 'cancelled':
+        with db.connection() as conn:
+            conn.execute("UPDATE teammate_messages SET status='cancelled',released='dropped',reason='Dropped' WHERE id=%s", (other,))
+    with db.connection() as conn:
+        before = {r['id']: (r['attempts'], r['not_before']) for r in conn.execute('SELECT id,attempts,not_before FROM teammate_messages').fetchall()}
+    recorded = read_by(reply, other, valid)
+    assert recorded == [valid], 'Exactly the valid one is recorded'
+    assert message_row(valid)['status'] == 'delivered' and message_row(other)['status'] != 'delivered'
+    assert [e['data']['message_id'] for e in events('teammate.message_delivered')] == [str(valid)], 'One delivered event'
+    with db.connection() as conn:
+        after = {r['id']: (r['attempts'], r['not_before']) for r in conn.execute('SELECT id,attempts,not_before FROM teammate_messages').fetchall()}
+    assert after == before, 'Acknowledging changes no count and no pause'
+
+
+def test_a_reply_task_gets_at_most_thirty_messages_and_the_rest_get_the_next_without_a_failure(work):
+    parent = worker.claim_new()[0]
+    sent = [UUID(invoke(parent, 'message', {'bot_id': 'writer', 'prompt': f'message {n}'})['message_id']) for n in range(32)]
+    with db.connection() as conn:
+        for n, identity in enumerate(sent):  # Oldest first, in the order sent.
+            conn.execute('UPDATE teammate_messages SET created_at=now()-make_interval(secs=>%s) WHERE id=%s', (100 - n, identity))
+    first = reply_attempt()
+    linked = [m for m in sent if message_row(m)['response_task_id'] == first['task_id']]
+    assert linked == sent[:30], 'The oldest thirty are linked'
+    assert [(message_row(m)['response_task_id'], message_row(m)['attempts']) for m in sent[30:]] == [(None, 0)] * 2, 'The other two wait, uncounted'
+    newer = UUID(invoke(parent, 'message', {'bot_id': 'writer', 'prompt': 'Sent after'})['message_id'])
+    assert set(read_inbox(first['task_id'])) == set(linked), 'Its inbox lists the messages linked to it before newer ones'
+    read_by(first, *linked)
+    complete(first)
+    second = reply_attempt()
+    assert second['task_id'] != first['task_id']
+    assert [message_row(m)['response_task_id'] for m in sent[30:] + [newer]] == [second['task_id']] * 3, 'The rest get a second reply task'
+    assert all(message_row(m)['attempts'] == 0 and not message_row(m)['last_error'] for m in sent + [newer]), 'Nothing was counted as a failure'
+    assert events('teammate.message_failed') == []
+
+
+def test_a_resent_message_that_was_read_is_no_longer_marked_resent_and_a_later_bounce_raises_no_alert(work, monkeypatch):
+    message = give_up(work, monkeypatch)
+    assert resolve(message, 'resend').status_code == 200
+    assert message_row(message)['owner_action'] == 'resend'
+    reply = reply_attempt()
+    read_by(reply, message)
+    read = message_row(message)
+    assert (read['status'], read['owner_action'], read['owner_action_at']) == ('delivered', None, None), 'Reading it did what the resend asked'
+    with db.connection() as conn:
+        coordination.bounce_recipient(conn, 'writer', f"{name('writer')} is archived")
+    bounced = message_row(message)
+    assert (bounced['status'], bounced['released']) == ('cancelled', 'bounced')
+    item = alert(message)
+    assert not coordination.awaiting_owner(bounced) and not (item and item['active']), 'An ordinary bounce is not "your resent message"'
+
+
+def test_the_scheduler_has_partial_indexes_on_the_live_messages_and_on_replies(work):
+    with db.connection() as conn:
+        assert {r['indexname'] for r in conn.execute("SELECT indexname FROM pg_indexes WHERE tablename='teammate_messages'").fetchall()} >= {'teammate_messages_live', 'teammate_messages_reply_to'}
+        parent = service.locked_task(conn, work['id'])
+        question = UUID(coordination.send(conn, parent, {'bot_id': 'writer', 'prompt': 'Question'})['message_id'])
+        columns = ','.join(r['column_name'] for r in conn.execute("SELECT column_name FROM information_schema.columns WHERE table_name='teammate_messages' "
+                                                                   "AND column_name NOT IN ('id','created_at','status','released','reason','not_before','attempts')").fetchall())
+        with conn.transaction():  # A table with plenty of old finished rows, as a long history has.
+            conn.execute(f"INSERT INTO teammate_messages(id,created_at,status,released,reason,{columns}) SELECT gen_random_uuid(),now()-make_interval(secs=>n+10),'cancelled','dropped','Old',{columns} "
+                         "FROM teammate_messages,generate_series(1,3000) n WHERE id=%s", (question,))
+            conn.execute('ANALYZE teammate_messages')
+            conn.execute('SET LOCAL enable_seqscan=off')
+            live = ' '.join(r['QUERY PLAN'] for r in conn.execute("EXPLAIN SELECT * FROM teammate_messages WHERE status IN ('pending','delivered') AND reply_to IS NULL ORDER BY created_at").fetchall())
+            replies = ' '.join(r['QUERY PLAN'] for r in conn.execute(f"EXPLAIN SELECT * FROM teammate_messages WHERE reply_to='{uuid4()}'").fetchall())
+            raise psycopg.Rollback()
+    assert 'teammate_messages_live' in live, live
+    assert 'teammate_messages_reply_to' in replies, replies
+
+
+def test_replies_and_acknowledgements_use_only_the_shared_paths():
+    import ast
+    from pathlib import Path
+    functions = {top.name: top for top in ast.parse(Path(coordination.__file__).read_text()).body if isinstance(top, ast.FunctionDef)}
+
+    def calls(name):
+        return {node.func.id for node in ast.walk(functions[name]) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)}
+    assert 'answer' in calls('advance'), 'The waiter takes its answer from answer()'
+    assert not [node.value for node in ast.walk(functions['advance']) if isinstance(node, ast.Constant) and isinstance(node.value, str) and 'reply_to' in node.value], \
+        'advance reads replies only through answer'
+    assert 'checked' in calls('answer') and 'checked' in calls('inbox'), 'Both go through the shared check'
+    assert not {'inbox', 'checked'} & calls('delivered'), 'Acknowledging neither recomputes the inbox nor checks, counts or releases'
+
+
 # Random sequences of everything that can happen to a message, with the rules checked after every step.
 
 STOPPED = {'cancelled', 'cancelling', 'interrupted'}
@@ -1424,7 +1983,6 @@ STOPPED = {'cancelled', 'cancelling', 'interrupted'}
 @pytest.mark.parametrize('seed', range(60))
 def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed):
     import random
-    import psycopg
     from backend import attention
     rng = random.Random(seed)
     child = delegate(work, bot='reviewer')
@@ -1432,7 +1990,8 @@ def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed
     senders = {'manager': next(a for a in attempts if a['bot_id'] == 'researcher'), 'helper': next(a for a in attempts if a['bot_id'] == 'reviewer')}
     sources = {'manager': work['id'], 'helper': child}
     broken, raised, sent, log = set(), set(), [], []
-    blocker = coordination.delivery_blocker
+    unrecordable, unrecorded = set(), set()  # Sources whose messages can't record a release, and the messages that hit that in this step.
+    blocker, release = coordination.delivery_blocker, coordination.release
 
     def flaky(conn, message, source):
         if message['source_task_id'] in broken:
@@ -1440,6 +1999,19 @@ def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed
             raise RuntimeError('injected failure')
         return blocker(conn, message, source)
     monkeypatch.setattr(coordination, 'delivery_blocker', flaky)
+
+    def unreleasable(conn, message, *rest):
+        if message['source_task_id'] in unrecordable:
+            unrecorded.add(message['id'])
+            raise RuntimeError('injected failure while recording')
+        return release(conn, message, *rest)
+    monkeypatch.setattr(coordination, 'release', unreleasable)
+
+    def dispatch():
+        try:
+            return worker.claim_new()
+        except Exception as exc:
+            pytest.fail(f'{log}: a dispatch pass failed because of one message: {exc!r}')
 
     def rows():
         with db.connection() as conn:
@@ -1451,9 +2023,10 @@ def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed
 
     def step():
         raised.clear()
+        unrecorded.clear()
         live = [k for k in senders if row(sources[k])['status'] not in STOPPED | set(service.TERMINAL)]
         # Weighted so sequences reach the hard states: three failures in a row, giving up, resends and bounces.
-        choices = ['schedule'] * 4 + ['finish_reply'] * 2 + ['toggle_failure', 'archive', 'restore'] + ['resolve'] * 3 + ['inbox_read'] * 2
+        choices = ['schedule'] * 4 + ['finish_reply'] * 2 + ['toggle_failure', 'toggle_recording', 'archive', 'restore'] + ['resolve'] * 3 + ['inbox_read'] * 2
         choices += ['send'] * 3 if live and writer_status() == 'active' else []  # Sending to an archived bot is refused at send time.
         choices += ['stop_helper'] if 'helper' in live else []
         action = rng.choice(choices)
@@ -1465,7 +2038,7 @@ def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed
             with db.connection() as conn:
                 conn.execute('UPDATE teammate_messages SET not_before=NULL WHERE not_before>now()')
             before, status, now = rows(), writer_status(), service.now()
-            worker.claim_new()
+            dispatch()
             for identity, after in rows().items():
                 old = before.get(identity)
                 if old and old['response_task_id'] is None and after['response_task_id'] is not None:  # Attached in this pass.
@@ -1474,7 +2047,7 @@ def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed
                     assert old['source_task_id'] not in broken, f'{log}: attached without passing its check'
                     assert status == 'active', f'{log}: attached while the recipient was {status}'
             for identity, after in rows().items():  # A message a failed check kept (and paused) is still counted as one that failed.
-                assert not (after['status'] == 'pending' and after['reply_status'] in service.TERMINAL and identity not in raised), f'{log}: a message stayed claimed by a reply task that ended'
+                assert not (after['status'] == 'pending' and after['reply_status'] in service.TERMINAL and identity not in raised | unrecorded), f'{log}: a message stayed claimed by a reply task that ended'
         elif action == 'finish_reply':
             with db.connection() as conn:
                 running = conn.execute("SELECT id FROM attempts WHERE bot_id='writer' AND status=ANY(%s)", (list(service.ACTIVE_ATTEMPTS),)).fetchall()
@@ -1488,6 +2061,8 @@ def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed
                     coordination.inbox(conn, service.locked_task(conn, attempt['task_id']))
         elif action == 'toggle_failure':
             broken.symmetric_difference_update({sources[rng.choice(list(sources))]})
+        elif action == 'toggle_recording':
+            unrecordable.symmetric_difference_update({sources[rng.choice(list(sources))]})
         elif action in ('archive', 'restore'):
             set_writer('archived' if action == 'archive' else 'active')
         elif action == 'stop_helper':
@@ -1511,7 +2086,9 @@ def test_random_sequences_never_break_the_delivery_rules(work, monkeypatch, seed
     def check():
         now = service.now()
         for identity, r in rows().items():
-            if identity in raised:
+            if identity in unrecorded:  # Its failure couldn't be recorded: it is paused so it isn't retried every pass, and dispatch went on.
+                assert r['status'] != 'cancelled' and r['not_before'] and r['not_before'] > now, f'{log}: a failure that could not be recorded did not pause the message'
+            elif identity in raised:
                 assert r['status'] == 'cancelled' or (r['not_before'] and r['not_before'] > now), f'{log}: a failed check was not counted'
             if r['status'] == 'cancelled':
                 assert r['released'] in ('failed', 'bounced', 'dropped') and r['reason'], f'{log}: cancelled without a reason'
@@ -1593,7 +2170,7 @@ def test_random_waits_always_resume(work, monkeypatch, seed):
             assert broken[0] or not stranded, f'{log}: a resent reply is pending with nobody left to read it'
         elif action == 'reply':
             for attempt in writers():
-                kind = rng.choice(['unread', 'failed', 'read', 'replied', 'replied', 'replied'])
+                kind = rng.choice(['unread', 'failed', 'read', 'read', 'read', 'replied', 'replied', 'replied'])
                 if kind == 'replied':  # A real reply to a message this task was started for, sent before it is settled.
                     with db.connection() as conn:
                         asked = conn.execute('SELECT m.id FROM teammate_messages m WHERE m.response_task_id=%s AND m.status=%s AND m.reply_to IS NULL '
@@ -1603,7 +2180,10 @@ def test_random_waits_always_resume(work, monkeypatch, seed):
                 if kind == 'read':
                     with db.connection() as conn:
                         task = service.locked_task(conn, attempt['task_id'])
-                        coordination.delivered(conn, task, [m['id'] for m in coordination.inbox(conn, task) if m['status'] == 'pending'])
+                        stale = [r['id'] for r in conn.execute("SELECT id FROM teammate_messages WHERE status='cancelled' ORDER BY created_at DESC LIMIT 1").fetchall()] or [uuid4()]  # A cancelled message's id when there is one, else one nobody has.
+                        shown = [m['id'] for m in coordination.inbox(conn, task) if m['status'] == 'pending']
+                        recorded = coordination.delivered(conn, task, shown + stale)  # The stale id is skipped, never failing the rest.
+                    assert set(recorded) == set(shown), f'{log}: acknowledging with a stale id did not record exactly the shown messages'
                 worker.settle(attempt['id'], {'status': 'failed', 'error': 'Cannot answer'} if kind == 'failed' else {'status': 'completed', 'output': 'Read, no reply'})
         elif action == 'toggle_failure':
             broken[0] = not broken[0]
@@ -1616,9 +2196,12 @@ def test_random_waits_always_resume(work, monkeypatch, seed):
 
     def unsettled(identity):  # Written out here, not through the product's helpers.
         with db.connection() as conn:
-            r = conn.execute('SELECT m.status,t.status AS reply_status,(SELECT count(*) FROM teammate_messages x WHERE x.reply_to=m.id) AS replies '
-                             'FROM teammate_messages m LEFT JOIN tasks t ON t.id=m.response_task_id WHERE m.id=%s', (identity,)).fetchone()
-        return r['replies'] == 0 and (r['status'] == 'pending' or (r['status'] == 'delivered' and (r['reply_status'] is None or r['reply_status'] not in service.TERMINAL)))
+            r = conn.execute('SELECT m.status,t.status AS reply_status FROM teammate_messages m LEFT JOIN tasks t ON t.id=m.response_task_id WHERE m.id=%s', (identity,)).fetchone()
+            replies = conn.execute('SELECT status,(not_before IS NOT NULL AND not_before>now()) AS paused FROM teammate_messages WHERE reply_to=%s', (identity,)).fetchall()
+        if replies:  # An answer that was read, or can be read now, settles it; so does one that was released. A paused one is still on its way.
+            usable = any(x['status'] == 'delivered' or (x['status'] == 'pending' and not x['paused']) for x in replies)
+            return not usable and any(x['status'] == 'pending' and x['paused'] for x in replies)
+        return r['status'] == 'pending' or (r['status'] == 'delivered' and (r['reply_status'] is None or r['reply_status'] not in service.TERMINAL))
 
     def check():
         with db.connection() as conn:
