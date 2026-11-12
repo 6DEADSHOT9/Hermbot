@@ -1326,6 +1326,96 @@ def test_a_task_parked_without_naming_anything_is_woken_only_once_per_change(wor
         assert row(work['id'])['status'] == 'waiting_results', 'Nothing changed since it last looked, so it stays parked'
 
 
+# A reply the owner resent is judged by the scheduler too: it waits only while its recipient has work that can read it.
+
+def sent_reply(work, monkeypatch, *, give_up_reply=True):
+    sender = worker.claim_new()[0]  # The researcher asks the writer and keeps running.
+    question = UUID(invoke(sender, 'message', {'bot_id': 'writer', 'prompt': 'What is your expertise?'})['message_id'])
+    answerer = next(a for a in worker.claim_new() if a['bot_id'] == 'writer')
+    reply = UUID(invoke(answerer, 'message', {'bot_id': 'researcher', 'prompt': 'Writing and synthesis', 'reply_to': question})['message_id'])
+    complete(answerer)
+    if give_up_reply:
+        fail_checks_for(monkeypatch, {reply})
+        for _ in range(3):
+            clear_pauses(reply)
+            read_inbox(work['id'])
+        monkeypatch.undo()
+        given_up = message_row(reply)
+        assert given_up['released'] == 'failed' and alert(reply)['active'], 'Three failed checks give the reply up'
+    return sender, reply
+
+
+def finish_sender(work, sender):
+    complete(sender)
+    assert row(work['id'])['status'] in service.TERMINAL, 'The researcher has no unfinished work left'
+
+
+def no_work_reason():
+    return f"{name('researcher')} has no unfinished work in this conversation to receive it"
+
+
+def assert_dropped_again(reply):
+    back = message_row(reply)
+    assert (back['status'], back['released'], back['reason'], back['owner_action']) == ('cancelled', 'dropped', no_work_reason(), 'resend')
+    item = alert(reply)
+    assert item['active'] and item['needs_owner'] and item['summary'].startswith(no_work_reason()) and item['title'].startswith('Your resent message'), 'It comes back with the reason'
+
+
+def test_a_resent_reply_whose_recipient_has_finished_comes_back_with_the_reason(work, monkeypatch):
+    sender, reply = sent_reply(work, monkeypatch)
+    finish_sender(work, sender)
+    assert resolve(reply, 'resend').status_code == 200 and not alert(reply)['active']
+    worker.claim_new()
+    assert_dropped_again(reply)
+    assert resolve(reply, 'done').status_code == 200 and not alert(reply)['active'], 'Done closes it'
+
+
+def test_a_resent_reply_whose_recipient_is_still_working_waits_and_is_then_read(work, monkeypatch):
+    sender, reply = sent_reply(work, monkeypatch)
+    assert resolve(reply, 'resend').status_code == 200
+    worker.claim_new()
+    assert message_row(reply)['status'] == 'pending' and not alert(reply)['active'], 'Its recipient is still working, so it waits'
+    assert reply in read_inbox(work['id']), 'The recipient reads it in its inbox'
+    with db.connection() as conn:
+        coordination.delivered(conn, service.locked_task(conn, work['id']), [reply])
+    assert message_row(reply)['status'] == 'delivered'
+    worker.claim_new()
+    assert message_row(reply)['status'] == 'delivered' and not alert(reply)['active'], 'A read reply stays read'
+
+
+def test_a_resent_reply_is_reported_when_its_recipient_ends_without_reading_it(work, monkeypatch):
+    sender, reply = sent_reply(work, monkeypatch)
+    assert resolve(reply, 'resend').status_code == 200
+    worker.claim_new()
+    assert message_row(reply)['status'] == 'pending' and not alert(reply)['active']
+    finish_sender(work, sender)  # It ends without reading the reply.
+    worker.claim_new()
+    assert_dropped_again(reply)
+
+
+def test_a_resent_reply_never_starts_a_task(work, monkeypatch):
+    sender, reply = sent_reply(work, monkeypatch)
+    with db.connection() as conn:
+        before = conn.execute('SELECT bot_id,count(*) AS n FROM tasks GROUP BY bot_id ORDER BY bot_id').fetchall()
+    assert resolve(reply, 'resend').status_code == 200
+    for _ in range(2):
+        worker.claim_new()
+    finish_sender(work, sender)
+    for _ in range(2):
+        assert worker.claim_new() == [], 'Nothing is started for a reply'
+    with db.connection() as conn:
+        assert conn.execute('SELECT bot_id,count(*) AS n FROM tasks GROUP BY bot_id ORDER BY bot_id').fetchall() == before, 'No task appeared for either bot'
+
+
+def test_a_reply_the_owner_did_not_resend_is_left_alone(work, monkeypatch):
+    sender, reply = sent_reply(work, monkeypatch, give_up_reply=False)
+    finish_sender(work, sender)
+    for _ in range(3):
+        worker.claim_new()
+    assert message_row(reply)['status'] == 'pending' and message_row(reply)['released'] is None
+    assert not alert(reply) or not alert(reply)['active'], 'Nothing is raised for a reply nobody resent'
+
+
 # Random sequences of everything that can happen to a message, with the rules checked after every step.
 
 STOPPED = {'cancelled', 'cancelling', 'interrupted'}
@@ -1454,19 +1544,21 @@ def test_random_waits_always_resume(work, monkeypatch, seed):
     blocker = coordination.delivery_blocker
 
     def flaky(conn, message, source):
-        if broken[0] and message['source_task_id'] == sender:
+        if broken[0] and (message['source_task_id'] == sender or message['reply_to']):  # Replies can fail their checks too.
             raise RuntimeError('injected failure')
         return blocker(conn, message, source)
     monkeypatch.setattr(coordination, 'delivery_blocker', flaky)
 
     def writers():
         with db.connection() as conn:
-            return conn.execute("SELECT id,task_id FROM attempts WHERE bot_id='writer' AND status=ANY(%s)", (list(service.ACTIVE_ATTEMPTS),)).fetchall()
+            return conn.execute("SELECT id,task_id,bot_id,session_id FROM attempts WHERE bot_id='writer' AND status=ANY(%s)", (list(service.ACTIVE_ATTEMPTS),)).fetchall()
 
     def step():
         with db.connection() as conn:
             open_alerts = [r['id'] for r in conn.execute('SELECT * FROM teammate_messages').fetchall() if coordination.awaiting_owner(r)]
-        choices = ['schedule'] * 3 + ['reply'] * 3 + ['toggle_failure', 'advance'] * 2 + ['resolve'] * 2 * bool(open_alerts)
+        choices = ['schedule'] * 3 + ['reply'] * 6 + ['toggle_failure'] * 3 + ['advance'] * 2 + ['resolve'] * 4 * bool(open_alerts)
+        choices += ['read_inbox'] * 3 if row(sender)['status'] not in service.TERMINAL else []  # Its own work reads the replies it got, or fails to.
+        choices += ['end'] * 3 if mine['attempt'] and len(log) > 12 else []  # Finishes without waiting, so nothing is left to read a later reply.
         choices += ['send_wait'] * 3 if mine['attempt'] else []
         choices += ['wait_again'] * 2 if mine['attempt'] and sent else []  # Waits on messages already sent, nothing new.
         action = rng.choice(choices)
@@ -1478,6 +1570,14 @@ def test_random_waits_always_resume(work, monkeypatch, seed):
             invoke(attempt, 'wait', {'message_ids': sorted(waited)})
             complete(attempt)
             mine['attempt'] = None
+        elif action == 'read_inbox':
+            for _ in range(rng.choice([1, 3])):
+                with db.connection() as conn:
+                    conn.execute('UPDATE teammate_messages SET not_before=NULL')
+                read_inbox(sender)
+        elif action == 'end':
+            complete(mine['attempt'])
+            mine['attempt'] = None
         elif action == 'wait_again':
             invoke(mine['attempt'], 'wait', {'message_ids': rng.sample(sent, rng.randint(1, min(2, len(sent))))})
             complete(mine['attempt'])
@@ -1486,9 +1586,20 @@ def test_random_waits_always_resume(work, monkeypatch, seed):
             with db.connection() as conn:
                 conn.execute('UPDATE teammate_messages SET not_before=NULL')
             mine['attempt'] = next((a for a in worker.claim_new() if a['task_id'] == sender), mine['attempt'])
+            with db.connection() as conn:  # A resent reply is pending only while its recipient has unfinished work (unless its check just failed).
+                stranded = conn.execute("SELECT m.id FROM teammate_messages m WHERE m.status='pending' AND m.reply_to IS NOT NULL AND m.owner_action='resend' "
+                                        "AND NOT EXISTS(SELECT 1 FROM tasks t WHERE t.bot_id=m.recipient AND t.conversation_id=m.conversation_id AND t.status<>ALL(%s))",
+                                        (list(service.TERMINAL),)).fetchall()
+            assert broken[0] or not stranded, f'{log}: a resent reply is pending with nobody left to read it'
         elif action == 'reply':
             for attempt in writers():
-                kind = rng.choice(['unread', 'failed', 'read'])
+                kind = rng.choice(['unread', 'failed', 'read', 'replied', 'replied', 'replied'])
+                if kind == 'replied':  # A real reply to a message this task was started for, sent before it is settled.
+                    with db.connection() as conn:
+                        asked = conn.execute('SELECT m.id FROM teammate_messages m WHERE m.response_task_id=%s AND m.status=%s AND m.reply_to IS NULL '
+                                             'AND NOT EXISTS(SELECT 1 FROM teammate_messages x WHERE x.reply_to=m.id)', (attempt['task_id'], 'pending')).fetchall()
+                    if asked:
+                        invoke(attempt, 'message', {'bot_id': 'researcher', 'prompt': f'reply {len(log)}', 'reply_to': rng.choice(asked)['id']})
                 if kind == 'read':
                     with db.connection() as conn:
                         task = service.locked_task(conn, attempt['task_id'])

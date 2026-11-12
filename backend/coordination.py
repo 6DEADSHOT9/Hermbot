@@ -76,6 +76,11 @@ def schedule_inboxes(conn):
                               "AND NOT EXISTS(SELECT 1 FROM teammate_messages reply WHERE reply.reply_to=m.id) ORDER BY m.created_at FOR UPDATE OF m SKIP LOCKED",
                               (list(service.TERMINAL),)).fetchall():
         isolated(conn, entry, lambda: reclaim(conn, entry))
+    # A reply never starts a task (so replies can't loop) and is read only when its recipient's own work next reads
+    # its inbox. One the owner resent still gets a judged outcome, like every other resend.
+    for entry in conn.execute("SELECT * FROM teammate_messages WHERE status='pending' AND reply_to IS NOT NULL AND owner_action='resend' "
+                              "AND (not_before IS NULL OR not_before<=now()) ORDER BY created_at FOR UPDATE SKIP LOCKED").fetchall():
+        isolated(conn, entry, lambda: settle_resent_reply(conn, entry))
     rows = conn.execute("SELECT DISTINCT ON(m.recipient,m.conversation_id,m.work_item_id) m.* FROM teammate_messages m WHERE m.status IN ('pending','delivered') AND m.reply_to IS NULL AND m.response_task_id IS NULL AND (m.not_before IS NULL OR m.not_before<=now()) AND NOT EXISTS(SELECT 1 FROM teammate_messages reply WHERE reply.reply_to=m.id) AND (m.status='pending' OR EXISTS(SELECT 1 FROM attempts a JOIN tasks t ON t.id=a.task_id WHERE a.id=m.delivered_attempt_id AND t.status=ANY(%s))) ORDER BY m.recipient,m.conversation_id,m.work_item_id,m.created_at", (list(service.TERMINAL),)).fetchall()
     for entry in rows:
         # This runs first in every dispatch pass, so one message must never stop dispatch for every bot.
@@ -102,6 +107,23 @@ def isolated(conn, message, step):
 ENDED = {'cancelled': 'was stopped', 'interrupted': 'was interrupted', 'uncertain': 'ended in an unknown state'}
 
 
+def teammate(conn, bot_id):
+    return (conn.execute('SELECT name FROM bots WHERE id=%s', (bot_id,)).fetchone() or {'name': 'The teammate'})['name']
+
+
+def settle_resent_reply(conn, message):
+    """A reply the owner resent waits only while its recipient has unfinished work that will read it (a task of that
+    bot in the conversation, and in the reply's work when it has one). Otherwise nothing can receive it, as a reply
+    to a requester that has gone is dropped rather than kept: it is released with that reason, and the owner's alert
+    comes back saying so."""
+    if checked(conn, message) in ('released', 'failed'):
+        return
+    reader = conn.execute('SELECT 1 FROM tasks WHERE bot_id=%s AND conversation_id=%s AND (%s::uuid IS NULL OR work_item_id=%s) AND status<>ALL(%s) LIMIT 1',
+                          (message['recipient'], message['conversation_id'], message['work_item_id'], message['work_item_id'], list(service.TERMINAL))).fetchone()
+    if not reader:
+        release(conn, message, f"{teammate(conn, message['recipient'])} has no unfinished work in this conversation to receive it", 'dropped')
+
+
 def reclaim(conn, message):
     """Settle a pending message whose reply task ended before reading it. One that can never be delivered is released
     with that reason (checked). If the reply was stopped or its ending is unknown, the message is dropped with the
@@ -109,7 +131,7 @@ def reclaim(conn, message):
     reply task, counted on the same counter as every other failure, so it is given up after the same limit."""
     if checked(conn, message) in ('released', 'failed'):
         return
-    recipient = (conn.execute('SELECT name FROM bots WHERE id=%s', (message['recipient'],)).fetchone() or {'name': 'The teammate'})['name']
+    recipient = teammate(conn, message['recipient'])
     if message['reply_status'] in ENDED:
         release(conn, message, f"{recipient}'s reply {ENDED[message['reply_status']]}", 'dropped')
         return
