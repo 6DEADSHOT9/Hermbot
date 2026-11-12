@@ -59,13 +59,25 @@ def inbox(conn, task):
                         "AND (status<>'pending' OR not_before IS NULL OR not_before<=now()) "
                         "ORDER BY (response_task_id IS NOT DISTINCT FROM %s) DESC,(status='pending') DESC,created_at DESC LIMIT %s",
                         (task['bot_id'], task['conversation_id'], task['work_item_id'], task['id'], task['id'], task['id'], INBOX_LIMIT)).fetchall()
-    return [{key: row[key] for key in ('id', 'sender', 'recipient', 'content', 'reply_to', 'status')}
-            for row in rows if row['status'] != 'pending' or checked(conn, row) == 'ready']
+    shown = [row for row in rows if row['status'] != 'pending' or checked(conn, row) == 'ready']
+    offer(conn, task, [row['id'] for row in shown if row['status'] == 'pending'])
+    return [{key: row[key] for key in ('id', 'sender', 'recipient', 'content', 'reply_to', 'status')} for row in shown]
+
+
+def offer(conn, task, identities):
+    """Remember which attempt each pending message was just shown to, and at which delivery revision. Only that offer
+    can be acknowledged (as a queue accepts only the receipt handle of the latest receive), so an acknowledgement
+    that arrives after a Resend, or from an attempt that was shown an earlier delivery, records nothing."""
+    attempt = conn.execute('SELECT id FROM attempts WHERE task_id=%s AND number=%s', (task['id'], task['attempts'])).fetchone()
+    if attempt and identities:
+        conn.execute("UPDATE teammate_messages SET offered_attempt_id=%s,offered_revision=delivery_revision WHERE id=ANY(%s) AND status='pending'",
+                     (attempt['id'], identities))
 
 
 def delivered(conn, task, identities):
     """Record which messages this attempt was shown, each on its own (as a batch reports its failures per item): an
-    id that is no longer pending for this bot here is skipped, never failing the rest. Nothing is checked, counted or
+    id that is no longer pending for this bot here, or that wasn't offered to this attempt at the message's current
+    delivery revision (see offer), is skipped, never failing the rest. The check is part of the write itself. Nothing is checked, counted or
     released while acknowledging. A message that was read has done what the owner's Resend asked, so that mark is
     cleared. Returns the ids recorded."""
     attempt = conn.execute('SELECT id FROM attempts WHERE task_id=%s AND number=%s', (task['id'], task['attempts'])).fetchone()
@@ -76,8 +88,9 @@ def delivered(conn, task, identities):
         row = conn.execute("UPDATE teammate_messages SET status='delivered',delivered_attempt_id=%s,delivered_at=now(),"
                            "owner_action_at=CASE WHEN owner_action='resend' THEN NULL ELSE owner_action_at END,"
                            "owner_action=CASE WHEN owner_action='resend' THEN NULL ELSE owner_action END "
-                           "WHERE id=%s AND status='pending' AND recipient=%s AND conversation_id=%s AND (work_item_id IS NULL OR work_item_id=%s) RETURNING id",
-                           (attempt['id'], identity, task['bot_id'], task['conversation_id'], task['work_item_id'])).fetchone()
+                           "WHERE id=%s AND status='pending' AND recipient=%s AND conversation_id=%s AND (work_item_id IS NULL OR work_item_id=%s) "
+                           "AND offered_attempt_id=%s AND offered_revision=delivery_revision RETURNING id",
+                           (attempt['id'], identity, task['bot_id'], task['conversation_id'], task['work_item_id'], attempt['id'])).fetchone()
         if row:
             recorded.append(identity)
             db.event(conn, 'teammate.message_delivered', task, data={'message_id': str(identity)}, source_id=f"teammate-delivery:{identity}:{attempt['id']}")  # One event per delivery, as a delivery tag per channel.
@@ -86,11 +99,22 @@ def delivered(conn, task, identities):
 
 def schedule_inboxes(conn):
     # The scheduler already has a global claim lock. Never add a second execution to a busy bot.
+    # Each step below works from the messages' current state on every pass (as a controller reconciles), so a missed
+    # event only delays an outcome until the next pass.
+    # An answered question was evidently read, even if its acknowledgement never arrived: settle it, so it isn't
+    # left pending with nothing to act on it.
+    conn.execute("UPDATE teammate_messages SET status='delivered',delivered_at=COALESCE(delivered_at,now()),not_before=NULL,"
+                 "owner_action_at=CASE WHEN owner_action='resend' THEN NULL ELSE owner_action_at END,"
+                 "owner_action=CASE WHEN owner_action='resend' THEN NULL ELSE owner_action END "
+                 "WHERE id IN (SELECT m.id FROM teammate_messages m WHERE m.status='pending' AND m.reply_to IS NULL AND " + service.ANSWERED + " FOR UPDATE SKIP LOCKED)")
+    # A paused message that can never be delivered is released now, not when its pause ends.
+    for entry in conn.execute("SELECT * FROM teammate_messages WHERE status='pending' AND not_before>now() ORDER BY created_at FOR UPDATE SKIP LOCKED").fetchall():
+        release_if_blocked(conn, entry)
     # A link to a reply task is a claim that ends with the task: a message it never read goes back to the queue, as a
     # broker requeues what a closed consumer never acknowledged. A paused message waits out its pause first.
     for entry in conn.execute("SELECT m.*,t.status AS reply_status FROM teammate_messages m JOIN tasks t ON t.id=m.response_task_id "
                               "WHERE m.status='pending' AND m.reply_to IS NULL AND t.status=ANY(%s) AND (m.not_before IS NULL OR m.not_before<=now()) "
-                              "AND NOT EXISTS(SELECT 1 FROM teammate_messages reply WHERE reply.reply_to=m.id) ORDER BY m.created_at FOR UPDATE OF m SKIP LOCKED",
+                              "AND NOT " + service.ANSWERED + " ORDER BY m.created_at FOR UPDATE OF m SKIP LOCKED",
                               (list(service.TERMINAL),)).fetchall():
         isolated(conn, entry, lambda: reclaim(conn, entry))
     # A reply never starts a task (so replies can't loop) and is read only when its recipient's own work next reads
@@ -98,7 +122,7 @@ def schedule_inboxes(conn):
     for entry in conn.execute("SELECT * FROM teammate_messages WHERE status='pending' AND reply_to IS NOT NULL AND owner_action='resend' "
                               "AND (not_before IS NULL OR not_before<=now()) ORDER BY created_at FOR UPDATE SKIP LOCKED").fetchall():
         isolated(conn, entry, lambda: settle_resent_reply(conn, entry))
-    rows = conn.execute("SELECT DISTINCT ON(m.recipient,m.conversation_id,m.work_item_id) m.* FROM teammate_messages m WHERE m.status IN ('pending','delivered') AND m.reply_to IS NULL AND m.response_task_id IS NULL AND (m.not_before IS NULL OR m.not_before<=now()) AND NOT EXISTS(SELECT 1 FROM teammate_messages reply WHERE reply.reply_to=m.id) AND (m.status='pending' OR EXISTS(SELECT 1 FROM attempts a JOIN tasks t ON t.id=a.task_id WHERE a.id=m.delivered_attempt_id AND t.status=ANY(%s))) ORDER BY m.recipient,m.conversation_id,m.work_item_id,m.created_at", (list(service.TERMINAL),)).fetchall()
+    rows = conn.execute("SELECT DISTINCT ON(m.recipient,m.conversation_id,m.work_item_id) m.* FROM teammate_messages m WHERE m.status IN ('pending','delivered') AND m.reply_to IS NULL AND m.response_task_id IS NULL AND (m.not_before IS NULL OR m.not_before<=now()) AND NOT " + service.ANSWERED + " AND (m.status='pending' OR EXISTS(SELECT 1 FROM attempts a JOIN tasks t ON t.id=a.task_id WHERE a.id=m.delivered_attempt_id AND t.status=ANY(%s))) ORDER BY m.recipient,m.conversation_id,m.work_item_id,m.created_at", (list(service.TERMINAL),)).fetchall()
     for entry in rows:
         # This runs first in every dispatch pass, so one message must never stop dispatch for every bot.
         isolated(conn, entry, lambda: schedule_inbox(conn, entry))
@@ -174,6 +198,21 @@ def reclaim(conn, message):
         return
     conn.execute("UPDATE teammate_messages SET response_task_id=NULL WHERE id=%s AND status='pending'", (message['id'],))
     count_failure(conn, message, f"{recipient}'s reply ended before reading it", f"The reply task {message['response_task_id']} ended ({message['reply_status']}) before reading this message")
+
+
+def release_if_blocked(conn, message):
+    """Release a paused message that can never be delivered (its sender was stopped, its recipient is gone, ...) with
+    that reason. Nothing is counted here: the message's pause is its backoff, so an error is left for the ordinary
+    check when the pause ends."""
+    try:
+        with conn.transaction():
+            blocked = delivery_blocker(conn, message, conn.execute('SELECT * FROM tasks WHERE id=%s', (message['source_task_id'],)).fetchone())
+            if blocked:
+                release(conn, message, blocked[1], blocked[0])
+    except Exception as exc:
+        if isolation.database_lost(exc):
+            raise
+        logger.debug('Paused teammate message %s could not be checked early (%s)', message['id'], isolation.describe(exc))
 
 
 def checked(conn, message):
@@ -300,7 +339,8 @@ def awaiting_owner(message):
 # so a new column can't be left unclassified: a forgotten reset here once left a stale response_task_id, which the
 # scheduler reads as "already answered", and the message never went out.
 REQUEUE = {'status': "'pending'", 'attempts': '0', 'not_before': 'NULL', 'reason': 'NULL', 'released': 'NULL',
-           'response_task_id': 'NULL', 'delivered_attempt_id': 'NULL', 'delivered_at': 'NULL'}
+           'response_task_id': 'NULL', 'delivered_attempt_id': 'NULL', 'delivered_at': 'NULL',
+           'offered_attempt_id': 'NULL', 'offered_revision': 'NULL'}
 KEPT = {'id', 'conversation_id', 'work_item_id', 'source_task_id', 'sender', 'recipient', 'content', 'reply_to', 'created_at',
         'last_error', 'last_error_at', 'owner_action', 'owner_action_at'}
 # Advanced, not reset: each resend is a new delivery of the same message.
@@ -353,7 +393,7 @@ def bounce_recipient(conn, bot_id, reason):
     """When a teammate is deleted or archived, release every message still waiting for its answer at once.
     Messages the dispatch pass holds right now are skipped; it bounces them itself on its next pass."""
     for message in conn.execute("SELECT * FROM teammate_messages m WHERE recipient=%s AND status IN ('pending','delivered') AND reply_to IS NULL "
-                                "AND NOT EXISTS(SELECT 1 FROM teammate_messages r WHERE r.reply_to=m.id) ORDER BY created_at FOR UPDATE SKIP LOCKED",
+                                "AND NOT " + service.ANSWERED + " ORDER BY created_at FOR UPDATE SKIP LOCKED",
                                 (bot_id,)).fetchall():
         release(conn, message, reason, 'bounced')
 
@@ -395,7 +435,7 @@ def schedule_inbox(conn, entry):
     attach = [entry['id']]
     for other in conn.execute("SELECT * FROM teammate_messages m WHERE recipient=%s AND conversation_id=%s AND work_item_id IS NOT DISTINCT FROM %s "
                               "AND status IN ('pending','delivered') AND reply_to IS NULL AND response_task_id IS NULL AND id<>%s "
-                              "AND NOT EXISTS(SELECT 1 FROM teammate_messages reply WHERE reply.reply_to=m.id) ORDER BY created_at FOR UPDATE SKIP LOCKED",
+                              "AND NOT " + service.ANSWERED + " ORDER BY created_at FOR UPDATE SKIP LOCKED",
                               (entry['recipient'], entry['conversation_id'], entry['work_item_id'], entry['id'])).fetchall():
         if len(attach) >= INBOX_LIMIT:  # The rest stay unlinked and get the next reply task.
             break
@@ -432,11 +472,11 @@ def wait(conn, task, args):
 
 
 def answer(conn, question):
-    """What a task waiting on a message may be given as its answer, through the same gate as every other reader:
-    ('answered', reply) for the oldest reply that was read or passes the check now; ('pending', None) while a reply
-    is paused or its check failed; ('lost', reply) when every reply was released (dropped, given up, or marked Done
-    by the owner); (None, None) when there is no reply."""
-    lost = None
+    """What a task waiting on a message may be given as its answer, through the same gate as every other reader.
+    Every reply is looked at before deciding: ('answered', reply) for the oldest reply that was read or passes the
+    check now; otherwise ('pending', None) while any reply is paused or its check failed; otherwise ('lost', reply)
+    when every reply was released (dropped, given up, or marked Done by the owner); (None, None) with no reply."""
+    waiting, lost = False, None
     for reply in conn.execute('SELECT * FROM teammate_messages WHERE reply_to=%s ORDER BY created_at', (question,)).fetchall():
         if reply['status'] == 'delivered':
             return 'answered', reply
@@ -445,8 +485,11 @@ def answer(conn, question):
                 return 'answered', reply
             reply = conn.execute('SELECT * FROM teammate_messages WHERE id=%s', (reply['id'],)).fetchone()
             if reply['status'] != 'cancelled':  # Paused, or its check failed and it will be tried again.
-                return 'pending', None
+                waiting = True
+                continue
         lost = reply  # Released: just now by the check (never deliverable, or given up at the limit), or earlier.
+    if waiting:
+        return 'pending', None
     return ('lost', lost) if lost else (None, None)
 
 
@@ -489,7 +532,9 @@ def advance(conn):
                     updates.append({'id': reply['id'], 'sender': reply['sender'], 'content': reply['content']})
                 elif outcome == 'pending':
                     pending = True
-                elif outcome == 'lost':  # The answer exists but was released; the waiter is told why, not handed it.
+                elif outcome == 'lost' and message['status'] != 'pending':
+                    # The answer exists but was released; the waiter is told why, not handed it. (While the question
+                    # itself is pending again, after a Resend or a retry, a new answer is still on its way.)
                     failed = True
                     updates.append({'message_id': str(dependency['message_id']), 'reply_id': str(reply['id']), 'status': reply['status'],
                                     'error': f"{teammate(conn, reply['sender'])}'s answer couldn't be delivered: {reply['reason']}",
