@@ -13,6 +13,15 @@ from .settings import settings
 
 TERMINAL = {"completed", "failed", "cancelled", "interrupted", "uncertain"}
 STOPPING = {'cancelling', 'pausing_budget', 'paused_budget'}
+# The one definition of an answered teammate message (alias m): it has a reply that wasn't released. A reply that was
+# dropped, given up or marked Done is not an answer, for the scheduler and bookkeeping here as for a waiting task.
+ANSWERED = "EXISTS(SELECT 1 FROM teammate_messages reply WHERE reply.reply_to=m.id AND reply.status<>'cancelled')"
+# The one definition of a teammate message that is still open work (alias m), for recurring-work bookkeeping: pending,
+# an original, unanswered, and either unlinked or linked to a reply task that has ended (the scheduler will retry or
+# release it). One linked to a live reply task is covered by that task.
+OPEN_TEAMMATE_MESSAGE = ("m.status='pending' AND m.reply_to IS NULL AND (m.response_task_id IS NULL OR EXISTS(SELECT 1 FROM tasks handler "
+                         "WHERE handler.id=m.response_task_id AND handler.status IN (" + ','.join(f"'{status}'" for status in sorted(TERMINAL)) + "))) "
+                         "AND NOT " + ANSWERED)
 ACTIVE_ATTEMPTS = ("dispatching", "running", "waiting_for_approval", "stopping", "uncertain", "external")
 
 
@@ -436,7 +445,8 @@ def cancel(conn, task, reason="Stopped by owner", *, kind=None):
     frozen = scope(conn, task)
     if frozen and task['id'] == task['root_id'] and task['bot_id'] == frozen['manager_id']:
         descendants = occurrence_tasks(conn, task)
-        conn.execute("UPDATE teammate_messages SET status='cancelled' WHERE work_item_id=%s AND status='pending'", (task.get('management_work_item_id') or task['work_item_id'],))
+        from .coordination import drop_pending
+        drop_pending(conn, task.get('management_work_item_id') or task['work_item_id'], f'The recurring work it belonged to was stopped: {reason}')
     for row in descendants:
         target = conn.execute("SELECT * FROM tasks WHERE id=%s", (row["id"],)).fetchone()
         if target["status"] in TERMINAL and target["status"] != "uncertain":

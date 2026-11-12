@@ -131,21 +131,26 @@ def close_missing(conn, kind, identity, purposes):
         db.event(conn, "attention.changed", data={"resolved": len(rows)})
 
 
+def task_refs(conn, task):
+    """Where an alert about this task opens: its conversation, thread, work and bot. Every alert about a task
+    builds its links here, so none can open a different place (for example the conversation root, not the thread)."""
+    work = task.get("management_work_item_id") or task["work_item_id"]
+    return {
+        "task_id": str(task["id"]),
+        "conversation_id": str(task["conversation_id"]),
+        "work_item_id": str(work) if work else None,
+        "thread_id": task["reply_to_message_id"],
+        "bot_id": task["bot_id"],
+        "bot_name": conn.execute("SELECT name FROM bots WHERE id=%s", (task["bot_id"],)).fetchone()["name"],
+    }
+
+
 def task_projection(conn, identity, *, initial=False):
     task = conn.execute("SELECT * FROM tasks WHERE id=%s", (identity,)).fetchone()
     if not task:
         close_missing(conn, "task", identity, [])
         return
-    refs = {
-        "task_id": str(identity),
-        "conversation_id": str(task["conversation_id"]),
-        "work_item_id": str(task.get("management_work_item_id") or task["work_item_id"])
-        if task.get("management_work_item_id") or task["work_item_id"]
-        else None,
-        "thread_id": task["reply_to_message_id"],
-        "bot_id": task["bot_id"],
-        "bot_name": conn.execute("SELECT name FROM bots WHERE id=%s", (task["bot_id"],)).fetchone()["name"],
-    }
+    refs = task_refs(conn, task)
     current = []
     for table, category, name in [
         ("input_requests", "questions", "Question"),
@@ -243,16 +248,14 @@ def work_projection(conn, identity, *, initial=False):
         ).fetchone()
         task = item["current_task"]
         if chat and not chat["archived_at"] and not item["hidden_at"] and task:
+            # The work item's own conversation and bot, with the current task's links (its thread included).
             refs = {
+                **task_refs(conn, conn.execute("SELECT * FROM tasks WHERE id=%s", (task["id"],)).fetchone()),
                 "work_item_id": str(identity),
                 "conversation_id": str(item["conversation_id"]),
-                "task_id": str(task["id"]),
                 "bot_id": item["bot_id"],
-                "thread_id": task["reply_to_message_id"],
+                "bot_name": conn.execute("SELECT name FROM bots WHERE id=%s", (item["bot_id"],)).fetchone()["name"],
             }
-            refs["bot_name"] = conn.execute(
-                "SELECT name FROM bots WHERE id=%s", (item["bot_id"],)
-            ).fetchone()["name"]
             state = item["status"]
             if task["status"] not in service.TERMINAL:
                 from fastapi import HTTPException
@@ -407,12 +410,59 @@ def source_projection(conn, kind, identity, *, initial=False):
     close_missing(conn, kind, identity, current)
 
 
+def message_projection(conn, identity, *, initial=False):
+    """A teammate message that couldn't be delivered and needs the owner: given up after repeated failures, or resent
+    by the owner and released again. The alert states what already happened, never a prediction, so it can't go
+    stale: while open it always offers Resend and Done, and a resend that can't work comes back with its reason."""
+    from .coordination import awaiting_owner
+
+    message = conn.execute("SELECT * FROM teammate_messages WHERE id=%s", (identity,)).fetchone()
+    kind = awaiting_owner(message)
+    current = []
+    if kind:
+        names = {
+            row["id"]: row["name"]
+            for row in conn.execute(
+                "SELECT id,name FROM bots WHERE id=ANY(%s)", ([message["sender"], message["recipient"]],)
+            ).fetchall()
+        }
+        sender, recipient = names.get(message["sender"], "A teammate"), names.get(message["recipient"], "a teammate")
+        if kind == "resend_lost":
+            title = f"Your resent message from {sender} to {recipient} couldn't be delivered"
+            summary = f"{message['reason']}. Resend it, or choose Done if you'll handle it yourself."
+        else:
+            # Fixed text: a failure's recorded reason can carry error detail, which stays out of the owner preview.
+            title = f"A message from {sender} to {recipient} couldn't be delivered"
+            summary = (f"It failed {message['attempts']} times and was dropped. If {sender} was waiting for the answer, it was told. "
+                       "Resend it, or choose Done if you'll handle it yourself.")
+        current.append("undeliverable")
+        materialize(
+            conn,
+            "message",
+            identity,
+            "undeliverable",
+            category="problems",
+            title=title,
+            summary=summary,
+            status="failed",
+            needs_owner=True,
+            refs={**task_refs(conn, conn.execute("SELECT * FROM tasks WHERE id=%s", (message["source_task_id"],)).fetchone()),
+                  "message_id": str(identity), "delivery_revision": message["delivery_revision"]},
+            initial=initial,
+            # The revision makes each failure after a resend its own episode, even with identical wording.
+            fingerprint={"kind": kind, "revision": message["delivery_revision"], "since": str(message["last_error_at"]), "reason": message["reason"]},
+        )
+    close_missing(conn, "message", identity, current)
+
+
 def project(conn, kind, identity):
     pref = conn.execute("SELECT initialized_at FROM notification_preferences WHERE owner='owner'").fetchone()
     if kind == "task":
         row = conn.execute("SELECT created_at FROM tasks WHERE id=%s", (identity,)).fetchone()
     elif kind == "work":
         row = conn.execute("SELECT created_at FROM work_items WHERE id=%s", (identity,)).fetchone()
+    elif kind == "message":
+        row = conn.execute("SELECT created_at FROM teammate_messages WHERE id=%s", (identity,)).fetchone()
     else:
         row = conn.execute(
             f"SELECT created_at FROM {SOURCE_TABLES[kind]} WHERE id=%s", (identity,)
@@ -428,6 +478,8 @@ def project(conn, kind, identity):
         task_projection(conn, identity, initial=initial)
     elif kind == "work":
         work_projection(conn, identity, initial=initial)
+    elif kind == "message":
+        message_projection(conn, identity, initial=initial)
     else:
         source_projection(conn, kind, identity, initial=initial)
 

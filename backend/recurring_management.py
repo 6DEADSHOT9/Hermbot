@@ -68,9 +68,7 @@ def tasks(conn, task):
 
 def pending_messages(conn, item_id):
     return bool(conn.execute("""SELECT 1 FROM teammate_messages m JOIN work_items w ON w.id=m.work_item_id
-        WHERE w.id=%s AND w.management_scope<>'{}'::jsonb AND m.status='pending'
-        AND m.reply_to IS NULL AND m.response_task_id IS NULL
-        AND NOT EXISTS(SELECT 1 FROM teammate_messages reply WHERE reply.reply_to=m.id) LIMIT 1""", (item_id,)).fetchone())
+        WHERE w.id=%s AND w.management_scope<>'{}'::jsonb AND """ + service.OPEN_TEAMMATE_MESSAGE + " LIMIT 1", (item_id,)).fetchone())
 
 
 def definite_failure(conn, task):

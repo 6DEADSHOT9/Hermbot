@@ -362,7 +362,7 @@ def unfinished(conn, identity):
         WHERE r.trigger_id=%s AND (
         EXISTS(SELECT 1 FROM tasks t WHERE (t.work_item_id=COALESCE(original.management_work_item_id,original.work_item_id) OR t.management_work_item_id=original.management_work_item_id) AND
           (t.status<>ALL(%s) OR EXISTS(SELECT 1 FROM attempts a WHERE a.task_id=t.id AND a.status=ANY(%s))))
-        OR EXISTS(SELECT 1 FROM teammate_messages m JOIN work_items w ON w.id=m.work_item_id WHERE w.id=COALESCE(original.management_work_item_id,original.work_item_id) AND w.management_scope<>'{}'::jsonb AND m.status='pending' AND m.reply_to IS NULL AND m.response_task_id IS NULL AND NOT EXISTS(SELECT 1 FROM teammate_messages reply WHERE reply.reply_to=m.id))
+        OR EXISTS(SELECT 1 FROM teammate_messages m JOIN work_items w ON w.id=m.work_item_id WHERE w.id=COALESCE(original.management_work_item_id,original.work_item_id) AND w.management_scope<>'{}'::jsonb AND """ + service.OPEN_TEAMMATE_MESSAGE + """)
         OR EXISTS(SELECT 1 FROM work_outcomes o WHERE o.work_item_id=COALESCE(original.management_work_item_id,original.work_item_id) AND o.status='uncertain')
         OR EXISTS(SELECT 1 FROM connector_operations o JOIN tasks t ON t.id=o.task_id WHERE (t.work_item_id=COALESCE(original.management_work_item_id,original.work_item_id) OR t.management_work_item_id=original.management_work_item_id) AND o.status=ANY(%s))) LIMIT 1""",
         (identity, list(service.TERMINAL), list(service.ACTIVE_ATTEMPTS) + ['reserved'], list(UNSETTLED))).fetchone()
