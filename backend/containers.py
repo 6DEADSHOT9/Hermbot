@@ -282,7 +282,11 @@ def resource_host(spec):
         return {}
     value = spec.limits
     memory = spec.configuration.memory_mb * 1024 * 1024
-    driver = read_machine().get('logging_driver', '')
+    machine = read_machine()
+    nofile = limits.describe(machine)['nofile_hard']
+    if not nofile['uncertain'] and not nofile['hard'][0] <= value.nofile_hard <= nofile['hard'][1]:
+        raise HTTPException(409, 'The saved open-file limit exceeds this machine’s kernel ceiling. Reset it before recreating the runtime.')
+    driver = machine.get('logging_driver', '')
     return {'PidsLimit': value.pids_limit,
             'MemorySwap': int(memory * (1 + limits.SWAP_ALLOWANCE)) if value.allow_swap else memory,
             'Ulimits': [{'Name': 'nofile', 'Soft': limits.NOFILE_SOFT, 'Hard': value.nofile_hard}],
@@ -470,7 +474,6 @@ OWNER_SESSION_SECURITY = {
     'NanoCpus': 1_500_000_000,
     'PidsLimit': 512,
     'MemorySwap': 1536 * 1024 * 1024,
-    'Ulimits': [{'Name': 'nofile', 'Soft': limits.NOFILE_SOFT, 'Hard': limits.NOFILE_DEFAULT}],
     'OomScoreAdj': limits.BOT_OOM_SCORE_ADJ,
 }
 
@@ -504,7 +507,11 @@ def remove_owner_session(bot_id):
 @app.post("/owner-sessions/{bot_id}", dependencies=[Depends(authorize)])
 def start_owner_session(bot_id: BotId, spec: OwnerSessionSpec):
     name, labels, token = "hermbot-owner-" + bot_id, owner_session_labels(bot_id), secrets.token_urlsafe(32)
-    log_config = rotated_logs(read_machine().get('logging_driver', ''))
+    machine = read_machine()
+    nofile = limits.describe(machine)['nofile_hard']
+    if not nofile['available']:
+        raise HTTPException(409, 'This machine cannot support the private browser’s required open-file limit.')
+    log_config = rotated_logs(machine.get('logging_driver', ''))
     with LOCKS["owner-session:" + bot_id]:
         remove_owner_session(bot_id)
         docker_request("POST", "/networks/create", json={"Name": name, "Driver": "bridge", "Labels": labels})
@@ -515,6 +522,7 @@ def start_owner_session(bot_id: BotId, spec: OwnerSessionSpec):
             "Entrypoint": [*RUNTIME_PYTHON, "-u", "/opt/hermbot/owner_session.py"],
             "Env": [f"OWNER_SESSION_TOKEN={token}", f"OWNER_SESSION_GEOMETRY={spec.geometry}"],
             "Labels": labels, "HostConfig": {**OWNER_SESSION_SECURITY, "NetworkMode": name,
+                                             'Ulimits': [{'Name': 'nofile', 'Soft': limits.NOFILE_SOFT, 'Hard': nofile['computed_value']}],
                                              **log_config}})
         docker_request("POST", f"/containers/{created['Id']}/start")
     return {"url": f"http://{name}:8650", "token": token}

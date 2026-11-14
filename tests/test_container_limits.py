@@ -132,6 +132,14 @@ class ContainerLimitTests(unittest.TestCase):
             remove.assert_not_called()
         self.assertNotIn("runtime", self.docker.created)
 
+    def test_lower_kernel_file_ceiling_does_not_remove_the_existing_runtime(self):
+        with patch.object(containers, 'read_machine', return_value={**MAC, 'nr_open': 16384}), \
+                patch.object(containers, 'remove_container') as remove:
+            with self.assertRaises(HTTPException) as error:
+                containers.ensure(spec(limits=FROZEN))
+            self.assertEqual(error.exception.status_code, 409)
+            remove.assert_not_called()
+
     def test_fence_preserves_network_privileges_and_cleans_up_on_failure(self):
         for status in (0, 1):
             self.docker.wait_status = status
@@ -194,6 +202,18 @@ class ContainerLimitTests(unittest.TestCase):
                 patch.object(containers, "filter_containers", return_value=[]):
             containers.start_owner_session("bot-test", containers.OwnerSessionSpec())
         self.assertNotIn("LogConfig", self.docker.created["owner-session"]["HostConfig"])
+
+    def test_private_browser_file_default_follows_the_kernel_ceiling(self):
+        with patch.object(containers, 'read_machine', return_value={**MAC, 'nr_open': 8192}), \
+                patch.object(containers, 'remove_owner_session'), \
+                patch.object(containers, 'filter_containers', return_value=[]):
+            containers.start_owner_session('bot-test', containers.OwnerSessionSpec())
+        self.assertEqual(self.docker.created['owner-session']['HostConfig']['Ulimits'][0]['Hard'], 8192)
+        with patch.object(containers, 'read_machine', return_value={**MAC, 'nr_open': 512}), \
+                patch.object(containers, 'remove_owner_session') as remove:
+            with self.assertRaises(HTTPException):
+                containers.start_owner_session('bot-test', containers.OwnerSessionSpec())
+            remove.assert_not_called()
 
     def test_preupgrade_receipt_replays_without_execution(self):
         request = spec()
