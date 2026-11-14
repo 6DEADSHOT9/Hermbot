@@ -8,14 +8,16 @@ import re
 import secrets
 import threading
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from collections import defaultdict
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 import httpx
-from pydantic import Field
+from pydantic import Field, StrictBool, StrictInt
 
 from .models import BotConfiguration, BotId, StrictModel
+from . import limits
 from .settings import BOT_IDS, settings
 
 RUNTIME_IMAGE = os.environ.get("HERMBOT_RUNTIME_IMAGE", "hermbot-hermes:phase4")
@@ -74,6 +76,78 @@ finally: os.close(directory)
 """
 LOCKS = defaultdict(threading.Lock)
 LABELS = {"com.hermbot.project": "hermbot", "com.hermbot.managed": "true"}
+MACHINE_CACHE = {}
+
+
+def rotated_logs(driver='json-file', size=None, files=None):
+    if driver not in ('json-file', 'local'):
+        return {}
+    return {'LogConfig': {'Type': driver, 'Config': {
+        'max-size': f'{size or limits.LOG_SIZE_MB}m', 'max-file': str(files or limits.LOG_FILES)}}}
+
+
+def helper_limits(memory_mb):
+    return {'PidsLimit': limits.HELPER_PIDS_LIMIT, 'MemorySwap': memory_mb * 1024 * 1024,
+            'OomScoreAdj': limits.BOT_OOM_SCORE_ADJ,
+            **rotated_logs(MACHINE_CACHE.get('facts', {}).get('logging_driver', ''))}
+
+
+def read_machine():
+    with LOCKS['machine']:
+        if MACHINE_CACHE.get('at') is not None and time.monotonic() - MACHINE_CACHE['at'] < 60:
+            return MACHINE_CACHE['facts']
+        info = docker_request('GET', '/info')
+        facts = {'cpus': info.get('NCPU'), 'memory_bytes': info.get('MemTotal'),
+                 'operating_system': info.get('OperatingSystem', ''), 'cgroup_version': info.get('CgroupVersion'),
+                 'memory_limit': bool(info.get('MemoryLimit')), 'swap_limit': bool(info.get('SwapLimit')),
+                 'pids_limit': bool(info.get('PidsLimit')), 'logging_driver': info.get('LoggingDriver', ''),
+                 'rootless': any('rootless' in x for x in info.get('SecurityOptions') or []),
+                 'observed_at': datetime.now(timezone.utc).isoformat(), 'warnings': []}
+        MACHINE_CACHE['facts'] = facts
+        for key, path in {'threads_max': '/proc/sys/kernel/threads-max', 'file_max': '/proc/sys/fs/file-max',
+                          'nr_open': '/proc/sys/fs/nr_open'}.items():
+            try:
+                facts[key] = int(Path(path).read_text().strip())
+            except (OSError, ValueError):
+                facts[key] = None
+        facts['memory_pressure'] = Path('/proc/pressure/memory').exists()
+        try:
+            stat = os.statvfs('/var/lib/hermbot-supervisor')
+            facts.update(disk_total_bytes=stat.f_blocks * stat.f_frsize,
+                         disk_free_bytes=stat.f_bavail * stat.f_frsize,
+                         total_inodes=stat.f_files, free_inodes=stat.f_favail)
+        except OSError:
+            facts['warnings'].append('Docker volume filesystem capacity is unavailable.')
+        helper = None
+        try:
+            # pid_max in the supervisor's PID namespace is not the host's ceiling.
+            helper = docker_request('POST', '/containers/create', json={
+                'Image': RUNTIME_IMAGE, 'Entrypoint': ['/bin/cat', '/proc/sys/kernel/pid_max'], 'Tty': True,
+                'Labels': {**LABELS, 'com.hermbot.kind': 'machine-helper'},
+                'HostConfig': {'NetworkMode': 'none', 'PidMode': 'host', 'ReadonlyRootfs': True,
+                               'CapDrop': ['ALL'], 'SecurityOpt': ['no-new-privileges:true'],
+                               'Memory': 32 * 1024 * 1024, **helper_limits(32)}})['Id']
+            docker_request('POST', f'/containers/{helper}/start')
+            result = docker_request('POST', f'/containers/{helper}/wait', params={'condition': 'not-running'})
+            if result['StatusCode'] != 0:
+                raise ValueError('Machine helper failed')
+            with httpx.Client(transport=httpx.HTTPTransport(uds='/var/run/docker.sock'), timeout=10) as client:
+                response = client.get(f'http://docker/v1.45/containers/{helper}/logs', params={'stdout': 1, 'tail': 1})
+                response.raise_for_status()
+                facts['pid_max'] = int(response.text.strip())
+        except (HTTPException, httpx.HTTPError, ValueError, KeyError):
+            facts['pid_max'] = None
+            facts['warnings'].append('Host PID ceiling unavailable; using the thread ceiling only.')
+        finally:
+            if helper:
+                try:
+                    docker_request('DELETE', f'/containers/{helper}', params={'force': True})
+                except (HTTPException, httpx.HTTPError):
+                    facts['warnings'].append('Machine helper cleanup needs retry; no bot was changed.')
+        if 'docker desktop' in facts['operating_system'].lower():
+            facts['warnings'].append('Docker reports its virtual machine, not the physical host disk or RAM.')
+        MACHINE_CACHE.update(at=time.monotonic(), facts=facts)
+        return facts
 
 
 def authorize(authorization: str | None = Header(default=None)):
@@ -160,6 +234,14 @@ def ensure_resources(bot_id):
     return network_name, volumes
 
 
+class RuntimeLimits(StrictModel):
+    pids_limit: StrictInt = Field(ge=limits.PIDS_MIN)
+    nofile_hard: StrictInt = Field(ge=limits.NOFILE_SOFT)
+    allow_swap: StrictBool
+    log_size_mb: StrictInt = Field(ge=limits.LOG_SIZE_HARD[0], le=limits.LOG_SIZE_HARD[1])
+    log_files: StrictInt = Field(ge=limits.LOG_FILES_HARD[0], le=limits.LOG_FILES_HARD[1])
+
+
 class RuntimeSpec(StrictModel):
     bot_id: BotId
     operation_id: str = Field(pattern=r"^[0-9a-f-]{36}$")
@@ -178,6 +260,33 @@ class RuntimeSpec(StrictModel):
     source_bot_id: BotId | None = None
     source_was_running: bool = False
     copy_options: dict[str, bool] = Field(default_factory=dict)
+    limits: RuntimeLimits | None = None
+
+
+def operation_body(spec):
+    # Receipts written before limits existed must retain their exact serialized hash.
+    return spec.model_dump(mode='json', exclude={'limits'} if spec.limits is None else set())
+
+
+def resource_host(spec):
+    if spec.limits is None:
+        return {}
+    value = spec.limits
+    memory = spec.configuration.memory_mb * 1024 * 1024
+    driver = read_machine().get('logging_driver', '')
+    return {'PidsLimit': value.pids_limit,
+            'MemorySwap': int(memory * (1 + limits.SWAP_ALLOWANCE)) if value.allow_swap else memory,
+            'Ulimits': [{'Name': 'nofile', 'Soft': limits.NOFILE_SOFT, 'Hard': value.nofile_hard}],
+            'OomScoreAdj': limits.BOT_OOM_SCORE_ADJ,
+            **rotated_logs(driver, value.log_size_mb, value.log_files)}
+
+
+def inspect_limits(container_id, spec):
+    if spec.limits is None:
+        return {}
+    host = docker_request('GET', f'/containers/{container_id}/json').get('HostConfig', {})
+    return {'limits_observed': {key: host.get(key) for key in
+                               ('PidsLimit', 'Memory', 'MemorySwap', 'Ulimits', 'LogConfig', 'OomScoreAdj')}}
 
 
 def container_stop(container):
@@ -201,7 +310,7 @@ def fence(container_id, bot_id):
         "Labels": {**LABELS, "com.hermbot.bot-id": bot_id, "com.hermbot.kind": "fence-helper"},
         "HostConfig": {"NetworkMode": f"container:{container_id}", "CapDrop": ["ALL"], "CapAdd": ["NET_ADMIN", "NET_RAW"],
                        "ReadonlyRootfs": True, "SecurityOpt": ["no-new-privileges:true"], "Tmpfs": {"/run": "rw,size=1m"},
-                       "Memory": 64 * 1024 * 1024}})["Id"]
+                       "Memory": 64 * 1024 * 1024, **helper_limits(64)}})["Id"]
     try:
         docker_request("POST", f"/containers/{helper}/start")
         if docker_request("POST", f"/containers/{helper}/wait", params={"condition": "not-running"})["StatusCode"] != 0:
@@ -247,7 +356,7 @@ def clone_state(spec, target_volumes):
                 helper = None
         if not helper:
             binds = [f"{source_volumes['data']}:/source-data:ro", f"{source_volumes['workspace']}:/source-workspace:ro", f"{target_volumes['data']}:/target-data:rw", f"{target_volumes['workspace']}:/target-workspace:rw"]
-            helper_id = docker_request("POST", "/containers/create", params={"name": helper_name}, json={"Image": RUNTIME_IMAGE, "User": "0:0", "WorkingDir": "/", "Entrypoint": [*RUNTIME_PYTHON, "/opt/hermbot/copy_state.py"], "Cmd": [json.dumps(spec.copy_options)], "Labels": {**LABELS, "com.hermbot.bot-id": spec.bot_id, "com.hermbot.kind": "clone-helper"}, "HostConfig": {"Binds": binds, "NetworkMode": "none", "Memory": 512 * 1024 * 1024, "NanoCpus": 500_000_000}})["Id"]
+            helper_id = docker_request("POST", "/containers/create", params={"name": helper_name}, json={"Image": RUNTIME_IMAGE, "User": "0:0", "WorkingDir": "/", "Entrypoint": [*RUNTIME_PYTHON, "/opt/hermbot/copy_state.py"], "Cmd": [json.dumps(spec.copy_options)], "Labels": {**LABELS, "com.hermbot.bot-id": spec.bot_id, "com.hermbot.kind": "clone-helper"}, "HostConfig": {"Binds": binds, "NetworkMode": "none", "Memory": 512 * 1024 * 1024, "NanoCpus": 500_000_000, **helper_limits(512)}})["Id"]
             docker_request("POST", f"/containers/{helper_id}/start")
         else:
             labels = helper.get("Config", {}).get("Labels", {})
@@ -269,7 +378,7 @@ def clone_state(spec, target_volumes):
 def ensure(spec, clone=False):
     image_id = docker_request("GET", f"/images/{RUNTIME_IMAGE}/json")["Id"]
     network, volumes = ensure_resources(spec.bot_id)
-    fingerprint = hashlib.sha256(json.dumps({**spec.model_dump(mode="json"), "image": image_id,
+    fingerprint = hashlib.sha256(json.dumps({**operation_body(spec), "image": image_id,
                                            'security': RUNTIME_SECURITY}, sort_keys=True).encode()).hexdigest()
     container = find_runtime(spec.bot_id, required=False)
     if container and (container.get("Labels") or {}).get("com.hermbot.configuration") == fingerprint:
@@ -282,7 +391,9 @@ def ensure(spec, clone=False):
         if spec.desired_state == "running":
             fence(container["Id"], spec.bot_id)
             runtime_ready(container["Id"])
-        return {"container_id": container["Id"][:12], "revision": spec.revision, "state": spec.desired_state}
+        return {"container_id": container["Id"][:12], "revision": spec.revision, "state": spec.desired_state,
+                **inspect_limits(container['Id'], spec)}
+    host_limits = resource_host(spec)
     if clone:
         clone_state(spec, volumes)
     remove_container(container)
@@ -295,14 +406,15 @@ def ensure(spec, clone=False):
         "Env": [f"{key}={value}" for key, value in environment.items()], "WorkingDir": "/",
         "Labels": {**LABELS, "com.hermbot.bot-id": spec.bot_id, "com.hermbot.kind": "runtime", "com.hermbot.configuration": fingerprint, "com.hermbot.revision": str(spec.revision)},
         "HostConfig": {**RUNTIME_SECURITY, "Binds": [f"{volumes['data']}:/opt/data", f"{volumes['workspace']}:/workspace", f"{volumes['browser']}:/browser-state"], "Init": True,
-            "Memory": config.memory_mb * 1024 * 1024, "NanoCpus": int(config.cpus * 1_000_000_000), "RestartPolicy": {"Name": "unless-stopped"}},
+            "Memory": config.memory_mb * 1024 * 1024, "NanoCpus": int(config.cpus * 1_000_000_000), "RestartPolicy": {"Name": "unless-stopped"}, **host_limits},
         "NetworkingConfig": {"EndpointsConfig": {network: {"Aliases": [f"hermbot-bot-{spec.bot_id}", f"hermes-{spec.bot_id}"]}}},
         "Healthcheck": {"Test": ["CMD", *RUNTIME_PYTHON, "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8642/health',timeout=3); urllib.request.urlopen('http://127.0.0.1:8643/health',timeout=3)"], "Interval": 10_000_000_000, "Timeout": 5_000_000_000, "StartPeriod": 40_000_000_000, "Retries": 12}})
     if spec.desired_state == "running":
         docker_request("POST", f"/containers/{result['Id']}/start")
         fence(result["Id"], spec.bot_id)
         runtime_ready(result["Id"])
-    return {"container_id": result["Id"][:12], "revision": spec.revision, "state": spec.desired_state}
+    return {"container_id": result["Id"][:12], "revision": spec.revision, "state": spec.desired_state,
+            **inspect_limits(result['Id'], spec)}
 
 
 @app.get("/health")
@@ -314,6 +426,11 @@ def health():
 def runtimes():
     rows = filter_containers(["com.hermbot.project=hermbot", "com.hermbot.kind=runtime"])
     return {"runtimes": [{"bot_id": row["Labels"]["com.hermbot.bot-id"], "container_id": row["Id"][:12], "state": row["State"], "status": row["Status"]} for row in rows]}
+
+
+@app.get('/machine', dependencies=[Depends(authorize)])
+def machine():
+    return read_machine()
 
 
 @app.post("/networks/{bot_id}/reconcile", dependencies=[Depends(authorize)])
@@ -343,6 +460,9 @@ OWNER_SESSION_SECURITY = {
     'Memory': 1536 * 1024 * 1024,
     'NanoCpus': 1_500_000_000,
     'PidsLimit': 512,
+    'MemorySwap': 1536 * 1024 * 1024,
+    'Ulimits': [{'Name': 'nofile', 'Soft': limits.NOFILE_SOFT, 'Hard': limits.NOFILE_DEFAULT}],
+    'OomScoreAdj': limits.BOT_OOM_SCORE_ADJ,
 }
 
 
@@ -375,6 +495,7 @@ def remove_owner_session(bot_id):
 @app.post("/owner-sessions/{bot_id}", dependencies=[Depends(authorize)])
 def start_owner_session(bot_id: BotId, spec: OwnerSessionSpec):
     name, labels, token = "hermbot-owner-" + bot_id, owner_session_labels(bot_id), secrets.token_urlsafe(32)
+    log_config = rotated_logs(read_machine().get('logging_driver', ''))
     with LOCKS["owner-session:" + bot_id]:
         remove_owner_session(bot_id)
         docker_request("POST", "/networks/create", json={"Name": name, "Driver": "bridge", "Labels": labels})
@@ -384,7 +505,8 @@ def start_owner_session(bot_id: BotId, spec: OwnerSessionSpec):
             "Image": RUNTIME_IMAGE, "User": "10001:10001", "WorkingDir": "/",
             "Entrypoint": [*RUNTIME_PYTHON, "-u", "/opt/hermbot/owner_session.py"],
             "Env": [f"OWNER_SESSION_TOKEN={token}", f"OWNER_SESSION_GEOMETRY={spec.geometry}"],
-            "Labels": labels, "HostConfig": {**OWNER_SESSION_SECURITY, "NetworkMode": name}})
+            "Labels": labels, "HostConfig": {**OWNER_SESSION_SECURITY, "NetworkMode": name,
+                                             **log_config}})
         docker_request("POST", f"/containers/{created['Id']}/start")
     return {"url": f"http://{name}:8650", "token": token}
 
@@ -435,7 +557,7 @@ def operate(action: str, spec: RuntimeSpec):
         receipts = Path("/var/lib/hermbot-supervisor/receipts")
         receipts.mkdir(parents=True, exist_ok=True, mode=0o700)
         receipt_file = receipts / (spec.operation_id + ".json")
-        request_hash = hashlib.sha256(json.dumps({"action": action, "body": spec.model_dump(mode="json"), "image": RUNTIME_IMAGE}, sort_keys=True).encode()).hexdigest()
+        request_hash = hashlib.sha256(json.dumps({"action": action, "body": operation_body(spec), "image": RUNTIME_IMAGE}, sort_keys=True).encode()).hexdigest()
         if receipt_file.exists():
             previous = json.loads(receipt_file.read_text())
             if previous["request_hash"] != request_hash:
