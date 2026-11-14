@@ -15,8 +15,8 @@ MIN_MEMORY_MB = 1024
 MAX_MEMORY_MB = 8192
 MEMORY_OPTIONS_MB = (1024, 2048, 4096, 8192)
 MIN_CPUS = 0.25
+# Core and idle allowances are estimates from one quiet machine; replace with measurements.
 CORE_RESERVE_MB = 1536
-# Estimates from one machine during a quiet period; replace with measurements.
 IDLE_MEMORY_MB = 0.4 * 1024
 PIDS_FLOOR = 512
 PIDS_CAP = 4096
@@ -35,6 +35,8 @@ HELPER_PIDS_LIMIT = 64
 BOT_OOM_SCORE_ADJ = 1000
 CORE_OOM_SCORE_ADJ = -500
 DATA_OOM_SCORE_ADJ = -997
+# A VM would isolate its guest process/file tables and, with a fixed disk, its storage;
+# that alternative still needs Linux/KVM testing and is not implemented here.
 # The order is not guaranteed if Postgres grows very large. Rootless setups may
 # refuse negative scores; in that case only the bots' +1,000 can be relied on.
 MIB = 1024 ** 2

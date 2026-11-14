@@ -30,6 +30,14 @@ Log in with `OWNER_TOKEN` from `.env`. Browser sessions use opaque, expiring, re
 
 Manage provider keys, permitted models, the workspace default, timezone, tool permissions and resource limits in **Workspace settings**. Editing a provider or timezone updates affected runtimes only between runs; the API reports busy work that must first settle. Model or role changes on a bot can explicitly stop affected work before applying. `.env` seeds the initial provider; once edited in the UI, that profile retains the owner's configuration across restarts. Defaults apply to newly created bots; existing bots keep their chosen provider and model.
 
+## Machine resources
+
+**Settings → General** shows the estimated capacity for your existing teammates and current concurrency. Raising a maximum beyond capacity requires confirming the server's warning. Memory and CPU bounds follow Docker's machine; existing values are retained, while new teammates use the machine's computed defaults.
+
+Reveal **Advanced** in General to open **Machine and containers**. It shows detected ceilings, process limits, open files per process, swap and log rotation, with computed defaults, allowed ranges, overrides and change history. Workspace changes wait until each teammate is idle before recreating its runtime; current model credentials remain valid meanwhile. **Apply now** explicitly reviews the teammates and work to interrupt. A teammate's own process override follows the existing edit rule: wait for idle or explicitly interrupt its work.
+
+Docker configuration observations are shown separately from proof of kernel enforcement. Capacity is an estimate, and the open-file limit applies per process rather than to a whole teammate. Disk figures are inactive previews. Core-service rotation and OOM settings take effect when those containers are recreated; data services remain marked pending until their observed settings match. Rootless fallback values are configurable in `.env`; negative OOM adjustments have not been validated on a real rootless host.
+
 ## Teammates and conversations
 
 Use **Create teammate** above the roster, or **Workspace settings → Teammates**, to create, edit, clone, archive, restore, start, stop or delete a bot. Configure its name, role, avatar, model, tools, skills, memory and CPU limits. Provisioning is asynchronous and reports runtime health and failures. A stopped or provisioning bot cannot begin new work.
@@ -117,6 +125,8 @@ python3 scripts/check.py
 ```
 
 This builds the test image, runs Ruff and backend tests, and writes `test-results/backend.xml`. Tests reset only `hermbot_test`, separately from the product database. Frontend type checking and production compilation run in `docker compose build api`.
+
+With the test image built, `python3 scripts/check_container_limits.py` verifies bounded process creation, zero swap, open-file limits and actual log rotation in disposable containers. It uses no workspace credentials or data services. The general `scripts/check.py` command starts/reconciles Postgres and storage, so schedule it appropriately when those services have pending configuration changes. `tests/browser/resource-limits.mjs` covers resource settings, exact warning confirmation, delayed interruption responses, stale snapshots, machine defaults and phone layout with mocked APIs.
 
 Real-model acceptance uses the configured provider and incurs its normal usage:
 

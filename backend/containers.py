@@ -415,6 +415,7 @@ def ensure(spec, clone=False):
         "MODEL_AUTH_KIND": spec.model_auth_kind, "MODEL_PROVIDER_URL": spec.model_provider_url,
         "API_SERVER_KEY": spec.runtime_key, "HERMBOT_ADAPTER_KEY": spec.adapter_key, "HERMBOT_BOT_TOKEN": spec.bot_token, "HERMBOT_API_URL": "http://api:8000", "BOT_ID": spec.bot_id,
         "BOT_ROLE": f"You are {config.name}. {config.role}", "HERMES_ENABLED_TOOLS": json.dumps(config.enabled_tools), "HERMES_ENABLED_SKILLS": json.dumps(config.enabled_skills), "HERMES_TIMEZONE": spec.timezone}
+    # HostConfig.Runtime is the hook for Kata/gVisor; validate desktop, pause, volumes and cold starts on KVM first.
     result = docker_request("POST", "/containers/create", params={"name": f"hermbot-bot-{spec.bot_id}"}, json={"Image": RUNTIME_IMAGE,
         "Env": [f"{key}={value}" for key, value in environment.items()], "WorkingDir": "/",
         "Labels": {**LABELS, "com.hermbot.bot-id": spec.bot_id, "com.hermbot.kind": "runtime", "com.hermbot.configuration": fingerprint, "com.hermbot.revision": str(spec.revision)},

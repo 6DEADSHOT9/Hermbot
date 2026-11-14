@@ -69,6 +69,8 @@ x-runtime: &runtime
     retries: 12
 
 services:
+  # Core memory/CPU caps and health recovery need load measurements in deployment hardening.
+  # These services remain uncapped here; a leak or hang is still outside bot isolation.
   runtime-image:
     image: hermbot-hermes:phase4
     build:
