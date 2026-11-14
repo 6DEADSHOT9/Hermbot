@@ -104,7 +104,8 @@ def routes(owner, get_store):
                 bot = registry.register(conn, registry.validate_config(conn, body.model_dump(exclude_unset=True)))
                 operation = registry.enqueue(conn, bot, "create", key)
                 return {"bot": registry.public_bot(conn, bot["id"]), "operation": operation}
-            return registry.mutation(conn, key, {"action": "create-bot", "body": body.model_dump()}, work)
+            return registry.mutation(conn, key, {"action": "create-bot", "body": body.model_dump()}, work,
+                                     resource_fields=sorted(body.model_fields_set & {'memory_mb', 'cpus'}))
 
     @router.put("/api/v1/bots/{bot_id}", status_code=202)
     def update_bot(bot_id: BotId, body: BotUpdate, key: str = Header(alias="Idempotency-Key")):
@@ -114,11 +115,12 @@ def routes(owner, get_store):
                 if bot["revision"] != body.expected_revision:
                     raise HTTPException(409, "This bot changed. Reload before editing")
                 registry.reserve_lifecycle(conn, bot, body.interrupt)
-                config = registry.validate_config(conn, body.model_dump(exclude={"expected_revision", "interrupt"}), existing=bot)
+                config = registry.validate_config(conn, body.model_dump(exclude_unset=True, exclude={"expected_revision", "interrupt"}), existing=bot)
                 registry.apply_configuration(conn, bot_id, config)
                 operation = registry.enqueue(conn, registry.require_bot(conn, bot_id), "configure", key)
                 return {"bot": registry.public_bot(conn, bot_id), "operation": operation}
-            return registry.mutation(conn, key, {"action": "update-bot", "id": bot_id, "body": body.model_dump()}, work)
+            return registry.mutation(conn, key, {"action": "update-bot", "id": bot_id, "body": body.model_dump()}, work,
+                                     resource_fields=sorted(body.model_fields_set & {'memory_mb', 'cpus'}))
 
     @router.post("/api/v1/bots/{bot_id}/clone", status_code=202)
     def clone_bot(bot_id: BotId, body: CloneRequest, key: str = Header(alias="Idempotency-Key")):
@@ -133,7 +135,8 @@ def routes(owner, get_store):
                 options = {name: getattr(body, "copy_" + name) for name in ("memory", "skills", "workspace", "history")}
                 operation = registry.enqueue(conn, bot, "clone", key, {"source_bot_id": bot_id, "source_revision": source["revision"], "source_was_running": source["desired_state"] == "running", "copy_options": options})
                 return {"bot": registry.public_bot(conn, bot["id"]), "operation": operation}
-            return registry.mutation(conn, key, {"action": "clone-bot", "id": bot_id, "body": body.model_dump()}, work)
+            return registry.mutation(conn, key, {"action": "clone-bot", "id": bot_id, "body": body.model_dump()}, work,
+                                     resource_fields=sorted(body.configuration.model_fields_set & {'memory_mb', 'cpus'}))
 
     @router.post("/api/v1/bots/{bot_id}/{action}", status_code=202)
     def bot_action(bot_id: BotId, action: str, body: LifecycleRequest, key: str = Header(alias="Idempotency-Key")):
@@ -201,7 +204,9 @@ def routes(owner, get_store):
     @router.put("/api/v1/proposals/{proposal_id}")
     def edit_proposal(proposal_id: UUID, body: ProposalArgs, key: str = Header(alias="Idempotency-Key")):
         with db.connection() as conn:
-            return registry.mutation(conn, key, {"action": "edit-proposal", "id": proposal_id, "body": body.model_dump()}, lambda: lifecycle.replace(conn, proposal_id, body.model_dump()))
+            return registry.mutation(conn, key, {"action": "edit-proposal", "id": proposal_id, "body": body.model_dump()},
+                                     lambda: lifecycle.replace(conn, proposal_id, body.model_dump(exclude_unset=True)),
+                                     resource_fields=sorted((body.configuration.model_fields_set if body.configuration else set()) & {'memory_mb', 'cpus'}))
 
     @router.put("/api/v1/groups/{conversation_id}")
     def edit_group(conversation_id: UUID, body: GroupRequest):

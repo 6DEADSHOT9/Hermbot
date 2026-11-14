@@ -130,7 +130,8 @@ def validate_config(conn, value, existing=None):
     bounds = limits.resource_bounds(workspace(conn)['machine_facts'], workspace(conn)['max_active'])
     for field, default in (('memory_mb', bounds['memory_default_mb']), ('cpus', bounds['cpus_default'])):
         if field not in supplied:
-            value[field] = default
+            fallback = existing[field] if existing is not None else default
+            value[field] = float(fallback) if field == 'cpus' else fallback
     resource_settings.validate_resources(conn, value, existing)
     value["name"], value["role"] = value["name"].strip(), value["role"].strip()
     if not value["name"] or not value["role"]:
@@ -245,14 +246,15 @@ def owner_operation(conn, bot_id, action, key, body):
     return enqueue(conn, require_bot(conn, bot_id), action, key)
 
 
-def mutation(conn, key, request, work):
+def mutation(conn, key, request, work, *, resource_fields=None):
     if not key or not 1 <= len(key) <= 255 or any(ord(c) < 33 or ord(c) > 126 for c in key):
         raise HTTPException(422, "Use an idempotency key with 1–255 visible ASCII characters")
     conn.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s,0))", ("owner:" + key,))
-    fingerprint = service.digest(request)
+    legacy_fingerprint = service.digest(request)
+    fingerprint = service.digest({'request': request, 'resource_fields': resource_fields}) if resource_fields is not None else legacy_fingerprint
     previous = conn.execute("SELECT * FROM owner_receipts WHERE key=%s", (key,)).fetchone()
     if previous:
-        if previous["request_hash"] != fingerprint:
+        if previous["request_hash"] not in (fingerprint, legacy_fingerprint):
             raise HTTPException(409, "Request ID already identifies a different action")
         return previous["response"]
     result = db.jsonable_encoder(work())

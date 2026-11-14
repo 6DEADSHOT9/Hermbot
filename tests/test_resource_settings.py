@@ -41,8 +41,8 @@ def change(client, values, *, url=LIMITS_URL, current=None, key=None, **extra):
     })
 
 
-def post(client, url, body):
-    return client.post(url, json=body, headers={"Idempotency-Key": str(uuid4())})
+def post(client, url, body, key=None):
+    return client.post(url, json=body, headers={"Idempotency-Key": key or str(uuid4())})
 
 
 def bot_snapshot(bot_id="writer"):
@@ -467,3 +467,77 @@ def test_legacy_resources_do_not_block_native_knowledge_edits(owner_client, monk
         })
     assert response.status_code == 202 and calls
     assert pending_operations()[0]["payload"]["configuration"]["memory_mb"] == 512
+
+
+@pytest.mark.parametrize('action,expected_mb,expected_cpu', [('create', 4096, 1.5), ('configure', 3072, 1.1)])
+def test_native_proposal_uses_new_defaults_or_preserves_existing_resources(owner_client, action, expected_mb, expected_cpu):
+    with db.connection() as conn:
+        conn.execute('UPDATE workspace_settings SET max_active=1')
+        conn.execute("UPDATE bots SET memory_mb=3072,cpus=1.1 WHERE id='writer'")
+        grant = registry.create_grant(conn, GrantRequest(manager_id='reviewer', targets=['writer'],
+                                                       operations=[action], max_memory_mb=4096))
+        chat = conn.execute("SELECT id FROM conversations WHERE bot_id='reviewer'").fetchone()['id']
+        task = service.create_task(conn, bot_id='reviewer', conversation_id=chat, prompt='Prepare a local specialist',
+                                   request_key=str(uuid4()), grant_id=grant['id'])
+    attempt = worker.claim_new()[0]
+    arguments = {'action': action, 'configuration': {'name': 'Resource defaults', 'role': 'Local tests'}, 'summary': 'Review this configuration'}
+    if action == 'configure':
+        arguments['bot_id'] = 'writer'
+    result = owner_client.post('/internal/tools', headers={'Authorization': 'Bearer ' + settings.bot_token('reviewer')}, json={
+        'session_id': attempt['session_id'], 'receipt_id': 'proposal-defaults', 'operation': 'propose', 'arguments': arguments})
+    assert result.status_code == 200, result.text
+    with db.connection() as conn:
+        payload = conn.execute('SELECT payload FROM lifecycle_proposals WHERE task_id=%s', (task['id'],)).fetchone()['payload']
+    assert payload['configuration']['memory_mb'] == expected_mb
+    assert payload['configuration']['cpus'] == expected_cpu
+
+
+def test_new_owner_receipts_distinguish_machine_default_from_explicit_memory(owner_client):
+    with db.connection() as conn:
+        conn.execute('UPDATE workspace_settings SET max_active=1')
+    key = str(uuid4())
+    body = {'name': 'Computed default', 'role': 'Local tests'}
+    result = post(owner_client, '/api/v1/bots', body, key=key)
+    assert result.status_code == 202 and result.json()['bot']['memory_mb'] == 4096
+    assert post(owner_client, '/api/v1/bots', {**body, 'memory_mb': 2048}, key=key).status_code == 409
+    assert post(owner_client, '/api/v1/bots', body, key=key).json() == result.json()
+
+
+def test_preupgrade_owner_receipt_replays_without_reapplying_defaults(owner_client):
+    from backend.models import BotConfiguration
+    key = str(uuid4())
+    body = {'name': 'Historical default', 'role': 'Local tests'}
+    request = {'action': 'create-bot', 'body': BotConfiguration(**body).model_dump()}
+    with db.connection() as conn:
+        conn.execute('INSERT INTO owner_receipts VALUES(%s,%s,%s,now())', (key, service.digest(request), Jsonb({'legacy': True})))
+    result = post(owner_client, '/api/v1/bots', body, key=key)
+    assert result.status_code == 202 and result.json() == {'legacy': True}
+    assert pending_operations() == []
+
+
+def test_partial_owner_edit_preserves_legacy_memory_and_fractional_cpu(owner_client):
+    with db.connection() as conn:
+        bot = conn.execute("UPDATE bots SET memory_mb=512,cpus=1.1 WHERE id='writer' RETURNING *").fetchone()
+    response = owner_client.put('/api/v1/bots/writer', headers={'Idempotency-Key': str(uuid4())}, json={
+        'name': 'Legacy renamed', 'role': bot['role'], 'expected_revision': bot['revision']})
+    assert response.status_code == 202
+    assert response.json()['bot']['memory_mb'] == 512 and response.json()['bot']['cpus'] == 1.1
+
+
+def test_proposal_receipt_preserves_legacy_hash_and_distinguishes_omitted_resources(owner_client, make_task):
+    from backend.models import ProposalArgs
+    task = make_task(bot='reviewer')
+    attempt = worker.claim_new()[0]
+    arguments = {'action': 'create', 'configuration': {'name': 'Historical proposal', 'role': 'Local tests'}, 'summary': 'Review'}
+    historical = service.digest({'operation': 'propose', 'args': ProposalArgs(**arguments).model_dump()})
+    assert service.tool_request_hash('propose', arguments, legacy=True) == historical
+    current = service.tool_request_hash('propose', arguments)
+    explicit = {**arguments, 'configuration': {**arguments['configuration'], 'memory_mb': 2048}}
+    assert current != historical and service.tool_request_hash('propose', explicit) != current
+    key = f"reviewer:{task['id']}:historical-proposal"
+    with db.connection() as conn:
+        conn.execute('INSERT INTO tool_receipts(id,bot_id,task_id,operation,request_hash,response) VALUES(%s,%s,%s,%s,%s,%s)',
+                     (key, 'reviewer', task['id'], 'propose', historical, Jsonb({'legacy': True})))
+    response = owner_client.post('/internal/tools', headers={'Authorization': 'Bearer ' + settings.bot_token('reviewer')}, json={
+        'session_id': attempt['session_id'], 'receipt_id': 'historical-proposal', 'operation': 'propose', 'arguments': arguments})
+    assert response.status_code == 200 and response.json() == {'legacy': True}
