@@ -504,15 +504,23 @@ def reassign(conn, caller, target_id, bot_id):
     return replacement
 
 
-def tool_request_hash(operation, args):
+def tool_request_hash(operation, args, *, legacy=False):
     """Keep receipt identity compatible when optional tool arguments are absent."""
+    if operation == 'propose':
+        from .models import ProposalArgs
+        resource_fields = sorted(set(args.get('configuration') or {}) & {'memory_mb', 'cpus'})
+        # Historical proposal receipts included schema defaults, before machine-aware defaulting.
+        args = ProposalArgs.model_validate(args).model_dump()
     receipt_args = {k: v for k, v in args.items() if k not in ('outcomes', 'results', 'outcome_ids', 'outcome_id', 'input_request_id', 'answer') or v}
     if operation in ('delegate', 'message'):
         # Preserve the identity of historical calls with no new handoff fields.
         receipt_args = {k: v for k, v in receipt_args.items() if k not in ('attachment_ids', 'skill_refs', 'expected_output', 'outcome_keys') or v}
     receipt_args = {k: v for k, v in receipt_args.items() if not (k == 'responsibility' and v == 'contribution') and not (k == 'required' and v is True) and not (k in ('reply_to','replaces_task_id') and v is None)}
     receipt_args = {k: v for k, v in receipt_args.items() if k not in ('outcome_key', 'connection') or v}
-    return digest({"operation": operation, "args": receipt_args})
+    request = {"operation": operation, "args": receipt_args}
+    if operation == 'propose' and not legacy:
+        request['resource_fields'] = resource_fields
+    return digest(request)
 
 
 def tool_action(conn, bot_id, session_id, operation, args, receipt_id, artifact_store=None, *, expected_work_revision=None):
@@ -521,7 +529,7 @@ def tool_action(conn, bot_id, session_id, operation, args, receipt_id, artifact_
     fingerprint = tool_request_hash(operation, args)
     previous = conn.execute("SELECT * FROM tool_receipts WHERE id=%s", (key,)).fetchone()
     if previous:
-        if previous["request_hash"] != fingerprint:
+        if previous["request_hash"] != fingerprint and not (operation == 'propose' and previous['request_hash'] == tool_request_hash(operation, args, legacy=True)):
             fail(409, "Tool receipt already identifies different arguments")
         return previous["response"]
     if task.get('orchestration_version') == 2 and task['work_item_id'] and expected_work_revision is not None:

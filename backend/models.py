@@ -2,7 +2,9 @@ from datetime import datetime
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt
+
+from . import limits
 
 BotId = Annotated[str, Field(pattern=r"^[a-z][a-z0-9-]{0,47}$")]
 ManagementOperation = Literal["delegate", "inspect", "steer", "cancel", "reassign", "create", "configure", "start", "stop"]
@@ -262,8 +264,8 @@ class BotConfiguration(StrictModel):
     capabilities: list[str] = Field(default_factory=list, max_length=20)
     enabled_tools: list[Literal["file", "terminal", "skills", "memory", "browser", "computer_use"]] = Field(default_factory=lambda: ["file", "terminal"])
     enabled_skills: list[str] = Field(default_factory=list, max_length=20)
-    memory_mb: int = Field(default=2048, ge=512, le=8192)
-    cpus: float = Field(default=1.5, ge=0.25, le=4)
+    memory_mb: int = Field(default=2048, ge=512, le=limits.MAX_MEMORY_MB, strict=True)
+    cpus: float = Field(default=1.5, ge=limits.MIN_CPUS, allow_inf_nan=False, strict=True)
 
 
 class BotUpdate(BotConfiguration):
@@ -300,14 +302,23 @@ class WorkspaceRequest(StrictModel):
     timezone: str = Field(max_length=100)
     default_provider_id: UUID | None = None
     permitted_tools: list[Literal["file", "terminal", "skills", "memory", "browser", "computer_use"]]
-    max_bots: int = Field(default=10, ge=3, le=30)
-    max_active: int = Field(default=3, ge=1, le=10)
+    max_bots: int = Field(default=10, ge=limits.MIN_BOTS, le=limits.MAX_BOTS)
+    max_active: int = Field(default=3, ge=1, le=limits.MAX_ACTIVE)
     active_budget_seconds: int = Field(default=3600, ge=60, le=86400)
     decision_provider_id: UUID | None = None
     decision_model: str = Field(default='', max_length=200)
     decision_mode: Literal['disabled', 'decisions', 'chat', 'responses'] = 'disabled'
     decision_actions: bool = False
     external_action_mode: Literal['requested', 'review'] | None = None
+    accepted_warnings: list[str] = Field(default_factory=list, max_length=20)
+
+
+class LimitsUpdate(StrictModel):
+    values: dict[str, StrictInt | StrictBool | None]
+    expected_revision: int = Field(ge=1)
+    machine_signature: str = Field(pattern=r'^[a-f0-9]{64}$')
+    accepted_warnings: list[str] = Field(default_factory=list, max_length=20)
+    apply_now: bool = False
 
 
 class AdvancedSettings(StrictModel):
@@ -322,8 +333,8 @@ class GrantRequest(StrictModel):
     operations: list[ManagementOperation] = Field(min_length=1, max_length=9)
     duration_hours: int = Field(default=24, ge=1, le=720)
     max_created_bots: int = Field(default=1, ge=0, le=5)
-    max_memory_mb: int = Field(default=2048, ge=512, le=8192)
-    max_cpus: float = Field(default=1.5, ge=0.25, le=4)
+    max_memory_mb: int = Field(default=2048, ge=512, le=limits.MAX_MEMORY_MB, strict=True)
+    max_cpus: float = Field(default=1.5, ge=limits.MIN_CPUS, allow_inf_nan=False, strict=True)
 
 
 class ProposalArgs(StrictModel):

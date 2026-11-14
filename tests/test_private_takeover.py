@@ -143,6 +143,7 @@ def test_the_bots_own_browser_is_not_offered_to_the_owner(owner_client):
 
 def test_owner_session_container_is_isolated_from_the_bot(monkeypatch):
     calls = []
+    monkeypatch.setattr(containers, 'read_machine', lambda: {'logging_driver': 'json-file'})
 
     def docker(method, path, **kwargs):
         calls.append((method, path, kwargs.get("json"), kwargs.get("params")))

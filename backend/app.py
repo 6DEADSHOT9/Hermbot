@@ -39,6 +39,8 @@ artifacts = None
 @asynccontextmanager
 async def lifespan(app):
     global artifacts
+    from .logging_config import configure_logging
+    configure_logging()
     if any(len(secret) < 32 for secret in (settings.owner_token, settings.internal_token, settings.supervisor_token)):
         raise RuntimeError("Generate private service credentials with scripts/configure.py")
     db.initialize()
@@ -416,7 +418,7 @@ async def events(request: Request, after: int = 0, last_event_id: str | None = H
 @app.post("/internal/tools")
 def tools(body: ToolRequest, bot_id=Depends(bot_identity)):
     try:
-        arguments = ARGUMENT_MODELS[body.operation].model_validate(body.arguments).model_dump()
+        arguments = ARGUMENT_MODELS[body.operation].model_validate(body.arguments).model_dump(exclude_unset=body.operation == 'propose')
     except ValidationError as exc:
         raise HTTPException(422, [{'loc': error['loc'], 'type': error['type'], 'msg': error['msg']} for error in exc.errors()])
     with db.connection() as conn:

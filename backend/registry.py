@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from psycopg.types.json import Jsonb
 from psycopg.errors import LockNotAvailable
 
-from . import db, service
+from . import db, limits, resource_settings, service
 from .secrets import credential_hash, decrypt, encrypt
 from .settings import settings
 from .model_protocol import BROKERED_AUTH, CODEX_URL
@@ -123,9 +123,16 @@ def bootstrap(conn):
                  (RUNTIME_LAYOUT, RUNTIME_LAYOUT))
 
 
-def validate_config(conn, value):
+def validate_config(conn, value, existing=None):
     from .models import BotConfiguration
+    supplied = set(value)
     value = BotConfiguration.model_validate(value).model_dump()
+    bounds = limits.resource_bounds(workspace(conn)['machine_facts'], workspace(conn)['max_active'])
+    for field, default in (('memory_mb', bounds['memory_default_mb']), ('cpus', bounds['cpus_default'])):
+        if field not in supplied:
+            fallback = existing[field] if existing is not None else default
+            value[field] = float(fallback) if field == 'cpus' else fallback
+    resource_settings.validate_resources(conn, value, existing)
     value["name"], value["role"] = value["name"].strip(), value["role"].strip()
     if not value["name"] or not value["role"]:
         raise HTTPException(422, "Give the teammate a name and a role")
@@ -176,7 +183,7 @@ def register(conn, config, bot_id=None):
 
 
 def busy_tasks(conn, bot_id):
-    return conn.execute("SELECT id,status,root_id FROM tasks WHERE bot_id=%s AND (status<>ALL(%s) OR EXISTS(SELECT 1 FROM attempts a WHERE a.task_id=tasks.id AND a.status=ANY(%s))) ORDER BY created_at", (bot_id, list(service.TERMINAL), list(service.ACTIVE_ATTEMPTS) + ["reserved"])).fetchall()
+    return conn.execute("SELECT id,status,root_id FROM tasks WHERE bot_id=%s AND (status='uncertain' OR status<>ALL(%s) OR EXISTS(SELECT 1 FROM attempts a WHERE a.task_id=tasks.id AND a.status=ANY(%s))) ORDER BY created_at", (bot_id, list(service.TERMINAL), list(service.ACTIVE_ATTEMPTS) + ["reserved"])).fetchall()
 
 
 def reserve_lifecycle(conn, bot, interrupt=False):
@@ -212,7 +219,7 @@ def enqueue(conn, bot, action, key, payload=None, *, proposal_id=None):
     else:
         conn.execute('UPDATE bots SET inference_key_encrypted=NULL,inference_key_hash=NULL,inference_revision=NULL WHERE id=%s', (bot['id'],))
         provider_snapshot = None
-    payload = {**payload, "configuration": configuration(bot), "revision": bot["revision"], "provider": provider_snapshot,
+    payload = {**payload, **resource_settings.frozen(conn, bot), "configuration": configuration(bot), "revision": bot["revision"], "provider": provider_snapshot,
                "timezone": workspace(conn)["timezone"], "desired_state": bot["desired_state"], "previous_status": bot["status"],
                "bot_token_encrypted": bot["bot_token_encrypted"], "runtime_key_encrypted": bot["runtime_key_encrypted"],
                "adapter_key_encrypted": bot["adapter_key_encrypted"]}
@@ -239,14 +246,15 @@ def owner_operation(conn, bot_id, action, key, body):
     return enqueue(conn, require_bot(conn, bot_id), action, key)
 
 
-def mutation(conn, key, request, work):
+def mutation(conn, key, request, work, *, resource_fields=None):
     if not key or not 1 <= len(key) <= 255 or any(ord(c) < 33 or ord(c) > 126 for c in key):
         raise HTTPException(422, "Use an idempotency key with 1–255 visible ASCII characters")
     conn.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s,0))", ("owner:" + key,))
-    fingerprint = service.digest(request)
+    legacy_fingerprint = service.digest(request)
+    fingerprint = service.digest({'request': request, 'resource_fields': resource_fields}) if resource_fields is not None else legacy_fingerprint
     previous = conn.execute("SELECT * FROM owner_receipts WHERE key=%s", (key,)).fetchone()
     if previous:
-        if previous["request_hash"] != fingerprint:
+        if previous["request_hash"] not in (fingerprint, legacy_fingerprint):
             raise HTTPException(409, "Request ID already identifies a different action")
         return previous["response"]
     result = db.jsonable_encoder(work())
@@ -300,6 +308,7 @@ def save_provider(conn, body, provider_id=None):
 def save_workspace(conn, body):
     conn.execute("SELECT pg_advisory_xact_lock(887832102)")
     current = workspace(conn)
+    resource_settings.workspace_warnings(conn, body)
     policy_fields = ('active_budget_seconds', 'decision_provider_id', 'decision_model', 'decision_mode', 'decision_actions')
     body = body.model_copy(update={name: current[name] for name in policy_fields if name not in body.model_fields_set})
     try:
@@ -341,6 +350,8 @@ def save_workspace(conn, body):
 
 
 def create_grant(conn, body):
+    if set(body.operations) & {'create', 'configure'}:
+        resource_settings.validate_resources(conn, {'memory_mb': body.max_memory_mb, 'cpus': body.max_cpus})
     require_bot(conn, body.manager_id)
     for target in set(body.targets):
         require_bot(conn, target)

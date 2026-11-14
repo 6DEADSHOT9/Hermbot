@@ -81,7 +81,7 @@ def apply(conn, bot, kind, name, body, key):
             config["enabled_skills"] = sorted(set(config["enabled_skills"] + [name]))
         if body.enable is False or not body.content:
             config["enabled_skills"] = [s for s in config["enabled_skills"] if s != name]
-    validated = registry.validate_config(conn, config)
+    validated = registry.validate_config(conn, config, existing=bot)
     result = native.request(
         bot["id"],
         "PUT",
@@ -343,7 +343,7 @@ def routes(owner):
                     config["enabled_skills"] = sorted(set(config["enabled_skills"] + [name]))
                 else:
                     config["enabled_skills"] = [s for s in config["enabled_skills"] if s != name]
-                registry.apply_configuration(conn, bot_id, registry.validate_config(conn, config))
+                registry.apply_configuration(conn, bot_id, registry.validate_config(conn, config, existing=bot))
                 return {
                     "operation": registry.enqueue(conn, registry.require_bot(conn, bot_id), "configure", key)
                 }

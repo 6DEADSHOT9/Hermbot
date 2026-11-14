@@ -1,6 +1,7 @@
 import {useEffect,useState,type FormEvent} from 'react';
 import {useQuery,useQueryClient} from '@tanstack/react-query';
 import {api} from './api';
+import {ResourceLimits} from './ResourceLimits';
 
 type Values={takeover_unpausable:'ask'|'refuse'|'continue';takeover_reply_wait_seconds:0|15|30|60};
 type Setting=keyof Values;
@@ -16,7 +17,7 @@ const SETTINGS:{[K in Setting]:{label:string;choices:[Values[K],string,string][]
     [30,'Wait up to 30 seconds','Let the reply finish first, so nothing is redone. Take over now skips the wait.'],
     [60,'Wait up to 60 seconds','Let the reply finish first, so nothing is redone. Take over now skips the wait.']]},
 };
-const choiceLabel=(setting:Setting,value:string|number)=>SETTINGS[setting].choices.find(([choice])=>choice===value)?.[1]||String(value);
+const choiceLabel=(setting:Setting,value:string|number)=>SETTINGS[setting]?.choices.find(([choice])=>choice===value)?.[1]||String(value??'Computed default');
 
 // The Advanced section of Settings: workspace-wide behaviour whose defaults are recommended.
 export function AdvancedSettings({active}:{active:boolean}){
@@ -27,10 +28,11 @@ export function AdvancedSettings({active}:{active:boolean}){
   const data=advanced.data,values=form||data?.values;
   async function run(work:()=>Promise<Advanced>,done:string){setBusy(true);setError('');setMessage('');try{query.setQueryData(['advanced-settings'],await work());setForm(null);setMessage(done);}catch(err){setError((err as Error).message);}finally{setBusy(false);}}
   function save(event:FormEvent){event.preventDefault();if(values)void run(()=>api<Advanced>('/api/v1/settings/advanced',{method:'PUT',body:JSON.stringify(values)}),'Advanced settings saved.');}
-  if(!data||!values)return advanced.error?<p role="alert" className="error-text">{advanced.error.message}</p>:<p>Loading advanced settings…</p>;
+  if(!data||!values)return <><ResourceLimits active={active}/>{advanced.error?<p role="alert" className="error-text">{advanced.error.message}</p>:<p>Loading advanced settings…</p>}</>;
   const changed=(Object.keys(SETTINGS) as Setting[]).some(key=>values[key]!==data.values[key]);
   const defaults=(Object.keys(SETTINGS) as Setting[]).every(key=>data.values[key]===data.defaults[key]);
   return <>
+    <ResourceLimits active={active}/>
     <p className="advanced-warning" role="note">These change how Hermbot behaves for the whole workspace. The defaults are recommended.</p>
     {error&&<p role="alert" className="error-text">{error}</p>}{message&&<p role="status" className="form-note">{message}</p>}
     <form className="settings-form" onSubmit={save}>

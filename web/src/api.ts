@@ -26,7 +26,7 @@ export type Chat = Conversation & {messages: Message[]; artifacts:Artifact[]; at
 export type Event = {id: number; kind: string; task_id: string | null; conversation_id: string | null; bot_id: BotId | null; data: Record<string, unknown>;created_at:string};
 
 // A refused request keeps the server's status and, where it gives one, a code naming what it needs.
-export type ApiError = Error & {status?: number; code?: string};
+export type ApiError = Error & {status?: number; code?: string; warnings?: string[]};
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(path, {credentials: 'same-origin', ...init, headers: {'Content-Type': 'application/json', ...init.headers}});
@@ -36,6 +36,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     const failure: ApiError = new Error(typeof body.detail === 'string' ? body.detail : body.detail?.message ? `${body.detail.message} ${body.detail.recovery||''}`.trim() : `Request failed (${response.status})`);
     failure.status = response.status;
     if (typeof body.detail?.code === 'string') failure.code = body.detail.code;
+    if (Array.isArray(body.detail?.warnings)) failure.warnings = body.detail.warnings.filter((warning:unknown):warning is string=>typeof warning==='string');
     throw failure;
   }
   return response.json();
