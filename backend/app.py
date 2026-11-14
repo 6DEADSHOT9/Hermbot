@@ -39,6 +39,8 @@ artifacts = None
 @asynccontextmanager
 async def lifespan(app):
     global artifacts
+    from .logging_config import configure_logging
+    configure_logging()
     if any(len(secret) < 32 for secret in (settings.owner_token, settings.internal_token, settings.supervisor_token)):
         raise RuntimeError("Generate private service credentials with scripts/configure.py")
     db.initialize()

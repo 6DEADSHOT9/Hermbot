@@ -1,5 +1,11 @@
 name: hermbot
 
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 x-app-env: &app-env
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/configure.py}
   OWNER_TOKEN: ${OWNER_TOKEN:?Run scripts/configure.py}
@@ -43,7 +49,15 @@ x-runtime: &runtime
     - /opt/data/plugins:rw,nosuid,nodev,noexec,size=4m,mode=0755
   restart: unless-stopped
   mem_limit: 2g
+  memswap_limit: 2g
+  pids_limit: 1024
+  oom_score_adj: ${BOT_OOM_SCORE_ADJ:-1000}
+  ulimits:
+    nofile:
+      soft: 1024
+      hard: 16384
   cpus: 1.5
+  logging: *default-logging
   depends_on:
     api:
       condition: service_healthy
@@ -62,9 +76,13 @@ services:
       dockerfile: docker/hermes.Dockerfile
     entrypoint: [/opt/hermes/.venv/bin/python, -c, "print('Pinned Hermes runtime image is ready')"]
     network_mode: none
+    logging: *default-logging
   postgres:
     image: postgres@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
     restart: unless-stopped
+    oom_score_adj: ${DATA_OOM_SCORE_ADJ:--997}
+    mem_reservation: 512m
+    logging: *default-logging
     environment:
       POSTGRES_DB: hermbot
       POSTGRES_USER: hermbot
@@ -80,6 +98,8 @@ services:
     image: minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
     command: server /data
     restart: unless-stopped
+    oom_score_adj: ${DATA_OOM_SCORE_ADJ:--997}
+    logging: *default-logging
     environment:
       MINIO_ROOT_USER: hermbot
       MINIO_ROOT_PASSWORD: ${STORAGE_PASSWORD}
@@ -91,6 +111,8 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     restart: unless-stopped
+    oom_score_adj: ${CORE_OOM_SCORE_ADJ:--500}
+    logging: *default-logging
     environment:
       <<: *app-env
       MODEL_BROKER_TOKEN_FILE: /run/model-broker/pairing.sha256
@@ -117,6 +139,8 @@ services:
     image: hermbot-app:phase1
     command: python -m backend.worker
     restart: unless-stopped
+    oom_score_adj: ${CORE_OOM_SCORE_ADJ:--500}
+    logging: *default-logging
     environment: *app-env
     networks: [control, researcher-net, writer-net, reviewer-net]
     depends_on:
@@ -128,6 +152,8 @@ services:
     image: hermbot-app:phase1
     command: python -m backend.trigger_worker
     restart: unless-stopped
+    oom_score_adj: ${CORE_OOM_SCORE_ADJ:--500}
+    logging: *default-logging
     read_only: true
     tmpfs: ["/tmp:rw,nosuid,nodev,noexec,size=16m"]
     mem_limit: 384m
@@ -149,6 +175,8 @@ services:
     image: hermbot-app:phase1
     command: python -m backend.notification_worker
     restart: unless-stopped
+    oom_score_adj: ${CORE_OOM_SCORE_ADJ:--500}
+    logging: *default-logging
     read_only: true
     tmpfs: ["/tmp:rw,nosuid,nodev,noexec,size=16m"]
     mem_limit: 256m
@@ -174,6 +202,8 @@ services:
     image: hermbot-app:phase1
     command: uvicorn backend.supervisor:app --host 0.0.0.0 --port 8001
     restart: unless-stopped
+    oom_score_adj: ${CORE_OOM_SCORE_ADJ:--500}
+    logging: *default-logging
     environment:
       SUPERVISOR_TOKEN: ${SUPERVISOR_TOKEN}
       HERMBOT_RUNTIME_IMAGE: hermbot-hermes:phase4
@@ -183,6 +213,8 @@ services:
   hermes-researcher:
     <<: *runtime
     profiles: [legacy]
+    mem_limit: 4g
+    memswap_limit: 4g
     environment:
       <<: *runtime-env
       API_SERVER_KEY: ${RESEARCHER_API_KEY}
@@ -193,6 +225,8 @@ services:
   hermes-writer:
     <<: *runtime
     profiles: [legacy]
+    mem_limit: 2g
+    memswap_limit: 2g
     environment:
       <<: *runtime-env
       API_SERVER_KEY: ${WRITER_API_KEY}
@@ -203,6 +237,8 @@ services:
   hermes-reviewer:
     <<: *runtime
     profiles: [legacy]
+    mem_limit: 2g
+    memswap_limit: 2g
     environment:
       <<: *runtime-env
       API_SERVER_KEY: ${REVIEWER_API_KEY}

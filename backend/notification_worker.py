@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 import signal
 
-from . import attention, db, notifications
+from . import attention, db, logging_config, notifications
 
 STOP = asyncio.Event()
 LOGGER = logging.getLogger("hermbot.notifications")
@@ -29,8 +29,8 @@ async def pump(cycle):
     while not STOP.is_set():
         try:
             await asyncio.to_thread(cycle)
-        except Exception:
-            LOGGER.error("Notification cycle failed; retained work will retry (private details omitted)")
+        except Exception as error:
+            logging_config.log_exception(LOGGER, "Notification cycle failed; retained work will retry", error)
         try:
             await asyncio.wait_for(STOP.wait(), timeout=0.5)
         except TimeoutError:
@@ -49,5 +49,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging_config.configure_logging()
     asyncio.run(main())

@@ -15,7 +15,7 @@ from psycopg import errors
 from psycopg.types.json import Jsonb
 from websockets.asyncio.client import connect
 
-from . import connector_oauth, db, service, triggers
+from . import connector_oauth, db, logging_config, service, triggers
 from .connector_http import ProviderFailure, request
 from .connector_catalog import path
 from .secrets import decrypt, encrypt
@@ -183,6 +183,7 @@ def poll(src):
         check_drive_creations(src, credential, page)
         commit_page(src, page)
     except Exception as error:
+        logging_config.log_exception(LOGGER, 'Event source processing failed', error)
         failure(src, error)
 
 
@@ -277,6 +278,7 @@ async def socket_source(src):
     except errors.UniqueViolation:
         await asyncio.to_thread(failure, src, ProviderFailure('This Slack app already has a source; reuse it for triggers in its configured workspace', auth=True))
     except Exception as error:
+        logging_config.log_exception(LOGGER, 'Socket source processing failed', error)
         await asyncio.to_thread(failure, src, error, disconnected=True)
     finally:
         if sock:
@@ -292,7 +294,7 @@ def advance():
 
 
 async def main():
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+    logging_config.configure_logging()
     db.initialize()
     for sig in (signal.SIGINT, signal.SIGTERM):
         asyncio.get_running_loop().add_signal_handler(sig, STOP.set)
@@ -304,7 +306,7 @@ async def main():
                     try:
                         job.result()
                     except Exception as error:
-                        LOGGER.error('Collector stopped (%s)', type(error).__name__)
+                        logging_config.log_exception(LOGGER, 'Collector stopped', error)
                     del jobs[identity]
             try:
                 for kind, limit in (('poll', 4), ('socket', 10)):
@@ -317,7 +319,7 @@ async def main():
                 await asyncio.to_thread(advance)
                 Path('/tmp/hermbot-events-heartbeat').touch()
             except Exception as error:
-                LOGGER.error('Event processing pass failed (%s)', type(error).__name__)
+                logging_config.log_exception(LOGGER, 'Event processing pass failed', error)
             try:
                 await asyncio.wait_for(STOP.wait(), timeout=1)
             except TimeoutError:
