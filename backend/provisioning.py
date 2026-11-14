@@ -1,13 +1,15 @@
 """Durable, leased lifecycle operations; exact approved snapshots survive worker restart."""
 import base64
 import logging
+from contextlib import nullcontext
 from random import random
 from uuid import uuid4
 
 import httpx
+from fastapi import HTTPException
 from psycopg.types.json import Jsonb
 
-from . import db, isolation, lifecycle, registry, service
+from . import db, isolation, lifecycle, registry, resource_settings, service
 from .secrets import decrypt
 from .settings import settings
 from .model_protocol import BROKERED_AUTH
@@ -26,12 +28,21 @@ async def supervisor(method, path, **kwargs):
 RELAY_URL = "http://api:8000/internal/inference/v1"
 
 
-def queue_initial():
+def queue_initial(bot_id=None):
     with db.connection() as conn:
-        bots = conn.execute("SELECT * FROM bots WHERE status='active' AND applied_revision<revision ORDER BY id FOR UPDATE SKIP LOCKED").fetchall()
+        bots = conn.execute("SELECT * FROM bots WHERE status='active' AND desired_state='running' "
+                            "AND (applied_revision<revision OR applied_limits_revision<(SELECT limits_revision FROM workspace_settings)) "
+                            "AND (%s::text IS NULL OR id=%s) ORDER BY id FOR UPDATE SKIP LOCKED", (bot_id, bot_id)).fetchall()
         for bot in bots:
-            if not registry.busy_tasks(conn, bot["id"]) and not conn.execute("SELECT 1 FROM bot_operations WHERE bot_id=%s AND status IN ('queued','applying','uncertain')", (bot["id"],)).fetchone():
-                registry.enqueue(conn, bot, "ensure", f"bootstrap:{bot['id']}:{bot['revision']}")
+            if not resource_settings.idle(conn, bot['id']):
+                continue
+            wanted = registry.workspace(conn)['limits_revision']
+            if bot['applied_limits_revision'] < wanted and bot['applied_revision'] == bot['revision']:
+                conn.execute('UPDATE bots SET revision=revision+1 WHERE id=%s', (bot['id'],))
+                bot = registry.require_bot(conn, bot['id'])
+            registry.enqueue(conn, bot, "ensure", f"bootstrap:{bot['id']}:{bot['revision']}:limits:{wanted}")
+            # The worker finishes this recreate before its next iteration; avoid a boot-time surge.
+            break
 
 
 def claim():
@@ -40,9 +51,9 @@ def claim():
     return [row for row in rows if row["due"]]
 
 
-def fail(operation_id, reason):
+def fail(operation_id, reason, conn=None):
     """Record a failed operation; the owner can retry the same operation explicitly."""
-    with db.connection() as conn:
+    with nullcontext(conn) if conn is not None else db.connection() as conn:
         current = conn.execute("SELECT * FROM bot_operations WHERE id=%s FOR UPDATE", (operation_id,)).fetchone()
         if current["status"] not in ("queued", "applying"):
             return
@@ -94,6 +105,13 @@ async def drive(operation):
                 conn.execute("UPDATE bots SET status='error',runtime_error='Approved operation cancelled before dispatch' WHERE id=%s", (current["bot_id"],))
                 conn.execute("UPDATE lifecycle_proposals SET status='cancelled' WHERE id=%s", (proposal["id"],))
                 return
+            if proposal['action'] in ('create', 'configure'):
+                try:
+                    existing = proposal['payload'].get('before') if proposal['action'] == 'configure' else None
+                    resource_settings.validate_resources(conn, payload['configuration'], existing=existing)
+                except HTTPException:
+                    fail(current['id'], 'Machine resource bounds changed before dispatch; review a fresh proposal', conn=conn)
+                    return
         conn.execute("UPDATE bot_operations SET status='applying',updated_at=now() WHERE id=%s", (current["id"],))
         if proposal:
             conn.execute("UPDATE lifecycle_proposals SET status='applying' WHERE id=%s", (proposal["id"],))
@@ -112,6 +130,8 @@ async def drive(operation):
         # Operations queued before adapter keys existed keep the key their runtime already has.
         "adapter_key": decrypt(payload.get("adapter_key_encrypted") or payload["runtime_key_encrypted"]), "timezone": payload["timezone"], "desired_state": payload["desired_state"],
         "source_bot_id": payload.get("source_bot_id"), "source_was_running": payload.get("source_was_running", False), "copy_options": payload.get("copy_options", {})}
+    if 'limits' in payload:
+        spec['limits'] = payload['limits']
     try:
         result = await supervisor("POST", f"/operations/{current['action']}", json=spec)
     except httpx.HTTPStatusError as exc:
@@ -131,7 +151,11 @@ async def drive(operation):
         status = "deleted" if current["action"] == "delete" else ("archived" if current["action"] == "archive" else "active")
         if current["action"] in {"configure", "ensure"} and payload.get("previous_status") == "archived":
             status = "archived"
-        conn.execute("UPDATE bots SET status=%s,applied_revision=%s,runtime_error=NULL,readiness='{}' WHERE id=%s", (status, payload["revision"], current["bot_id"]))
+        conn.execute("UPDATE bots SET status=%s,applied_revision=%s,runtime_error=NULL,readiness='{}' WHERE id=%s",
+                     (status, payload["revision"], current["bot_id"]))
+        if current['action'] not in ('stop', 'archive', 'delete'):
+            conn.execute('UPDATE bots SET applied_limits_revision=%s,limits_observed=%s WHERE id=%s',
+                         (payload.get('limits_revision', 0), Jsonb(result.get('limits_observed', {})), current['bot_id']))
         if status == "deleted":
             conn.execute("UPDATE bots SET bot_token_hash=NULL,bot_token_encrypted=NULL,runtime_key_encrypted=NULL,adapter_key_encrypted=NULL WHERE id=%s", (current["bot_id"],))
             conn.execute("DELETE FROM participants WHERE bot_id=%s", (current["bot_id"],))

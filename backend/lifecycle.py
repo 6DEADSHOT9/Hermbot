@@ -39,7 +39,7 @@ def prepare(conn, task, args):
     if action in ("create", "configure"):
         if not args.get("configuration"):
             raise HTTPException(422, "Provide the complete proposed bot configuration")
-        config = registry.validate_config(conn, args["configuration"])
+        config = registry.validate_config(conn, args["configuration"], existing=bot)
         if config["memory_mb"] > grant["max_memory_mb"] or config["cpus"] > grant["max_cpus"]:
             raise HTTPException(403, "Proposed runtime exceeds the grant's resource limits")
     elif args.get("configuration"):
@@ -85,6 +85,10 @@ def decide(conn, approval, task, decision):
         return
     payload = proposal["payload"]
     grant = authority(conn, task, proposal["action"], None if proposal["action"] == "create" else proposal["bot_id"])
+    if proposal['action'] in ('create', 'configure'):
+        config = payload['configuration']
+        if config['memory_mb'] > grant['max_memory_mb'] or config['cpus'] > grant['max_cpus']:
+            raise HTTPException(403, "Proposed runtime exceeds the grant's resource limits")
     provider = conn.execute("SELECT revision FROM providers WHERE id=%s", (UUID(payload["provider"]["id"]),)).fetchone()
     if not provider or provider["revision"] != payload["provider"]["revision"]:
         raise HTTPException(409, "The model provider changed. Request a fresh proposal")
@@ -105,7 +109,7 @@ def decide(conn, approval, task, decision):
             raise HTTPException(409, "Affected work changed. Review a fresh proposal")
         registry.reserve_lifecycle(conn, bot, payload["interrupt"])
         if proposal["action"] == "configure":
-            registry.apply_configuration(conn, bot["id"], registry.validate_config(conn, payload["configuration"]))
+            registry.apply_configuration(conn, bot["id"], registry.validate_config(conn, payload["configuration"], existing=bot))
         else:
             conn.execute("UPDATE bots SET desired_state=%s,revision=revision+1 WHERE id=%s", ("stopped" if proposal["action"] == "stop" else "running", bot["id"]))
         bot = registry.require_bot(conn, bot["id"])

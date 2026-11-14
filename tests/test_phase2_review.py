@@ -97,7 +97,7 @@ def test_supervisor_refuses_foreign_volume_before_any_mutation(monkeypatch):
 
 def test_workspace_changes_reconfigure_timezone_and_enforce_limits(owner_client, make_task):
     settings = owner_client.get("/api/v1/settings").json()["workspace"]
-    body = {key: settings[key] for key in WorkspaceRequest.model_fields}
+    body = {key: settings[key] for key in WorkspaceRequest.model_fields if key in settings}
     body["timezone"] = "Asia/Kolkata"
     task = make_task()
     assert owner_client.put("/api/v1/settings", json=body).status_code == 409

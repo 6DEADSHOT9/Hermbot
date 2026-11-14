@@ -1,5 +1,6 @@
 import math
 import unittest
+from decimal import Decimal
 
 from backend import limits
 
@@ -14,6 +15,11 @@ BOTS = [{"memory_mb": size} for size in (4096, 2048, 2048)]
 
 
 class LimitTests(unittest.TestCase):
+    def test_unchanged_database_cpu_value_is_grandfathered(self):
+        limits.validate_resources(1024, 1.1, {'cpus': 1}, existing={'cpus': Decimal('1.1')})
+        with self.assertRaises(ValueError):
+            limits.validate_resources(1024, 1.2, {'cpus': 1}, existing={'cpus': Decimal('1.1')})
+
     def test_process_examples_separate_share_default_and_maximum(self):
         for ceiling, max_bots, default, maximum, capacity in (
             (63_765, 10, 1024, 4782, 93),

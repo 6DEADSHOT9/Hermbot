@@ -146,6 +146,15 @@ def read_machine():
                     facts['warnings'].append('Machine helper cleanup needs retry; no bot was changed.')
         if 'docker desktop' in facts['operating_system'].lower():
             facts['warnings'].append('Docker reports its virtual machine, not the physical host disk or RAM.')
+        facts['core_services'] = {}
+        try:
+            for name in ('postgres', 'storage'):
+                rows = filter_containers(['com.docker.compose.project=hermbot', f'com.docker.compose.service={name}'])
+                if len(rows) == 1:
+                    host = docker_request('GET', f'/containers/{rows[0]["Id"]}/json')['HostConfig']
+                    facts['core_services'][name] = {key: host.get(key) for key in ('OomScoreAdj', 'MemoryReservation', 'LogConfig')}
+        except (HTTPException, httpx.HTTPError, KeyError):
+            facts['warnings'].append('Core service settings could not be inspected; restart status is unverified.')
         MACHINE_CACHE.update(at=time.monotonic(), facts=facts)
         return facts
 

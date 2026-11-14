@@ -130,7 +130,8 @@ def claim_new():
         conn.execute("SELECT pg_advisory_xact_lock(887832103)")
         coordination.schedule_inboxes(conn)
         available = registry.workspace(conn)["max_active"] - conn.execute("SELECT count(*) AS n FROM attempts WHERE status=ANY(%s)", (list(ACTIVE_ATTEMPTS) + ["reserved"],)).fetchone()["n"]
-        for row in conn.execute("SELECT id FROM bots WHERE status='active' AND desired_state='running' AND provider_id IS NOT NULL AND applied_revision=revision ORDER BY id").fetchall():
+        for row in conn.execute("SELECT id FROM bots WHERE status='active' AND desired_state='running' AND provider_id IS NOT NULL AND applied_revision=revision "
+                                "AND applied_limits_revision>=(SELECT limits_revision FROM workspace_settings) ORDER BY id").fetchall():
             if len(claimed) >= available:
                 break
             bot_id = row["id"]
@@ -161,7 +162,9 @@ def claim_new():
                         if not conn.execute("SELECT id FROM tasks WHERE id=%s FOR UPDATE SKIP LOCKED", (candidate["root_id"],)).fetchone():
                             continue
                         locked_bot = conn.execute("SELECT * FROM bots WHERE id=%s FOR UPDATE SKIP LOCKED", (bot_id,)).fetchone()
-                        if not locked_bot or locked_bot["status"] != "active" or locked_bot["desired_state"] != "running":
+                        if (not locked_bot or locked_bot["status"] != "active" or locked_bot["desired_state"] != "running"
+                                or locked_bot['applied_revision'] != locked_bot['revision']
+                                or locked_bot['applied_limits_revision'] < registry.workspace(conn)['limits_revision']):
                             continue
                         if conn.execute("SELECT 1 FROM computer_controls WHERE bot_id=%s AND holder='human'", (bot_id,)).fetchone():
                             continue
@@ -767,6 +770,13 @@ async def resume_orphaned_pauses():
 
 
 async def probe():
+    from . import resource_settings
+    try:
+        facts = await provisioning.supervisor('GET', '/machine')
+        with db.connection() as conn:
+            resource_settings.update_machine(conn, facts)
+    except (httpx.HTTPError, ValueError):
+        logger.warning('Machine resource facts are unavailable; retaining the last snapshot')
     try:
         await resume_orphaned_pauses()
     except (httpx.HTTPError, KeyError):
@@ -784,6 +794,9 @@ async def probe():
         except (httpx.HTTPError, ValueError):
             readiness = {"compatible": False, "error": "Runtime is unreachable", "provider_configured": settings.provider_configured}
         with db.connection() as conn:
+            previous = conn.execute('SELECT readiness FROM bots WHERE id=%s', (bot_id,)).fetchone()
+            if previous and previous['readiness'].get('compatible') != readiness.get('compatible'):
+                logger.info('Runtime %s became %s', bot_id, 'reachable' if readiness.get('compatible') else 'unreachable')
             conn.execute("UPDATE bots SET readiness=%s,checked_at=now() WHERE id=%s", (Jsonb(readiness), bot_id))
 
 
@@ -799,11 +812,11 @@ async def step(name, action, *args):
 
 
 async def iterate(iteration):
+    if iteration % 20 == 0:
+        await step("probe", probe)
     await step("provisioning.queue_initial", provisioning.queue_initial)
     operations = await step("provisioning.claim", provisioning.claim) or []
     await asyncio.gather(*(provisioning.guarded_drive(operation) for operation in operations))
-    if iteration % 20 == 0:
-        await step("probe", probe)
     await step("work_controller.advance", asyncio.to_thread, work_controller.advance)
     await step("advance_waiters", advance_waiters)
     await step("knowledge.drive_proposals", asyncio.to_thread, knowledge.drive_proposals)
@@ -816,7 +829,8 @@ async def iterate(iteration):
 
 
 async def main():
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    from .logging_config import configure_logging
+    configure_logging()
     db.initialize()
     for sig in (signal.SIGINT, signal.SIGTERM):
         asyncio.get_running_loop().add_signal_handler(sig, STOP.set)

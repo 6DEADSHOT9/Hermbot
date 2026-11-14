@@ -260,7 +260,7 @@ class MachineFactTests(unittest.TestCase):
         self.assertEqual(host["Memory"], 32 * limits.MIB)
         self.assertEqual(host["MemorySwap"], host["Memory"])
         self.assertEqual(host["PidsLimit"], limits.HELPER_PIDS_LIMIT)
-        self.assertEqual(self.docker.calls[-1][:2], ("DELETE", "/containers/machine-helper"))
+        self.assertIn(("DELETE", "/containers/machine-helper"), [call[:2] for call in self.docker.calls])
 
     def test_pid_helper_failure_keeps_thread_fallback_and_cleanup(self):
         self.docker.wait_status = 1
@@ -268,7 +268,7 @@ class MachineFactTests(unittest.TestCase):
         self.assertIsNone(facts["pid_max"])
         self.assertEqual(facts["threads_max"], 63765)
         self.assertEqual(limits.resolved_values(facts)["pids_limit"], 1024)
-        self.assertEqual(self.docker.calls[-1][:2], ("DELETE", "/containers/machine-helper"))
+        self.assertIn(("DELETE", "/containers/machine-helper"), [call[:2] for call in self.docker.calls])
 
     def test_pid_helper_start_failure_still_removes_created_container(self):
         def fail_start(method, path, **kwargs):
@@ -278,7 +278,7 @@ class MachineFactTests(unittest.TestCase):
         with patch.object(containers, "docker_request", side_effect=fail_start):
             facts = containers.read_machine()
         self.assertIsNone(facts["pid_max"])
-        self.assertEqual(self.docker.calls[-1][:2], ("DELETE", "/containers/machine-helper"))
+        self.assertIn(("DELETE", "/containers/machine-helper"), [call[:2] for call in self.docker.calls])
 
     def test_cleanup_failure_is_reported_without_discarding_machine_facts(self):
         def fail_cleanup(method, path, **kwargs):

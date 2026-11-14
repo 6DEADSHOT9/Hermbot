@@ -173,7 +173,7 @@ def resource_bounds(machine, max_active=3):
     # machines. Missing or odd facts use floor defaults and remain uncertain.
     return {
         "memory_min_mb": MIN_MEMORY_MB, "memory_max_mb": memory_max,
-        "memory_default_mb": default, "memory_options_mb": options,
+        "memory_default_mb": default, "memory_options_mb": options, "memory_all_options_mb": list(MEMORY_OPTIONS_MB),
         "cpus_min": MIN_CPUS, "cpus_max": cpus if cpus else 4,
         "cpus_default": min(1.5, cpus) if cpus else MIN_CPUS,
         "memory_uncertain": memory is None, "cpus_uncertain": cpus is None,
@@ -191,7 +191,10 @@ def validate_resources(memory_mb, cpus, machine, existing=None):
         ("memory_mb", memory_mb, bounds["memory_min_mb"], bounds["memory_max_mb"]),
         ("cpus", cpus, bounds["cpus_min"], bounds["cpus_max"]),
     ):
-        if existing is not None and value == existing.get(key):
+        previous = existing.get(key) if existing is not None else None
+        if key == 'cpus' and previous is not None:
+            previous = float(previous)  # PostgreSQL numeric values arrive as Decimal.
+        if previous is not None and value == previous:
             continue
         if not low <= value <= high:
             raise ValueError(f"{key} must be between {low} and {high} on this machine")

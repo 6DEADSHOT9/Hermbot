@@ -31,8 +31,10 @@ def clean_database(monkeypatch):
         environment = conn.execute("SELECT id FROM providers WHERE from_environment=true OR name='Environment provider' ORDER BY from_environment DESC LIMIT 1").fetchone()
         conn.execute("UPDATE workspace_settings SET default_provider_id=%s,timezone='UTC',permitted_tools='[\"file\",\"terminal\",\"skills\"]',max_bots=10,max_active=3", (environment["id"],))
         conn.execute("UPDATE workspace_settings SET active_budget_seconds=3600,decision_provider_id=NULL,decision_model='',decision_mode='disabled',decision_actions=false,execution_policy_revision=1,external_action_mode='requested'")
+        conn.execute("UPDATE workspace_settings SET limit_overrides='{}',machine_facts='{}',limits_revision=1")
         conn.execute("DELETE FROM providers WHERE id<>%s AND NOT EXISTS(SELECT 1 FROM bots WHERE bots.provider_id=providers.id)", (environment["id"],))
         conn.execute("UPDATE bots SET status='active',desired_state='running',applied_revision=revision,enabled_tools='[\"file\",\"terminal\"]',enabled_skills='[]',readiness=%s", (Jsonb({"compatible": True}),))
+        conn.execute("UPDATE bots SET limit_overrides='{}',applied_limits_revision=1,limits_observed='{}',memory_mb=2048,cpus=1.5")
     monkeypatch.setattr(worker, "settings", replace(worker.settings, provider_configured=True, model_name="test"))
 
 
